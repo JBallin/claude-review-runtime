@@ -28,7 +28,7 @@ permissions:
 
 # Eligible reviews for a PR share one queue with claude-review.yml's, so two
 # reviews never overlap on the same PR's comment evidence; queue: max keeps
-# every pending @claude request instead of replacing all but the newest.
+# every pending /claude-review request instead of replacing all but the newest.
 # Ineligible comments get a per-run group so they can never occupy that queue.
 # The predicate must stay textually identical to start-check's `if:`
 # (enforced by tests).
@@ -36,7 +36,7 @@ concurrency:
   group: >-
     ${{
     ((github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-    contains(github.event.comment.body, '@claude') &&
+    github.event.comment.body == '/claude-review' &&
     contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
     github.event.comment.author_association) &&
     (github.event_name == 'pull_request_review_comment' ||
@@ -50,14 +50,14 @@ concurrency:
 jobs:
   start-check:
     name: Start check
-    # Only trusted commenters start a run, so anyone else's @claude never
+    # Only trusted commenters start a run, so anyone else's /claude-review never
     # occupies a runner (the action also requires write access). This keeps the
     # workflow limited to trusted requests. Gating this first job
     # keeps ineligible comments away from every later job and from
     # checks: write.
     if: >-
       (github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-      contains(github.event.comment.body, '@claude') &&
+      github.event.comment.body == '/claude-review' &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
       github.event.comment.author_association) &&
       (github.event_name == 'pull_request_review_comment' ||
@@ -283,7 +283,7 @@ jobs:
             Review the pull request described in
             ${{ runner.temp }}/pr-review/request.json (which includes
             head_sha, the exact commit this review covers, and
-            trigger_comment, the specific @claude request being acted on --
+            trigger_comment, the specific manual request being acted on --
             this is the only comment captured; no other PR comments are
             fetched or visible) and the diff at
             ${{ runner.temp }}/pr-review/diff.patch, which covers
@@ -462,7 +462,7 @@ jobs:
     if: always() && needs.start-check.result != 'skipped'
     runs-on: ubuntu-latest
     # Sized for the bundled review helper's bounded retries.
-    timeout-minutes: 18
+    timeout-minutes: 22
     # PR comments need pull-requests: write; top-level PR reactions use the issue endpoint and need issues: write.
     permissions:
       contents: read
@@ -510,6 +510,7 @@ jobs:
           CHECK_RUN_ID: ${{ needs.start-check.outputs.check_run_id }}
           STATUS_COMMENTS_ENABLED: "true"
           PR_REACTION_MODE: manual
+          MANUAL_COMPLETION_ENABLED: "true"
           START_RESULT: ${{ needs.start-check.result }}
           REVIEW_RESULT: ${{ needs.review.result }}
           ACTION_CONCLUSION: ${{ needs.review.outputs.conclusion }}

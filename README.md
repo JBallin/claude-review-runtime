@@ -3,6 +3,11 @@
 Reusable GitHub Actions workflows for automatic Claude pull-request reviews,
 trusted manual review requests, and stale-review presentation updates.
 
+Request a manual review with a PR comment containing exactly `/claude-review`
+(case-insensitive, without surrounding whitespace or arguments). See the
+[manual review contract](docs/consumer-workflows.md#manual-review) for eligibility
+and result presentation.
+
 This is a private prototype. Cross-repository workflow resolution, default
 Anthropic App/OIDC authentication, model execution, and publication have not yet
 been validated together in a live consumer. A successful workflow that skips
@@ -51,6 +56,11 @@ are informational presentation and can become stale when the patch changes.
 Consumers must reserve `github-actions[bot]` eyes/thumbs-up reactions on top-level
 PRs for this runtime: reconciliation identifies the bot/reaction pair, not the
 individual workflow that added it.
+Clean manual reviews also leave a fixed, snapshot-specific completion notice.
+Notices are historical information: same-identity clean reruns do not add another,
+and later findings or failures do not erase an earlier notice. Use the Check and
+stable status to assess the current review. Provider-bot reactions on invocation
+comments are preserved and are not runtime progress signals.
 Completion requires every captured metadata and diff line to appear in successful
 Read responses. Claude can read additional ranges after a partial response;
 unread or truncated lines fail closed. Every inline-finding call must target the

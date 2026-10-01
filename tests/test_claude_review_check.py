@@ -326,8 +326,8 @@ def pr_head_rule(*responses):
     return {"method": "GET", "path": f"repos/{REPO}/pulls/7", "responses": list(responses)}
 
 
-def live_head(sha, base_ref="main"):
-    return ok(json.dumps({"head": {"sha": sha}, "base": {"ref": base_ref}}))
+def live_head(sha, base_ref="main", base_sha=BASE_TIP):
+    return ok(json.dumps({"head": {"sha": sha}, "base": {"ref": base_ref, "sha": base_sha}}))
 
 
 def status_create_rule(*responses):
@@ -1991,6 +1991,217 @@ class PRReactionTests(ScriptTestCase):
                 self.assertEqual(check.last_completed_review({"body": rendered})[2], result)
                 self.assertIn(f"**Current commit:** `{HEAD[:7]}`", rendered)
                 self.assertIn(HEAD, rendered)  # Full SHA remains in hidden identity.
+
+
+class ManualCompletionTests(ScriptTestCase):
+    def notice(self, *, head=HEAD, base_ref="main", base_sha=BASE_TIP,
+               merge_base=MERGE_BASE, pr="7", repo=REPO, **author):
+        marker = check.completion_marker(repo, pr, head, base_ref, base_sha, merge_base)
+        return {
+            "id": 88,
+            "user": {"login": "github-actions[bot]", "type": "Bot", **author},
+            "body": check.completion_comment_body(
+                repo, head, base_ref, base_sha, marker, "https://github.com/owner/repo/actions/runs/1"),
+        }
+
+    def clean_rules(self, listed=None, live=None, post=None):
+        return [history_rule(current_run_only()), comments_rule(ok(pages([]))), patch_rule(ok("{}")),
+                status_list_rule(listed if listed is not None else ok(pages([]))),
+                pr_head_rule(live if live is not None else live_head(HEAD)),
+                status_create_rule(post if post is not None else ok('{"id":88}'))]
+
+    def run_manual(self, rules, **extra):
+        self.before.write_text("[]")
+        return self.run_script(["finalize"], rules, **{
+            "CHECK_RUN_ID": "99", "REVIEW_RESULT": "success", "ACTION_CONCLUSION": "success",
+            "BEFORE_IDS_FILE": str(self.before), "MANUAL_COMPLETION_ENABLED": "true",
+            "DETAILS_URL": "https://github.com/owner/repo/actions/runs/1",
+            "TRIGGER_LABEL": "Manual request", "PR_REACTION_MODE": "manual", **extra,
+        })
+
+    def test_clean_manual_notice_follows_the_published_check_and_names_the_snapshot(self):
+        result = self.run_manual(self.clean_rules())
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        calls = self.calls()
+        self.assertEqual([call["method"] for call in calls], ["GET", "GET", "PATCH", "GET", "GET", "POST"])
+        self.assertEqual(calls[2]["body"]["conclusion"], "success")
+        body = calls[-1]["body"]["body"]
+        self.assertEqual(body, self.notice()["body"])
+        for identity in (HEAD, BASE_TIP, MERGE_BASE):
+            self.assertIn(identity, body)
+        self.assertIn("🎉 Claude review completed—no findings on", body)
+        self.assertNotIn("current", body.lower())
+        self.assertNotIn("approved", body.lower())
+        self.assertNotIn("@claude", body)
+
+    def test_same_identity_notice_on_a_later_page_suppresses_rerun_noise(self):
+        result = self.run_manual(self.clean_rules(listed=ok(pages([], [self.notice()]))))
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertFalse(self.calls("POST"))
+        self.assertEqual([call["path"] for call in self.calls("PATCH")], [f"repos/{REPO}/check-runs/99"])
+        listing = self.calls()[-1]
+        self.assertIn("--paginate", listing["args"])
+
+    def test_notice_with_a_different_captured_identity_does_not_suppress_completion(self):
+        cases = [{"head": OTHER}, {"base_ref": "release"}, {"base_sha": OTHER},
+                 {"merge_base": OTHER}, {"pr": "8"}, {"repo": "other/repo"}]
+        for fields in cases:
+            with self.subTest(fields=fields):
+                self.log.unlink(missing_ok=True)
+                result = self.run_manual(self.clean_rules(listed=ok(pages([self.notice(**fields)]))))
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertEqual(len(self.calls("POST")), 1)
+                # Historical notices are neither edited nor removed.
+                self.assertEqual([call["path"] for call in self.calls("PATCH")], [f"repos/{REPO}/check-runs/99"])
+                self.assertFalse(self.calls("DELETE"))
+
+    def test_forged_marker_and_unrelated_bot_comment_cannot_suppress_notice(self):
+        comments = [self.notice(login="someone"), self.notice(type="User"),
+                    {"id": 44, "user": None, "body": self.notice()["body"]},
+                    {**self.notice(), "body": "unrelated workflow comment"}, status_comment()]
+        result = self.run_manual(self.clean_rules(listed=ok(pages(comments))))
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(len(self.calls("POST")), 1)
+
+    def test_automatic_run_does_not_add_a_completion_notice(self):
+        result = self.run_manual(self.clean_rules(), MANUAL_COMPLETION_ENABLED="")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(len(self.calls()), 3)
+
+    def test_findings_failed_unverified_and_incomplete_evidence_never_post_success(self):
+        cases = [({"REVIEW_RESULT": "failure"}, []),
+                 ({"START_RESULT": "failure"}, []),
+                 ({"ACTION_CONCLUSION": "failure"}, []),
+                 ({"COMPLETION_VERIFIED": "false"}, []),
+                 ({"BEFORE_IDS_FILE": str(self.dir / "missing")}, []),
+                 ({}, [comment(1)])]
+        for extra, findings in cases:
+            with self.subTest(extra=extra, findings=findings):
+                self.log.unlink(missing_ok=True)
+                rules = self.clean_rules()
+                rules[1] = comments_rule(ok(pages(findings)))
+                result = self.run_manual(rules, **extra)
+                self.assertIn(result.returncode, (0, 1))
+                self.assertNotEqual(self.calls("PATCH")[0]["body"]["conclusion"], "success")
+                self.assertEqual(len(self.calls()), 3)
+
+    def test_sticky_findings_and_history_errors_never_post_success(self):
+        for history in (ok(pages({"check_runs": [check_run(12, "action_required")]})), FAIL):
+            with self.subTest(history=history):
+                self.log.unlink(missing_ok=True)
+                rules = self.clean_rules()
+                rules[0] = history_rule(history)
+                result = self.run_manual(rules)
+                self.assertIn(result.returncode, (0, 1))
+                self.assertNotEqual(self.calls("PATCH")[0]["body"]["conclusion"], "success")
+                self.assertFalse(self.calls("POST"))
+
+    def test_check_publication_fallback_never_posts_a_completion_notice(self):
+        rules = self.clean_rules()
+        rules[2] = patch_rule(FAIL, FAIL, FAIL, ok("{}"))
+        result = self.run_manual(rules)
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertEqual(self.calls("PATCH")[-1]["body"]["conclusion"], "failure")
+        self.assertFalse(self.calls("POST"))
+
+    def test_fork_without_a_check_never_posts_success(self):
+        result = self.run_manual([], CHECK_RUN_ID="", IS_FORK="true")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertFalse(self.calls())
+
+    def test_changed_head_base_ref_or_base_tip_suppresses_notice(self):
+        for live in (live_head(NEWER), live_head(HEAD, "release"), live_head(HEAD, base_sha=OTHER)):
+            with self.subTest(live=live):
+                self.log.unlink(missing_ok=True)
+                result = self.run_manual(self.clean_rules(live=live))
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertEqual(self.calls("PATCH")[0]["body"]["conclusion"], "success")
+                self.assertFalse(self.calls("POST"))
+                self.assertIn("superseded review snapshot", result.stdout)
+
+    def test_missing_captured_identity_skips_notice_without_changing_the_check(self):
+        for field in ("BASE_REF", "BASE_SHA", "MERGE_BASE_SHA", "DETAILS_URL"):
+            with self.subTest(field=field):
+                self.log.unlink(missing_ok=True)
+                result = self.run_manual(self.clean_rules(), **{field: ""})
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertEqual(len(self.calls()), 3)
+                self.assertIn("::warning::", result.stdout)
+
+    def test_discovery_or_live_identity_failure_does_not_change_the_check(self):
+        cases = [self.clean_rules(listed=FAIL), self.clean_rules(live=FAIL),
+                 self.clean_rules(live=ok('{"head":{"sha":"' + HEAD + '"},"base":{"ref":"main"}}'))]
+        for rules in cases:
+            with self.subTest(rules=rules):
+                self.log.unlink(missing_ok=True)
+                result = self.run_manual(rules)
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertFalse(self.calls("POST"))
+                self.assertEqual(self.calls("PATCH")[0]["body"]["conclusion"], "success")
+                self.assertIn("::warning::", result.stdout)
+
+    def test_ambiguous_post_is_not_retried_and_a_later_rerun_discovers_it(self):
+        result = self.run_manual(self.clean_rules(post=FAIL))
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(len(self.calls("POST")), 1)
+        self.assertIn("::warning::", result.stdout)
+        self.log.unlink()
+        result = self.run_manual(self.clean_rules(listed=ok(pages([self.notice()]))))
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertFalse(self.calls("POST"))
+
+    def test_stable_status_and_owned_reactions_still_complete_before_the_notice(self):
+        rules = self.clean_rules()
+        rules[3] = status_list_rule(ok(pages([status_comment()])), ok(pages([])))
+        rules += [status_patch_rule(ok("{}")),
+                  reaction_list_rule(ok(pages([reaction(70, "eyes"), reaction(71, "eyes", login="claude[bot]")]))),
+                  reaction_delete_rule(70, ok("")), reaction_post_rule(ok('{"id":80}'))]
+        result = self.run_manual(rules, STATUS_COMMENTS_ENABLED="true")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        patches = self.calls("PATCH")
+        self.assertEqual(patches[0]["body"]["conclusion"], "success")
+        self.assertIn("Claude Review passed", patches[1]["body"]["body"])
+        self.assertEqual(self.calls("DELETE")[0]["path"], f"repos/{REPO}/issues/7/reactions/70")
+        self.assertEqual(len(self.calls("DELETE")), 1)
+        self.assertEqual(self.calls()[-1]["method"], "POST")
+        self.assertIn(check.COMPLETION_PREFIX, self.calls()[-1]["body"]["body"])
+        self.assertFalse(any("issues/comments/" in call["path"] and "reactions" in call["path"]
+                             for call in self.calls()))
+
+    def test_failed_same_identity_rerun_does_not_mutate_a_historical_notice(self):
+        result = self.run_manual(self.clean_rules(listed=ok(pages([self.notice()]))), REVIEW_RESULT="failure")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(len(self.calls()), 3)
+        self.assertEqual(self.calls("PATCH")[0]["body"]["conclusion"], "failure")
+
+    def test_stale_refresh_preserves_historical_notices_and_updates_only_stable_status(self):
+        result = self.run_script(["stale"], [
+            pr_head_rule(live_head(OTHER)),
+            status_list_rule(ok(pages([self.notice(), status_comment()]))),
+            status_patch_rule(ok("{}")), reaction_list_rule(ok(pages([]))),
+        ], HEAD_SHA=OTHER, STATUS_COMMENTS_ENABLED="true", PR_REACTION_MODE="stale")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual([call["path"] for call in self.calls("PATCH")],
+                         [f"repos/{REPO}/issues/comments/55"])
+        self.assertIn("Claude Review stale", self.calls("PATCH")[0]["body"]["body"])
+        self.assertFalse(self.calls("POST"))
+        self.assertFalse(self.calls("DELETE"))
+
+    def test_completion_worst_case_matches_the_budget(self):
+        rules = self.clean_rules(post=FAIL)
+        rules[3] = status_list_rule(FAIL, FAIL, ok(pages([])))
+        rules[4] = pr_head_rule(FAIL, FAIL, live_head(HEAD))
+        result = self.run_manual(rules)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(len(self.calls()) - 3, check.WORST_CASE["completion"][0])
+        self.assertEqual(check.WORST_CASE["completion"][1], 2)
+
+    def test_base_ref_is_rendered_as_literal_text(self):
+        result = self.run_manual(self.clean_rules(live=live_head(HEAD, "topic/with`tick")),
+                                 BASE_REF="topic/with`tick")
+        self.assertEqual(result.returncode, 0, result.stdout)
+        body = self.calls("POST")[0]["body"]["body"]
+        self.assertIn(check.inline_code("topic/with`tick"), body)
 
 
 if __name__ == "__main__":

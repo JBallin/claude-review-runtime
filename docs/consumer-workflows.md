@@ -61,9 +61,40 @@ jobs:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
 
-The runtime requires a trusted author and a Claude mention on a pull request. It
-resolves the current patch once for the manual request. Ordinary issue comments
-and untrusted requests do not start model execution.
+Post `/claude-review` as the entire PR comment, without surrounding whitespace,
+arguments, quotes, or other text. Matching is case-insensitive. Top-level PR
+comments and inline review comments are accepted from authors GitHub identifies
+as `OWNER`, `MEMBER`, or `COLLABORATOR`; the action also checks actor/access
+eligibility. Ordinary issue comments and untrusted requests do not start model
+execution. The runtime resolves the current patch once for each accepted request.
+
+The command deliberately avoids a Claude mention. `@claude review` can invoke
+Anthropic's separate managed review service and does not invoke this runtime.
+Provider-bot reactions on comments are preserved and are not this runtime's
+progress or completion signals. Runtime revisions that accepted mentions retain
+that behavior while pinned; lab callers testing this command need the updated
+runtime pin. The caller workflow shape stays the same.
+
+The exact-SHA `Claude Review` Check is authoritative. The stable workflow-owned
+status comment and top-level PR reactions present progress, clean completion,
+findings, failure, and stale state. A verified clean manual review also adds a
+fixed completion notice after successful Check publication, identifying its
+captured head, base commit, and workflow run. Reserve this runtime's namespaced
+comment markers for its trusted publication jobs.
+
+Completion notices are historical information, not review authority or merge
+approval. There is at most one notice per PR/head/base-commit/base-ref/merge-base
+identity. Repeating the command still reviews the patch and refreshes Check/status
+state, but a clean rerun of the same identity adds no notice. Findings or a failed
+rerun leave prior notices unchanged; consult the current Check and status. A base
+change creates a different notice identity even when the head is unchanged.
+
+No success notice is posted for findings, failure, unverified completion, or an
+unavailable Check. Publication checks the live head and base immediately before
+posting and skips known superseded snapshots. A concurrent PR change can still
+occur afterward, so the notice always describes its linked historical snapshot.
+Notice publication is best-effort: an API failure may leave no notice, and an
+ambiguous POST is not retried blindly. Neither changes the authoritative result.
 
 ## Stale presentation refresh
 
