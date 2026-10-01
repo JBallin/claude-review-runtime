@@ -64,8 +64,11 @@ comments are preserved and are not runtime progress signals.
 Completion requires every captured metadata and diff line to appear in successful
 Read responses. Claude can read additional ranges after a partial response;
 unread or truncated lines fail closed. Every inline-finding call must target the
-captured head SHA, and errored responses reject completion even if the model
-reports success.
+captured head SHA. Findings publish immediately, and trusted finalization verifies
+that every publication receipt identifies a new Claude comment on that captured
+PR/head. Missing, malformed, buffered, or partially published finding evidence
+makes the review incomplete even if the model reports success. Reviews with no
+finding attempts still require verified completion before a clean result.
 
 Findings remain sticky for the same PR, head, and merge base through trusted
 Check evidence. Findings attributed only to another diff do not carry across a

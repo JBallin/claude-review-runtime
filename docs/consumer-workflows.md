@@ -36,6 +36,21 @@ The runtime preserves draft, fork, and Dependabot exclusions. Automatic review
 captures the pull-request event's head and base; it does not silently move the
 review to a later patch.
 
+## Finding publication
+
+Both review entrypoints publish inline findings immediately. Trusted completion
+requires a valid receipt for every inline attempt and confirms each comment on
+the captured PR/head using the complete paginated comment list and pre-review
+snapshot. Failed or ambiguous publication produces an incomplete review, retains
+any findings already recorded, and cannot produce a clean completion notice.
+
+The complete receipt list is limited to 64 finding attempts per run. Exceeding
+that limit fails completion; receipt evidence is never truncated to imply clean
+publication. The limit is separate from the sampled historical Check diagnostics.
+An explicit zero-attempt receipt list permits clean completion only when all
+other completion and finding-evidence checks pass. No additional consumer input,
+credential, or permission is required.
+
 ## Manual review
 
 ```yaml
