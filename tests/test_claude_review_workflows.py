@@ -559,6 +559,9 @@ class JobStructureTests(unittest.TestCase):
                 self.assertEqual(
                     scalar(verify, "EXECUTION_FILE", 10), "${{ steps.review.outputs.execution_file }}"
                 )
+                self.assertEqual(scalar(verify, "REVIEW_HEAD_SHA", 10),
+                                 "${{ github.event.pull_request.head.sha }}" if path == AUTOMATIC
+                                 else "${{ needs.start-check.outputs.head_sha }}")
                 metadata = "pr.json" if path == AUTOMATIC else "request.json"
                 self.assertEqual(scalar(verify, "REVIEW_METADATA_FILE", 10),
                                  "${{ runner.temp }}/pr-review/" + metadata)
@@ -1152,14 +1155,31 @@ def result(subtype="success", is_error=False):
     return {"type": "result", "subtype": subtype, "is_error": is_error, "num_turns": 4}
 
 
+METADATA_CONTENT = '{"head_sha": "' + HEAD + '",\n"number": 7}\n'
+DIFF_CONTENT = "diff --git a/file.py b/file.py\n+changed line\n"
+
+
+def read_result(use_id, source, start=1, stop=None, *, blocks=False, **flags):
+    # Read text sent to the model is numbered; structured SDK sidecars alone
+    # do not establish what was presented. Preserve content, including spaces.
+    lines = source.split("\n")
+    if lines and lines[-1] == "":
+        lines.pop()
+    rendered = "\n".join(f"{index:6d}→{line}"
+                         for index, line in enumerate(lines, 1)
+                         if index >= start and (stop is None or index <= stop))
+    content = [{"type": "text", "text": rendered}] if blocks else rendered
+    return tool_result(use_id, content=content, **flags)
+
+
 def clean_stream():
     return [
         init_message(),
         tool_use("t1", "Read", file_path="/captured/metadata.json"),
-        tool_result("t1"),
+        read_result("t1", METADATA_CONTENT),
         tool_use("t2", "Read", file_path="/captured/diff.patch"),
-        tool_result("t2"),
-        tool_use("t3", "mcp__github_inline_comment__create_inline_comment"),
+        read_result("t2", DIFF_CONTENT),
+        tool_use("t3", "mcp__github_inline_comment__create_inline_comment", commit_id=HEAD),
         tool_result("t3"),
         final_text(),
         result(),
@@ -1169,23 +1189,32 @@ def clean_stream():
 class CompletionVerifierTests(unittest.TestCase):
     """Runs the verifier step's actual shell against execution-stream fixtures."""
 
-    def verify(self, stream=None, *, raw=None, path=AUTOMATIC, execution_file=None):
+    def verify(self, stream=None, *, raw=None, path=AUTOMATIC, execution_file=None,
+               metadata=METADATA_CONTENT, diff=DIFF_CONTENT):
         step = steps(job(path, "review"))[VERIFY_STEP]
         script = run_block(step)
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp) / "github_output"
             record = Path(tmp) / "claude-execution-output.json"
+            metadata_file, diff_file = Path(tmp) / "metadata.json", Path(tmp) / "diff.patch"
+            metadata_file.write_text(metadata)
+            if isinstance(diff, bytes):
+                diff_file.write_bytes(diff)
+            else:
+                diff_file.write_text(diff)
             if raw is not None:
                 record.write_text(raw)
             elif stream is not None:
-                record.write_text(json.dumps(stream))
+                record.write_text(json.dumps(stream).replace("/captured/metadata.json", str(metadata_file))
+                                  .replace("/captured/diff.patch", str(diff_file)))
             environment = {
                 "PATH": os.environ["PATH"],
                 "GITHUB_OUTPUT": str(output),
                 "EXECUTION_FILE": str(record) if execution_file is None else execution_file,
                 "ALLOWED_TOOLS": scalar(step, "ALLOWED_TOOLS", 10).strip("'"),
-                "REVIEW_METADATA_FILE": "/captured/metadata.json",
-                "REVIEW_DIFF_FILE": "/captured/diff.patch",
+                "REVIEW_HEAD_SHA": HEAD,
+                "REVIEW_METADATA_FILE": str(metadata_file),
+                "REVIEW_DIFF_FILE": str(diff_file),
             }
             completed = subprocess.run(
                 ["bash", "-eo", "pipefail", "-c", script], env=environment, capture_output=True, text=True
@@ -1202,24 +1231,99 @@ class CompletionVerifierTests(unittest.TestCase):
             with self.subTest(workflow=path.name):
                 self.assertEqual(self.verify(clean_stream(), path=path), ("true", "verified"))
 
-    def test_both_captured_inputs_require_successful_unsliced_reads(self):
+    def test_both_captured_inputs_require_complete_successful_read_content(self):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
                 self.assertRejected([init_message(), final_text(), result()],
                                     "captured_inputs_not_read", path=path)
-                for use_index, response_index in ((1, 2), (3, 4)):
-                    for inputs in ({"file_path": "/unrelated/file"},
-                                   {"file_path": "/captured/metadata.json" if use_index == 1 else "/captured/diff.patch", "limit": 1},
-                                   {"file_path": "/captured/metadata.json" if use_index == 1 else "/captured/diff.patch", "offset": 2}):
-                        stream = clean_stream()
-                        stream[use_index]["message"]["content"][0]["input"] = inputs
-                        self.assertRejected(stream, "captured_inputs_not_read", path=path)
+                for use_index, response_index, source in ((1, 2, METADATA_CONTENT), (3, 4, DIFF_CONTENT)):
+                    stream = clean_stream()
+                    stream[use_index]["message"]["content"][0]["input"]["file_path"] = "/unrelated/file"
+                    self.assertRejected(stream, "captured_inputs_not_read", path=path)
                     stream = clean_stream()
                     stream[response_index]["message"]["content"][0]["is_error"] = True
                     self.assertRejected(stream, "captured_inputs_not_read", path=path)
                     stream = clean_stream()
                     del stream[use_index:response_index + 1]
                     self.assertRejected(stream, "captured_inputs_not_read", path=path)
+                    for partial in (read_result("t1" if use_index == 1 else "t2", source, stop=1),
+                                    read_result("t1" if use_index == 1 else "t2", source, start=2),
+                                    tool_result("t1" if use_index == 1 else "t2", content="read successfully")):
+                        stream = clean_stream()
+                        stream[response_index] = partial
+                        self.assertRejected(stream, "captured_inputs_not_read", path=path)
+
+    def test_oversized_diff_needs_actual_complete_coverage_in_both_paths(self):
+        diff = "\n".join(f"+line {i}" for i in range(2101)) + "\n"
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                stream = clean_stream()
+                stream[4] = read_result("t2", diff, stop=2000)
+                stream[4]["tool_use_result"] = {"type": "text", "file": {
+                    "totalLines": 2101, "numLines": 2101, "startLine": 1, "content": diff}}
+                self.assertRejected(stream, "captured_inputs_not_read", path=path, diff=diff)
+                # A second successful range presents the rest. Coverage comes
+                # from content, not optimistic sidecar counts or requested limits.
+                stream[7:7] = [tool_use("rest", "Read", file_path="/captured/diff.patch", offset=2001, limit=101),
+                               read_result("rest", diff, start=2001, blocks=True)]
+                self.assertEqual(self.verify(stream, path=path, diff=diff), ("true", "verified"))
+                stream[8]["message"]["content"][0]["is_error"] = True
+                self.assertRejected(stream, "captured_inputs_not_read", path=path, diff=diff)
+
+    def test_supported_read_rendering_preserves_payload_and_empty_file_evidence(self):
+        empty_notice = "<system-reminder>Warning: the file exists but the contents are empty.</system-reminder>"
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                for separator in ("\t", ":", "→"):
+                    diff = "+\tcolon: and arrow→ stay in content\r\n+second line"
+                    stream = clean_stream()
+                    stream[4] = read_result("t2", diff.replace("\r\n", "\n"))
+                    content = stream[4]["message"]["content"][0]
+                    content["content"] = "PARTIAL view banner\n" + content["content"].replace("1→", "1" + separator).replace("2→", "2" + separator) + "\n<system-reminder>Other text</system-reminder>"
+                    self.assertEqual(self.verify(stream, path=path, diff=diff), ("true", "verified"))
+                stream = clean_stream()
+                stream[4] = tool_result("t2", content=empty_notice)
+                self.assertEqual(self.verify(stream, path=path, diff=""), ("true", "verified"))
+                stream[4] = tool_result("t2", content="read successfully")
+                self.assertRejected(stream, "captured_inputs_not_read", path=path, diff="")
+
+    def test_lossy_utf8_decoding_cannot_establish_complete_input_coverage(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                stream = clean_stream()
+                stream[4] = read_result("t2", "+replacement \ufffd\n")
+                self.assertRejected(stream, "unsupported_captured_input_encoding", path=path,
+                                    diff=b"+replacement \xff\n")
+
+    def test_truncated_or_changed_lines_do_not_count_as_coverage(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                diff = "+" + "x" * 3000 + "\n"
+                stream = clean_stream()
+                stream[4] = read_result("t2", diff[:2000] + "... [truncated]\n")
+                self.assertRejected(stream, "captured_inputs_not_read", path=path, diff=diff)
+                stream = clean_stream()
+                stream[4] = read_result("t2", DIFF_CONTENT.replace("changed", "different"))
+                self.assertRejected(stream, "captured_inputs_not_read", path=path)
+                # Line numbers matter even when the returned text occurs elsewhere.
+                stream[4] = read_result("t2", DIFF_CONTENT)
+                stream[4]["message"]["content"][0]["content"] = stream[4]["message"]["content"][0]["content"].replace("2→", "1→")
+                self.assertRejected(stream, "captured_inputs_not_read", path=path)
+                stream[4] = read_result("t2", DIFF_CONTENT, blocks=True)
+                self.assertEqual(self.verify(stream, path=path), ("true", "verified"))
+
+    def test_every_inline_invocation_must_target_the_captured_head(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                for inputs in ({}, {"commit_id": "b" * 40}, {"commit_id": HEAD.upper()}, {"commit_id": None}):
+                    stream = clean_stream()
+                    stream[5]["message"]["content"][0]["input"] = inputs
+                    self.assertRejected(stream, "wrong_inline_commit_identity", path=path)
+                self.assertEqual(self.verify(clean_stream(), path=path), ("true", "verified"))
+                stream = clean_stream()
+                stream[7:7] = [tool_use("wrong", "mcp__github_inline_comment__create_inline_comment", commit_id="b" * 40),
+                               tool_result("wrong")]
+                self.assertRejected(stream, "wrong_inline_commit_identity", path=path)
 
     def test_failed_inline_publication_cannot_verify_a_clean_review(self):
         for path in (AUTOMATIC, MANUAL):
@@ -1228,7 +1332,7 @@ class CompletionVerifierTests(unittest.TestCase):
                 stream[6] = tool_result("t3", is_error=True)
                 self.assertRejected(stream, "errored_inline_tool_result", path=path)
                 # A later successful retry does not erase the failed attempt.
-                stream[7:7] = [tool_use("retry", "mcp__github_inline_comment__create_inline_comment"),
+                stream[7:7] = [tool_use("retry", "mcp__github_inline_comment__create_inline_comment", commit_id=HEAD),
                                tool_result("retry", is_error=False)]
                 self.assertRejected(stream, "errored_inline_tool_result", path=path)
                 stream = clean_stream()

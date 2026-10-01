@@ -7,6 +7,7 @@ without network access.
 """
 
 import importlib.util
+import hashlib
 import json
 import os
 import subprocess
@@ -729,6 +730,129 @@ class FinalizeTests(ScriptTestCase):
         self.assertEqual(len(self.calls("GET")), check.ATTEMPTS)
         self.assertEqual(self.calls("POST"), [])
         self.assertIn("Could not confirm whether start-check created", result.stdout)
+
+    def test_large_finding_and_history_sets_publish_bounded_authoritative_evidence(self):
+        ids = list(range(1000, 11000))
+        history = [check_run(i, "action_required") for i in range(20000, 30000)]
+        result = self.finalize(
+            [history_rule(ok(pages({"check_runs": history}))),
+             comments_rule(ok(pages([comment(i) for i in ids]))), patch_rule(ok("{}"))],
+        )
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        body = self.published()
+        self.assertEqual(body["conclusion"], "action_required")
+        for field in ("summary", "text"):
+            self.assertLess(len(body["output"][field].encode("utf-8")), 65535)
+        evidence = evidence_of(body)
+        self.assertEqual(evidence["claude_finding_comment_ids"], ids[:check.EVIDENCE_ID_LIMIT])
+        summary = evidence["claude_finding_comment_ids_summary"]
+        self.assertEqual(summary["count"], len(ids))
+        self.assertTrue(summary["truncated"])
+        self.assertEqual(summary["sha256"], hashlib.sha256(
+            json.dumps(ids, separators=(",", ":")).encode()).hexdigest())
+        self.assertEqual(evidence["prior_finding_check_run_ids_summary"]["count"], len(history))
+        self.assertIs(evidence["same_diff_findings_recorded"], True)
+
+    def test_large_fallback_and_failed_rerun_keep_same_diff_findings_durable(self):
+        ids = list(range(1000, 11000))
+        result = self.finalize(
+            [history_rule(current_run_only()),
+             comments_rule(ok(pages([comment(i) for i in ids]))),
+             patch_rule(FAIL, FAIL, FAIL, ok("{}"))],
+        )
+        self.assertEqual(result.returncode, 1)
+        fallback = self.published()
+        self.assertEqual(fallback["conclusion"], "failure")
+        self.assertIs(evidence_of(fallback)["same_diff_findings_recorded"], True)
+        for call in self.calls("PATCH"):
+            for field in ("summary", "text"):
+                self.assertLess(len(call["body"]["output"][field].encode("utf-8")), 65535)
+
+        # All comment bodies (including IDs omitted from the sample) can vanish.
+        # A failed subsequent review still preserves the same-diff presence bit.
+        self.log.unlink()
+        prior = {**check_run(98, "failure"), "output": fallback["output"]}
+        result = self.finalize(
+            [history_rule(ok(pages({"check_runs": [prior]}))),
+             comments_rule(ok(pages([]))), patch_rule(ok("{}"))], review_result="failure",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        failed = self.published()
+        self.assertEqual(failed["conclusion"], "failure")
+        self.assertIs(evidence_of(failed)["same_diff_findings_recorded"], True)
+        # Presence remains authoritative independently of the diagnostic ID sample.
+        evidence = evidence_of(failed)
+        evidence["new_finding_comment_ids"] = []
+        evidence["claude_finding_comment_ids"] = []
+        failed["output"]["text"] = check.evidence_text(evidence)
+        rerun = self.rerun_after(failed, comments=())
+        self.assertEqual(rerun.returncode, 0, rerun.stderr + rerun.stdout)
+        self.assertEqual(self.published()["conclusion"], "action_required")
+
+    def test_overflow_samples_never_claim_omitted_ids_belong_to_a_retargeted_diff(self):
+        ids = list(range(1000, 11000))
+        old = {**check_run(98, "failure", merge_base=OTHER), "output": {"text": check.evidence_text({
+            "pr_number": 7, "merge_base_sha": OTHER, "claude_finding_comment_ids": ids,
+            "same_diff_findings_recorded": True,
+        })}}
+        # Included exact IDs are excluded as old-diff evidence; no sticky bit
+        # crosses merge-base identity, even when the originating run failed.
+        result = self.finalize(
+            [history_rule(ok(pages({"check_runs": [old]}))),
+             comments_rule(ok(pages([comment(ids[0])]))), patch_rule(ok("{}"))], before=[ids[0]],
+        )
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        self.assertEqual(self.published()["conclusion"], "success")
+        self.assertIs(evidence_of(self.published())["same_diff_findings_recorded"], False)
+
+        # A full-set hash cannot prove the omitted ID's membership. Unknown
+        # attribution fails closed and cannot become false current-diff evidence.
+        self.log.unlink()
+        result = self.finalize(
+            [history_rule(ok(pages({"check_runs": [old]}))),
+             comments_rule(ok(pages([comment(ids[-1])]))), patch_rule(ok("{}"))], before=[ids[-1]],
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(self.published()["conclusion"], "failure")
+        self.assertEqual(check.recorded_finding_ids(self.published()), [])
+        self.assertIs(evidence_of(self.published())["same_diff_findings_recorded"], False)
+
+    def test_large_unknown_ids_and_unicode_errors_bound_both_check_fields(self):
+        ids = list(range(1000, 11000))
+        result = self.finalize(
+            [history_rule(current_run_only()), comments_rule(ok(pages([comment(i) for i in ids]))),
+             patch_rule(ok("{}"))], before=ids,
+        )
+        self.assertEqual(result.returncode, 1)
+        body = self.published()
+        self.assertEqual(body["conclusion"], "failure")
+        for field in ("summary", "text"):
+            self.assertLess(len(body["output"][field].encode("utf-8")), 65535)
+        evidence = evidence_of(body)
+        self.assertEqual(evidence["unscoped_finding_comment_ids_summary"]["count"], len(ids))
+        self.assertLessEqual(len(evidence["evidence_errors"][0].encode()), check.EVIDENCE_ERROR_BYTES)
+        self.assertIs(evidence["same_diff_findings_recorded"], False)
+        # Scalar diagnostics are byte-bounded, not character-bounded.
+        evidence["trigger"] = "😀" * 30000
+        evidence["evidence_errors"] = ["😀" * 30000] * 10
+        bounded = check.evidence_text(evidence)
+        self.assertLess(len(bounded.encode()), 65535)
+        self.assertEqual(bounded, check.evidence_text(evidence))
+
+    def test_check_evidence_bound_accounts_for_json_escaping_and_large_numeric_ids(self):
+        evidence = {
+            field: list(range(2 ** 63 - 10000, 2 ** 63)) for field in check.EVIDENCE_ID_FIELDS
+        }
+        # Bound every variable scalar at once; control characters expand in JSON.
+        for field in ("reviewed_sha", "pr_number", "base_sha", "merge_base_sha",
+                      "runtime_repository", "runtime_sha", "runtime_workflow_path",
+                      "trigger", "start_check_result", "review_job_result",
+                      "action_conclusion", "completion_reason"):
+            evidence[field] = "\x00😀" * 30000
+        evidence["evidence_errors"] = ["\x00😀" * 30000] * 10
+        text = check.evidence_text(evidence)
+        self.assertLess(len(text.encode("utf-8")), 65535)
+        self.assertEqual(json.loads(text[8:-4])["pr_number"][-1], "…")
 
     def test_unresolved_check_lookup_clears_obsolete_pr_reaction_when_possible(self):
         result = self.run_script(
