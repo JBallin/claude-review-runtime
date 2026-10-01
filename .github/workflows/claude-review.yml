@@ -1,0 +1,550 @@
+name: Claude Review
+
+# Review a ready, same-repository PR on the caller's selected events.
+# The trusted start job captures the event's head/base, compare diff, metadata,
+# and existing inline-finding evidence. Claude reads that captured snapshot
+# and the same head checkout, with only read tools and the inline-finding tool.
+# The pinned runtime's helper is prepared through $/ in trusted jobs; no
+# consumer checkout supplies publication code. Only start-check and
+# publish-status receive status/evidence write authority, and neither invokes
+# Claude. The final Check derives findings from posted inline comments and
+# requires verified foreground completion before reporting a clean result.
+# The conversation comment and PR reactions are informational projections.
+on:
+  workflow_call:
+    secrets:
+      CLAUDE_CODE_OAUTH_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  id-token: write
+
+# Eligible reviews for a PR share one queue with claude.yml's, so two reviews
+# never overlap on the same PR's comment evidence; queue: max keeps every
+# pending review instead of replacing all but the newest. Ineligible events
+# get a per-run group so they can never occupy that queue. The predicate must
+# stay textually identical to start-check's `if:` (enforced by tests).
+concurrency:
+  group: >-
+    ${{
+    (github.event_name == 'pull_request' &&
+    !github.event.pull_request.draft &&
+    github.actor != 'dependabot[bot]' &&
+    github.event.pull_request.head.repo.full_name == github.repository)
+    && format('claude-review-state-{0}-{1}', github.repository, github.event.pull_request.number)
+    || format('claude-review-ineligible-{0}', github.run_id)
+    }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  start-check:
+    name: Start check
+    # Pull requests from forks and Dependabot-triggered runs cannot read the
+    # Actions secret, so skip them rather than fail. Gating this first job
+    # keeps ineligible events away from every later job and from checks: write.
+    if: >-
+      github.event_name == 'pull_request' &&
+      !github.event.pull_request.draft &&
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    # Sized for the bundled review helper's bounded retries.
+    timeout-minutes: 14
+    # PR comments need pull-requests: write; top-level PR reactions use the issue endpoint and need issues: write.
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+      issues: write
+    outputs:
+      check_run_id: ${{ steps.check.outputs.check_run_id }}
+      status_comment_id: ${{ steps.check.outputs.status_comment_id }}
+      merge_base_sha: ${{ steps.inputs.outputs.merge_base_sha }}
+    # The event already pins the reviewed head, so the check run is created
+    # before any fallible input fetching; a later failure here is then
+    # published as that check's failure rather than leaving no state.
+    steps:
+      - name: Check review tooling
+        id: tooling-ready
+        uses: $/actions/review-helper
+        with:
+          command: create
+      - name: Start Claude Review check
+        id: check
+        env:
+          REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
+          GH_TOKEN: ${{ github.token }}
+          RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
+          RUNTIME_SHA: ${{ job.workflow_sha }}
+          RUNTIME_WORKFLOW_PATH: ${{ job.workflow_file_path }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          STATUS_COMMENTS_ENABLED: "true"
+          PR_REACTION_MODE: automatic
+          TRIGGER_LABEL: ${{ github.event.action == 'ready_for_review' && 'Draft marked ready' || 'PR opened for review' }}
+          DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EXTERNAL_ID: ${{ github.workflow }}/${{ github.run_id }}/${{ github.run_attempt }}
+        run: python3 "$REVIEW_HELPER" create
+      - name: Fetch PR review inputs
+        # Uses the trusted job's token directly; this step's
+        # environment is never passed to or reachable by Claude. Builds the
+        # diff and metadata from the base/head SHAs the triggering event
+        # captured, not from a live `gh pr diff`/`gh pr view` lookup by PR
+        # number, which would reflect the PR's *current* head if it moved
+        # after this event was queued. PR-supplied text (title/body) is
+        # passed through env vars and jq --arg, never interpolated directly
+        # into the shell script. The merge base identifies the reviewed diff
+        # for later sticky-finding checks.
+        id: inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
+          RUNTIME_SHA: ${{ job.workflow_sha }}
+          RUNTIME_WORKFLOW_PATH: ${{ job.workflow_file_path }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/pr-review"
+          gh api "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA" \
+            -H "Accept: application/vnd.github.v3.diff" \
+            > "$RUNNER_TEMP/pr-review/diff.patch"
+          MERGE_BASE_SHA=$(gh api "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA?per_page=1" \
+            --jq '.merge_base_commit.sha')
+          jq -n \
+            --arg number "$PR_NUMBER" \
+            --arg title "$PR_TITLE" \
+            --arg body "$PR_BODY" \
+            --arg base_sha "$BASE_SHA" \
+            --arg runtime_repository "$RUNTIME_REPOSITORY" \
+            --arg runtime_sha "$RUNTIME_SHA" \
+            --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" \
+            --arg head_sha "$HEAD_SHA" \
+            '{number: ($number | tonumber), title: $title, body: $body, base_sha: $base_sha, head_sha: $head_sha, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}' \
+            > "$RUNNER_TEMP/pr-review/pr.json"
+          echo "merge_base_sha=$MERGE_BASE_SHA" >> "$GITHUB_OUTPUT"
+      - name: Record existing Claude review comments
+        env:
+          REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
+          GH_TOKEN: ${{ github.token }}
+          RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
+          RUNTIME_SHA: ${{ job.workflow_sha }}
+          RUNTIME_WORKFLOW_PATH: ${{ job.workflow_file_path }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: >-
+          python3 "$REVIEW_HELPER" snapshot
+          --output "$RUNNER_TEMP/claude-review-evidence/before-comment-ids.json"
+      - name: Upload review snapshot
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: pr-review-snapshot
+          path: ${{ runner.temp }}/pr-review/
+          if-no-files-found: error
+          retention-days: 1
+      - name: Upload pre-review comment evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: claude-review-evidence
+          path: ${{ runner.temp }}/claude-review-evidence/
+          if-no-files-found: error
+          retention-days: 1
+
+  review:
+    name: Review
+    needs: start-check
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      conclusion: ${{ steps.review.outputs.conclusion }}
+      completion_verified: ${{ steps.verify.outputs.completion_verified }}
+      completion_reason: ${{ steps.verify.outputs.completion_reason }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          # Pin to the event's captured head SHA rather than the default
+          # pull_request ref, so the checkout Claude reads from is the same
+          # immutable snapshot the diff, metadata, and inline-comment
+          # commit target below all describe -- not whatever the PR head
+          # happens to be by the time this job runs.
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Download review snapshot
+        # The exact inputs start-check captured; this job never queries the
+        # live PR itself.
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: pr-review-snapshot
+          path: ${{ runner.temp }}/pr-review
+      - name: Review pull request
+        id: review
+        uses: anthropics/claude-code-action@12dd8d74c712f5f3669365b2369b558c495b1104
+        # Runs any subagent in the foreground, as a backstop to --tools below:
+        # a background task lets the run end early on an interim result.
+        env:
+          CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: >-
+            Review the pull request described in
+            ${{ runner.temp }}/pr-review/pr.json (which includes head_sha,
+            the exact commit this review covers) and the diff at
+            ${{ runner.temp }}/pr-review/diff.patch, which covers exactly
+            base_sha to head_sha from that same file. Read the repository
+            as needed for context. Flag significant bugs and correctness
+            issues introduced by the diff only; ignore nitpicks and
+            pre-existing issues. For each issue found, post an inline
+            comment with mcp__github_inline_comment__create_inline_comment
+            citing the file and line, and always pass commit_id set to
+            exactly the head_sha value from pr.json -- never omit it, since
+            omitting it targets whatever the PR's head happens to be when
+            the comment posts rather than the commit actually reviewed. If
+            you find no issues, do not post anything.
+          # claude-code-action embeds its own write-scoped GitHub token into
+          # .git/config before Claude runs, and copies the whole process
+          # environment (including that token and the job's own default
+          # token) into the session Bash tools would inherit. No Bash is
+          # granted at all here, --strict-mcp-config keeps any other MCP
+          # configuration (e.g. a reviewed PR's own .mcp.json, which the
+          # action's trusted-config restore already replaces from the base
+          # branch before Claude starts -- this is separate, additional
+          # defense in depth, not a substitute) from being loaded at all,
+          # and the ambient token variables are additionally blanked as
+          # defense in depth; the action's own inline-comment MCP server
+          # keeps its own copy, captured separately before these settings
+          # are read.
+          # setting-sources user: excludes a reviewed PR's own
+          # .claude/settings.json from loading, so untrusted PR content
+          # can't alter Claude's own configuration.
+          # blockReadsOutsideWorkingDirectories: fences Read/Grep/Glob to
+          # the repo plus the pre-fetched review-input directory only. The
+          # .git deny is listed both relative to the working directory and
+          # as an absolute path (Claude Code's `//` syntax) so it holds
+          # regardless of how a tool call addresses the path; Claude Code
+          # applies Read deny rules to Grep/Glob's search directory too, so
+          # no separate rule is needed for those tools. Bash is also denied
+          # explicitly, not just omitted from --allowedTools, so the
+          # boundary doesn't depend on omission.
+          settings: |
+            {
+              "env": {
+                "GITHUB_TOKEN": "",
+                "GH_TOKEN": "",
+                "DEFAULT_WORKFLOW_TOKEN": ""
+              },
+              "permissions": {
+                "deny": ["Read(./.git/**)", "Read(/${{ github.workspace }}/.git/**)"],
+                "blockReadsOutsideWorkingDirectories": true
+              }
+            }
+          # --tools restricts the built-in tools to Read, Glob, and Grep
+          # (--allowedTools only skips permission prompts), which removes Agent
+          # and with it the known subagent path; it does not affect MCP tools.
+          # A built-in the CLI cannot remove, such as EndConversation, may still
+          # be offered, so the verifier below rejects any unexpected tool use.
+          claude_args: >-
+            --setting-sources user
+            --strict-mcp-config
+            --add-dir ${{ runner.temp }}/pr-review
+            --tools "Read,Glob,Grep"
+            --allowedTools "Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment"
+            --disallowedTools "Bash"
+      - name: Verify review completion
+        # Trusted inline check of the action's own execution record, never
+        # code from the reviewed head. claude-code-action reports success from
+        # the first result it sees, so this confirms the run was one
+        # foreground review that finished normally: a single clean result at
+        # the end, every review tool available (so findings could be posted)
+        # and no Agent tool, no tool used beyond the review tools (an extra
+        # non-removable built-in may be offered but not used), every tool call
+        # answered, and no subagent or background-task activity. Only the
+        # verdict leaves this job; the transcript is never uploaded or
+        # published.
+        id: verify
+        env:
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          ALLOWED_TOOLS: '["Read","Glob","Grep","mcp__github_inline_comment__create_inline_comment"]'
+        run: |
+          verdict() {
+            echo "completion_verified=$1" >> "$GITHUB_OUTPUT"
+            echo "completion_reason=$2" >> "$GITHUB_OUTPUT"
+            echo "Claude review completion verified: $1 ($2)"
+          }
+          program='
+            def blocks: (.message.content? // []) | if type == "array" then . else [] end;
+            if type != "array" or length == 0 then "malformed_execution_file"
+            else
+              . as $m
+              | [$m[] | select(.type == "result")] as $results
+              | [$m[] | select(.type == "assistant")] as $turns
+              | [$turns[] | blocks[] | select(.type == "tool_use")] as $uses
+              | [$m[] | select(.type == "user") | blocks[] | select(.type == "tool_result") | .tool_use_id] as $answered
+              | [$m[] | select(.type == "system" and .subtype == "init")] as $init
+              | if ($results | length) != 1 or $m[-1].type != "result"
+                  or $m[-1].subtype != "success" or $m[-1].is_error != false then "no_clean_terminal_result"
+                elif ($init | length) != 1 or ($init[0].tools | type) != "array"
+                  or ($init[0].tools | index("Agent")) != null
+                  or any($allowed[]; . as $tool | $init[0].tools | index($tool) | not) then "review_tools_not_as_configured"
+                elif any($m[]; .type == "system"
+                  and ((.subtype // "") | test("^task_|^background_tasks_changed$|^worker_shutting_down$"))) then "background_task_activity"
+                elif any($m[]; (.type == "assistant" or .type == "user") and .parent_tool_use_id != null) then "subagent_activity"
+                elif any($uses[]; .name as $name | $allowed | index($name) | not) then "unexpected_tool"
+                elif any($uses[]; .id as $id | $answered | index($id) | not) then "unfinished_tool_use"
+                elif ($turns | length) == 0
+                  or ($turns[-1] | [blocks[] | select(.type == "tool_use")] | length) > 0 then "unfinished_tool_use"
+                else "verified" end
+            end'
+          if [ -z "$EXECUTION_FILE" ] || [ ! -f "$EXECUTION_FILE" ]; then
+            verdict false missing_execution_file
+          elif ! reason=$(jq -r --argjson allowed "$ALLOWED_TOOLS" "$program" "$EXECUTION_FILE" 2> /dev/null); then
+            verdict false malformed_execution_file
+          elif [ "$reason" = verified ]; then
+            verdict true verified
+          else
+            verdict false "$reason"
+          fi
+
+  publish-status:
+    name: Publish status
+    needs: [start-check, review]
+    # Runs after any review attempt start-check actually began, including a
+    # failed one, but never for an event start-check's gate skipped.
+    if: always() && needs.start-check.result != 'skipped'
+    runs-on: ubuntu-latest
+    # Sized for the bundled review helper's bounded retries.
+    timeout-minutes: 18
+    # PR comments need pull-requests: write; top-level PR reactions use the issue endpoint and need issues: write.
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
+      issues: write
+    steps:
+      - name: Check review tooling
+        id: tooling-ready
+        if: always()
+        continue-on-error: true
+        uses: $/actions/review-helper
+        with:
+          command: finalize
+      - name: Download pre-review comment evidence
+        # Present whenever start-check finished; a failed review is compared
+        # too, so findings it posted before stopping are still recorded. A
+        # failed download must not skip publication: the finalizer treats the
+        # missing snapshot as incomplete evidence and fails closed.
+        if: needs.start-check.result == 'success'
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: claude-review-evidence
+          path: ${{ runner.temp }}/claude-review-evidence
+      - name: Publish Claude Review result
+        # The review job's own result is the outer signal: a failure before
+        # the action reports anything (checkout, inputs, startup) or while it
+        # posts buffered inline comments still maps to failure, as does a
+        # start-check failure after the check run was created.
+        if: steps.tooling-ready.outcome == 'success'
+        env:
+          REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
+          GH_TOKEN: ${{ github.token }}
+          RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
+          RUNTIME_SHA: ${{ job.workflow_sha }}
+          RUNTIME_WORKFLOW_PATH: ${{ job.workflow_file_path }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MERGE_BASE_SHA: ${{ needs.start-check.outputs.merge_base_sha }}
+          CHECK_RUN_ID: ${{ needs.start-check.outputs.check_run_id }}
+          STATUS_COMMENTS_ENABLED: "true"
+          PR_REACTION_MODE: automatic
+          START_RESULT: ${{ needs.start-check.result }}
+          REVIEW_RESULT: ${{ needs.review.result }}
+          ACTION_CONCLUSION: ${{ needs.review.outputs.conclusion }}
+          COMPLETION_VERIFIED: ${{ needs.review.outputs.completion_verified }}
+          COMPLETION_REASON: ${{ needs.review.outputs.completion_reason }}
+          BEFORE_IDS_FILE: ${{ runner.temp }}/claude-review-evidence/before-comment-ids.json
+          EXTERNAL_ID: ${{ github.workflow }}/${{ github.run_id }}/${{ github.run_attempt }}
+          TRIGGER_LABEL: ${{ github.event.action == 'ready_for_review' && 'Draft marked ready' || 'PR opened for review' }}
+          DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 "$REVIEW_HELPER" finalize
+      - name: Record failure without review tooling
+        # Reached when trusted helper tooling is unavailable, so a missing
+        # helper alone cannot leave this run's check in_progress; if GitHub's
+        # API stays unavailable, publishing may still fail and fail the job.
+        # Uses only gh and jq from the runner image, with no checkout of its own.
+        if: always() && steps.tooling-ready.outcome != 'success'
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
+          RUNTIME_SHA: ${{ job.workflow_sha }}
+          RUNTIME_WORKFLOW_PATH: ${{ job.workflow_file_path }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          IS_FORK: 'false'
+          CHECK_RUN_ID: ${{ needs.start-check.outputs.check_run_id }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MERGE_BASE_SHA: ${{ needs.start-check.outputs.merge_base_sha }}
+          STATUS_COMMENT_ID: ${{ needs.start-check.outputs.status_comment_id }}
+          EXTERNAL_ID: ${{ github.workflow }}/${{ github.run_id }}/${{ github.run_attempt }}
+          TRIGGER_LABEL: ${{ github.event.action == 'ready_for_review' && 'Draft marked ready' || 'PR opened for review' }}
+          DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          repair_review_presentation() {
+            # Confirm the live PR identity before changing its presentation.
+            comment_timeout=10
+            [ -n "$PR_NUMBER" ] || return 0
+            if ! live_pr=$(timeout "$comment_timeout" gh api "repos/$REPO/pulls/$PR_NUMBER" 2> /dev/null) ||
+               ! printf '%s' "$live_pr" | jq -e --arg head "$HEAD_SHA" --arg base "$BASE_REF" '.head.sha == $head and .base.ref == $base' > /dev/null; then
+              echo "::warning::Could not verify this review is the current PR head and base; leaving its presentation unchanged."
+              return 0
+            fi
+            # Repo convention reserves github-actions[bot] eyes/+1 on PRs for
+            # Claude Review. Revisit ownership before another workflow uses
+            # this actor/reaction pair. GitHub reports its reaction user.type
+            # as User, so match the reserved login/content pair. Cleanup also
+            # works without a comment.
+            if reactions=$(timeout "$comment_timeout" gh api --paginate "repos/$REPO/issues/$PR_NUMBER/reactions?per_page=100" 2> /dev/null) &&
+               ids=$(printf '%s' "$reactions" | jq -rs '.[].[] | select(.user.login == "github-actions[bot]" and (.content == "eyes" or .content == "+1")) | .id'); then
+              for reaction_id in $ids; do
+                if ! timeout "$comment_timeout" gh api --method DELETE "repos/$REPO/issues/$PR_NUMBER/reactions/$reaction_id" > /dev/null; then
+                  echo "::warning::Could not clear a workflow-owned Claude Review PR reaction."
+                fi
+              done
+            else
+              echo "::warning::Could not inspect workflow-owned Claude Review PR reactions."
+            fi
+            # The helper's known ID is the only emergency repair target. Confirm
+            # bot ownership and marker; never discover or create a comment here.
+            [ -n "$STATUS_COMMENT_ID" ] || return 0
+            if ! comment=$(timeout "$comment_timeout" gh api "repos/$REPO/issues/comments/$STATUS_COMMENT_ID" 2> /dev/null); then
+              echo "::warning::Could not verify the known Claude Review status comment."
+              return 0
+            fi
+            if ! printf '%s' "$comment" | jq -e --arg marker '<!-- claude-review-runtime:claude-review-status -->' \
+              '.user.login == "github-actions[bot]" and .user.type == "Bot" and (.body | contains($marker))' > /dev/null; then
+              echo "::warning::The known status comment is not workflow-owned."
+              return 0
+            fi
+            if [ "$1" = failure ]; then
+              state=failure
+              message='This review did not complete reliably; this commit is not approved by it.'
+            elif [ "$IS_FORK" = true ] && [ -z "$CHECK_RUN_ID" ]; then
+              state=publication_incomplete
+              message='Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.'
+            else
+              state=publication_incomplete
+              message='The authoritative Check result could not be published. Treat this commit as not reviewed.'
+            fi
+            encoded_base=$(jq -nr --arg ref "$BASE_REF" '$ref | @uri')
+            reviewed_markers=$(printf '%s' "$comment" | jq -r '.body | split("\n") | map(select(startswith("<!-- claude-review-runtime:claude-review-last-reviewed-"))) | join("\n")')
+            if [ -z "$reviewed_markers" ]; then
+              old_body=$(printf '%s' "$comment" | jq -r '.body')
+              old_result=
+              case "$old_body" in
+                *'Claude Review completed with no findings for this commit.'*) old_result=success ;;
+                *'Claude Review recorded findings for this commit.'*) old_result=action_required ;;
+              esac
+              if [ -n "$old_result" ]; then
+                old_head=$(printf '%s' "$comment" | jq -r '.body | try capture("<!-- claude-review-runtime:claude-review-status-head:(?<value>[0-9a-f]{40}) -->").value catch ""')
+                old_base=$(printf '%s' "$comment" | jq -r '.body | try capture("<!-- claude-review-runtime:claude-review-status-base-ref:(?<value>[A-Za-z0-9_.~%-]+) -->").value catch ""')
+                if [ -n "$old_head" ] && [ -n "$old_base" ]; then
+                  reviewed_markers=$(printf '<!-- claude-review-runtime:claude-review-last-reviewed-head:%s -->\n<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-last-reviewed-result:%s -->' "$old_head" "$old_base" "$old_result")
+                fi
+              fi
+            fi
+            if [ -n "$reviewed_markers" ]; then
+              reviewed_markers="$reviewed_markers"$'\n'
+            fi
+            trigger_line=
+            if [ -n "$TRIGGER_LABEL" ]; then
+              trigger_line=$'\n'"**Trigger:** $TRIGGER_LABEL"
+            fi
+            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### ❌ Claude Review incomplete\n\n**Current commit:** `%s`%s\n\n%s\n\n[Workflow run](%s)' \
+              "$HEAD_SHA" "$encoded_base" "$state" "$reviewed_markers" "${HEAD_SHA:0:7}" "$trigger_line" "$message" "$DETAILS_URL")
+            body=$(jq -n --arg body "$rendered" '{body: $body}')
+            if ! printf '%s' "$body" | timeout "$comment_timeout" gh api --method PATCH "repos/$REPO/issues/comments/$STATUS_COMMENT_ID" --input - > /dev/null; then
+              echo "::warning::Could not repair the known Claude Review status comment."
+            fi
+          }
+          if [ -z "$HEAD_SHA" ]; then
+            echo "::error::Review tooling was unavailable and the reviewed head SHA was never resolved, so no exact-SHA Claude Review check run can record this failure."
+            exit 1
+          fi
+          delay=${CLAUDE_REVIEW_RETRY_DELAY:-2}
+          # Each gh call is bounded, since gh api has no timeout of its own:
+          # two phases of three attempts stay well inside this step's timeout.
+          attempt_timeout=${CLAUDE_REVIEW_GH_TIMEOUT:-20}
+          # start-check may have created the run without reporting it. Find it
+          # by this run's external_id before creating anything, and never POST
+          # while that lookup is unresolved, so no duplicate is created while
+          # its existence is unknown. If the lookup never succeeds, such a run
+          # may remain in_progress and the job fails instead.
+          if [ -z "$CHECK_RUN_ID" ] && [ -n "$EXTERNAL_ID" ]; then
+            reconciled=false
+            for attempt in 1 2 3; do
+              if history=$(timeout "$attempt_timeout" gh api --paginate "repos/$REPO/commits/$HEAD_SHA/check-runs?check_name=Claude%20Review&filter=all&per_page=100"); then
+                CHECK_RUN_ID=$(printf '%s' "$history" | jq -rs --arg ext "$EXTERNAL_ID" \
+                  '[.[].check_runs[]? | select(.external_id == $ext) | .id] | first // empty')
+                reconciled=true
+                break
+              fi
+              [ "$attempt" -lt 3 ] && sleep "$((attempt * delay))"
+            done
+            if [ "$reconciled" != true ]; then
+              echo "::error::Could not confirm whether this run already created a Claude Review check run, so none was created or completed."
+              repair_review_presentation publication_incomplete
+              exit 1
+            fi
+          fi
+          if [ -z "$CHECK_RUN_ID" ] && [ "$IS_FORK" = "true" ]; then
+            echo "::error::Review tooling was unavailable and this fork PR has no Claude Review check run to complete."
+            exit 1
+          fi
+          summary=$(printf '**Reviewed commit:** `%s`\n\nThe review outcome could not be published because the review tooling was unavailable; treat this commit as not reviewed.\n\n[Workflow run](%s)' "$HEAD_SHA" "$DETAILS_URL")
+          evidence=$(jq -n --arg head "$HEAD_SHA" --arg pr "$PR_NUMBER" --arg base "$BASE_SHA" --arg merge_base "$MERGE_BASE_SHA" \
+            --arg runtime_repository "$RUNTIME_REPOSITORY" --arg runtime_sha "$RUNTIME_SHA" --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" \
+            '{reviewed_sha: $head, pr_number: ($pr | tonumber? // null), base_sha: $base, merge_base_sha: $merge_base, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}')
+          output=$(jq -n --arg summary "$summary" --arg evidence "$evidence" \
+            '{title: "Review outcome could not be published", summary: $summary, text: ("```json\n" + $evidence + "\n```")}')
+          if [ -n "$CHECK_RUN_ID" ]; then
+            method=PATCH
+            path="repos/$REPO/check-runs/$CHECK_RUN_ID"
+            body=$(jq -n --argjson output "$output" '{status: "completed", conclusion: "failure", output: $output}')
+          else
+            method=POST
+            path="repos/$REPO/check-runs"
+            body=$(jq -n --argjson output "$output" --arg sha "$HEAD_SHA" --arg ext "$EXTERNAL_ID" \
+              '{name: "Claude Review", head_sha: $sha, external_id: $ext, status: "completed", conclusion: "failure", output: $output}')
+          fi
+          for attempt in 1 2 3; do
+            if printf '%s' "$body" | timeout "$attempt_timeout" gh api --method "$method" "$path" --input - > /dev/null; then
+              echo "::error::Review tooling was unavailable; recorded failure on the Claude Review check run."
+              repair_review_presentation failure
+              exit 1
+            fi
+            [ "$attempt" -lt 3 ] && sleep "$((attempt * delay))"
+          done
+          echo "::error::Could not complete the Claude Review check run; it may remain in progress."
+          repair_review_presentation publication_incomplete
+          exit 1

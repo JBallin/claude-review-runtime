@@ -1,0 +1,29 @@
+name: Prepare trusted review helper
+description: Locate and validate the helper bundled with this runtime revision.
+inputs:
+  command:
+    description: Helper command to validate before use.
+    required: true
+outputs:
+  helper-path:
+    description: Absolute path to the validated helper in this action bundle.
+    value: ${{ steps.prepare.outputs.helper-path }}
+runs:
+  using: composite
+  steps:
+    - name: Validate bundled helper
+      id: prepare
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+        HELPER_COMMAND: ${{ inputs.command }}
+      run: |
+        set -eu
+        case "$HELPER_COMMAND" in
+          create|finalize|stale) ;;
+          *) echo "::error::Unsupported helper preparation command"; exit 1 ;;
+        esac
+        helper="$ACTION_PATH/claude_review_check.py"
+        test -f "$helper"
+        python3 "$helper" "$HELPER_COMMAND" --help > /dev/null
+        echo "helper-path=$helper" >> "$GITHUB_OUTPUT"
