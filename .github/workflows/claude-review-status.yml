@@ -1,0 +1,48 @@
+name: Refresh Claude Review status
+
+# A new PR head or base ref invalidates an older conversation summary. This
+# workflow only updates an existing informational comment; it never starts a review or
+# changes the authoritative exact-SHA Claude Review Check.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+# Share the review queue so status writes on one PR cannot race. A delayed
+# PR event checks the live head/base ref and the comment's recorded identity.
+concurrency:
+  group: ${{ format('claude-review-state-{0}-{1}', github.repository, github.event.pull_request.number) }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  refresh-status:
+    if: >-
+      github.event_name == 'pull_request' &&
+      (github.event.action == 'synchronize' ||
+      (github.event.action == 'edited' && github.event.changes.base.ref.from != ''))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check review tooling
+        id: tooling-ready
+        uses: $/actions/review-helper
+        with:
+          command: stale
+      - name: Mark an existing older status stale
+        env:
+          REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
+          GH_TOKEN: ${{ github.token }}
+          RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
+          RUNTIME_SHA: ${{ job.workflow_sha }}
+          RUNTIME_WORKFLOW_PATH: ${{ job.workflow_file_path }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          STATUS_COMMENTS_ENABLED: "true"
+          PR_REACTION_MODE: stale
+        run: python3 "$REVIEW_HELPER" stale
