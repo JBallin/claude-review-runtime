@@ -31,6 +31,45 @@ runtime-local helper action uses `$/actions/review-helper`, which requires runne
 version 2.336.0 or later. GitHub Enterprise Server and public consumers are not
 validated targets.
 
+## Review this repository
+
+The `self-review-automatic.yml`, `self-review-manual.yml`, and
+`self-review-status.yml` callers use the reviewed runtime commit
+`9a9310f9ab8374f5c67bd9c0f067b9ff3dac3ebf`. They leave the reusable entrypoints
+separate and keep publication code pinned even when a PR changes the runtime.
+Reviews cover the captured PR diff and record its head, base, merge base, and
+the executing runtime's repository, SHA, and workflow path.
+
+Automatic review starts when an open, same-repository PR is opened ready for
+review or marked ready; drafts and Dependabot-triggered runs are excluded.
+To request another review, create a top-level or inline PR comment containing
+`@claude`, such as `@claude review`. Mention matching is case-insensitive and
+accepts additional text. This pin does not accept `/claude-review` or post a
+separate manual clean-completion notice. Manual callers require an owner, member,
+or collaborator association and check that the PR is open, non-draft, and
+same-repository; the action also checks the author's write access. Stacked PRs
+are eligible. Head changes and base-ref retargeting refresh existing status
+without running Claude; request a new review for the changed diff.
+
+Before live use, the owner must confirm the existing Anthropic App has access
+to this repository and make the existing OAuth credential available as the
+repository Actions secret `CLAUDE_CODE_OAUTH_TOKEN`. The caller setup does not
+install an App or configure credentials. New credentials or access grants
+require a separate decision. Keep the setup PR draft while authentication and
+independent review are outstanding. Default App/OIDC validation may skip a
+caller absent from the default branch; a skip is not a review. Any initial
+installation exception requires explicit owner approval, and the owner merges
+the setup.
+
+The pinned revision has a known [finding-publication gap](https://github.com/JBallin/claude-review-runtime/issues/6):
+attempted findings may not all reach GitHub even when its Check reports success.
+Do not treat a green Check alone as merge approval or claim that every
+publication failure is detected. Keep independent review requirements in place.
+After an approved live run, inspect actual completion, captured identities,
+runtime provenance, and posted findings. Updating all three pins to a reviewed
+revision is a separate change. To undo this setup, revert the three callers and
+this section through a reviewed PR; preserve prior review evidence.
+
 ## Trust and review results
 
 The Claude job receives repository and pull-request read permissions plus OIDC.
