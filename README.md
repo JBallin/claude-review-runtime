@@ -51,9 +51,13 @@ are informational presentation and can become stale when the patch changes.
 Consumers must reserve `github-actions[bot]` eyes/thumbs-up reactions on top-level
 PRs for this runtime: reconciliation identifies the bot/reaction pair, not the
 individual workflow that added it.
-Missing completion evidence or incomplete model execution fails the review;
-findings remain sticky for the reviewed identity. Raw model transcripts are not
-uploaded as artifacts. Dependency actions are pinned, but this does not make
+Completion requires successful unsliced Read calls for both captured input
+paths and rejects errored inline-finding tool responses, even if the model
+reports success. Missing completion evidence or incomplete execution fails the
+review. Findings remain sticky for the same PR, head, and merge base through
+trusted Check evidence; findings attributed only to another diff do not carry
+across a base retarget. Preexisting findings with unknown diff attribution fail
+closed. Raw model transcripts are not uploaded as artifacts. Dependency actions are pinned, but this does not make
 their transitive runtime dependencies immutable.
 
 Automatic review excludes drafts, fork pull requests, and Dependabot-triggered runs.

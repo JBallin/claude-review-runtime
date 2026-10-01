@@ -559,6 +559,11 @@ class JobStructureTests(unittest.TestCase):
                 self.assertEqual(
                     scalar(verify, "EXECUTION_FILE", 10), "${{ steps.review.outputs.execution_file }}"
                 )
+                metadata = "pr.json" if path == AUTOMATIC else "request.json"
+                self.assertEqual(scalar(verify, "REVIEW_METADATA_FILE", 10),
+                                 "${{ runner.temp }}/pr-review/" + metadata)
+                self.assertEqual(scalar(verify, "REVIEW_DIFF_FILE", 10),
+                                 "${{ runner.temp }}/pr-review/diff.patch")
                 for untrusted in ("scripts/", "claude_review_check", "GITHUB_WORKSPACE", "./", "source "):
                     self.assertNotIn(untrusted, text)
                 allowed = json.loads(scalar(verify, "ALLOWED_TOOLS", 10).strip("'"))
@@ -1129,13 +1134,13 @@ def init_message(tools=REVIEW_TOOLS):
     return {"type": "system", "subtype": "init", "tools": list(tools)}
 
 
-def tool_use(use_id, name, parent=None):
-    content = [{"type": "tool_use", "id": use_id, "name": name, "input": {}}]
+def tool_use(use_id, name, parent=None, **inputs):
+    content = [{"type": "tool_use", "id": use_id, "name": name, "input": inputs}]
     return {"type": "assistant", "parent_tool_use_id": parent, "message": {"content": content}}
 
 
-def tool_result(use_id, parent=None):
-    content = [{"type": "tool_result", "tool_use_id": use_id, "content": "ok"}]
+def tool_result(use_id, parent=None, **flags):
+    content = [{"type": "tool_result", "tool_use_id": use_id, "content": "ok", **flags}]
     return {"type": "user", "parent_tool_use_id": parent, "message": {"content": content}}
 
 
@@ -1150,9 +1155,9 @@ def result(subtype="success", is_error=False):
 def clean_stream():
     return [
         init_message(),
-        tool_use("t1", "Read"),
+        tool_use("t1", "Read", file_path="/captured/metadata.json"),
         tool_result("t1"),
-        tool_use("t2", "Grep"),
+        tool_use("t2", "Read", file_path="/captured/diff.patch"),
         tool_result("t2"),
         tool_use("t3", "mcp__github_inline_comment__create_inline_comment"),
         tool_result("t3"),
@@ -1179,6 +1184,8 @@ class CompletionVerifierTests(unittest.TestCase):
                 "GITHUB_OUTPUT": str(output),
                 "EXECUTION_FILE": str(record) if execution_file is None else execution_file,
                 "ALLOWED_TOOLS": scalar(step, "ALLOWED_TOOLS", 10).strip("'"),
+                "REVIEW_METADATA_FILE": "/captured/metadata.json",
+                "REVIEW_DIFF_FILE": "/captured/diff.patch",
             }
             completed = subprocess.run(
                 ["bash", "-eo", "pipefail", "-c", script], env=environment, capture_output=True, text=True
@@ -1194,8 +1201,39 @@ class CompletionVerifierTests(unittest.TestCase):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
                 self.assertEqual(self.verify(clean_stream(), path=path), ("true", "verified"))
-        text_only = [init_message(), final_text(), result()]
-        self.assertEqual(self.verify(text_only), ("true", "verified"))
+
+    def test_both_captured_inputs_require_successful_unsliced_reads(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                self.assertRejected([init_message(), final_text(), result()],
+                                    "captured_inputs_not_read", path=path)
+                for use_index, response_index in ((1, 2), (3, 4)):
+                    for inputs in ({"file_path": "/unrelated/file"},
+                                   {"file_path": "/captured/metadata.json" if use_index == 1 else "/captured/diff.patch", "limit": 1},
+                                   {"file_path": "/captured/metadata.json" if use_index == 1 else "/captured/diff.patch", "offset": 2}):
+                        stream = clean_stream()
+                        stream[use_index]["message"]["content"][0]["input"] = inputs
+                        self.assertRejected(stream, "captured_inputs_not_read", path=path)
+                    stream = clean_stream()
+                    stream[response_index]["message"]["content"][0]["is_error"] = True
+                    self.assertRejected(stream, "captured_inputs_not_read", path=path)
+                    stream = clean_stream()
+                    del stream[use_index:response_index + 1]
+                    self.assertRejected(stream, "captured_inputs_not_read", path=path)
+
+    def test_failed_inline_publication_cannot_verify_a_clean_review(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                stream = clean_stream()
+                stream[6] = tool_result("t3", is_error=True)
+                self.assertRejected(stream, "errored_inline_tool_result", path=path)
+                # A later successful retry does not erase the failed attempt.
+                stream[7:7] = [tool_use("retry", "mcp__github_inline_comment__create_inline_comment"),
+                               tool_result("retry", is_error=False)]
+                self.assertRejected(stream, "errored_inline_tool_result", path=path)
+                stream = clean_stream()
+                stream[6] = tool_result("t3", is_error=False)
+                self.assertEqual(self.verify(stream, path=path), ("true", "verified"))
 
     def test_missing_or_malformed_evidence_is_not_verified(self):
         self.assertRejected(None, "missing_execution_file")
@@ -1228,7 +1266,8 @@ class CompletionVerifierTests(unittest.TestCase):
             with self.subTest(missing=missing):
                 stream = [init_message([t for t in REVIEW_TOOLS if t != missing]), final_text(), result()]
                 self.assertRejected(stream, reason)
-        extra = [init_message(REVIEW_TOOLS + ["EndConversation"]), final_text(), result()]
+        extra = clean_stream()
+        extra[0] = init_message(REVIEW_TOOLS + ["EndConversation"])
         self.assertEqual(self.verify(extra), ("true", "verified"))
 
     def test_subagent_and_background_task_evidence_is_not_verified(self):

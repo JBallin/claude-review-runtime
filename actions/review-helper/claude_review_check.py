@@ -138,33 +138,39 @@ def recorded_finding_ids(run):
         return []
 
 
-def prior_finding_run_ids(pages, head_sha, current_check_run_id, pr_number, merge_base_sha):
-    """Earlier completed runs for this review whose findings keep it action_required.
+def prior_finding_evidence(pages, head_sha, current_check_run_id, pr_number, merge_base_sha):
+    """Classify trusted finding evidence by the reviewed PR/head/merge-base.
 
-    Check runs are listed per commit across the whole repository, so a run
-    counts only if its recorded evidence names the same PR and the same merge
-    base, i.e. the same reviewed diff. Runs without that identity never count.
-    A run that failed after recording findings counts too, so a later clean
-    rerun cannot turn those findings into success.
+    A raw review comment names its original head but not the diff's merge
+    base. Only completed trusted Check evidence can attribute earlier comment
+    IDs to this diff or to another diff of the same PR/head. Failed runs also
+    preserve any findings they recorded. Keep recorded IDs even when the
+    corresponding comments have since been deleted.
     """
     if not pr_number or not merge_base_sha:
-        return []
-    matching = []
+        return [], set(), set()
+    matching_runs, matching_ids, other_diff_ids = [], set(), set()
     for page in pages:
         for run in page.get("check_runs", []):
             evidence = recorded_evidence(run)
-            if (
+            if not (
                 run.get("name") == CHECK_NAME
                 and (run.get("app") or {}).get("slug") == CHECK_APP_SLUG
                 and run.get("head_sha") == head_sha
                 and str(run.get("id")) != str(current_check_run_id)
                 and run.get("status") == "completed"
                 and str(evidence.get("pr_number")) == str(pr_number)
-                and evidence.get("merge_base_sha") == merge_base_sha
-                and (run.get("conclusion") == "action_required" or recorded_finding_ids(run))
+                and evidence.get("merge_base_sha")
             ):
-                matching.append(run["id"])
-    return sorted(matching)
+                continue
+            finding_ids = recorded_finding_ids(run)
+            if evidence["merge_base_sha"] == merge_base_sha:
+                matching_ids.update(finding_ids)
+                if run.get("conclusion") == "action_required" or finding_ids:
+                    matching_runs.append(run["id"])
+            else:
+                other_diff_ids.update(finding_ids)
+    return sorted(matching_runs), matching_ids, other_diff_ids - matching_ids
 
 
 def fetch_claude_comment_ids(repo, pr_number, head_sha):
@@ -179,11 +185,11 @@ def check_run_history(repo, head_sha):
     return parse_pages(gh_api(["--paginate", f"repos/{repo}/commits/{head_sha}/check-runs?{query}"]))
 
 
-def fetch_prior_finding_run_ids(repo, head_sha, current_check_run_id, pr_number, merge_base_sha):
+def fetch_prior_finding_evidence(repo, head_sha, current_check_run_id, pr_number, merge_base_sha):
     history = with_retries(
         lambda: check_run_history(repo, head_sha), "Listing Claude Review check history"
     )
-    return prior_finding_run_ids(history, head_sha, current_check_run_id, pr_number, merge_base_sha)
+    return prior_finding_evidence(history, head_sha, current_check_run_id, pr_number, merge_base_sha)
 
 
 def find_check_run_by_external_id(repo, head_sha, external_id):
@@ -209,9 +215,10 @@ def decide(
 ):
     """Return (conclusion, title, result sentence) for the reviewed commit.
 
-    new_ids are Claude findings this run posted; earlier_ids are Claude
-    findings already on the commit; prior_ids are earlier check runs that
-    recorded findings. Any of them keeps a completed review action_required.
+    new_ids are Claude findings this run posted; earlier_ids are findings
+    recorded for this PR/head/merge-base; prior_ids are earlier check runs
+    that recorded findings for that identity. Any keeps a completed review
+    action_required.
     Only an explicitly verified completion can produce success.
     """
     notes = ""
@@ -743,17 +750,16 @@ def cmd_finalize():
     )
     merge_base_sha = env("MERGE_BASE_SHA")
 
-    # Each evidence source is read independently, and whatever is observed is
-    # recorded even when another source fails. Claude's comments on the commit
-    # are durable ground truth: a later run rediscovers findings from them even
-    # if an earlier run could not record its own.
+    # Each source is read independently. The snapshot attributes newly posted
+    # comments to this run's captured diff; trusted Check history attributes
+    # preexisting comments. A raw head SHA alone cannot identify their diff.
     errors = []
     try:
-        prior_ids = fetch_prior_finding_run_ids(
+        prior_ids, recorded_ids, other_diff_ids = fetch_prior_finding_evidence(
             repo, head_sha, check_run_id, pr_number, merge_base_sha
         )
     except GhError as error:
-        prior_ids = []
+        prior_ids, recorded_ids, other_diff_ids = [], set(), set()
         errors.append(f"earlier Claude Review history is unavailable ({error})")
 
     observed_ids = None
@@ -773,7 +779,14 @@ def cmd_finalize():
 
     observed = set(observed_ids or [])
     new_ids = sorted(observed - before) if before is not None else []
-    earlier_ids = sorted(observed - set(new_ids))
+    scoped_ids = recorded_ids | set(new_ids)
+    earlier_ids = sorted(recorded_ids - set(new_ids))
+    unscoped_ids = sorted(observed - scoped_ids - other_diff_ids)
+    if unscoped_ids:
+        errors.append(
+            "earlier Claude finding comments cannot be attributed to a reviewed diff "
+            f"(comment IDs: {', '.join(map(str, unscoped_ids))})"
+        )
 
     # A completed review with incomplete evidence fails closed; after a failed
     # review the conclusion is already failure, so gaps are only warnings.
@@ -802,7 +815,10 @@ def cmd_finalize():
         "completion_verified": completion_verified,
         "completion_reason": completion_reason or None,
         "new_finding_comment_ids": new_ids,
-        "claude_finding_comment_ids": None if observed_ids is None else sorted(observed),
+        "claude_finding_comment_ids": sorted(scoped_ids),
+        "observed_head_comment_ids": observed_ids,
+        "unscoped_finding_comment_ids": unscoped_ids,
+        "other_diff_finding_comment_ids": sorted(observed & other_diff_ids),
         "prior_finding_check_run_ids": prior_ids,
         "evidence_errors": errors,
     }

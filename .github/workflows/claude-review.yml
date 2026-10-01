@@ -202,6 +202,8 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: >-
+            First use Read with file_path set to each exact absolute metadata
+            and diff path below, without offset or limit, before reviewing.
             Review the pull request described in
             ${{ runner.temp }}/pr-review/pr.json (which includes head_sha,
             the exact commit this review covers) and the diff at
@@ -273,12 +275,15 @@ jobs:
         # the end, every review tool available (so findings could be posted)
         # and no Agent tool, no tool used beyond the review tools (an extra
         # non-removable built-in may be offered but not used), every tool call
-        # answered, and no subagent or background-task activity. Only the
+        # answered, no errored inline publication, successful unsliced Reads
+        # of both captured input paths, and no subagent/background activity. Only the
         # verdict leaves this job; the transcript is never uploaded or
         # published.
         id: verify
         env:
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          REVIEW_METADATA_FILE: ${{ runner.temp }}/pr-review/pr.json
+          REVIEW_DIFF_FILE: ${{ runner.temp }}/pr-review/diff.patch
           ALLOWED_TOOLS: '["Read","Glob","Grep","mcp__github_inline_comment__create_inline_comment"]'
         run: |
           verdict() {
@@ -294,7 +299,14 @@ jobs:
               | [$m[] | select(.type == "result")] as $results
               | [$m[] | select(.type == "assistant")] as $turns
               | [$turns[] | blocks[] | select(.type == "tool_use")] as $uses
-              | [$m[] | select(.type == "user") | blocks[] | select(.type == "tool_result") | .tool_use_id] as $answered
+              | [$m[] | select(.type == "user") | blocks[] | select(.type == "tool_result")] as $responses
+              | [$responses[] | .tool_use_id] as $answered
+              | [$uses[] | select(.name == "Read"
+                  and (.input.offset // 1) == 1 and .input.limit == null)
+                  | . as $use
+                  | select(any($responses[]; .tool_use_id == $use.id
+                      and (.is_error == null or .is_error == false)))
+                  | .input.file_path] as $read_paths
               | [$m[] | select(.type == "system" and .subtype == "init")] as $init
               | if ($results | length) != 1 or $m[-1].type != "result"
                   or $m[-1].subtype != "success" or $m[-1].is_error != false then "no_clean_terminal_result"
@@ -308,11 +320,15 @@ jobs:
                 elif any($uses[]; .id as $id | $answered | index($id) | not) then "unfinished_tool_use"
                 elif ($turns | length) == 0
                   or ($turns[-1] | [blocks[] | select(.type == "tool_use")] | length) > 0 then "unfinished_tool_use"
+                elif any($uses[]; select(.name == "mcp__github_inline_comment__create_inline_comment")
+                  | .id as $id | any($responses[]; .tool_use_id == $id and .is_error == true)) then "errored_inline_tool_result"
+                elif ($read_paths | index($metadata)) == null
+                  or ($read_paths | index($diff)) == null then "captured_inputs_not_read"
                 else "verified" end
             end'
           if [ -z "$EXECUTION_FILE" ] || [ ! -f "$EXECUTION_FILE" ]; then
             verdict false missing_execution_file
-          elif ! reason=$(jq -r --argjson allowed "$ALLOWED_TOOLS" "$program" "$EXECUTION_FILE" 2> /dev/null); then
+          elif ! reason=$(jq -r --argjson allowed "$ALLOWED_TOOLS" --arg metadata "$REVIEW_METADATA_FILE" --arg diff "$REVIEW_DIFF_FILE" "$program" "$EXECUTION_FILE" 2> /dev/null); then
             verdict false malformed_execution_file
           elif [ "$reason" = verified ]; then
             verdict true verified

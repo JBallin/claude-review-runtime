@@ -211,7 +211,7 @@ class PureLogicTests(unittest.TestCase):
                 {**check_run(9, "failure"), "output": {"text": "not json"}},
             ]
         }
-        self.assertEqual(check.prior_finding_run_ids([page], HEAD, 6, "7", MERGE_BASE), [1, 7])
+        self.assertEqual(check.prior_finding_evidence([page], HEAD, 6, "7", MERGE_BASE)[0], [1, 7])
 
     def test_sticky_history_is_scoped_to_the_pr_and_reviewed_diff(self):
         page = {
@@ -224,9 +224,29 @@ class PureLogicTests(unittest.TestCase):
                 {**check_run(6, "failure"), "output": {"text": evidence_text([301], pr=None)}},
             ]
         }
-        self.assertEqual(check.prior_finding_run_ids([page], HEAD, 99, "7", MERGE_BASE), [1])
-        self.assertEqual(check.prior_finding_run_ids([page], HEAD, 99, "8", MERGE_BASE), [2])
-        self.assertEqual(check.prior_finding_run_ids([page], HEAD, 99, "7", ""), [])
+        self.assertEqual(check.prior_finding_evidence([page], HEAD, 99, "7", MERGE_BASE)[0], [1])
+        self.assertEqual(check.prior_finding_evidence([page], HEAD, 99, "8", MERGE_BASE)[0], [2])
+        self.assertEqual(check.prior_finding_evidence([page], HEAD, 99, "7", "")[0], [])
+
+    def test_comment_attribution_requires_trusted_same_pr_head_history(self):
+        runs = [
+            {**check_run(1, "failure"), "output": {"text": evidence_text([10])}},
+            {**check_run(2, "action_required", merge_base=OTHER),
+             "output": {"text": evidence_text([10, 20], merge_base=OTHER)}},
+            {**check_run(3, "action_required", slug="other-app"),
+             "output": {"text": evidence_text([30])}},
+            {**check_run(4, "action_required", pr=8),
+             "output": {"text": evidence_text([40], pr=8)}},
+            {**check_run(5, "action_required"), "head_sha": OTHER,
+             "output": {"text": evidence_text([50])}},
+            {**check_run(99, "action_required"), "output": {"text": evidence_text([60])}},
+            {**check_run(7, "action_required", legacy=True),
+             "output": {"text": evidence_text([70], merge_base=None)}},
+        ]
+        self.assertEqual(
+            check.prior_finding_evidence([{"check_runs": runs}], HEAD, 99, "7", MERGE_BASE),
+            ([1], {10}, {20}),
+        )
 
 
 class ScriptTestCase(unittest.TestCase):
@@ -391,6 +411,28 @@ class FinalizeTests(ScriptTestCase):
                 self.assertEqual(body["output"]["title"], "Review completion could not be verified")
                 self.assertIs(evidence_of(body)["completion_verified"], False)
 
+    def test_rejected_tool_or_input_evidence_cannot_publish_a_clean_check(self):
+        for reason in ("errored_inline_tool_result", "captured_inputs_not_read"):
+            with self.subTest(reason=reason):
+                self.log.unlink(missing_ok=True)
+                result = self.finalize(
+                    [history_rule(current_run_only()), comments_rule(ok(pages([]))),
+                     patch_rule(ok("{}"))],
+                    COMPLETION_VERIFIED="false", COMPLETION_REASON=reason,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+                body = self.published()
+                self.assertEqual(body["conclusion"], "failure")
+                self.assertEqual(body["output"]["title"], "Review completion could not be verified")
+                evidence = evidence_of(body)
+                self.assertEqual(evidence["start_check_result"], "success")
+                self.assertEqual(evidence["review_job_result"], "success")
+                self.assertEqual(evidence["action_conclusion"], "success")
+                self.assertIs(evidence["completion_verified"], False)
+                self.assertEqual(evidence["completion_reason"], reason)
+                self.assertEqual(evidence["claude_finding_comment_ids"], [])
+                self.assertIn(reason, body["output"]["summary"])
+
     def test_findings_from_an_unverified_run_are_recorded_and_stay_sticky(self):
         first = self.finalize(
             [history_rule(current_run_only()), comments_rule(ok(pages([comment(9)]))), patch_rule(ok("{}"))],
@@ -435,7 +477,10 @@ class FinalizeTests(ScriptTestCase):
     def test_existing_claude_findings_are_not_new_but_keep_the_commit_action_required(self):
         result = self.finalize(
             [
-                history_rule(current_run_only()),
+                history_rule(ok(pages({"check_runs": [
+                    check_run(99, None, status="in_progress"),
+                    {**check_run(98, "failure"), "output": {"text": evidence_text([10, 11])}},
+                ]}))),
                 comments_rule(ok(pages([comment(10), comment(11)]))),
                 patch_rule(ok("{}")),
             ],
@@ -498,7 +543,8 @@ class FinalizeTests(ScriptTestCase):
         body = self.published()
         self.assertEqual(body["conclusion"], "failure")
         self.assertEqual(evidence_of(body)["new_finding_comment_ids"], [9])
-        self.assertEqual(check.recorded_finding_ids(body), [8, 9])
+        self.assertEqual(check.recorded_finding_ids(body), [9])
+        self.assertEqual(evidence_of(body)["unscoped_finding_comment_ids"], [8])
 
     def test_findings_from_an_earlier_failed_review_stay_sticky(self):
         earlier = {**check_run(50, "failure"), "output": {"text": evidence_text([9])}}
@@ -564,7 +610,7 @@ class FinalizeTests(ScriptTestCase):
         self.assertEqual(body["conclusion"], "action_required")
         self.assertEqual(evidence_of(body)["prior_finding_check_run_ids"], [98])
 
-    def test_finding_survives_a_comment_read_failure_into_a_clean_rerun(self):
+    def test_unattributed_comment_after_comment_read_failure_fails_closed(self):
         first = self.finalize(
             [history_rule(current_run_only()), comments_rule(FAIL), patch_rule(ok("{}"))]
         )
@@ -573,13 +619,14 @@ class FinalizeTests(ScriptTestCase):
         self.assertEqual(first_body["conclusion"], "failure")
         self.assertEqual(check.recorded_finding_ids(first_body), [])
 
-        # Only the durable GitHub comment can reveal the finding now.
+        # A head-only comment reveals a finding, but cannot identify its diff.
         rerun = self.rerun_after(first_body)
-        self.assertEqual(rerun.returncode, 0, rerun.stderr + rerun.stdout)
+        self.assertEqual(rerun.returncode, 1, rerun.stderr + rerun.stdout)
         body = self.published()
-        self.assertEqual(body["conclusion"], "action_required")
+        self.assertEqual(body["conclusion"], "failure")
         self.assertEqual(evidence_of(body)["prior_finding_check_run_ids"], [])
-        self.assertEqual(evidence_of(body)["claude_finding_comment_ids"], [9])
+        self.assertEqual(evidence_of(body)["claude_finding_comment_ids"], [])
+        self.assertEqual(evidence_of(body)["unscoped_finding_comment_ids"], [9])
 
     def test_transient_publish_failure_is_retried(self):
         result = self.finalize(
@@ -629,7 +676,9 @@ class FinalizeTests(ScriptTestCase):
         self.assertEqual(result.returncode, 1)
         body = self.published()
         self.assertEqual(body["conclusion"], "failure")
-        self.assertEqual(evidence_of(body)["claude_finding_comment_ids"], [9])
+        self.assertEqual(evidence_of(body)["claude_finding_comment_ids"], [])
+        self.assertEqual(evidence_of(body)["observed_head_comment_ids"], [9])
+        self.assertEqual(evidence_of(body)["unscoped_finding_comment_ids"], [9])
 
     def test_finalize_recovers_an_unreported_check_run_by_external_id(self):
         orphan = {**check_run(99, None, status="in_progress"), "external_id": "Claude Review/5/1"}
@@ -769,6 +818,105 @@ class FinalizeTests(ScriptTestCase):
     def test_a_finding_against_a_different_merge_base_does_not_stick(self):
         stale = check_run(42, "action_required", merge_base=OTHER)
         self.assertEqual(self.finalize_with_history(stale)["conclusion"], "success")
+
+    def test_same_head_retarget_ignores_comments_attributed_only_to_the_old_diff(self):
+        earlier = {**check_run(98, "action_required", merge_base=OTHER),
+                   "output": {"text": evidence_text([9], merge_base=OTHER)}}
+        history = pages({"check_runs": [check_run(99, None, status="in_progress"), earlier]})
+        result = self.finalize(
+            [history_rule(ok(history)), comments_rule(ok(pages([comment(9)]))), patch_rule(ok("{}"))],
+            before=[9],
+        )
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        body = self.published()
+        self.assertEqual(body["conclusion"], "success")
+        self.assertEqual(evidence_of(body)["claude_finding_comment_ids"], [])
+        self.assertEqual(evidence_of(body)["other_diff_finding_comment_ids"], [9])
+        self.assertEqual(check.recorded_finding_ids(body), [])
+        history_calls = [c for c in self.calls("GET") if "/check-runs" in c["path"]]
+        self.assertEqual(len(history_calls), 1)
+
+        # A failed retargeted run must not relabel the old diff's IDs either.
+        self.log.unlink()
+        failed = self.finalize(
+            [history_rule(ok(history)), comments_rule(ok(pages([comment(9), comment(10)]))),
+             patch_rule(ok("{}"))], before=[9], review_result="failure",
+        )
+        self.assertEqual(failed.returncode, 0, failed.stderr + failed.stdout)
+        failed_body = self.published()
+        self.assertEqual(failed_body["conclusion"], "failure")
+        self.assertEqual(check.recorded_finding_ids(failed_body), [10])
+        self.assertEqual(evidence_of(failed_body)["other_diff_finding_comment_ids"], [9])
+
+    def test_publish_fallback_preserves_only_same_diff_findings_on_retry(self):
+        old_diff = {**check_run(97, "action_required", merge_base=OTHER),
+                    "output": {"text": evidence_text([9], merge_base=OTHER)}}
+        first = self.finalize(
+            [history_rule(ok(pages({"check_runs": [old_diff]}))),
+             comments_rule(ok(pages([comment(9), comment(10)]))),
+             patch_rule(FAIL, FAIL, FAIL, ok("{}"))], before=[9],
+        )
+        self.assertEqual(first.returncode, 1)
+        fallback = self.published()
+        self.assertEqual(fallback["conclusion"], "failure")
+        self.assertEqual(check.recorded_finding_ids(fallback), [10])
+        self.assertEqual(evidence_of(fallback)["other_diff_finding_comment_ids"], [9])
+
+        self.log.unlink()
+        earlier = {**check_run(98, "failure"), "output": fallback["output"]}
+        result = self.finalize(
+            [history_rule(ok(pages({"check_runs": [old_diff, earlier]}))),
+             comments_rule(ok(pages([comment(9)]))), patch_rule(ok("{}"))], before=[9],
+        )
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        body = self.published()
+        self.assertEqual(body["conclusion"], "action_required")
+        self.assertEqual(check.recorded_finding_ids(body), [10])
+        self.assertEqual(evidence_of(body)["other_diff_finding_comment_ids"], [9])
+
+    def test_unattributed_preexisting_comment_fails_closed_without_persisting_false_scope(self):
+        result = self.finalize(
+            [history_rule(current_run_only()), comments_rule(ok(pages([comment(9)]))),
+             patch_rule(ok("{}"))], before=[9],
+        )
+        self.assertEqual(result.returncode, 1)
+        first_body = self.published()
+        self.assertEqual(first_body["conclusion"], "failure")
+        self.assertEqual(check.recorded_finding_ids(first_body), [])
+        self.assertEqual(evidence_of(first_body)["unscoped_finding_comment_ids"], [9])
+
+        # The next run cannot treat the earlier failure's raw observation as
+        # authoritative evidence of a finding on its own captured diff.
+        rerun = self.rerun_after(first_body)
+        self.assertEqual(rerun.returncode, 1)
+        self.assertEqual(self.published()["conclusion"], "failure")
+        self.assertEqual(check.recorded_finding_ids(self.published()), [])
+
+    def test_same_diff_recorded_ids_survive_comment_deletion_and_a_failed_rerun(self):
+        earlier = {**check_run(98, "failure"), "output": {"text": evidence_text([9])}}
+        result = self.finalize(
+            [history_rule(ok(pages({"check_runs": [earlier]}))), comments_rule(ok(pages([]))),
+             patch_rule(ok("{}"))], review_result="failure",
+        )
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        body = self.published()
+        self.assertEqual(body["conclusion"], "failure")
+        self.assertEqual(check.recorded_finding_ids(body), [9])
+        rerun = self.rerun_after(body, comments=())
+        self.assertEqual(rerun.returncode, 0, rerun.stderr + rerun.stdout)
+        self.assertEqual(self.published()["conclusion"], "action_required")
+        self.assertEqual(check.recorded_finding_ids(self.published()), [9])
+
+    def test_history_loss_with_preexisting_comments_fails_closed_without_assuming_the_diff(self):
+        result = self.finalize(
+            [history_rule(FAIL), comments_rule(ok(pages([comment(9), comment(10)]))),
+             patch_rule(ok("{}"))], before=[9],
+        )
+        self.assertEqual(result.returncode, 1)
+        body = self.published()
+        self.assertEqual(body["conclusion"], "failure")
+        self.assertEqual(check.recorded_finding_ids(body), [10])
+        self.assertEqual(evidence_of(body)["unscoped_finding_comment_ids"], [9])
 
     def test_base_branch_movement_alone_keeps_the_same_diff_sticky(self):
         earlier = {**check_run(43, "action_required")}
