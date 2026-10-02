@@ -74,7 +74,7 @@ class OwnershipTests(unittest.TestCase):
         self.addCleanup(self.stack.stop)
         self.real_gh = check.gh_api
         self.gh = mock.patch.object(check, "gh_api", side_effect=self.api.call)
-        self.gh.start()
+        self.gh_mock = self.gh.start()
         self.addCleanup(self.gh.stop)
         self.outputs = mock.patch.object(check, "write_output", side_effect=lambda name, value: self.output.append((name, value)))
         self.outputs.start()
@@ -106,6 +106,67 @@ class OwnershipTests(unittest.TestCase):
 
     def writes(self):
         return [call for call in self.api.calls if call[0] != "GET"]
+
+    def test_base_tip_advancement_finishes_owned_presentation_as_stale(self):
+        for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+            with self.subTest(kind=kind):
+                self.api = PresentationAPI()
+                self.gh_mock.side_effect = self.api.call
+                os.environ.update(TRIGGER_KIND="automatic", PR_REACTION_MODE="automatic")
+                trigger = self.target(kind) if kind != "automatic" else None
+                owner = self.start()
+                self.api.pr["base"]["sha"] = OTHER
+                self.finish()
+                self.assertEqual(check.status_state(self.api.status), "stale")
+                self.assertEqual(check.status_owner(self.api.status), owner)
+                self.assertFalse(check.status_owner_running(self.api.status))
+                self.assertEqual(self.owned(self.opening), [])
+                if trigger:
+                    self.assertEqual(self.owned(trigger), [])
+
+    def test_base_tip_movement_does_not_reclaim_or_change_terminal_history(self):
+        path = self.target("issue_comment")
+        self.start()
+        self.finish()
+        previous = copy.deepcopy(self.api.status)
+        self.api.pr["base"]["sha"] = OTHER
+        self.api.calls.clear()
+        self.finish()
+        self.assertEqual(self.api.status, previous)
+        self.assertEqual(self.owned(path), ["+1"])
+        self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3")
+        self.assertEqual(self.api.status, previous)
+        self.assertEqual(self.writes(), [])
+
+    def test_reaction_summary_changes_do_not_block_start_or_finish(self):
+        trigger = self.target("issue_comment")
+        self.start()
+        def change_summary(method, path):
+            if method == "GET" and path.endswith("/issues/7/comments"):
+                self.api.status["reactions"] = {"total_count": len(self.api.calls)}
+        self.api.on_call = change_summary
+        self.finish()
+        self.assertEqual(check.status_state(self.api.status), "success")
+        self.assertEqual(self.owned(self.opening), ["+1"])
+        self.assertEqual(self.owned(trigger), ["+1"])
+        self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3")
+        self.assertEqual(check.status_state(self.api.status), "in_progress")
+        self.assertEqual(check.status_owner(self.api.status)["run"], 6)
+
+    def test_status_body_change_between_reads_blocks_publication(self):
+        self.start()
+        reads = 0
+        def change_body(method, path):
+            nonlocal reads
+            if method == "GET" and path.endswith("/issues/7/comments"):
+                reads += 1
+                if reads == 2:
+                    self.api.status["body"] += "\nConcurrent body edit"
+        self.api.on_call = change_body
+        self.api.calls.clear()
+        self.finish()
+        self.assertEqual(self.writes(), [])
+        self.assertEqual(self.owned(self.opening), ["eyes"])
 
     def test_complete_manual_and_automatic_matrix(self):
         for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
@@ -475,13 +536,15 @@ class EmergencyOwnershipTests(unittest.TestCase):
 
     def test_emergency_cleanup_uses_both_correct_manual_endpoints_and_keeps_owner(self):
         from test_claude_review_workflows import REPO as workflow_repo, pr_identity
-        for kind, namespace in (("issue_comment", "issues"), ("pull_request_review_comment", "pulls")):
-            with self.subTest(kind=kind):
+        for kind, namespace, moved_base in ((kind, namespace, moved)
+                for kind, namespace in (("issue_comment", "issues"), ("pull_request_review_comment", "pulls"))
+                for moved in (False, True)):
+            with self.subTest(kind=kind, moved_base=moved_base):
                 owner = presentation_owner(repo=workflow_repo, kind=kind, target=42)
                 status = {"id":55, "user":{"login":check.STATUS_AUTHOR,"type":"Bot"},
                           "body":check.status_comment_body(HEAD, "main", "in_progress", owner=owner)}
                 result, calls = self.fallback(OWNER_FIXTURE=owner, PR_NUMBER="7", STATUS_COMMENT_ID="55", responses={
-                    "STATUS":[{"stdout":json.dumps(status)}], "PR":[{"stdout":pr_identity()}],
+                    "STATUS":[{"stdout":json.dumps(status)}], "PR":[{"stdout":pr_identity().replace(BASE_TIP, OTHER) if moved_base else pr_identity()}],
                     "TRIGGER":[{"stdout":json.dumps({"id":42,
                         "issue_url" if namespace == "issues" else "pull_request_url":
                         f"https://api.github.com/repos/{workflow_repo}/{namespace}/7"})}],
@@ -495,6 +558,28 @@ class EmergencyOwnershipTests(unittest.TestCase):
                                 and any("issues/comments/55" in arg for arg in call["args"]))
                 self.assertEqual(check.status_owner({"body":repaired}), owner)
                 self.assertFalse(any(call["method"] == "POST" for call in calls))
+
+    def test_automatic_emergency_base_tip_cleanup_preserves_terminal_history(self):
+        from test_claude_review_workflows import ToolingFallbackScriptTests, AUTOMATIC, REPO as workflow_repo, pr_identity
+        for state in ("in_progress", "success"):
+            with self.subTest(state=state):
+                owner = presentation_owner(repo=workflow_repo)
+                status = {"id":55, "user":{"login":check.STATUS_AUTHOR,"type":"Bot"},
+                          "body":check.status_comment_body(HEAD, "main", state, owner=owner)}
+                result, calls = ToolingFallbackScriptTests().run_fallback(AUTOMATIC,
+                    OWNER_FIXTURE=owner, PR_NUMBER="7", STATUS_COMMENT_ID="55", responses={
+                        "STATUS":[{"stdout":json.dumps(status)}],
+                        "PR":[{"stdout":pr_identity().replace(BASE_TIP, OTHER)}],
+                        "REACTIONS":[{"stdout":json.dumps([reaction(70,"eyes")])}]})
+                self.assertEqual(result.returncode, 1, result.stderr)
+                writes = [call for call in calls if call["method"] in ("DELETE", "PATCH", "POST")
+                          and not any("check-runs" in arg for arg in call["args"])]
+                if state == "success":
+                    self.assertEqual(writes, [])
+                else:
+                    self.assertTrue(any(call["method"] == "DELETE" for call in writes))
+                    self.assertTrue(any(call["method"] == "PATCH" for call in writes))
+                    self.assertFalse(any(call["method"] == "POST" for call in writes))
 
     def test_emergency_partial_rerun_cannot_claim_ownership(self):
         result, calls = self.fallback(PR_NUMBER="7", STATUS_COMMENT_ID="55", GITHUB_RUN_ATTEMPT="2")

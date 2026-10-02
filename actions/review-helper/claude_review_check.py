@@ -635,6 +635,14 @@ def live_pr_identity(repo, pr_number, *, include_base_sha=False):
     return head_sha, base_ref
 
 
+def status_publication_identity(comment):
+    """Compare writable status identity, ignoring unrelated API metadata."""
+    if comment is None:
+        return None
+    author = comment.get("user", {})
+    return comment.get("id"), author.get("login"), author.get("type"), comment.get("body")
+
+
 def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
     """Only trusted starts acquire; every later write requires that exact owner.
 
@@ -677,7 +685,16 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
                 write_output("status_comment_id", existing["id"])
                 return
             expected_patch = (head_sha, base_ref, env("BASE_SHA"))
-        current = lambda: live_pr_identity(repo, pr_number, include_base_sha=not stale) == expected_patch
+        match_base_sha = not stale
+        current = lambda: live_pr_identity(repo, pr_number, include_base_sha=match_base_sha) == expected_patch
+        if (not current() and not acquire and not stale and prior == owner
+                and status_owner_running(existing)
+                and live_pr_identity(repo, pr_number) == (head_sha, base_ref)):
+            # The captured Check still describes its original base. Finish this
+            # owner's presentation without implying the advanced base was reviewed.
+            state = "stale"
+            expected_patch = (head_sha, base_ref)
+            match_base_sha = False
         if not current():
             if not acquire and not stale and prior == owner and status_owner_running(existing):
                 try:
@@ -689,7 +706,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
             return
         # Re-read the observed owner immediately before changing shared status.
         observed = find_status_comment(repo, pr_number)
-        if observed != existing or not current():
+        if status_publication_identity(observed) != status_publication_identity(existing) or not current():
             raise ValueError("presentation changed before status publication")
         body = {"body": status_comment_body(
             head_sha, base_ref, state, check_available=check_available,

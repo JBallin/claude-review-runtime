@@ -148,8 +148,10 @@ Terminal reactions on older trigger comments remain historical snapshot
 information when the patch changes or another comment requests a review. A new
 accepted attempt on the same comment replaces its owned reactions. Superseded
 attempts never add clean thumbs-up or overwrite another request's presentation.
-Stale refresh preserves ownership metadata and affects only current PR
-presentation. Reaction and status publication are best-effort: API failures or
+If only the base tip advances during a still-owned review, finalization marks
+its presentation stale and clears progress reactions; the captured Check result
+retains its original authority. Stale refresh preserves ownership metadata and
+affects only current PR presentation. Reaction and status publication are best-effort: API failures or
 unverifiable ownership can leave stale or missing reactions. Consult the current
 exact-head Check.
 

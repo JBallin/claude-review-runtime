@@ -578,9 +578,12 @@ jobs:
                 '.user.login == "github-actions[bot]" and .user.type == "Bot" and (.body | contains("<!-- claude-review-runtime:claude-review-status -->")) and (.body | split("\n") | map(select(startswith("<!-- claude-review-runtime:presentation-owner:"))) == [$marker])' > /dev/null
             }
             verify_current_patch() {
+              # Failure repair may clear progress after same-ref base movement,
+              # but must preserve terminal historical presentation.
+              running=$(printf '%s' "$comment" | jq -r '.body | contains("<!-- claude-review-runtime:presentation-owner-phase:running -->")')
               live_pr=$(presentation_api "repos/$REPO/pulls/$PR_NUMBER" 2> /dev/null) &&
-              printf '%s' "$live_pr" | jq -e --arg head "$HEAD_SHA" --arg base "$BASE_REF" --arg sha "$BASE_SHA" \
-                '.head.sha == $head and .base.ref == $base and .base.sha == $sha' > /dev/null
+              printf '%s' "$live_pr" | jq -e --arg head "$HEAD_SHA" --arg base "$BASE_REF" --arg sha "$BASE_SHA" --arg running "$running" \
+                '.head.sha == $head and .base.ref == $base and (.base.sha == $sha or $running == "true")' > /dev/null
             }
             if ! verify_presentation_owner; then
               echo "::warning::Could not verify this attempt owns presentation; leaving it unchanged."
