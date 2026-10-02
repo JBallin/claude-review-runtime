@@ -438,6 +438,45 @@ jobs:
           else
             verdict false "$reason"
           fi
+          # Diagnostics never affect the verdict. Emit only fixed labels/enums,
+          # counts and a partial-view flag; never paths, payloads or transcripts.
+          if [ "${reason:-}" = captured_inputs_not_read ] || [ "${reason:-}" = verified ]; then
+            if diagnostics=$(jq -c --arg metadata "$REVIEW_METADATA_FILE" --arg diff "$REVIEW_DIFF_FILE" \
+              --rawfile metadata_content "$REVIEW_METADATA_FILE" --rawfile diff_content "$REVIEW_DIFF_FILE" '
+              def blocks: (.message.content? // []) | if type == "array" then . else [] end;
+              def text:
+                if type == "string" then .
+                elif type == "array" then map(select(.type? == "text" and (.text? | type) == "string") | .text) | join("\n")
+                else "" end;
+              def shape:
+                if type == "string" then "string"
+                elif type == "array" then
+                  if all(.[]; .type? == "text" and (.text? | type) == "string") then "text_blocks" else "mixed_blocks" end
+                else "other" end;
+              def stats($uses; $responses; $path; $captured):
+                [$uses[] | select(.name == "Read" and .input.file_path == $path)] as $matching
+                | [$matching[] | .id as $id | $responses[] | select(.tool_use_id == $id)] as $paired
+                | [$paired[] | select(.is_error == null or .is_error == false)] as $successful
+                | [$successful[] | .content | text | split("\n")[]] as $returned
+                | [$returned[] | try capture("^[ \t]*(?<number>[0-9]+)[→\t:](?<text>.*)$") catch empty] as $parsed
+                | (reduce $parsed[] as $line ({}; .[($line.number | tonumber | tostring)] += [$line.text])) as $lines
+                | ($captured | if . == "" then [] else split("\n") | if .[-1] == "" then .[:-1] else . end | map(rtrimstr("\r")) end) as $expected
+                | ([$expected | to_entries[] | . as $line
+                    | select(($lines[($line.key + 1 | tostring)] // [] | index($line.value)) != null)] | length) as $matched
+                | {read_count: ($matching | length), successful_read_count: ($successful | length),
+                   expected_line_count: ($expected | length), matched_line_count: $matched,
+                   missing_line_count: (($expected | length) - $matched),
+                   unparsed_line_count: (($returned | length) - ($parsed | length)),
+                   content_shapes: ([$paired[] | .content | shape] | unique),
+                   partial_view: any($returned[]; (test("^[ \t]*[0-9]+[→\t:]") | not) and contains("PARTIAL view"))};
+              [.[] | select(.type == "assistant") | blocks[] | select(.type == "tool_use")] as $uses
+              | [.[] | select(.type == "user") | blocks[] | select(.type == "tool_result")] as $responses
+              | {metadata: stats($uses; $responses; $metadata; $metadata_content),
+                 diff: stats($uses; $responses; $diff; $diff_content)}
+              ' "$EXECUTION_FILE" 2> /dev/null); then
+              printf 'Claude review captured-input coverage: %s\n' "$diagnostics"
+            fi
+          fi
 
   publish-status:
     name: Publish status
