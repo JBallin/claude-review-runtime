@@ -108,6 +108,27 @@ class ReadCoverageDiagnosticsTests(unittest.TestCase):
                     stats = self.verify(stream, path=path, expected=expected, diff=diff)["diff"]
                     self.assertEqual(stats["content_shapes"], [shape])
 
+    def test_partial_view_payload_is_not_a_banner(self):
+        metadata = '{"description":"PARTIAL view is captured payload"}\n'
+        diff = "+PARTIAL view is captured payload\n"
+        for path in (workflows.MANUAL, workflows.AUTOMATIC):
+            for blocks in (False, True):
+                with self.subTest(path=path.name, blocks=blocks):
+                    stream = workflows.clean_stream()
+                    stream[2] = workflows.read_result("t1", metadata, blocks=blocks)
+                    stream[4] = workflows.read_result("t2", diff, blocks=blocks)
+                    report = self.verify(stream, path=path, expected=("true", "verified"), metadata=metadata, diff=diff)
+                    self.assertFalse(report["metadata"]["partial_view"])
+                    self.assertFalse(report["diff"]["partial_view"])
+                    content = stream[4]["message"]["content"][0]
+                    if blocks:
+                        content["content"].insert(0, {"type":"text", "text":"PARTIAL view: read the remaining page"})
+                    else:
+                        content["content"] = "PARTIAL view: read the remaining page\n" + content["content"]
+                    report = self.verify(stream, path=path, expected=("true", "verified"), metadata=metadata, diff=diff)
+                    self.assertTrue(report["diff"]["partial_view"])
+                    self.assertFalse(report["metadata"]["partial_view"])
+
     def test_invalid_execution_or_input_encoding_emits_no_diagnostics(self):
         for path in (workflows.MANUAL, workflows.AUTOMATIC):
             for kind in ("malformed", "tool_configuration", "encoding"):

@@ -468,7 +468,7 @@ jobs:
                    missing_line_count: (($expected | length) - $matched),
                    unparsed_line_count: (($returned | length) - ($parsed | length)),
                    content_shapes: ([$paired[] | .content | shape] | unique),
-                   partial_view: any($successful[]; (.content | text | contains("PARTIAL view")))};
+                   partial_view: any($returned[]; (test("^[ \t]*[0-9]+[→\t:]") | not) and contains("PARTIAL view"))};
               [.[] | select(.type == "assistant") | blocks[] | select(.type == "tool_use")] as $uses
               | [.[] | select(.type == "user") | blocks[] | select(.type == "tool_result")] as $responses
               | {metadata: stats($uses; $responses; $metadata; $metadata_content),
