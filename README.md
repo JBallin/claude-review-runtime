@@ -42,8 +42,9 @@ clean-completion notices, failures, trust boundaries, and rollback.
 This is an experimental private prototype with no commitment to ongoing support.
 The [validation summary](docs/validation.md) distinguishes tested revisions from
 the deployed callers and remaining gaps.
-In particular, the deployed baseline has a finding-publication gap; its green
-Check alone cannot establish that every attempted finding reached GitHub.
+The pinned callers include confirmed finding publication and sanitized Read
+coverage diagnostics. A verified Check establishes those runtime contracts; keep
+independent review requirements in place.
 
 ## Validate locally
 
