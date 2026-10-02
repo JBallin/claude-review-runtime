@@ -43,6 +43,17 @@ history. Valid empty collections, extra API fields, multiple pages and nullable
 optional output fields remain supported. There is no change to permissions,
 model tools, credentials, caller eligibility or publication authority.
 
+The first published correction was too strict about application metadata.
+Claude's review of `2d094f61006c7b914f9d0b51d6b8b668bcc42d7a` identified that
+GitHub's [official OpenAPI schema](https://github.com/github/rest-api-description/blob/main/descriptions/api.github.com/api.github.com.json)
+declares `check-run.app` nullable and the integration's `slug` optional. The
+classifier already skips runs without the trusted `github-actions` slug.
+The follow-up accepts missing/null app and slug while rejecting wrong non-null
+types. It also checks the consumed conclusion field's non-null type. Missing/null
+app metadata never grants trusted finding attribution. Regressions cover clean
+classification alongside such runs, preserved sticky findings from a separate
+trusted run, and rejection of invalid app/slug/conclusion types.
+
 ## Reproducible offline evidence
 
 Run from the repository root:
@@ -56,6 +67,8 @@ The existing stub GitHub CLI supplies deterministic API responses and records
 requests; these tests perform no network operations. New regression cases are
 `FinalizeTests.test_invalid_history_fails_closed_and_preserves_observed_findings`
 and `CreateAndSnapshotTests.test_ambiguous_create_never_reposts_after_invalid_history`.
+The compatibility follow-up adds
+`FinalizeTests.test_nullable_untrusted_apps_do_not_hide_trusted_sticky_findings`.
 
 | Fault sequence | Before fix | Expected and observed after fix |
 | --- | --- | --- |
@@ -64,7 +77,7 @@ and `CreateAndSnapshotTests.test_ambiguous_create_never_reposts_after_invalid_hi
 | Invalid later page or malformed run; one newly observed finding | Invalid history could escape classification | Failure Check; finding ID and same-diff presence retained |
 | Creation POST fails ambiguously; invalid history lookup | Empty history could permit another POST; malformed history could crash | One POST only; at most two recovery reads; nonzero exit |
 
-The final candidate suite contains 290 tests. Independent review reproduced the
+The candidate suite contains 291 tests. Independent review reproduced the
 original defect and reviewed the focused correction. Exact output revision,
 local validation result, and remote CI state are recorded in the handoff; pending
 or unavailable external gates must not be represented as passing.
@@ -90,7 +103,8 @@ or unavailable external gates must not be represented as passing.
   emergency repair. The 120-second presentation budget is independent of Check
   publication; presentation failure cannot strengthen its conclusion.
 
-No additional substantive defect was established by this bounded audit.
+Beyond the history defect and its application-metadata compatibility correction,
+no additional substantive defect was established by this bounded audit.
 Duplicate Read responses in a synthetic malformed transcript are a robustness
 question: Read coverage currently combines successful returned lines, whereas
 inline publication requires exactly one receipt. No practical producer or

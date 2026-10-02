@@ -433,6 +433,10 @@ class FinalizeTests(ScriptTestCase):
                    pages({"check_runs": [{**check_run(98, "failure"), "output": {"text": []}}]}),
                    pages({"check_runs": []}, {}),
                    pages({"check_runs": [{**check_run(98, "failure"), "id": True}]})]
+        for changes in ({"app": []}, {"app": "github-actions"}, {"app": False},
+                        {"app": {"slug": []}}, {"app": {"slug": False}},
+                        {"conclusion": []}, {"conclusion": False}):
+            invalid.append(pages({"check_runs": [{**check_run(98, "failure"), **changes}]}))
         for raw in invalid:
             for findings in ([], [comment(9)]):
                 with self.subTest(raw=raw, findings=bool(findings)):
@@ -450,6 +454,28 @@ class FinalizeTests(ScriptTestCase):
                     self.assertIn("malformed or incomplete", evidence["evidence_errors"][0])
                     self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), check.ATTEMPTS)
                     self.assertFalse(self.calls("POST"))
+
+    def test_nullable_untrusted_apps_do_not_hide_trusted_sticky_findings(self):
+        for app in (None, {}, {"slug": None}, {"slug": "other-app"}, "missing"):
+            for sticky, text in ((sticky, text) for sticky in (False, True)
+                                 for text in (None, evidence_text([8]))):
+                with self.subTest(app=app, sticky=sticky, populated_evidence=text is not None):
+                    self.log.unlink(missing_ok=True)
+                    untrusted = {**check_run(97, "action_required"), "app": app,
+                                 "external_id": None, "output": {"text": text}}
+                    if app == "missing":
+                        untrusted.pop("app")
+                    runs = [untrusted]
+                    if sticky:
+                        runs.append(check_run(98, "action_required"))
+                    result = self.finalize(
+                        [history_rule(ok(pages({"check_runs": runs}))),
+                         comments_rule(ok(pages([]))), patch_rule(ok("{}"))])
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    body = self.published()
+                    self.assertEqual(body["conclusion"], "action_required" if sticky else "success")
+                    self.assertEqual(evidence_of(body)["prior_finding_check_run_ids"], [98] if sticky else [])
+                    self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), 1)
 
     def finalize(self, rules, *, before=(), review_result="success", action_conclusion="success", **extra):
         self.before.write_text(json.dumps(list(before)))

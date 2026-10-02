@@ -264,8 +264,13 @@ def check_run_history(repo, head_sha):
             for run in page["check_runs"]:
                 if (not isinstance(run, dict) or not positive_comment_id(run.get("id"))
                         or any(not isinstance(run.get(key), str) for key in ("name", "head_sha", "status"))
-                        or not isinstance(run.get("app"), dict)
-                        or not isinstance(run["app"].get("slug"), str)
+                        # Null/missing app or slug cannot identify our trusted
+                        # publisher; the classifier safely skips those runs.
+                        or (run.get("app") is not None and not isinstance(run["app"], dict))
+                        or (isinstance(run.get("app"), dict)
+                            and run["app"].get("slug") is not None
+                            and not isinstance(run["app"]["slug"], str))
+                        or (run.get("conclusion") is not None and not isinstance(run["conclusion"], str))
                         or (run.get("external_id") is not None and not isinstance(run["external_id"], str))
                         or (run.get("output") is not None and not isinstance(run["output"], dict))
                         or (isinstance(run.get("output"), dict)
