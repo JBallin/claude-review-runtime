@@ -139,6 +139,22 @@ jobs:
         uses: $/actions/review-helper
         with:
           command: create
+      - name: Verify manual base freshness
+        # A PR's comparison base can lag the actual branch tip. Reject that
+        # snapshot before model execution instead of silently choosing a new
+        # comparison base. Admission is required even when fork Check tooling
+        # would otherwise be best-effort.
+        env:
+          REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.resolve.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.resolve.outputs.head_sha }}
+          BASE_SHA: ${{ steps.resolve.outputs.base_sha }}
+          BASE_REF: ${{ steps.resolve.outputs.base_ref }}
+        run: |
+          test -n "$REVIEW_HELPER"
+          python3 "$REVIEW_HELPER" admit-manual
       - name: Start Claude Review check
         # Required for a same-repository PR; best-effort for a fork PR, whose
         # review must not depend on check publication. Every step here that
@@ -703,12 +719,57 @@ jobs:
                 '.user.login == "github-actions[bot]" and .user.type == "Bot" and (.body | contains("<!-- claude-review-runtime:claude-review-status -->")) and (.body | split("\n") | map(select(startswith("<!-- claude-review-runtime:presentation-owner:"))) == [$marker])' > /dev/null
             }
             verify_current_patch() {
-              # Failure repair may clear progress after same-ref base movement,
-              # but must preserve terminal historical presentation.
+              # PR.base.sha may remain old after the branch advances. Resolve
+              # the exact direct ref and recheck PR identity around that read.
+              # Running-owner cleanup can tolerate a known moved base; unknown
+              # authority never permits shared presentation writes.
               running=$(printf '%s' "$comment" | jq -r '.body | contains("<!-- claude-review-runtime:presentation-owner-phase:running -->")')
-              live_pr=$(presentation_api "repos/$REPO/pulls/$PR_NUMBER" 2> /dev/null) &&
-              printf '%s' "$live_pr" | jq -e --arg head "$HEAD_SHA" --arg base "$BASE_REF" --arg sha "$BASE_SHA" --arg running "$running" \
-                '.head.sha == $head and .base.ref == $base and (.base.sha == $sha or $running == "true")' > /dev/null
+              remaining=$((presentation_deadline - SECONDS))
+              [ "$remaining" -gt 0 ] || return 1
+              PRESENTATION_REMAINING="$remaining" PRESENTATION_GH_TIMEOUT="$comment_timeout" PRESENTATION_RUNNING="$running" python3 - <<'PY_FRESHNESS'
+          import json, os, re, subprocess, time
+          from urllib.parse import quote
+
+          def unique(pairs):
+              result = {}
+              for key, value in pairs:
+                  if key in result:
+                      raise ValueError("duplicate JSON key")
+                  result[key] = value
+              return result
+
+          try:
+              repo, number = os.environ["REPO"], os.environ["PR_NUMBER"]
+              head, base = os.environ["HEAD_SHA"], os.environ["BASE_REF"]
+              deadline = time.monotonic() + int(os.environ["PRESENTATION_REMAINING"])
+              def read(path):
+                  remaining = deadline - time.monotonic()
+                  if remaining <= 0:
+                      raise ValueError("presentation budget exhausted")
+                  raw = subprocess.run(["gh", "api", path], check=True, capture_output=True,
+                      text=True, timeout=min(int(os.environ["PRESENTATION_GH_TIMEOUT"]), remaining))
+                  return json.loads(raw.stdout, object_pairs_hook=unique)
+              def projection():
+                  pr = read(f"repos/{repo}/pulls/{number}")
+                  value = (pr["head"]["sha"], pr["base"]["ref"], pr["base"]["sha"])
+                  if (pr["base"]["repo"]["full_name"] != repo or value[:2] != (head, base)
+                          or not isinstance(value[2], str) or not re.fullmatch(r"[0-9a-f]{40}", value[2])):
+                      raise ValueError("PR identity differs")
+                  return value
+              before = projection()
+              ref = read(f"repos/{repo}/git/ref/heads/{quote(base, safe='')}")
+              tip = ref["object"]["sha"]
+              if (ref["ref"] != f"refs/heads/{base}" or ref["object"]["type"] != "commit"
+                      or not isinstance(tip, str) or not re.fullmatch(r"[0-9a-f]{40}", tip)
+                      or projection() != before):
+                  raise ValueError("base branch authority differs")
+              if tip == os.environ["BASE_SHA"] and before[2] != tip:
+                  raise ValueError("PR projection and current branch authority disagree")
+              if tip != os.environ["BASE_SHA"] and os.environ["PRESENTATION_RUNNING"] != "true":
+                  raise ValueError("terminal snapshot is historical")
+          except (ValueError, TypeError, KeyError, subprocess.SubprocessError):
+              raise SystemExit(1)
+          PY_FRESHNESS
             }
             if ! verify_presentation_owner; then
               echo "::warning::Could not verify this attempt owns presentation; leaving it unchanged."

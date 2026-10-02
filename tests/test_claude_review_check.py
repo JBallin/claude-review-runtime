@@ -305,11 +305,26 @@ class ScriptTestCase(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def run_script(self, command, rules, **extra_env):
+    def run_script(self, command, rules, *, step_script=None, **extra_env):
         scenario = self.dir / "scenario.json"
         if (extra_env.get("STATUS_COMMENTS_ENABLED") == "true" and command[0] != "stale"
                 and not any(rule["path"] == f"repos/{REPO}/pulls/7" for rule in rules)):
             rules = [pr_head_rule(live_head(extra_env.get("HEAD_SHA", HEAD))), *rules]
+        # PR comparison projections and branch refs are independent endpoints.
+        # Existing scenarios default to a stationary direct tip; freshness
+        # regressions supply their own ref responses instead.
+        base_refs = {extra_env.get("BASE_REF", "main")}
+        for rule in rules:
+            if rule["path"] == f"repos/{REPO}/pulls/7":
+                for response in rule["responses"]:
+                    try:
+                        base_refs.add(json.loads(response["stdout"])["base"]["ref"])
+                    except (KeyError, ValueError, TypeError):
+                        pass
+        for base_ref in base_refs:
+            path = f"repos/{REPO}/git/ref/heads/{check.quote(base_ref, safe='')}"
+            if not any(rule["path"] == path for rule in rules):
+                rules = [*rules, base_tip_rule(base_ref, extra_env.get("BASE_SHA", BASE_TIP))]
         if extra_env.get("STATUS_COMMENTS_ENABLED") == "true":
             fixture_owner = presentation_owner(kind="automatic", head=extra_env.get("HEAD_SHA", HEAD),
                                              base_ref=extra_env.get("BASE_REF", "main"))
@@ -358,7 +373,8 @@ class ScriptTestCase(unittest.TestCase):
             **extra_env,
         }
         return subprocess.run(
-            [sys.executable, str(SCRIPT), *command],
+            ["bash", "-eo", "pipefail", "-c", step_script] if step_script is not None
+            else [sys.executable, str(SCRIPT), *command],
             env=environment,
             capture_output=True,
             text=True,
@@ -392,7 +408,14 @@ def pr_head_rule(*responses):
 
 
 def live_head(sha, base_ref="main", base_sha=BASE_TIP):
-    return ok(json.dumps({"head": {"sha": sha}, "base": {"ref": base_ref, "sha": base_sha}}))
+    return ok(json.dumps({"head": {"sha": sha}, "base": {
+        "ref": base_ref, "sha": base_sha, "repo": {"full_name": REPO}}}))
+
+
+def base_tip_rule(base_ref="main", sha=BASE_TIP, *responses):
+    return {"method": "GET", "path": f"repos/{REPO}/git/ref/heads/{check.quote(base_ref, safe='')}",
+            "responses": list(responses) or [ok(json.dumps({"ref": f"refs/heads/{base_ref}",
+                "object": {"type": "commit", "sha": sha}}))]}
 
 
 def status_create_rule(*responses):
@@ -2195,7 +2218,7 @@ class ManualCompletionTests(ScriptTestCase):
         result = self.run_manual(self.clean_rules())
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         calls = self.calls()
-        self.assertEqual([call["method"] for call in calls], ["GET", "GET", "PATCH", "GET", "GET", "POST"])
+        self.assertEqual([call["method"] for call in calls], ["GET", "GET", "PATCH", "GET", "GET", "GET", "GET", "POST"])
         self.assertEqual(calls[2]["body"]["conclusion"], "success")
         body = calls[-1]["body"]["body"]
         self.assertEqual(body, self.notice()["body"])
@@ -2289,7 +2312,18 @@ class ManualCompletionTests(ScriptTestCase):
                 self.assertEqual(result.returncode, 0, result.stdout)
                 self.assertEqual(self.calls("PATCH")[0]["body"]["conclusion"], "success")
                 self.assertFalse(self.calls("POST"))
-                self.assertIn("superseded review snapshot", result.stdout)
+                self.assertTrue("superseded review snapshot" in result.stdout
+                                or "comparison base and direct branch tip disagree" in result.stdout)
+
+    def test_direct_base_advance_preserves_check_but_suppresses_clean_notice(self):
+        rules = self.clean_rules()
+        rules.append(base_tip_rule("main", OTHER))
+        result = self.run_manual(rules)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        published = self.calls("PATCH")[0]["body"]
+        self.assertEqual(published["conclusion"], "success")
+        self.assertIn(BASE_TIP, published["output"]["text"])
+        self.assertFalse(self.calls("POST"))
 
     def test_missing_captured_identity_skips_notice_without_changing_the_check(self):
         for field in ("BASE_REF", "BASE_SHA", "MERGE_BASE_SHA", "DETAILS_URL"):
@@ -2362,11 +2396,12 @@ class ManualCompletionTests(ScriptTestCase):
     def test_completion_worst_case_matches_the_budget(self):
         rules = self.clean_rules(post=FAIL)
         rules[3] = status_list_rule(FAIL, FAIL, ok(pages([])))
-        rules[4] = pr_head_rule(FAIL, FAIL, live_head(HEAD))
+        rules[4] = pr_head_rule(FAIL, FAIL, live_head(HEAD), FAIL, FAIL, live_head(HEAD))
+        rules.append(base_tip_rule("main", BASE_TIP, FAIL, FAIL, base_tip_rule()["responses"][0]))
         result = self.run_manual(rules)
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual(len(self.calls()) - 3, check.WORST_CASE["completion"][0])
-        self.assertEqual(check.WORST_CASE["completion"][1], 2)
+        self.assertEqual(check.WORST_CASE["completion"][1], 4)
 
     def test_base_ref_is_rendered_as_literal_text(self):
         result = self.run_manual(self.clean_rules(live=live_head(HEAD, "topic/with`tick")),

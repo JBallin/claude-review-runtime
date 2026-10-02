@@ -9,6 +9,7 @@ Subcommands (configured through environment variables set by the workflow):
   snapshot  record Claude's review-comment IDs on HEAD_SHA before the review
   finalize  map the review outcome to a conclusion and complete the check run
   stale     refresh an existing status comment for a new PR head
+  admit-manual  reject a manual snapshot whose PR base projection is outdated
 """
 
 import argparse
@@ -57,7 +58,9 @@ EVIDENCE_ID_FIELDS = (
 )
 # Authoritative Check/evidence and completion-notice worst cases as
 # (GitHub calls, retried operations). Presentation uses its separate elapsed
-# PRESENTATION_SECONDS budget, including pagination and readback. Each call is
+# PRESENTATION_SECONDS budget, including pagination and readback. Manual
+# admission and completion notices each have an independent elapsed budget
+# of the same duration, reset before any authoritative Check work. Each call is
 # capped at GH_TIMEOUT_SECONDS and each retried operation adds its backoff.
 # create's retries each add a reconciliation lookup before POSTing again;
 # finalize may look up an unreported run, then read history and comments and
@@ -70,7 +73,8 @@ WORST_CASE = {
     "finalize": (5 * ATTEMPTS, 5),
     # Paginated dedup discovery and the live snapshot read may retry; the
     # completion POST is attempted once because a lost response is ambiguous.
-    "completion": (2 * ATTEMPTS + 1, 2),
+    "completion": (4 * ATTEMPTS + 1, 4),
+    "admit-manual": (3 * ATTEMPTS, 3),
 }
 
 
@@ -663,23 +667,75 @@ def reconcile_reactions(path, desired, guard):
                 raise
 
 
-def live_pr_identity(repo, pr_number, *, include_base_sha=False):
+def live_pr_projection(repo, pr_number):
+    """The PR's base SHA is a comparison projection, not branch-tip authority."""
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
+        raise ValueError("invalid base repository")
     current = with_retries(
         lambda: gh_api([f"repos/{repo}/pulls/{pr_number}"]),
         "Reading the current PR head and base",
     )
-    pr = json.loads(current)
+    pr = json.loads(current, object_pairs_hook=unique_json_object)
     head_sha, base_ref = pr["head"]["sha"], pr["base"]["ref"]
     if not isinstance(head_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", head_sha):
         raise ValueError("the live PR head SHA is invalid")
-    if not isinstance(base_ref, str) or not base_ref:
+    if not isinstance(base_ref, str) or not base_ref or len(base_ref) > 255:
         raise ValueError("the live PR base ref is invalid")
+    if pr["base"]["repo"]["full_name"] != repo:
+        raise ValueError("the live PR base repository differs from the requested repository")
+    base_sha = pr["base"]["sha"]
+    if not isinstance(base_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", base_sha):
+        raise ValueError("the live PR comparison base SHA is invalid")
+    return head_sha, base_ref, base_sha
+
+
+def direct_base_tip(repo, base_ref):
+    raw = with_retries(
+        lambda: gh_api([f"repos/{repo}/git/ref/heads/{quote(base_ref, safe='')}"]),
+        "Reading the current base branch tip",
+    )
+    ref = json.loads(raw, object_pairs_hook=unique_json_object)
+    if (ref["ref"] != f"refs/heads/{base_ref}" or ref["object"]["type"] != "commit"
+            or not isinstance(ref["object"]["sha"], str)
+            or not re.fullmatch(r"[0-9a-f]{40}", ref["object"]["sha"])):
+        raise ValueError("the direct base branch ref is invalid")
+    return ref["object"]["sha"]
+
+
+def live_pr_identity(repo, pr_number, *, include_base_sha=False, require_projection_match=False):
+    before = live_pr_projection(repo, pr_number)
+    head_sha, base_ref, _ = before
     if include_base_sha:
-        base_sha = pr["base"]["sha"]
-        if not isinstance(base_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", base_sha):
-            raise ValueError("the live PR base SHA is invalid")
+        base_sha = direct_base_tip(repo, base_ref)
+        if live_pr_projection(repo, pr_number) != before:
+            raise ValueError("the PR changed while resolving its base branch tip")
+        if require_projection_match and before[2] != base_sha:
+            raise ValueError("the PR comparison base and direct branch tip disagree")
         return head_sha, base_ref, base_sha
     return head_sha, base_ref
+
+
+def cmd_admit_manual():
+    """Fail closed before model execution; never rewrite the captured snapshot."""
+    global PRESENTATION_DEADLINE
+    PRESENTATION_DEADLINE = time.monotonic() + PRESENTATION_SECONDS
+    try:
+        repo, number = env("REPO"), env("PR_NUMBER")
+        captured = (env("HEAD_SHA"), env("BASE_REF"), env("BASE_SHA"))
+        projected = live_pr_projection(repo, number)
+        if projected != captured:
+            raise ValueError("the PR no longer matches the captured manual snapshot")
+        tip = direct_base_tip(repo, projected[1])
+        if tip != captured[2]:
+            raise ValueError("the PR comparison base differs from the current base branch tip")
+        if live_pr_projection(repo, number) != projected:
+            raise ValueError("the PR changed during manual freshness admission")
+        return 0
+    except (GhError, ValueError, KeyError, TypeError) as error:
+        print(f"::error::Cannot admit manual review: {error}")
+        return 1
+    finally:
+        PRESENTATION_DEADLINE = None
 
 
 def status_publication_identity(comment):
@@ -710,10 +766,13 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
                 raise ValueError("stale refresh has no verified owner")
             owner = prior
             expected_patch = (head_sha, base_ref)
-            if live_pr_identity(repo, pr_number) != expected_patch:
+            live = live_pr_identity(repo, pr_number, include_base_sha=True)
+            if live[:2] != expected_patch:
                 return
-            if (status_head(existing), status_base_ref(existing)) == expected_patch and status_state(existing) != "stale":
+            if ((status_head(existing), status_base_ref(existing)) == expected_patch
+                    and status_state(existing) != "stale" and live[2] == owner["base"]):
                 return
+            expected_patch = live
         else:
             owner = captured_owner() if acquire else validate_owner(json.loads(env("PRESENTATION_OWNER")))
             if (owner["repo"], str(owner["pr"]), owner["head"], owner["base"], owner["base_ref"],
@@ -732,17 +791,19 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
                 write_output("status_comment_id", existing["id"])
                 return
             expected_patch = (head_sha, base_ref, env("BASE_SHA"))
-        match_base_sha = not stale
-        current = lambda: live_pr_identity(repo, pr_number, include_base_sha=match_base_sha) == expected_patch
-        if (not current() and not acquire and not stale and prior == owner
+        projection_must_match = not stale
+        current = lambda: live_pr_identity(repo, pr_number, include_base_sha=True,
+                                          require_projection_match=projection_must_match) == expected_patch
+        live = live_pr_identity(repo, pr_number, include_base_sha=True)
+        if (live != expected_patch and not acquire and not stale and prior == owner
                 and status_owner_running(existing)
-                and live_pr_identity(repo, pr_number) == (head_sha, base_ref)):
+                and live[:2] == (head_sha, base_ref)):
             # The captured Check still describes its original base. Finish this
             # owner's presentation without implying the advanced base was reviewed.
             state = "stale"
-            expected_patch = (head_sha, base_ref)
-            match_base_sha = False
-        if not current():
+            expected_patch = live
+            projection_must_match = False
+        if live != expected_patch:
             if not acquire and not stale and prior == owner and status_owner_running(existing):
                 try:
                     path = trigger_reaction_path(owner)
@@ -832,6 +893,8 @@ def best_effort_manual_completion(head_sha):
     """Publish historical UX only after this run's clean Check was published."""
     if env("MANUAL_COMPLETION_ENABLED") != "true":
         return
+    global PRESENTATION_DEADLINE
+    PRESENTATION_DEADLINE = time.monotonic() + PRESENTATION_SECONDS
     repo, pr_number = env("REPO"), env("PR_NUMBER")
     base_ref, base_sha = env("BASE_REF"), env("BASE_SHA")
     merge_base_sha, details_url = env("MERGE_BASE_SHA"), env("DETAILS_URL")
@@ -856,7 +919,8 @@ def best_effort_manual_completion(head_sha):
         # Read after discovery, immediately before POST. GitHub cannot make
         # this read/write atomic, so the notice describes the captured history
         # and never claims that it covers the PR's current patch.
-        if live_pr_identity(repo, pr_number, include_base_sha=True) != (head_sha, base_ref, base_sha):
+        if live_pr_identity(repo, pr_number, include_base_sha=True,
+                            require_projection_match=True) != (head_sha, base_ref, base_sha):
             print("::notice::Skipping manual completion notice for a superseded review snapshot.")
             return
         body = completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url)
@@ -865,6 +929,8 @@ def best_effort_manual_completion(head_sha):
         gh_api(["--method", "POST", path, "--input", "-"], {"body": body})
     except Exception as error:
         print(f"::warning::Could not publish manual Claude Review completion notice: {error}")
+    finally:
+        PRESENTATION_DEADLINE = None
 
 
 def summary_lines(head_sha, sentence):
@@ -1291,6 +1357,7 @@ def main(argv=None):
     snapshot.add_argument("--output", required=True)
     sub.add_parser("finalize")
     sub.add_parser("stale")
+    sub.add_parser("admit-manual")
     args = parser.parse_args(argv)
     if args.command == "create":
         return cmd_create()
@@ -1302,6 +1369,8 @@ def main(argv=None):
             return 1
     if args.command == "stale":
         return cmd_stale()
+    if args.command == "admit-manual":
+        return cmd_admit_manual()
     return cmd_finalize()
 
 

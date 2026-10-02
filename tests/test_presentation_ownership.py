@@ -11,7 +11,9 @@ from test_claude_review_check import check, HEAD, OTHER, BASE_TIP, REPO, reactio
 class PresentationAPI:
     def __init__(self):
         self.status = None
-        self.pr = {"head": {"sha": HEAD}, "base": {"sha": BASE_TIP, "ref": "main"}}
+        self.pr = {"head": {"sha": HEAD}, "base": {
+            "sha": BASE_TIP, "ref": "main", "repo": {"full_name": REPO}}}
+        self.base_tip = BASE_TIP
         self.reactions = {}
         self.targets = {}
         self.calls = []
@@ -31,6 +33,10 @@ class PresentationAPI:
             raise check.GhError("injected failure")
         if path == f"repos/{REPO}/pulls/7":
             result = json.dumps(self.pr)
+        elif path.startswith(f"repos/{REPO}/git/ref/heads/"):
+            branch = check.unquote(path.split("/git/ref/heads/", 1)[1])
+            result = json.dumps({"ref": f"refs/heads/{branch}",
+                                 "object": {"type": "commit", "sha": self.base_tip}})
         elif path == f"repos/{REPO}/issues/7/comments" and method == "GET":
             result = "".join(json.dumps(page) for page in [self.comment_pages, [self.status] if self.status else []])
         elif (path == f"repos/{REPO}/issues/7/comments" and method == "POST"
@@ -115,7 +121,7 @@ class OwnershipTests(unittest.TestCase):
                 os.environ.update(TRIGGER_KIND="automatic", PR_REACTION_MODE="automatic")
                 trigger = self.target(kind) if kind != "automatic" else None
                 owner = self.start()
-                self.api.pr["base"]["sha"] = OTHER
+                self.api.base_tip = OTHER
                 self.finish()
                 self.assertEqual(check.status_state(self.api.status), "stale")
                 self.assertEqual(check.status_owner(self.api.status), owner)
@@ -129,7 +135,7 @@ class OwnershipTests(unittest.TestCase):
         self.start()
         self.finish()
         previous = copy.deepcopy(self.api.status)
-        self.api.pr["base"]["sha"] = OTHER
+        self.api.base_tip = OTHER
         self.api.calls.clear()
         self.finish()
         self.assertEqual(self.api.status, previous)
@@ -137,6 +143,67 @@ class OwnershipTests(unittest.TestCase):
         self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3")
         self.assertEqual(self.api.status, previous)
         self.assertEqual(self.writes(), [])
+
+    def test_direct_tip_advancement_ignores_stale_pr_projection(self):
+        self.target("issue_comment")
+        self.start()
+        self.api.base_tip = OTHER
+        self.finish()
+        self.assertEqual(self.api.pr["base"]["sha"], BASE_TIP)
+        self.assertEqual(check.status_state(self.api.status), "stale")
+        self.assertEqual(self.owned(self.opening), [])
+
+    def test_same_head_status_refresh_observes_direct_base_movement(self):
+        trigger = self.target("pull_request_review_comment")
+        owner = self.start()
+        self.finish()
+        self.api.base_tip = OTHER
+        check.cmd_stale()
+        self.assertEqual(check.status_state(self.api.status), "stale")
+        self.assertEqual(check.status_owner(self.api.status), owner)
+        self.assertEqual(self.owned(self.opening), [])
+        # The completed trigger remains valid historical information.
+        self.assertEqual(self.owned(trigger), ["+1"])
+
+    def test_missing_direct_ref_cannot_add_terminal_clean_presentation(self):
+        trigger = self.target("issue_comment")
+        self.start()
+        previous = copy.deepcopy(self.api.status)
+        self.api.faults[("GET", f"repos/{REPO}/git/ref/heads/main")] = "fail"
+        self.api.calls.clear()
+        self.finish()
+        self.assertEqual(self.api.status, previous)
+        self.assertEqual(self.writes(), [])
+        self.assertNotIn("+1", self.owned(self.opening))
+        self.assertNotIn("+1", self.owned(trigger))
+
+    def test_projection_disagreement_cannot_claim_fresh_terminal_presentation(self):
+        self.start()
+        previous = copy.deepcopy(self.api.status)
+        self.api.pr["base"]["sha"] = OTHER
+        self.api.calls.clear()
+        self.finish()
+        self.assertEqual(self.api.status, previous)
+        self.assertEqual(self.writes(), [])
+
+    def test_retarget_during_direct_ref_read_suppresses_presentation(self):
+        self.start()
+        previous = copy.deepcopy(self.api.status)
+        self.api.calls.clear()
+        def retarget(method, path):
+            if "/git/ref/heads/" in path:
+                self.api.pr["base"]["ref"] = "release"
+        self.api.on_call = retarget
+        self.finish()
+        self.assertEqual(self.api.status, previous)
+        self.assertEqual(self.writes(), [])
+
+    def test_slash_branch_tip_is_read_through_exact_encoded_endpoint(self):
+        self.api.pr["base"]["ref"] = "release/2026"
+        self.start(BASE_REF="release/2026")
+        self.finish()
+        self.assertIn(("GET", f"repos/{REPO}/git/ref/heads/release%2F2026", None), self.api.calls)
+        self.assertEqual(self.owned(self.opening), ["+1"])
 
     def test_reaction_summary_changes_do_not_block_start_or_finish(self):
         trigger = self.target("issue_comment")
@@ -544,7 +611,9 @@ class EmergencyOwnershipTests(unittest.TestCase):
                 status = {"id":55, "user":{"login":check.STATUS_AUTHOR,"type":"Bot"},
                           "body":check.status_comment_body(HEAD, "main", "in_progress", owner=owner)}
                 result, calls = self.fallback(OWNER_FIXTURE=owner, PR_NUMBER="7", STATUS_COMMENT_ID="55", responses={
-                    "STATUS":[{"stdout":json.dumps(status)}], "PR":[{"stdout":pr_identity().replace(BASE_TIP, OTHER) if moved_base else pr_identity()}],
+                    "STATUS":[{"stdout":json.dumps(status)}], "PR":[{"stdout":pr_identity()}],
+                    "REF":[{"stdout":json.dumps({"ref":"refs/heads/main", "object":{
+                        "type":"commit", "sha":OTHER if moved_base else BASE_TIP}})}],
                     "TRIGGER":[{"stdout":json.dumps({"id":42,
                         "issue_url" if namespace == "issues" else "pull_request_url":
                         f"https://api.github.com/repos/{workflow_repo}/{namespace}/7"})}],
@@ -569,7 +638,9 @@ class EmergencyOwnershipTests(unittest.TestCase):
                 result, calls = ToolingFallbackScriptTests().run_fallback(AUTOMATIC,
                     OWNER_FIXTURE=owner, PR_NUMBER="7", STATUS_COMMENT_ID="55", responses={
                         "STATUS":[{"stdout":json.dumps(status)}],
-                        "PR":[{"stdout":pr_identity().replace(BASE_TIP, OTHER)}],
+                        "PR":[{"stdout":pr_identity()}],
+                        "REF":[{"stdout":json.dumps({"ref":"refs/heads/main", "object":{
+                            "type":"commit", "sha":OTHER}})}],
                         "REACTIONS":[{"stdout":json.dumps([reaction(70,"eyes")])}]})
                 self.assertEqual(result.returncode, 1, result.stderr)
                 writes = [call for call in calls if call["method"] in ("DELETE", "PATCH", "POST")

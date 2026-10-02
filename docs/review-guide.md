@@ -55,6 +55,15 @@ appear while Check publication is unavailable; they indicate an active attempt,
 not a review result. Findings, failure, cancellation, unverified completion, and
 terminal unavailable Check remove the runtime's eyes/thumbs-up pair best-effort.
 
+Runtime revisions containing the direct-ref freshness guard distinguish the
+PR API's comparison-base SHA from the actual base branch tip. Before a manual
+review starts, the captured PR head/base must still match the live PR, and its
+comparison base must equal the directly resolved branch tip. Missing, malformed,
+inconsistent, or outdated authority rejects that request before model execution;
+the guard is required even for a manual fork request. It does not silently
+replace the captured base or change the reviewed diff. Automatic reviews retain
+the triggering event's immutable head/base and historical Check identity.
+
 When the existing trusted result reports clean completion, trusted finalization
 adds a fixed notice after successful Check publication, identifying its captured
 head, base commit, and workflow run.
@@ -131,12 +140,23 @@ Terminal reactions on older trigger comments remain historical snapshot
 information when the patch changes or another comment requests a review. A new
 accepted attempt on the same comment replaces its owned reactions. Superseded
 attempts never add clean thumbs-up or overwrite another request's presentation.
-If only the base tip advances during a still-owned review, finalization marks
-its presentation stale and clears progress reactions; the captured Check result
-retains its original authority. Stale refresh preserves ownership metadata and
+If finalization observes a base tip that advanced during a still-owned review,
+it marks presentation stale and clears progress reactions; the captured Check
+retains its original authority. Freshness checks read the exact encoded branch
+ref directly and validate its ref name, commit type, and full SHA, with PR
+identity reads around that lookup. A status refresh can observe this movement
+even if the PR API still reports the old comparison base. This is not a watcher
+for base-branch pushes, and separate API reads and writes are not atomic:
+movement after the last read remains possible. Unavailable branch authority
+suppresses new clean presentation rather than strengthening the Check result.
+Stale refresh preserves ownership metadata and
 affects only current PR presentation. Reaction and status publication are best-effort: API failures or
 unverifiable ownership can leave stale or missing reactions. Consult the current
 exact-head Check.
+
+The default self-review caller pins listed below remain at `8dbcd6d`; that
+revision predates this direct-ref guard. Updating consumer pins is a separate
+reviewed deployment, not a side effect of changing the runtime implementation.
 
 Completion requires every captured metadata and diff line to appear in successful
 Read responses. Claude can read additional ranges after a partial response;
