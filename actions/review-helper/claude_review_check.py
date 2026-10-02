@@ -252,7 +252,29 @@ def fetch_claude_comment_ids(repo, pr_number, head_sha):
 def check_run_history(repo, head_sha):
     # filter=all: the endpoint's default returns only the latest run per name.
     query = urlencode({"check_name": CHECK_NAME, "filter": "all", "per_page": 100})
-    return parse_pages(gh_api(["--paginate", f"repos/{repo}/commits/{head_sha}/check-runs?{query}"]))
+    raw = gh_api(["--paginate", f"repos/{repo}/commits/{head_sha}/check-runs?{query}"])
+    try:
+        pages = parse_pages(raw)
+        # An empty body or missing collection cannot establish absence. Check
+        # all pages before consuming any history, including recovery lookups.
+        if not pages or any(not isinstance(page, dict)
+                            or not isinstance(page.get("check_runs"), list) for page in pages):
+            raise ValueError("expected complete check history pages")
+        for page in pages:
+            for run in page["check_runs"]:
+                if (not isinstance(run, dict) or not positive_comment_id(run.get("id"))
+                        or any(not isinstance(run.get(key), str) for key in ("name", "head_sha", "status"))
+                        or not isinstance(run.get("app"), dict)
+                        or not isinstance(run["app"].get("slug"), str)
+                        or (run.get("external_id") is not None and not isinstance(run["external_id"], str))
+                        or (run.get("output") is not None and not isinstance(run["output"], dict))
+                        or (isinstance(run.get("output"), dict)
+                            and run["output"].get("text") is not None
+                            and not isinstance(run["output"]["text"], str))):
+                    raise ValueError("malformed check run")
+        return pages
+    except (ValueError, TypeError, KeyError, AttributeError) as error:
+        raise GhError("Claude Review check history is malformed or incomplete") from error
 
 
 def fetch_prior_finding_evidence(repo, head_sha, current_check_run_id, pr_number, merge_base_sha):

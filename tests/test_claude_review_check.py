@@ -427,6 +427,30 @@ def current_run_only():
 
 
 class FinalizeTests(ScriptTestCase):
+    def test_invalid_history_fails_closed_and_preserves_observed_findings(self):
+        invalid = ["", "{}", "{broken", pages([]), pages({"check_runs": None}),
+                   pages({"check_runs": [None]}),
+                   pages({"check_runs": [{**check_run(98, "failure"), "output": {"text": []}}]}),
+                   pages({"check_runs": []}, {}),
+                   pages({"check_runs": [{**check_run(98, "failure"), "id": True}]})]
+        for raw in invalid:
+            for findings in ([], [comment(9)]):
+                with self.subTest(raw=raw, findings=bool(findings)):
+                    self.log.unlink(missing_ok=True)
+                    result = self.finalize(
+                        [history_rule(ok(raw)), comments_rule(ok(pages(findings))), patch_rule(ok("{}"))],
+                        MANUAL_COMPLETION_ENABLED="true",
+                    )
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    body = self.published()
+                    self.assertEqual(body["conclusion"], "failure")
+                    evidence = evidence_of(body)
+                    self.assertEqual(evidence["new_finding_comment_ids"], [9] if findings else [])
+                    self.assertEqual(evidence["same_diff_findings_recorded"], bool(findings))
+                    self.assertIn("malformed or incomplete", evidence["evidence_errors"][0])
+                    self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), check.ATTEMPTS)
+                    self.assertFalse(self.calls("POST"))
+
     def finalize(self, rules, *, before=(), review_result="success", action_conclusion="success", **extra):
         self.before.write_text(json.dumps(list(before)))
         return self.run_script(
@@ -1179,6 +1203,17 @@ class WorstCaseModelTests(ScriptTestCase):
 
 
 class CreateAndSnapshotTests(ScriptTestCase):
+    def test_ambiguous_create_never_reposts_after_invalid_history(self):
+        for raw in ("", "{}", "{broken", pages({"check_runs": None})):
+            with self.subTest(raw=raw):
+                self.log.unlink(missing_ok=True)
+                rules = [{**self.create_rule, "responses": [FAIL]}, history_rule(ok(raw))]
+                result = self.run_script(["create"], rules, EXTERNAL_ID="Claude Review/5/1")
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertEqual(len(self.calls("POST")), 1)
+                self.assertEqual(len(self.calls("GET")), check.ATTEMPTS - 1)
+                self.assertFalse(self.output.exists())
+
     create_rule = {"method": "POST", "path": f"repos/{REPO}/check-runs", "responses": []}
 
     def create(self, responses, **extra):
