@@ -10,7 +10,7 @@ from pathlib import Path
 
 import test_claude_review_workflows as w
 
-PIN = "da81f4b17c0142fec4b6996e6c03aa725394cb1a"
+PIN = "8dbcd6d786c9485670ffaaac55af4aa390c70d22"
 AUTOMATIC = w.WORKFLOWS / "self-review-automatic.yml"
 MANUAL = w.WORKFLOWS / "self-review-manual.yml"
 STATUS = w.WORKFLOWS / "self-review-status.yml"
