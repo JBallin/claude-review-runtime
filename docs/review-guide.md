@@ -13,7 +13,7 @@ the executing runtime's repository, SHA, and workflow path.
 | Caller | Events | Eligibility and behavior |
 | --- | --- | --- |
 | [Automatic](../.github/workflows/self-review-automatic.yml) | PR `opened`, `ready_for_review` | Open, non-draft, same-repository PRs; Dependabot-triggered runs are excluded. |
-| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted mention followed by a read-only check for an open, non-draft, same-repository PR. |
+| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted `@claude` mention followed by a read-only check for an open, non-draft, same-repository PR. |
 | [Status](../.github/workflows/self-review-status.yml) | PR `synchronize`, `edited` | Open, same-repository PRs; refreshes existing presentation after head changes or base-ref retargeting. |
 
 Stacked PRs are eligible; the callers do not restrict the base branch. Status
@@ -35,11 +35,56 @@ the author's write access. Ordinary issue comments and untrusted comments do
 not start review. The eligibility job has read-only PR access and performs no
 checkout before calling the pinned runtime.
 
-This baseline pin does not accept `/claude-review` or post a separate manual
-clean-completion notice. The proposed exact `/claude-review` command and notice
-require a separately reviewed runtime revision and caller update; changing the
-documentation does not enable them. Manual results appear in the exact-head
-Check and existing status presentation.
+These callers remain pinned to the baseline and do not accept `/claude-review`
+or post a separate manual clean-completion notice. The reusable manual entrypoint
+in this checkout uses the [current runtime interface](#current-runtime-manual-interface)
+below. Enabling that interface in the callers requires a separately reviewed
+runtime pin and manual eligibility-gate update; neither is changed here. Manual
+results from the deployed callers appear in the exact-head Check and existing
+status presentation.
+
+## Current runtime manual interface
+
+Post `/claude-review` as the entire PR comment, without surrounding whitespace,
+arguments, quotes, or other text. Matching is case-insensitive. Top-level PR
+comments and inline review comments are accepted from authors GitHub identifies
+as `OWNER`, `MEMBER`, or `COLLABORATOR`; the action also checks actor/access
+eligibility. Ordinary issue comments and untrusted requests do not start model
+execution. The runtime resolves the current patch once for each accepted request.
+
+The command deliberately avoids a Claude mention. `@claude review` can invoke
+Anthropic's separate managed review service and does not invoke this checkout's
+manual entrypoint. The deployed baseline still accepts trusted mentions.
+Provider-bot reactions on comments are preserved and are not this runtime's
+progress or completion signals. The caller installation shape stays the same,
+but a revision update must keep its manual gate and documented command consistent
+with that revision.
+
+The exact-SHA `Claude Review` Check is authoritative. The stable workflow-owned
+status comment and top-level PR reactions present progress, clean completion,
+findings, failure, and stale state. When the existing trusted result reports clean
+completion, trusted finalization adds a fixed notice after successful Check
+publication, identifying its captured head, base commit, and workflow run.
+Reserve this runtime's namespaced comment markers for its trusted publication jobs.
+
+Completion notices are historical information, not review authority or merge
+approval. There is at most one notice per PR/head/base-commit/base-ref/merge-base
+identity. Repeating the command still reviews the patch and refreshes Check/status
+state, but a clean rerun of the same identity adds no notice. Recorded findings or
+a failed rerun leave prior notices unchanged; consult the current Check and status.
+A base change creates a different notice identity even when the head is unchanged.
+
+No success notice is posted for recorded findings, failure, unverified completion,
+or an unavailable Check. Publication checks the live head and base immediately
+before posting and skips known superseded snapshots. A concurrent PR change can
+still occur afterward, so the notice describes its linked historical snapshot.
+Notice publication is best-effort: an API failure may leave no notice, and an
+ambiguous POST is not retried blindly. Neither changes the authoritative result.
+
+The notice follows the existing trusted result and inherits the
+[finding-publication gap](https://github.com/JBallin/claude-review-runtime/issues/6).
+It does not independently prove that every attempted finding reached GitHub.
+Keep independent review requirements in place.
 
 ## Permissions and authentication
 

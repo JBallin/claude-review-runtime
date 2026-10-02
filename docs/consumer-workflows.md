@@ -62,9 +62,10 @@ review to a later patch.
 
 ## Manual review
 
-For the command accepted by this repository's pinned revision, see
-[manual invocation](review-guide.md#request-a-manual-review). When selecting a
-different revision, check its documented manual interface before changing callers.
+Manual invocation depends on the selected runtime revision. See the review
+guide for [this repository's pinned command](review-guide.md#request-a-manual-review)
+and the [current runtime interface](review-guide.md#current-runtime-manual-interface)
+before selecting a revision or changing callers.
 
 ```yaml
 name: Manual Claude review
@@ -89,9 +90,8 @@ jobs:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
 
-The runtime requires a trusted author and a Claude mention on a pull request. It
-resolves the current patch once for the manual request. Ordinary issue comments
-and untrusted requests do not start model execution.
+The runtime resolves the current patch once for each accepted manual request.
+Ordinary issue comments and untrusted requests do not start model execution.
 
 ## Stale presentation refresh
 

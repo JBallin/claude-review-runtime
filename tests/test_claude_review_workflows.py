@@ -287,7 +287,7 @@ def pull_request_event(*, draft=False, actor="example-user", head_repo=REPO, num
     }
 
 
-def issue_comment_event(*, body="@claude review", association="OWNER", on_pr=True, number=7):
+def issue_comment_event(*, body="/claude-review", association="OWNER", on_pr=True, number=7):
     issue = {"number": number}
     if on_pr:
         issue["pull_request"] = {"url": f"https://api.github.com/repos/{REPO}/pulls/{number}"}
@@ -300,7 +300,7 @@ def issue_comment_event(*, body="@claude review", association="OWNER", on_pr=Tru
     }
 
 
-def review_comment_event(*, body="@claude review", association="MEMBER", number=7):
+def review_comment_event(*, body="/claude-review", association="MEMBER", number=7):
     return {
         "event_name": "pull_request_review_comment",
         "actor": "someone",
@@ -331,7 +331,7 @@ class EligibilityPredicateTests(unittest.TestCase):
         self.assertFalse(evaluate(predicate, pull_request_event(actor="dependabot[bot]")))
         self.assertFalse(evaluate(predicate, pull_request_event(head_repo="someone/fork")))
 
-    def test_manual_review_requires_trusted_claude_mention_on_a_pr(self):
+    def test_manual_review_requires_trusted_standalone_command_on_a_pr(self):
         predicate = start_check_predicate(MANUAL)
         for association in ("OWNER", "MEMBER", "COLLABORATOR"):
             self.assertTrue(evaluate(predicate, issue_comment_event(association=association)))
@@ -341,6 +341,23 @@ class EligibilityPredicateTests(unittest.TestCase):
             self.assertFalse(evaluate(predicate, review_comment_event(association=association)))
         self.assertFalse(evaluate(predicate, issue_comment_event(body="looks good")))
         self.assertFalse(evaluate(predicate, issue_comment_event(on_pr=False)))
+
+    def test_manual_command_matches_only_the_entire_body_case_insensitively(self):
+        for factory in (issue_comment_event, review_comment_event):
+            for body in ("/claude-review", "/CLAUDE-REVIEW", "/Claude-Review"):
+                event = factory(body=body)
+                self.assertTrue(evaluate(start_check_predicate(MANUAL), event))
+                self.assertEqual(evaluate(concurrency_group(MANUAL), event),
+                                 f"claude-review-state-{REPO}-7")
+            for body in ("@claude", "@claude review", "/claude-review now",
+                         "please /claude-review", "`/claude-review`", "> /claude-review",
+                         " /claude-review", "/claude-review ", "\t/claude-review",
+                         "/claude-review\n", "\n/claude-review\n", "", None):
+                with self.subTest(event=factory.__name__, body=body):
+                    event = factory(body=body)
+                    self.assertFalse(evaluate(start_check_predicate(MANUAL), event))
+                    self.assertEqual(evaluate(concurrency_group(MANUAL), event),
+                                     f"claude-review-ineligible-{event['run_id']}")
 
 
     def test_reusable_entrypoints_reject_unrelated_caller_event_names(self):
@@ -508,10 +525,22 @@ class JobStructureTests(unittest.TestCase):
                 with self.subTest(workflow=path.name, job=name):
                     needed = sum(worst_case_seconds(command) for command in commands)
                     needed += worst_case_seconds("status")
+                    if path == MANUAL and name == "publish-status":
+                        needed += worst_case_seconds("completion")
                     timeout = int(scalar(job(path, name), "timeout-minutes", 4)) * 60
                     self.assertLessEqual(needed + JOB_OVERHEAD_SECONDS, timeout)
                     for command in commands:
                         self.assertIn(f'"$REVIEW_HELPER" {command}', "\n".join(job(path, name)))
+
+    def test_completion_notice_is_enabled_only_in_manual_trusted_finalization(self):
+        for path in (AUTOMATIC, MANUAL):
+            text = path.read_text()
+            self.assertEqual(text.count('MANUAL_COMPLETION_ENABLED: "true"'),
+                             1 if path == MANUAL else 0)
+            for name in ("start-check", "review"):
+                self.assertNotIn("MANUAL_COMPLETION_ENABLED", "\n".join(job(path, name)))
+        publish = steps(job(MANUAL, "publish-status"))["Publish Claude Review result"]
+        self.assertEqual(scalar(publish, "MANUAL_COMPLETION_ENABLED", 10), '"true"')
 
     def test_check_text_carries_no_agent_invocation_and_one_external_id(self):
         for path in (AUTOMATIC, MANUAL):

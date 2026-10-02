@@ -33,6 +33,7 @@ STATUS_REVIEWED_HEAD_PREFIX = "<!-- claude-review-runtime:claude-review-last-rev
 STATUS_REVIEWED_BASE_REF_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:"
 STATUS_REVIEWED_RESULT_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-result:"
 STATUS_AUTHOR = "github-actions[bot]"
+COMPLETION_PREFIX = "<!-- claude-review-runtime:manual-clean-completion:"
 ATTEMPTS = 3
 GH_TIMEOUT_SECONDS = 30
 RETRY_DELAY_SECONDS = 2
@@ -64,6 +65,9 @@ WORST_CASE = {
     # adds up to three bounded, non-retried calls.
     "status": (4 * ATTEMPTS + 3, 4),
     "stale": (4 * ATTEMPTS + 3, 4),
+    # Paginated dedup discovery and the live snapshot read may retry; the
+    # completion POST is attempted once because a lost response is ambiguous.
+    "completion": (2 * ATTEMPTS + 1, 2),
 }
 
 
@@ -504,7 +508,7 @@ def reconcile_pr_reactions(repo, pr_number, desired):
         gh_api(["--method", "POST", path, "--input", "-"], {"content": desired})
 
 
-def live_pr_identity(repo, pr_number):
+def live_pr_identity(repo, pr_number, *, include_base_sha=False):
     current = with_retries(
         lambda: gh_api([f"repos/{repo}/pulls/{pr_number}"]),
         "Reading the current PR head and base",
@@ -515,6 +519,11 @@ def live_pr_identity(repo, pr_number):
         raise ValueError("the live PR head SHA is invalid")
     if not isinstance(base_ref, str) or not base_ref:
         raise ValueError("the live PR base ref is invalid")
+    if include_base_sha:
+        base_sha = pr["base"]["sha"]
+        if not isinstance(base_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", base_sha):
+            raise ValueError("the live PR base SHA is invalid")
+        return head_sha, base_ref, base_sha
     return head_sha, base_ref
 
 
@@ -556,6 +565,62 @@ def best_effort_status(head_sha, state, *, check_available=True, create=True):
         reconcile_pr_reactions(repo, pr_number, desired)
     except Exception as error:
         print(f"::warning::Could not reconcile Claude Review reactions: {error}")
+
+
+def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_sha):
+    identity = [repo, str(pr_number), head_sha, base_ref, base_sha, merge_base_sha]
+    encoded = quote(json.dumps(identity, separators=(",", ":")), safe="")
+    return f"{COMPLETION_PREFIX}{encoded} -->"
+
+
+def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url):
+    return (
+        f"{marker}\n"
+        "🎉 Claude review completed—no findings on "
+        f"[`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}) against "
+        f"{inline_code(base_ref)} at "
+        f"[`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}). "
+        f"[Review run]({details_url})."
+    )
+
+
+def best_effort_manual_completion(head_sha):
+    """Publish historical UX only after this run's clean Check was published."""
+    if env("MANUAL_COMPLETION_ENABLED") != "true":
+        return
+    repo, pr_number = env("REPO"), env("PR_NUMBER")
+    base_ref, base_sha = env("BASE_REF"), env("BASE_SHA")
+    merge_base_sha, details_url = env("MERGE_BASE_SHA"), env("DETAILS_URL")
+    try:
+        if (not repo or not pr_number.isdigit() or not base_ref or not details_url
+                or any(not re.fullmatch(r"[0-9a-f]{40}", sha)
+                       for sha in (head_sha, base_sha, merge_base_sha))):
+            raise ValueError("the captured completion identity or workflow URL is missing or invalid")
+        marker = completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_sha)
+        path = f"repos/{repo}/issues/{pr_number}/comments"
+        raw = with_retries(
+            lambda: gh_api(["--paginate", f"{path}?per_page=100"]),
+            "Looking up a manual Claude Review completion notice",
+        )
+        if any(
+            (comment.get("user") or {}).get("login") == STATUS_AUTHOR
+            and (comment.get("user") or {}).get("type") == "Bot"
+            and marker in (comment.get("body") or "")
+            for page in parse_pages(raw) for comment in page
+        ):
+            return
+        # Read after discovery, immediately before POST. GitHub cannot make
+        # this read/write atomic, so the notice describes the captured history
+        # and never claims that it covers the PR's current patch.
+        if live_pr_identity(repo, pr_number, include_base_sha=True) != (head_sha, base_ref, base_sha):
+            print("::notice::Skipping manual completion notice for a superseded review snapshot.")
+            return
+        body = completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url)
+        # Never retry an ambiguous POST. A subsequent clean rerun can discover
+        # a notice that was created despite a failed response.
+        gh_api(["--method", "POST", path, "--input", "-"], {"body": body})
+    except Exception as error:
+        print(f"::warning::Could not publish manual Claude Review completion notice: {error}")
 
 
 def summary_lines(head_sha, sentence):
@@ -927,6 +992,8 @@ def cmd_finalize():
         return 1
     print(f"Claude Review check run {check_run_id}: {conclusion} ({title})")
     best_effort_status(head_sha, conclusion)
+    if conclusion == "success":
+        best_effort_manual_completion(head_sha)
     if evidence_error:
         print(f"::error::{evidence_error}")
         return 1
