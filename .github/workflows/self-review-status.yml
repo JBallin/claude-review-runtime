@@ -1,0 +1,18 @@
+name: Claude self-review status
+
+on:
+  pull_request:
+    types: [synchronize, edited]
+
+permissions: {}
+
+jobs:
+  status:
+    if: >-
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    uses: JBallin/claude-review-runtime/.github/workflows/claude-review-status.yml@9a9310f9ab8374f5c67bd9c0f067b9ff3dac3ebf
