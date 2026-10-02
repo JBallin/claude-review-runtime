@@ -5,7 +5,7 @@
 ## Pinned callers
 
 The three self-review callers use reviewed runtime commit
-`da81f4b17c0142fec4b6996e6c03aa725394cb1a`. They leave the reusable entrypoints
+`8dbcd6d786c9485670ffaaac55af4aa390c70d22`. They leave the reusable entrypoints
 separate and keep publication code pinned even when a PR changes the runtime.
 Reviews cover the captured PR diff and record its head, base, merge base, and
 the executing runtime's repository, SHA, and workflow path.
@@ -39,11 +39,11 @@ progress or completion signals. The caller installation shape stays the same,
 but a revision update must keep its manual gate and documented command consistent
 with that revision.
 
-The trigger-comment reactions and presentation ownership described below are
-[PR 11](https://github.com/JBallin/claude-review-runtime/pull/11) candidate behavior.
-The deployed pin `da81f4b17c0142fec4b6996e6c03aa725394cb1a` reacts only to the PR
-opening post and does not include that ownership protocol. Deploying those
-candidate features requires a separately reviewed pin update after merge.
+The pinned runtime includes the trigger-comment reactions and presentation
+ownership merged in [PR 11](https://github.com/JBallin/claude-review-runtime/pull/11)
+and the fail-closed Check-history validation from
+[PR 18](https://github.com/JBallin/claude-review-runtime/pull/18). See the
+[validation summary](validation.md) for exact tested revisions and live limits.
 
 The exact-SHA `Claude Review` Check is authoritative. The stable workflow-owned
 status comment and opening-post reactions present progress, clean completion,
@@ -226,14 +226,23 @@ Updating all three pins to a reviewed revision is a separate change. Review and
 merge that runtime revision first, and update the manual caller and invocation
 guidance to match its interface. Keep caller-contract tests in sync with the
 approved pin and interface. To roll back a pin update, restore all three
-references, manual eligibility gate, and corresponding tests and guidance to
-the prior reviewed revision. The prior pin
-`9a9310f9ab8374f5c67bd9c0f067b9ff3dac3ebf` requires the trusted `@claude` mention
-gate; reverting pins alone would leave commands incompatible. That rollback
-retains the strict Read guard but restores the known
-[finding-publication gap](https://github.com/JBallin/claude-review-runtime/issues/6)
-and removes coverage diagnostics; it does not approve a release. Runtime
-publication does not update callers automatically.
+references and corresponding tests and deployment guidance together. For this
+adoption, the prior pin is `da81f4b17c0142fec4b6996e6c03aa725394cb1a`; keep the
+exact `/claude-review` gate unchanged because both revisions use it.
+
+That rollback retains strict captured Read coverage, finding receipts, and
+sanitized diagnostics, but restores opening-post-only reactions without
+presentation ownership or trigger reconciliation. Historical trigger reactions
+may remain, and old status writes may omit ownership markers. It also restores
+the pre-audit Check-history validation gaps, including possible false-clean
+classification on incomplete history. Rollback is an emergency disposition,
+not equivalent correctness or release approval.
+
+Before adoption or rollback activation, inspect active and queued reviews and
+let existing attempts settle; do not silently cancel or rerun mixed-version
+writers. Preserve Checks, findings, notices, and unrelated reactions. Any
+necessary cleanup or ambiguous recovery needs a separately scoped decision.
+Runtime publication does not update callers automatically.
 
 To undo the initial self-review setup, revert the three callers, their focused
 tests, and the associated documentation changes through a reviewed PR. Preserve

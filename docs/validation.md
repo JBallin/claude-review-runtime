@@ -20,26 +20,45 @@ does not update their callers.
 ## What is deployed
 
 This repository’s three self-review callers use reviewed runtime revision
-`da81f4b17c0142fec4b6996e6c03aa725394cb1a`. Their manual gate accepts the exact,
+`8dbcd6d786c9485670ffaaac55af4aa390c70d22`. Their manual gate accepts the exact,
 case-insensitive `/claude-review` command from trusted PR commenters. This pin
 includes the merged finding-publication contract and sanitized captured-read
-coverage diagnostics from [PR 16](https://github.com/JBallin/claude-review-runtime/pull/16).
-All three pins, manual eligibility, caller tests, and invocation guidance are
-updated together; permissions and credentials are unchanged.
+coverage diagnostics from [PR 16](https://github.com/JBallin/claude-review-runtime/pull/16),
+presentation ownership from [PR 11](https://github.com/JBallin/claude-review-runtime/pull/11),
+and audited Check-history validation from [PR 18](https://github.com/JBallin/claude-review-runtime/pull/18).
+All three pins, caller tests, and deployment guidance are updated together;
+manual eligibility, events, permissions, and credentials are unchanged.
 
 Diagnostics run without an opt-in flag when verification reports `verified` or
 `captured_inputs_not_read`; earlier failures may have no counters. They report
 only fixed metadata/diff labels, counts, content-shape enums, and partial-view
 booleans.
 They do not export contents, paths, transcripts, or raw errors, and do not alter
-the strict completion guard. Offline tests validate this contract; they do not
-establish a live diagnostic outcome for PR 11. Its two historical incomplete
-Checks remain evidence and are not superseded by a caller update.
+the strict completion guard.
 
-[PR 11](https://github.com/JBallin/claude-review-runtime/pull/11) proposes a
-manual trigger-comment reaction lifecycle. It remains subject to review gates
-and does not update deployed pins or eligibility. That behavior is not part of
-the merged publication contract described here.
+The single approved diagnostic review of PR 11 completed with authoritative
+[Check 110927696406](https://github.com/JBallin/claude-review-runtime/runs/110927696406):
+reviewed head `f539aab61e72b6e281d816c1ccc30e5a857c0fad`, base
+`9a20dcdab1081abce44ab4358996016bd3330cdc`, executing runtime
+`da81f4b17c0142fec4b6996e6c03aa725394cb1a`. Metadata covered 12/12 lines and diff
+2,116/2,116 lines, with zero missing/unparsed lines, zero finding attempts, and no
+evidence errors. Its two earlier incomplete Checks remain preserved. This was
+verified review completion of the candidate patch; it did not execute the
+candidate ownership protocol.
+
+The [integrated audit report](https://github.com/JBallin/claude-review-runtime/blob/8dbcd6d786c9485670ffaaac55af4aa390c70d22/docs/audit-issue-12.md)
+records audit input `bf210316642eb37ec5bd040b70cc87275c0a64d3` and the focused
+history-schema, nullable-metadata, count, and known-current-Check corrections.
+The merged runtime tree is identical to reviewed candidate
+`8f0c4359566cea9033652874b4b0bc9ce9e9ad08`, which passed the six focused
+regressions and 294-test full/CI suite. Its authoritative
+[Check 110967387622](https://github.com/JBallin/claude-review-runtime/runs/110967387622)
+verified clean completion with zero evidence errors using executing runtime
+`da81f4b17c0142fec4b6996e6c03aa725394cb1a`. These are source/offline and
+candidate-review results, not a live exercise of the adopted runtime's
+ownership behavior. No adversarial/stress execution is part of caller adoption.
+The audit retains limits on internally consistent historical listings and the
+API's 1,000-check-suite boundary; it does not prove atomic history completeness.
 
 ## Remaining boundaries
 
