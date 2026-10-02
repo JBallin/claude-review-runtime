@@ -39,11 +39,25 @@ progress or completion signals. The caller installation shape stays the same,
 but a revision update must keep its manual gate and documented command consistent
 with that revision.
 
+The trigger-comment reactions and presentation ownership described below are
+[PR 11](https://github.com/JBallin/claude-review-runtime/pull/11) candidate behavior.
+The deployed pin `da81f4b17c0142fec4b6996e6c03aa725394cb1a` reacts only to the PR
+opening post and does not include that ownership protocol. Deploying those
+candidate features requires a separately reviewed pin update after merge.
+
 The exact-SHA `Claude Review` Check is authoritative. The stable workflow-owned
-status comment and top-level PR reactions present progress, clean completion,
-findings, failure, and stale state. When the existing trusted result reports clean
-completion, trusted finalization adds a fixed notice after successful Check
-publication, identifying its captured head, base commit, and workflow run.
+status comment and opening-post reactions present progress, clean completion,
+findings, failure, and stale state. Accepted manual requests also receive runtime
+reactions on their top-level or inline trigger comment: 👀 while running and 👍
+only after verified clean completion and successful authoritative Check
+publication. Automatic reviews react only to the opening post. Running eyes can
+appear while Check publication is unavailable; they indicate an active attempt,
+not a review result. Findings, failure, cancellation, unverified completion, and
+terminal unavailable Check remove the runtime's eyes/thumbs-up pair best-effort.
+
+When the existing trusted result reports clean completion, trusted finalization
+adds a fixed notice after successful Check publication, identifying its captured
+head, base commit, and workflow run.
 Reserve this runtime's namespaced comment markers for its trusted publication jobs.
 
 Completion notices are historical information, not review authority or merge
@@ -99,9 +113,31 @@ it. These are different provenance boundaries.
 
 The exact-head Check is the review result. The stable comment and owned reactions
 are informational presentation and can become stale when the patch changes.
-Consumers must reserve `github-actions[bot]` eyes/thumbs-up reactions on top-level
-PRs for this runtime: reconciliation identifies the bot/reaction pair, not the
-individual workflow that added it.
+Consumers must reserve `github-actions[bot]` eyes/thumbs-up reactions on PR
+opening posts and accepted trigger comments for this runtime. Reconciliation
+identifies the bot/reaction pair, not the individual workflow that added it;
+human, Codex, provider, and other reaction pairs are preserved.
+
+Only an accepted trusted start acquires current presentation ownership under the
+shared PR queue. Its persisted owner binds the run/attempt, trigger target, and
+captured patch. Finalization and emergency repair must match that owner and the
+executing attempt; a partial rerun cannot claim it. A newly executed start on a
+rerun can replace current presentation, including on the same head. Missing or
+unverifiable owner evidence suppresses presentation writes. A start can establish
+ownership on a legacy status; finalization cannot. Duplicate starts do not reset
+a completed result or reclaim presentation from a newer request.
+
+Terminal reactions on older trigger comments remain historical snapshot
+information when the patch changes or another comment requests a review. A new
+accepted attempt on the same comment replaces its owned reactions. Superseded
+attempts never add clean thumbs-up or overwrite another request's presentation.
+If only the base tip advances during a still-owned review, finalization marks
+its presentation stale and clears progress reactions; the captured Check result
+retains its original authority. Stale refresh preserves ownership metadata and
+affects only current PR presentation. Reaction and status publication are best-effort: API failures or
+unverifiable ownership can leave stale or missing reactions. Consult the current
+exact-head Check.
+
 Completion requires every captured metadata and diff line to appear in successful
 Read responses. Claude can read additional ranges after a partial response;
 unread or truncated lines fail closed. Every inline-finding call must target the

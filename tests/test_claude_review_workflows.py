@@ -35,6 +35,8 @@ JOB_COMMANDS = {"start-check": ["create", "snapshot"], "publish-status": ["final
 
 
 def worst_case_seconds(command):
+    if command in ("status", "stale"):
+        return check.PRESENTATION_SECONDS
     calls, retried_operations = check.WORST_CASE[command]
     backoff = sum(check.RETRY_DELAY_SECONDS * 2**attempt for attempt in range(check.ATTEMPTS - 1))
     return calls * check.GH_TIMEOUT_SECONDS + retried_operations * backoff
@@ -451,9 +453,10 @@ class JobStructureTests(unittest.TestCase):
 
     def test_check_run_is_created_before_fallible_review_input_capture(self):
         cases = {
-            AUTOMATIC: ["Check review tooling", "Start Claude Review check", "Fetch PR review inputs"],
+            AUTOMATIC: ["Capture presentation start", "Check review tooling", "Start Claude Review check", "Fetch PR review inputs"],
             MANUAL: [
                 "Resolve PR under review",
+                "Capture presentation start",
                 "Check review tooling",
                 "Start Claude Review check",
                 "Capture PR review snapshot",
@@ -475,7 +478,8 @@ class JobStructureTests(unittest.TestCase):
             "Record existing Claude review comments",
             "Upload pre-review comment evidence",
         ]
-        self.assertEqual(sorted(named), sorted(required + evidence_only))
+        self.assertEqual(sorted(named), sorted(required + evidence_only + ["Capture presentation start"]))
+        self.assertEqual(scalar(named["Capture presentation start"], "continue-on-error", 8), "true")
         for name in required:
             with self.subTest(step=name):
                 self.assertIsNone(scalar(named[name], "continue-on-error", 8))
@@ -490,6 +494,9 @@ class JobStructureTests(unittest.TestCase):
 
     def test_same_repo_only_automatic_review_keeps_every_start_step_fail_closed(self):
         for name, lines in steps(job(AUTOMATIC, "start-check")).items():
+            if name == "Capture presentation start":
+                self.assertEqual(scalar(lines, "continue-on-error", 8), "true")
+                continue
             with self.subTest(step=name):
                 self.assertIsNone(scalar(lines, "continue-on-error", 8))
 
@@ -727,13 +734,24 @@ STUB_GH = textwrap.dedent(
         handle.write(json.dumps({"method": method, "args": args, "body": body}) + "\\n")
     reaction_get = method == "GET" and any("/reactions" in arg for arg in args)
     key = "REACTIONS" if reaction_get else method
+    if method == "GET" and not reaction_get:
+        if any("/issues/comments/55" in arg for arg in args):
+            key = "STATUS"
+        elif any(arg.endswith("/pulls/7") for arg in args):
+            key = "PR"
+        elif any("/comments/42" in arg for arg in args):
+            key = "TRIGGER"
     responses = json.loads(os.environ.get("GH_STUB_RESPONSES", "{}")).get(
         key, [{"stdout": "[]"}] if reaction_get else [{"stdout": "{}"}]
     )
     seen = sum(
         1 for c in calls
         if c["method"] == method
-        and (method != "GET" or any("/reactions" in arg for arg in c["args"]) == reaction_get)
+        and (method != "GET" or (
+            ("REACTIONS" if any("/reactions" in arg for arg in c["args"]) else
+             "STATUS" if any("/issues/comments/55" in arg for arg in c["args"]) else
+             "PR" if any(arg.endswith("/pulls/7") for arg in c["args"]) else
+             "TRIGGER" if any("/comments/42" in arg for arg in c["args"]) else "GET") == key))
     )
     response = responses[min(seen, len(responses) - 1)]
     if response.get("hang"):
@@ -775,7 +793,7 @@ def history(*runs):
 
 
 def pr_identity(head=HEAD, base_ref=BASE_REF):
-    return json.dumps({"head": {"sha": head}, "base": {"ref": base_ref}})
+    return json.dumps({"head": {"sha": head}, "base": {"ref": base_ref, "sha": "d" * 40}})
 
 
 class ToolingFallbackScriptTests(unittest.TestCase):
@@ -783,6 +801,27 @@ class ToolingFallbackScriptTests(unittest.TestCase):
 
     def run_fallback(self, path=AUTOMATIC, responses=None, **overrides):
         script = run_block(steps(job(path, "publish-status"))["Record failure without review tooling"])
+        from test_claude_review_check import presentation_owner
+        owner = overrides.pop("OWNER_FIXTURE", None) or presentation_owner(repo=REPO, base_ref=overrides.get("BASE_REF", BASE_REF))
+        owner_json = json.dumps(owner)
+        owner_marker = check.owner_marker(owner)
+        responses = dict(responses or {})
+        generic = responses.get("GET", [])
+        statuses, prs = [], []
+        for response in generic:
+            try:
+                document = json.loads(response.get("stdout", ""))
+            except ValueError:
+                continue
+            if isinstance(document, dict) and "head" in document:
+                prs.append(response)
+            elif isinstance(document, dict) and "user" in document:
+                document["body"] += "\n" + owner_marker
+                statuses.append({"stdout": json.dumps(document)})
+        responses.setdefault("PR", prs or generic[-1:] or [{"stdout": pr_identity()}])
+        default_status = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"},
+                          "body": check.status_comment_body(HEAD, owner["base_ref"], "in_progress", owner=owner)}
+        responses.setdefault("STATUS", statuses or [{"stdout": json.dumps(default_status)}])
         with tempfile.TemporaryDirectory() as tmp:
             stub = Path(tmp) / "gh"
             stub.write_text(STUB_GH)
@@ -795,8 +834,10 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             environment = {
                 "PATH": f"{tmp}{os.pathsep}{os.environ['PATH']}",
                 "GH_STUB_LOG": str(log),
-                "GH_STUB_RESPONSES": json.dumps(responses or {}),
+                "GH_STUB_RESPONSES": json.dumps(responses),
                 "CLAUDE_REVIEW_RETRY_DELAY": "0",
+                "PRESENTATION_OWNER": owner_json,
+                "GITHUB_RUN_ID": "5", "GITHUB_RUN_ATTEMPT": "1",
                 "CLAUDE_REVIEW_GH_TIMEOUT": "1",
                 "REPO": REPO,
                 "BASE_SHA": "d" * 40,
@@ -912,7 +953,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
     def test_unresolved_lookup_publishes_nothing(self):
         result, calls = self.run_fallback(AUTOMATIC, {"GET": [{"fail": True}]}, CHECK_RUN_ID="")
         self.assertEqual(result.returncode, 1)
-        self.assertEqual(self.methods(calls), ["GET", "GET", "GET"])
+        self.assertFalse(any(call["method"] == "PATCH" for call in calls))
 
     def test_confirmed_absence_allows_one_completed_failure_post(self):
         result, calls = self.run_fallback(AUTOMATIC, {"GET": [{"stdout": history()}]}, CHECK_RUN_ID="")
@@ -934,7 +975,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             CHECK_RUN_ID="", IS_FORK="true", STATUS_COMMENT_ID="55", PR_NUMBER="7",
         )
         self.assertEqual(result.returncode, 1)
-        self.assertEqual(self.methods(calls), ["GET", "GET", "GET", "PATCH"])
+        self.assertEqual(self.methods(calls)[-1], "PATCH")
         body = next(call["body"]["body"] for call in calls if call["method"] == "PATCH")
         self.assertIn("Review completion cannot be established", body)
         self.assertIn("Check publication is unavailable", body)
@@ -949,7 +990,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     CHECK_RUN_ID="", IS_FORK="true", STATUS_COMMENT_ID="55", PR_NUMBER="7",
                 )
                 self.assertEqual(result.returncode, 1)
-                self.assertEqual(self.methods(calls), ["GET", "GET"])
+                self.assertEqual(self.methods(calls)[-1], "GET")
 
     def test_manual_fork_no_check_repair_leaves_unowned_comment_untouched(self):
         unowned = {"user": {"login": "other", "type": "User"},
@@ -960,7 +1001,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             CHECK_RUN_ID="", IS_FORK="true", STATUS_COMMENT_ID="55", PR_NUMBER="7",
         )
         self.assertEqual(result.returncode, 1)
-        self.assertEqual(self.methods(calls), ["GET", "GET", "GET"])
+        self.assertFalse(any(call["method"] == "PATCH" for call in calls))
 
     def test_manual_fork_no_check_repair_failure_does_not_change_exit(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
@@ -972,7 +1013,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             CHECK_RUN_ID="", IS_FORK="true", STATUS_COMMENT_ID="55", PR_NUMBER="7",
         )
         self.assertEqual(result.returncode, 1)
-        self.assertEqual(self.methods(calls), ["GET", "GET", "GET", "PATCH"])
+        self.assertEqual(self.methods(calls)[-1], "PATCH")
 
     def test_retries_a_failing_write_a_bounded_number_of_times(self):
         result, calls = self.run_fallback(responses={"PATCH": [{"fail": True}]})
@@ -1009,9 +1050,10 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             with self.subTest(workflow=path.name):
                 script = run_block(steps(job(path, "publish-status"))[FALLBACK_STEP])
                 code = "\n".join(line for line in script.splitlines() if not line.lstrip().startswith("#"))
-                self.assertEqual(code.count("gh api"), 7)
+                self.assertEqual(code.count("gh api"), 3)
                 self.assertEqual(code.count('timeout "$attempt_timeout" gh api'), 2)
-                self.assertEqual(code.count('timeout "$comment_timeout" gh api'), 5)
+                self.assertIn('timeout "$remaining" gh api "$@"', code)
+                self.assertIn("presentation_deadline=$((SECONDS + 120))", code)
 
     def test_known_workflow_owned_comment_is_repaired_after_check_fallback(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
@@ -1024,7 +1066,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     STATUS_COMMENT_ID="55", PR_NUMBER="7", TRIGGER_LABEL=label,
                 )
                 self.assertEqual(result.returncode, 1)
-                self.assertEqual(self.methods(calls), ["PATCH", "GET", "GET", "PATCH"])
+                self.assertEqual(self.methods(calls)[-1], "PATCH")
                 repaired = next(call for call in calls if call["method"] == "PATCH" and any("issues/comments/55" in arg for arg in call["args"]))
                 self.assertIn("❌ Claude Review incomplete", repaired["body"]["body"])
                 self.assertIn(HEAD, repaired["body"]["body"])
@@ -1073,7 +1115,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertFalse(any("issues/comments/55/reactions" in arg
                                      for call in calls for arg in call["args"]))
 
-    def test_fallback_clears_pr_reactions_without_a_known_status_comment(self):
+    def test_fallback_without_known_status_owner_does_not_clear_reactions(self):
         reaction = {"id": 70, "content": "+1",
                     "user": {"login": "github-actions[bot]", "type": "User"}}
         result, calls = self.run_fallback(
@@ -1082,10 +1124,10 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             PR_NUMBER="7", STATUS_COMMENT_ID="",
         )
         self.assertEqual(result.returncode, 1)
-        self.assertEqual([call["method"] for call in calls if call["method"] == "DELETE"], ["DELETE"])
-        self.assertIn(f"repos/{REPO}/issues/7/reactions/70", calls[-1]["args"])
+        self.assertEqual(self.methods(calls), ["PATCH"])
+        self.assertFalse(any(call["method"] == "DELETE" for call in calls))
 
-    def test_fallback_migrates_a_legacy_clean_status_without_losing_its_sha(self):
+    def test_fallback_preserves_legacy_review_history_with_verified_owner(self):
         old_sha = "b" * 40
         legacy = (f"{check.STATUS_MARKER}\n{check.STATUS_HEAD_PREFIX}{old_sha} -->\n"
                   f"{check.STATUS_BASE_REF_PREFIX}main -->\n"
@@ -1109,7 +1151,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             STATUS_COMMENT_ID="55", PR_NUMBER="7",
         )
         self.assertEqual(result.returncode, 1)
-        self.assertEqual(self.methods(calls), ["PATCH", "GET", "GET"])
+        self.assertEqual(self.methods(calls), ["PATCH", "GET"])
         self.assertEqual(calls[0]["body"]["conclusion"], "failure")
 
     def test_fallback_never_rewrites_a_newer_or_unverifiable_status(self):
@@ -1121,7 +1163,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         path, {"GET": [response]}, STATUS_COMMENT_ID="55", PR_NUMBER="7"
                     )
                     self.assertEqual(result.returncode, 1)
-                    self.assertEqual(self.methods(calls), ["PATCH", "GET"])
+                    self.assertEqual(self.methods(calls)[0], "PATCH")
+                    self.assertEqual(len([call for call in calls if call["method"] == "PATCH"]), 1)
                     self.assertEqual(calls[0]["body"]["conclusion"], "failure")
 
     def test_unpublishable_check_repairs_known_comment_as_incomplete(self):
@@ -1135,7 +1178,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             STATUS_COMMENT_ID="55", PR_NUMBER="7", TRIGGER_LABEL="PR opened for review",
         )
         self.assertEqual(result.returncode, 1)
-        self.assertEqual(self.methods(calls), ["PATCH", "PATCH", "PATCH", "GET", "GET", "PATCH"])
+        self.assertEqual(self.methods(calls)[-1], "PATCH")
         repaired = next(call for call in calls if call["method"] == "PATCH" and any("issues/comments/55" in arg for arg in call["args"]))
         self.assertIn("could not be published", repaired["body"]["body"])
         self.assertNotIn("Authority:", repaired["body"]["body"])
@@ -1155,7 +1198,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 step_seconds = int(scalar(step, "timeout-minutes", 8)) * 60
                 # Lookup and write phases, then known-comment repair and
                 # best-effort removal of two obsolete reactions.
-                self.assertLessEqual(2 * per_phase + 6 * 10 + 60, step_seconds)
+                self.assertLessEqual(2 * per_phase + check.PRESENTATION_SECONDS, step_seconds)
 
     def test_fork_without_a_matching_run_is_not_given_a_new_one(self):
         result, calls = self.run_fallback(MANUAL, {"GET": [{"stdout": history()}]}, CHECK_RUN_ID="", IS_FORK="true")

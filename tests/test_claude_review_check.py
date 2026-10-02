@@ -55,9 +55,43 @@ STUB_GH = textwrap.dedent(
     if response.get("fail"):
         sys.stderr.write("HTTP 502: stubbed failure\\n")
         sys.exit(1)
-    sys.stdout.write(response["stdout"])
+    stdout = response["stdout"]
+    if os.environ.get("GH_STUB_STATUS_STATE") and method == "GET" and path.startswith("repos/owner/repo/issues/7/comments"):
+        written = [call for call in calls if call["method"] in ("POST", "PATCH")
+                   and call.get("body") and "claude-review-status -->" in call["body"].get("body", "")
+                   and call.get("persisted")]
+        if written:
+            decoder = json.JSONDecoder()
+            docs, remaining = [], stdout
+            while remaining.strip():
+                value, length = decoder.raw_decode(remaining.lstrip())
+                docs.append(value)
+                remaining = remaining.lstrip()[length:]
+            for doc in docs:
+                if isinstance(doc, list):
+                    doc[:] = [item for item in doc if item.get("id") != 55]
+            docs[0].append({"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": written[-1]["body"]["body"]})
+            stdout = "".join(json.dumps(doc) for doc in docs)
+    if method in ("POST", "PATCH"):
+        logged = [json.loads(line) for line in open(log)]
+        logged[-1]["persisted"] = True
+        with open(log, "w") as handle:
+            for item in logged:
+                handle.write(json.dumps(item) + "\\n")
+    sys.stdout.write(stdout)
     """
 )
+
+
+def sign_owner(owner):
+    identity = {key: value for key, value in owner.items() if key != "generation"}
+    return {**identity, "generation": hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()}
+
+
+def presentation_owner(kind="automatic", target=None, **changes):
+    return sign_owner({"version": 1, "repo": REPO, "pr": 7, "run": 5, "attempt": 1,
+                       "kind": kind, "target": target, "head": HEAD, "base": BASE_TIP,
+                       "base_ref": "main", "started": 2, **changes})
 
 
 def comment(comment_id, *, login="claude[bot]", user_type="Bot", commit=HEAD):
@@ -270,6 +304,26 @@ class ScriptTestCase(unittest.TestCase):
         if (extra_env.get("STATUS_COMMENTS_ENABLED") == "true" and command[0] != "stale"
                 and not any(rule["path"] == f"repos/{REPO}/pulls/7" for rule in rules)):
             rules = [pr_head_rule(live_head(extra_env.get("HEAD_SHA", HEAD))), *rules]
+        if extra_env.get("STATUS_COMMENTS_ENABLED") == "true":
+            fixture_owner = presentation_owner(kind="automatic", head=extra_env.get("HEAD_SHA", HEAD),
+                                             base_ref=extra_env.get("BASE_REF", "main"))
+            for rule in rules:
+                if rule["method"] == "GET" and rule["path"] == f"repos/{REPO}/issues/7/comments":
+                    for response in rule["responses"]:
+                        if "stdout" not in response:
+                            continue
+                        docs = check.parse_pages(response["stdout"])
+                        for doc in docs:
+                            for item in doc:
+                                if check.owned_status(item) and check.OWNER_PREFIX not in item.get("body", ""):
+                                    owner = dict(fixture_owner)
+                                    owner["head"] = check.status_head(item) or HEAD
+                                    owner["base_ref"] = check.status_base_ref(item) or "main"
+                                    if command[0] == "create":
+                                        owner["started"] = 1
+                                        owner["run"] = 4
+                                    item["body"] += "\n" + check.owner_marker(sign_owner(owner))
+                        response["stdout"] = pages(*docs)
         scenario.write_text(json.dumps(rules))
         environment = {
             "PATH": f"{self.dir / 'bin'}{os.pathsep}{os.environ['PATH']}",
@@ -277,6 +331,10 @@ class ScriptTestCase(unittest.TestCase):
             "GH_STUB_SCENARIO": str(scenario),
             "GITHUB_OUTPUT": str(self.output),
             "CLAUDE_REVIEW_RETRY_DELAY": "0",
+            "GH_STUB_STATUS_STATE": "true",
+            "GITHUB_RUN_ID": "5", "GITHUB_RUN_ATTEMPT": "1",
+            "PRESENTATION_START": "2",
+            "PRESENTATION_OWNER": json.dumps(presentation_owner()),
             "REPO": REPO,
             "PR_NUMBER": "7",
             "HEAD_SHA": HEAD,
@@ -855,7 +913,7 @@ class FinalizeTests(ScriptTestCase):
         self.assertLess(len(text.encode("utf-8")), 65535)
         self.assertEqual(json.loads(text[8:-4])["pr_number"][-1], "…")
 
-    def test_unresolved_check_lookup_clears_obsolete_pr_reaction_when_possible(self):
+    def test_unresolved_check_lookup_without_owner_leaves_pr_reactions_untouched(self):
         result = self.run_script(
             ["finalize"],
             [history_rule(FAIL), pr_head_rule(live_head(HEAD)),
@@ -868,8 +926,7 @@ class FinalizeTests(ScriptTestCase):
         self.assertEqual(result.returncode, 1)
         self.assertFalse(any(call["path"] == f"repos/{REPO}/check-runs"
                              for call in self.calls("POST")))
-        self.assertEqual([call["path"] for call in self.calls("DELETE")],
-                         [f"repos/{REPO}/issues/7/reactions/70"])
+        self.assertEqual(self.calls("DELETE"), [])
 
     def test_unresolved_lookup_for_a_fork_stays_best_effort(self):
         post = {"method": "POST", "path": f"repos/{REPO}/check-runs", "responses": [ok(json.dumps({"id": 5}))]}
@@ -1104,42 +1161,21 @@ class WorstCaseModelTests(ScriptTestCase):
         self.assertEqual(result.returncode, 1)
         self.assertEqual(len(self.calls()), check.WORST_CASE["finalize"][0])
 
-    def test_stale_worst_case_matches_the_model(self):
-        result = self.run_script(
-            ["stale"],
-            [
-                pr_head_rule(FAIL, FAIL, live_head(OTHER),
-                             FAIL, FAIL, live_head(OTHER)),
-                status_list_rule(FAIL, FAIL, ok(pages([status_comment(HEAD)]))),
-                status_patch_rule(FAIL, FAIL, ok("{}")),
-                reaction_list_rule(ok(pages([reaction(70, "eyes"), reaction(71, "+1")]))),
-                reaction_delete_rule(70, ok("")), reaction_delete_rule(71, ok("")),
-            ],
-            HEAD_SHA=OTHER, STATUS_COMMENTS_ENABLED="true", PR_REACTION_MODE="stale",
-        )
-        self.assertEqual(result.returncode, 0)
-        self.assertEqual(len(self.calls()), check.WORST_CASE["stale"][0])
-
-    def test_status_worst_case_includes_reaction_projection(self):
-        result = self.run_script(
-            ["create"],
-            [
-                {"method": "POST", "path": f"repos/{REPO}/check-runs", "responses": [ok('{"id":99}')]},
-                pr_head_rule(FAIL, FAIL, live_head(HEAD), FAIL, FAIL, live_head(HEAD)),
-                status_list_rule(FAIL, FAIL, ok(pages([status_comment(HEAD)]))),
-                status_patch_rule(FAIL, FAIL, ok("{}")),
-                reaction_list_rule(ok(pages([reaction(70, "+1")]))),
-                reaction_delete_rule(70, ok("")), reaction_post_rule(ok('{"id":80}')),
-            ],
-            STATUS_COMMENTS_ENABLED="true", PR_REACTION_MODE="automatic",
-        )
-        self.assertEqual(result.returncode, 0)
-        self.assertEqual(
-            len([call for call in self.calls() if call["path"] == f"repos/{REPO}/pulls/7"]),
-            2 * check.ATTEMPTS,
-        )
-        self.assertEqual(check.WORST_CASE["status"][1], 4)
-        self.assertEqual(len(self.calls()) - 1, check.WORST_CASE["status"][0])
+    def test_presentation_elapsed_budget_is_separate_from_check_retries(self):
+        for command in ("status", "stale"):
+            self.assertNotIn(command, check.WORST_CASE)
+        completed = subprocess.CompletedProcess(["gh"], 0, stdout="[]", stderr="")
+        with mock.patch.object(check.time, "monotonic", return_value=115), \
+             mock.patch.object(check, "PRESENTATION_DEADLINE", 120), \
+             mock.patch.object(check.subprocess, "run", return_value=completed) as run:
+            check.gh_api(["repos/owner/repo/issues/7/reactions"])
+        self.assertEqual(run.call_args.kwargs["timeout"], 5)
+        with mock.patch.object(check.time, "monotonic", return_value=121), \
+             mock.patch.object(check, "PRESENTATION_DEADLINE", 120), \
+             mock.patch.object(check.subprocess, "run") as run:
+            with self.assertRaises(check.GhError):
+                check.gh_api(["repos/owner/repo/issues/7/reactions"])
+            run.assert_not_called()
 
 
 class CreateAndSnapshotTests(ScriptTestCase):
@@ -1231,7 +1267,7 @@ class StatusCommentTests(ScriptTestCase):
                     STATUS_COMMENTS_ENABLED="true", TRIGGER_LABEL=label,
                 )
                 self.assertEqual(result.returncode, 0, result.stdout)
-                self.assertEqual([c["method"] for c in self.calls()], ["POST", "GET", "GET", "POST"])
+                self.assertEqual([c["method"] for c in self.calls() if c["method"] != "GET"], ["POST", "POST"])
                 body = self.calls("POST")[-1]["body"]["body"]
                 self.assertIn(HEAD, body)
                 self.assertEqual(check.status_base_ref({"body": body}), "main")
@@ -1287,8 +1323,8 @@ class StatusCommentTests(ScriptTestCase):
                     STATUS_COMMENTS_ENABLED="true",
                 )
                 self.assertEqual(result.returncode, 0)
-                self.assertEqual([call["path"] for call in self.calls()],
-                                 [f"repos/{REPO}/check-runs", f"repos/{REPO}/pulls/7"])
+                self.assertEqual([call["path"] for call in self.calls() if call["method"] != "GET"],
+                                 [f"repos/{REPO}/check-runs"])
 
     def test_superseded_rerun_preserves_newer_status_after_check_finalization(self):
         self.before.write_text("[]")
@@ -1346,7 +1382,7 @@ class StatusCommentTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0)
         self.assertEqual(len(self.calls("POST")), 1)
-        self.assertEqual(len(self.calls("GET")), check.ATTEMPTS)
+        self.assertEqual(len([call for call in self.calls("GET") if call["path"] == f"repos/{REPO}/pulls/7"]), check.ATTEMPTS)
 
     def test_nullable_comment_user_and_local_projection_error_are_best_effort(self):
         result = self.run_script(
@@ -1358,7 +1394,7 @@ class StatusCommentTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0)
         self.assertEqual(len(self.calls("POST")), 2)
-        with mock.patch.object(check, "update_status_comment", side_effect=RuntimeError("local error")):
+        with mock.patch.object(check, "find_status_comment", side_effect=RuntimeError("local error")):
             with mock.patch.object(check, "live_pr_identity", return_value=(HEAD, "main")):
                 with mock.patch.dict(os.environ, {"STATUS_COMMENTS_ENABLED": "true", "PR_NUMBER": "7",
                                                   "REPO": REPO, "BASE_REF": "main"}):
@@ -1639,11 +1675,11 @@ class PRReactionTests(ScriptTestCase):
         self.assertEqual(self.calls("POST")[-1]["body"], {"content": "eyes"})
         self.assert_pr_reactions_only()
 
-    def test_manual_same_head_rerun_moves_clean_to_pr_progress_and_back(self):
+    def test_opening_same_head_rerun_moves_clean_to_progress_and_back(self):
         # Only the reserved github-actions[bot] PR pair belongs to Claude Review.
-        # Other actors' PR reactions survive; the native invocation comment is untouched.
+        # Other actors' PR reactions survive; trigger surfaces have dedicated tests.
         result = self.start(
-            mode="manual", existing=status_comment(),
+            mode="automatic", existing=status_comment(),
             reactions=[reaction(70, "+1"), reaction(71, "eyes", login="claude[bot]"),
                        reaction(72, "+1", login="example-user", user_type="User"),
                        reaction(73, "eyes", login="chatgpt-codex-connector[bot]")],
@@ -1669,7 +1705,7 @@ class PRReactionTests(ScriptTestCase):
                                           reaction(73, "eyes", login="chatgpt-codex-connector[bot]")]))),
              reaction_delete_rule(80, ok("")), reaction_post_rule(ok('{"id":81}'))],
             CHECK_RUN_ID="99", REVIEW_RESULT="success", ACTION_CONCLUSION="success",
-            BEFORE_IDS_FILE=str(self.before), STATUS_COMMENTS_ENABLED="true", PR_REACTION_MODE="manual",
+            BEFORE_IDS_FILE=str(self.before), STATUS_COMMENTS_ENABLED="true", PR_REACTION_MODE="automatic",
         )
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual(self.calls("PATCH")[0]["body"]["conclusion"], "success")
@@ -1690,7 +1726,7 @@ class PRReactionTests(ScriptTestCase):
                  reaction(72, "+1", login="example-user", user_type="User"),
              ]))), reaction_delete_rule(70, ok("")), reaction_post_rule(ok('{"id":80}'))],
             CHECK_RUN_ID="99", REVIEW_RESULT="success", ACTION_CONCLUSION="success",
-            BEFORE_IDS_FILE=str(self.before), STATUS_COMMENTS_ENABLED="true", PR_REACTION_MODE="manual",
+            BEFORE_IDS_FILE=str(self.before), STATUS_COMMENTS_ENABLED="true", PR_REACTION_MODE="automatic",
         )
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual(self.calls("PATCH")[0]["body"]["conclusion"], "success")
@@ -1825,7 +1861,7 @@ class PRReactionTests(ScriptTestCase):
                      reaction_delete_rule(70, ok("")), reaction_delete_rule(74, ok(""))],
                     CHECK_RUN_ID="99", REVIEW_RESULT=review_result, ACTION_CONCLUSION="success",
                     BEFORE_IDS_FILE=str(self.before), STATUS_COMMENTS_ENABLED="true",
-                    PR_REACTION_MODE="manual",
+                    PR_REACTION_MODE="automatic",
                 )
                 self.assertEqual(result.returncode, 0, result.stdout)
                 self.assertEqual(self.calls("PATCH")[0]["body"]["conclusion"], expected)
@@ -1883,7 +1919,7 @@ class PRReactionTests(ScriptTestCase):
         comment_body = next(call["body"]["body"] for call in self.calls("POST")
                             if call["path"] == f"repos/{REPO}/issues/7/comments")
         self.assertIn("Check publication is unavailable", comment_body)
-        self.assertEqual(self.calls("POST")[-1]["path"], f"repos/{REPO}/issues/7/comments")
+        self.assertEqual(self.calls("POST")[-1]["body"], {"content": "eyes"})
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
                          [f"repos/{REPO}/issues/7/reactions/70"])
         self.assert_pr_reactions_only()
@@ -1945,7 +1981,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertIn(f"**Last reviewed:** `{HEAD[:7]}` on `main` — ⚠️ findings", body)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "action_required"))
 
-    def test_stale_clears_pr_reactions_even_when_the_status_comment_is_missing(self):
+    def test_stale_without_owner_does_not_clear_pr_reactions(self):
         result = self.run_script(
             ["stale"],
             [pr_head_rule(live_head(OTHER)), status_list_rule(ok(pages([]))),
@@ -1956,8 +1992,7 @@ class PRReactionTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual(self.calls("PATCH") + self.calls("POST"), [])
-        self.assertEqual([call["path"] for call in self.calls("DELETE")],
-                         [f"repos/{REPO}/issues/7/reactions/70"])
+        self.assertEqual(self.calls("DELETE"), [])
         self.assert_pr_reactions_only()
 
     def test_stale_does_not_clear_newer_head_reactions_during_refresh(self):
@@ -2153,7 +2188,7 @@ class ManualCompletionTests(ScriptTestCase):
 
     def test_stable_status_and_owned_reactions_still_complete_before_the_notice(self):
         rules = self.clean_rules()
-        rules[3] = status_list_rule(ok(pages([status_comment()])), ok(pages([])))
+        rules[3] = status_list_rule(ok(pages([status_comment()])))
         rules += [status_patch_rule(ok("{}")),
                   reaction_list_rule(ok(pages([reaction(70, "eyes"), reaction(71, "eyes", login="claude[bot]")]))),
                   reaction_delete_rule(70, ok("")), reaction_post_rule(ok('{"id":80}'))]
