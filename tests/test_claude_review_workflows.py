@@ -1306,6 +1306,7 @@ class CompletionVerifierTests(unittest.TestCase):
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
             values = dict(line.split("=", 1) for line in output.read_text().splitlines())
+        self.last_stdout = completed.stdout
         self.last_outputs = values
         return values["completion_verified"], values["completion_reason"]
 
