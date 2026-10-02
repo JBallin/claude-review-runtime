@@ -53,3 +53,7 @@ python3 -m unittest discover -s tests
 
 Offline tests establish local contracts; they do not prove live authentication
 or model execution.
+
+## License
+
+Licensed under the [MIT License](LICENSE).
