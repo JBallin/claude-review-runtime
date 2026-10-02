@@ -10,7 +10,7 @@ from pathlib import Path
 
 import test_claude_review_workflows as w
 
-PIN = "9a9310f9ab8374f5c67bd9c0f067b9ff3dac3ebf"
+PIN = "da81f4b17c0142fec4b6996e6c03aa725394cb1a"
 AUTOMATIC = w.WORKFLOWS / "self-review-automatic.yml"
 MANUAL = w.WORKFLOWS / "self-review-manual.yml"
 STATUS = w.WORKFLOWS / "self-review-status.yml"
@@ -84,15 +84,17 @@ class CallerBoundaryTests(unittest.TestCase):
                 self.assertEqual(bool(w.evaluate(review, event)), allowed_review)
                 self.assertEqual(bool(w.evaluate(status, event)), allowed_status)
 
-    def test_manual_requires_trusted_mentions_on_pr_comments(self):
+    def test_manual_requires_trusted_exact_command_on_pr_comments(self):
         gate = w.folded(w.job(MANUAL, "eligibility"), "if", 4)
         for factory in (w.issue_comment_event, w.review_comment_event):
             for association in ("OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR", "NONE", "FIRST_TIMER"):
-                for body in ("@claude review", "Please @CLAUDE review this", "/claude-review", "ordinary text"):
+                for body in ("/claude-review", "/CLAUDE-REVIEW", " /claude-review", "/claude-review\n",
+                             "/claude-review now", "`/claude-review`", "> /claude-review",
+                             "@claude review", "Please @CLAUDE review this", "ordinary text"):
                     with self.subTest(event=factory.__name__, association=association, body=body):
-                        expected = association in ("OWNER", "MEMBER", "COLLABORATOR") and "@claude" in body.lower()
+                        expected = association in ("OWNER", "MEMBER", "COLLABORATOR") and body.lower() == "/claude-review"
                         self.assertEqual(bool(w.evaluate(gate, factory(body=body, association=association))), expected)
-        self.assertFalse(w.evaluate(gate, w.issue_comment_event(on_pr=False)))
+        self.assertFalse(w.evaluate(gate, w.issue_comment_event(body="/claude-review", on_pr=False)))
         review = w.scalar(w.job(MANUAL, "review"), "if", 4)
         for result in ("true", "false", "", None):
             self.assertEqual(w.Evaluator(review, {"needs": {"eligibility": {

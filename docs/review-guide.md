@@ -5,7 +5,7 @@
 ## Pinned callers
 
 The three self-review callers use reviewed runtime commit
-`9a9310f9ab8374f5c67bd9c0f067b9ff3dac3ebf`. They leave the reusable entrypoints
+`da81f4b17c0142fec4b6996e6c03aa725394cb1a`. They leave the reusable entrypoints
 separate and keep publication code pinned even when a PR changes the runtime.
 Reviews cover the captured PR diff and record its head, base, merge base, and
 the executing runtime's repository, SHA, and workflow path.
@@ -13,7 +13,7 @@ the executing runtime's repository, SHA, and workflow path.
 | Caller | Events | Eligibility and behavior |
 | --- | --- | --- |
 | [Automatic](../.github/workflows/self-review-automatic.yml) | PR `opened`, `ready_for_review` | Open, non-draft, same-repository PRs; Dependabot-triggered runs are excluded. |
-| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted `@claude` mention followed by a read-only check for an open, non-draft, same-repository PR. |
+| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted exact `/claude-review` command followed by a read-only check for an open, non-draft, same-repository PR. |
 | [Status](../.github/workflows/self-review-status.yml) | PR `synchronize`, `edited` | Open, same-repository PRs; refreshes existing presentation after head changes or base-ref retargeting. |
 
 Stacked PRs are eligible; the callers do not restrict the base branch. Status
@@ -23,38 +23,17 @@ diff changes, and assess whether a changed base invalidates previous evidence.
 
 ## Request a manual review
 
-Create a top-level or inline PR comment containing `@claude`, for example:
-
-```text
-@claude review
-```
-
-Mention matching is case-insensitive and accepts additional text. The commenter
-must have an owner, member, or collaborator association; the action also checks
-the author's write access. Ordinary issue comments and untrusted comments do
-not start review. The eligibility job has read-only PR access and performs no
-checkout before calling the pinned runtime.
-
-These callers remain pinned to the baseline and do not accept `/claude-review`
-or post a separate manual clean-completion notice. The reusable manual entrypoint
-in this checkout uses the [current runtime interface](#current-runtime-manual-interface)
-below. Enabling that interface in the callers requires a separately reviewed
-runtime pin and manual eligibility-gate update; neither is changed here. Manual
-results from the deployed callers appear in the exact-head Check and existing
-status presentation.
-
-## Current runtime manual interface
-
-Post `/claude-review` as the entire PR comment, without surrounding whitespace,
-arguments, quotes, or other text. Matching is case-insensitive. Top-level PR
-comments and inline review comments are accepted from authors GitHub identifies
-as `OWNER`, `MEMBER`, or `COLLABORATOR`; the action also checks actor/access
-eligibility. Ordinary issue comments and untrusted requests do not start model
-execution. The runtime resolves the current patch once for each accepted request.
+Post `/claude-review` as the entire top-level or inline PR comment, without
+surrounding whitespace, arguments, quotes, or other text. Matching is
+case-insensitive. The commenter must have an owner, member, or collaborator
+association; the action also checks actor/access eligibility. Ordinary issue
+comments and untrusted requests do not start model execution. The eligibility
+job has read-only PR access and performs no checkout before calling the pinned
+runtime. The runtime resolves the current patch once for each accepted request.
 
 The command deliberately avoids a Claude mention. `@claude review` can invoke
 Anthropic's separate managed review service and does not invoke this checkout's
-manual entrypoint. The deployed baseline still accepts trusted mentions.
+manual entrypoint or this repository’s callers.
 Provider-bot reactions on comments are preserved and are not this runtime's
 progress or completion signals. The caller installation shape stays the same,
 but a revision update must keep its manual gate and documented command consistent
@@ -81,11 +60,9 @@ still occur afterward, so the notice describes its linked historical snapshot.
 Notice publication is best-effort: an API failure may leave no notice, and an
 ambiguous POST is not retried blindly. Neither changes the authoritative result.
 
-The merged runtime's clean result also requires
-[confirmed finding publication](#finding-publication). The deployed baseline
-retains the [finding-publication gap](https://github.com/JBallin/claude-review-runtime/issues/6);
-its callers do not acquire this contract until a separately reviewed pin update.
-Keep independent review requirements in place.
+The pinned runtime’s clean result also requires
+[confirmed finding publication](#finding-publication). Keep independent review
+requirements in place.
 
 ## Permissions and authentication
 
@@ -152,8 +129,8 @@ previous review evidence.
 ## Finding publication
 
 The publication contract below is implemented in merged runtime revision
-`91f5b76f00800e05ac41f408b427dd60c639d906`. It is not deployed by
-this repository’s baseline callers. See the [validation summary](validation.md)
+`91f5b76f00800e05ac41f408b427dd60c639d906` and is included in this repository’s
+pinned runtime. See the [validation summary](validation.md)
 for the distinct live-tested revision.
 
 Those reusable review entrypoints publish inline findings immediately. Trusted
@@ -167,9 +144,7 @@ that limit fails completion; receipt evidence is never truncated to imply clean
 publication. The limit is separate from the sampled historical Check diagnostics.
 An explicit zero-attempt receipt list permits clean completion only when all
 other completion and finding-evidence checks pass. No additional consumer input,
-credential, or permission is required. The deployed self-review callers remain
-pinned to the baseline and do not acquire this contract until a separately
-reviewed pin update.
+credential, or permission is required.
 
 ## Installation and incomplete reviews
 
@@ -191,10 +166,15 @@ initial setup draft while authentication and independent review are outstanding.
 Any initial installation exception requires explicit owner approval, and the
 owner merges the setup.
 
-The pinned revision has a known [finding-publication gap](https://github.com/JBallin/claude-review-runtime/issues/6):
-attempted findings may not all reach GitHub even when its Check reports success.
-Do not treat a green Check alone as merge approval or claim that every
-publication failure is detected. Keep independent review requirements in place.
+The pinned runtime reports sanitized captured-read coverage diagnostics during
+verification when the reason is `verified` or `captured_inputs_not_read`,
+without an opt-in flag. Earlier failures may have no coverage counters. For each
+of the fixed `metadata` and `diff` labels, it reports read and successful-read
+counts, expected/matched/missing/unparsed line counts, fixed content-shape labels,
+and a partial-view boolean. No file contents, paths, transcripts, or raw errors
+are exported. Diagnostics are best-effort and do not change acceptance: missing
+captured lines still fail completion. A partial page can be followed by complete
+reads; consult coverage and the authoritative Check together.
 
 After an approved live run, inspect actual completion, captured identities,
 runtime provenance, and posted findings. An incomplete result does not approve
@@ -210,8 +190,14 @@ Updating all three pins to a reviewed revision is a separate change. Review and
 merge that runtime revision first, and update the manual caller and invocation
 guidance to match its interface. Keep caller-contract tests in sync with the
 approved pin and interface. To roll back a pin update, restore all three
-references and the corresponding tests and guidance to the prior reviewed
-revision. Runtime publication does not update callers automatically.
+references, manual eligibility gate, and corresponding tests and guidance to
+the prior reviewed revision. The prior pin
+`9a9310f9ab8374f5c67bd9c0f067b9ff3dac3ebf` requires the trusted `@claude` mention
+gate; reverting pins alone would leave commands incompatible. That rollback
+retains the strict Read guard but restores the known
+[finding-publication gap](https://github.com/JBallin/claude-review-runtime/issues/6)
+and removes coverage diagnostics; it does not approve a release. Runtime
+publication does not update callers automatically.
 
 To undo the initial self-review setup, revert the three callers, their focused
 tests, and the associated documentation changes through a reviewed PR. Preserve

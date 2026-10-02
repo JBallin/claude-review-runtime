@@ -72,7 +72,6 @@ For the selected revision's publication behavior, see the
 
 Manual invocation depends on the selected runtime revision. See the review
 guide for [this repository's pinned command](review-guide.md#request-a-manual-review)
-and the [current runtime interface](review-guide.md#current-runtime-manual-interface)
 before selecting a revision or changing callers.
 
 ```yaml
@@ -99,8 +98,8 @@ jobs:
 ```
 
 For the current reusable entrypoint, post `/claude-review` as the entire comment,
-without whitespace or arguments; matching is case-insensitive. The deployed
-self-review callers still use the older mention interface. Any additional manual
+without whitespace or arguments; matching is case-insensitive. This repository’s
+self-review callers use that same command with their reviewed runtime pin. Any additional manual
 caller gate must match the selected runtime revision.
 
 The runtime resolves the current patch once for each accepted manual request.

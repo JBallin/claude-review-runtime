@@ -19,13 +19,23 @@ does not update their callers.
 
 ## What is deployed
 
-This repository’s self-review callers remain pinned to
-`9a9310f9ab8374f5c67bd9c0f067b9ff3dac3ebf`. Their manual gate accepts trusted
-`@claude` mentions, not `/claude-review`. They have the known
-[finding-publication gap](https://github.com/JBallin/claude-review-runtime/issues/6):
-a successful Check can coexist with an attempted finding that did not reach GitHub.
-Updating pins alone will not adopt the new command. Update all three pins, the
-manual gate, caller-contract tests, and invocation guidance in one reviewed change.
+This repository’s three self-review callers use reviewed runtime revision
+`da81f4b17c0142fec4b6996e6c03aa725394cb1a`. Their manual gate accepts the exact,
+case-insensitive `/claude-review` command from trusted PR commenters. This pin
+includes the merged finding-publication contract and sanitized captured-read
+coverage diagnostics from [PR 16](https://github.com/JBallin/claude-review-runtime/pull/16).
+All three pins, manual eligibility, caller tests, and invocation guidance are
+updated together; permissions and credentials are unchanged.
+
+Diagnostics run without an opt-in flag when verification reports `verified` or
+`captured_inputs_not_read`; earlier failures may have no counters. They report
+only fixed metadata/diff labels, counts, content-shape enums, and partial-view
+booleans.
+They do not export contents, paths, transcripts, or raw errors, and do not alter
+the strict completion guard. Offline tests validate this contract; they do not
+establish a live diagnostic outcome for PR 11. Its two historical incomplete
+Checks remain evidence and are not superseded by a caller update.
+
 [PR 11](https://github.com/JBallin/claude-review-runtime/pull/11) proposes a
 manual trigger-comment reaction lifecycle. It remains subject to review gates
 and does not update deployed pins or eligibility. That behavior is not part of
