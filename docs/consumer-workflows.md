@@ -4,23 +4,28 @@
 
 ## Prerequisites
 
-Use a private consumer repository owned by the same personal account as this
-runtime. The runtime must allow Actions access from that account's private
-repositories (`access_level: user`). This setting grants access across the
+While the runtime is private, GitHub restricts shared workflow access to private
+consumer repositories owned by the same personal account. The runtime must allow
+Actions access from that account's private repositories (`access_level: user`). This setting grants access across the
 owner's private repositories; it is not a per-consumer allowlist. While the
-runtime is private, public repositories cannot call it.
+runtime is private, public repositories cannot call it. This is a GitHub access
+restriction, not a model OAuth restriction or a permanent compatibility limit.
 
 Model authentication uses the consumer's existing Claude OAuth credential stored
-as the Actions secret `CLAUDE_CODE_OAUTH_TOKEN`. GitHub authentication uses the
-Anthropic Claude GitHub App and the action's default OIDC token exchange. The
-App must have access to the consumer. No PAT, custom App credential, or GitHub
-token override is accepted by the runtime. Adding credentials or access grants
+as the Actions secret `CLAUDE_CODE_OAUTH_TOKEN`. This runtime does not accept
+`ANTHROPIC_API_KEY`; API-key support is deferred (see the
+[authentication assessment](https://github.com/JBallin/claude-review-runtime/issues/3#issuecomment-5941743869)).
+This is the runtime's contract, not a limitation of Anthropic's action.
+GitHub authentication uses the Anthropic Claude GitHub App and the action's
+default OIDC token exchange. The App must have access to the consumer. No PAT,
+custom App credential, or GitHub token override is accepted by the runtime. Adding credentials or access grants
 requires the repository owner's authorization.
 
 The supported platform is GitHub.com with GitHub-hosted Ubuntu runners. The
 runtime-local helper action uses `$/actions/review-helper`, which requires runner
-version 2.336.0 or later. GitHub Enterprise Server and public consumers are not
-validated targets. No public-release license has been selected.
+version 2.336.0 or later. Public, other-owner, fork, and GitHub Enterprise Server
+consumers are not validated targets. See the [validation summary](validation.md)
+for tested revisions. The runtime is licensed under the [MIT License](../LICENSE).
 
 ## Install the callers
 
@@ -92,6 +97,11 @@ jobs:
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
+
+For the current reusable entrypoint, post `/claude-review` as the entire comment,
+without whitespace or arguments; matching is case-insensitive. The deployed
+self-review callers still use the older mention interface. Any additional manual
+caller gate must match the selected runtime revision.
 
 The runtime resolves the current patch once for each accepted manual request.
 Ordinary issue comments and untrusted requests do not start model execution.

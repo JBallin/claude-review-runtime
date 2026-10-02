@@ -81,7 +81,7 @@ still occur afterward, so the notice describes its linked historical snapshot.
 Notice publication is best-effort: an API failure may leave no notice, and an
 ambiguous POST is not retried blindly. Neither changes the authoritative result.
 
-This checkout's clean result also requires
+The merged runtime's clean result also requires
 [confirmed finding publication](#finding-publication). The deployed baseline
 retains the [finding-publication gap](https://github.com/JBallin/claude-review-runtime/issues/6);
 its callers do not acquire this contract until a separately reviewed pin update.
@@ -151,10 +151,14 @@ previous review evidence.
 
 ## Finding publication
 
-The reusable review entrypoints in this checkout publish inline findings
-immediately. Trusted completion
-requires a valid receipt for every inline attempt and confirms each comment on
-the captured PR/head using the complete paginated comment list and pre-review
+The publication contract below is implemented in merged runtime revision
+`91f5b76f00800e05ac41f408b427dd60c639d906`. It is not deployed by
+this repository’s baseline callers. See the [validation summary](validation.md)
+for the distinct live-tested revision.
+
+Those reusable review entrypoints publish inline findings immediately. Trusted
+completion requires a valid receipt for every inline attempt and confirms each
+comment on the captured PR/head using the complete paginated comment list and pre-review
 snapshot. Failed or ambiguous publication produces an incomplete review, retains
 any findings already recorded, and cannot produce a clean completion notice.
 
@@ -177,11 +181,9 @@ caller setup does not install an App or configure credentials. New credentials
 or access grants require a separate decision.
 
 Default App/OIDC validation can reject a caller that does not exist with matching
-content on the default branch. The verified rejection recorded in
-[issue #9](https://github.com/JBallin/claude-review-runtime/issues/9) prevented
-Claude from executing on the initial setup patch; required review remains
-unsatisfied. This is a specific provider validation condition, not a rule that
-every PR changing a workflow is unreviewable.
+content on the default branch. If that validation rejects a caller, model
+execution may be skipped even when the workflow succeeds; required review remains unsatisfied. This is a provider
+validation condition, not a rule that every PR changing a workflow is unreviewable.
 
 A skipped action or successful workflow without verified model completion is
 not a Claude review. Do not suppress the incomplete Check or bypass it. Keep an
@@ -210,11 +212,6 @@ guidance to match its interface. Keep caller-contract tests in sync with the
 approved pin and interface. To roll back a pin update, restore all three
 references and the corresponding tests and guidance to the prior reviewed
 revision. Runtime publication does not update callers automatically.
-
-For an isolated trial, restrict caller eligibility to dedicated fixture branches
-and prevent another reviewer from running on those fixtures. Restore the
-consumer's original workflow configuration through a reviewed PR when the trial
-ends. Keep fixtures and their evidence available for review.
 
 To undo the initial self-review setup, revert the three callers, their focused
 tests, and the associated documentation changes through a reviewed PR. Preserve
