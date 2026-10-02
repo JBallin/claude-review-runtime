@@ -81,9 +81,10 @@ still occur afterward, so the notice describes its linked historical snapshot.
 Notice publication is best-effort: an API failure may leave no notice, and an
 ambiguous POST is not retried blindly. Neither changes the authoritative result.
 
-The notice follows the existing trusted result and inherits the
-[finding-publication gap](https://github.com/JBallin/claude-review-runtime/issues/6).
-It does not independently prove that every attempted finding reached GitHub.
+This checkout's clean result also requires
+[confirmed finding publication](#finding-publication). The deployed baseline
+retains the [finding-publication gap](https://github.com/JBallin/claude-review-runtime/issues/6);
+its callers do not acquire this contract until a separately reviewed pin update.
 Keep independent review requirements in place.
 
 ## Permissions and authentication
@@ -147,6 +148,24 @@ status entrypoint refreshes existing presentation after head changes or base-ref
 retargeting; it does not initiate a model review or watch base-tip advancement
 on the same branch. Consumers must assess whether a changed base invalidates
 previous review evidence.
+
+## Finding publication
+
+The reusable review entrypoints in this checkout publish inline findings
+immediately. Trusted completion
+requires a valid receipt for every inline attempt and confirms each comment on
+the captured PR/head using the complete paginated comment list and pre-review
+snapshot. Failed or ambiguous publication produces an incomplete review, retains
+any findings already recorded, and cannot produce a clean completion notice.
+
+The complete receipt list is limited to 64 finding attempts per run. Exceeding
+that limit fails completion; receipt evidence is never truncated to imply clean
+publication. The limit is separate from the sampled historical Check diagnostics.
+An explicit zero-attempt receipt list permits clean completion only when all
+other completion and finding-evidence checks pass. No additional consumer input,
+credential, or permission is required. The deployed self-review callers remain
+pinned to the baseline and do not acquire this contract until a separately
+reviewed pin update.
 
 ## Installation and incomplete reviews
 

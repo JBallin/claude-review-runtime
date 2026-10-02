@@ -60,6 +60,9 @@ The runtime preserves draft, fork, and Dependabot exclusions. Automatic review
 captures the pull-request event's head and base; it does not silently move the
 review to a later patch.
 
+For the selected revision's publication behavior, see the
+[finding-publication contract](review-guide.md#finding-publication).
+
 ## Manual review
 
 Manual invocation depends on the selected runtime revision. See the review

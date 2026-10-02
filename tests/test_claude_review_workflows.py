@@ -604,13 +604,14 @@ class JobStructureTests(unittest.TestCase):
                 scripts.add(run_block(verify))
         self.assertEqual(len(scripts), 1)
 
-    def test_only_the_completion_verdict_flows_from_review_to_publication(self):
+    def test_only_verdict_and_bounded_receipts_flow_from_review_to_publication(self):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
                 outputs = block(job(path, "review"), "outputs", 4)
                 self.assertIn("      completion_verified: ${{ steps.verify.outputs.completion_verified }}", outputs)
                 self.assertIn("      completion_reason: ${{ steps.verify.outputs.completion_reason }}", outputs)
-                self.assertEqual(len([line for line in outputs if line.strip()]), 3)
+                self.assertIn("      finding_publication: ${{ steps.verify.outputs.finding_publication }}", outputs)
+                self.assertEqual(len([line for line in outputs if line.strip()]), 4)
                 publish = steps(job(path, "publish-status"))["Publish Claude Review result"]
                 self.assertEqual(
                     scalar(publish, "COMPLETION_VERIFIED", 10), "${{ needs.review.outputs.completion_verified }}"
@@ -618,6 +619,10 @@ class JobStructureTests(unittest.TestCase):
                 self.assertEqual(
                     scalar(publish, "COMPLETION_REASON", 10), "${{ needs.review.outputs.completion_reason }}"
                 )
+                self.assertEqual(scalar(publish, "FINDING_PUBLICATION", 10),
+                                 "${{ needs.review.outputs.finding_publication }}")
+                self.assertEqual(scalar(steps(job(path, "review"))["Review pull request"],
+                                        "classify_inline_comments", 10), '"false"')
                 self.assertNotIn("execution_file", "\n".join(job(path, "publish-status")))
 
     def test_review_job_uses_the_captured_snapshot_instead_of_live_pr_state(self):
@@ -1201,6 +1206,14 @@ def read_result(use_id, source, start=1, stop=None, *, blocks=False, **flags):
     return tool_result(use_id, content=content, **flags)
 
 
+def inline_result(use_id="t3", comment_id=11, **flags):
+    return tool_result(use_id, content=[{"type": "text", "text": json.dumps({
+        "success": True, "comment_id": comment_id,
+        "html_url": f"https://github.com/owner/repo/pull/7#discussion_r{comment_id}",
+        "path": "file.py", "line": 1,
+    })}], **flags)
+
+
 def clean_stream():
     return [
         init_message(),
@@ -1209,7 +1222,7 @@ def clean_stream():
         tool_use("t2", "Read", file_path="/captured/diff.patch"),
         read_result("t2", DIFF_CONTENT),
         tool_use("t3", "mcp__github_inline_comment__create_inline_comment", commit_id=HEAD),
-        tool_result("t3"),
+        inline_result(),
         final_text(),
         result(),
     ]
@@ -1250,6 +1263,7 @@ class CompletionVerifierTests(unittest.TestCase):
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
             values = dict(line.split("=", 1) for line in output.read_text().splitlines())
+        self.last_outputs = values
         return values["completion_verified"], values["completion_reason"]
 
     def assertRejected(self, stream, reason, **kwargs):
@@ -1365,7 +1379,7 @@ class CompletionVerifierTests(unittest.TestCase):
                                tool_result("retry", is_error=False)]
                 self.assertRejected(stream, "errored_inline_tool_result", path=path)
                 stream = clean_stream()
-                stream[6] = tool_result("t3", is_error=False)
+                stream[6] = inline_result(is_error=False)
                 self.assertEqual(self.verify(stream, path=path), ("true", "verified"))
 
     def test_missing_or_malformed_evidence_is_not_verified(self):

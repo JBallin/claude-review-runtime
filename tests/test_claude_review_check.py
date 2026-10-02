@@ -289,6 +289,7 @@ class ScriptTestCase(unittest.TestCase):
             # A normal finished run; the completion tests override these.
             "COMPLETION_VERIFIED": "true",
             "COMPLETION_REASON": "verified",
+            "FINDING_PUBLICATION": json.dumps({"attempt_count": 0, "comment_ids": []}),
             "TRIGGER_LABEL": "Draft marked ready",
             **extra_env,
         }

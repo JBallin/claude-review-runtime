@@ -40,6 +40,9 @@ RETRY_DELAY_SECONDS = 2
 # Check Run output.summary/output.text have a 65,535-byte limit. Keep generous
 # headroom, including for non-ASCII diagnostics (https://docs.github.com/rest/checks/runs).
 EVIDENCE_ID_LIMIT = 64
+# Complete publication evidence is validated before diagnostic sampling.
+PUBLICATION_RECEIPT_LIMIT = 64
+MAX_COMMENT_ID = 9007199254740991
 CHECK_SUMMARY_BYTES = 8192
 EVIDENCE_STRING_BYTES = 2048
 EVIDENCE_ERROR_BYTES = 1024
@@ -114,6 +117,38 @@ def parse_pages(text):
             return pages
         page, index = decoder.raw_decode(text, index)
         pages.append(page)
+
+
+def positive_comment_id(value):
+    return type(value) is int and 0 < value <= MAX_COMMENT_ID
+
+
+def valid_comment_id_list(value):
+    return (isinstance(value, list) and all(positive_comment_id(item) for item in value)
+            and len(set(value)) == len(value))
+
+
+def unique_json_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON key")
+        result[key] = value
+    return result
+
+
+def publication_receipts(raw):
+    """Validate complete cross-job evidence; absent data never means no attempts."""
+    if len(raw) > 2048:
+        raise ValueError("publication receipt evidence exceeds its bound")
+    value = json.loads(raw, object_pairs_hook=unique_json_object)
+    if not isinstance(value, dict) or set(value) != {"attempt_count", "comment_ids"}:
+        raise ValueError("publication receipt evidence needs an exact count and ID list")
+    count, ids = value["attempt_count"], value["comment_ids"]
+    if (type(count) is not int or not 0 <= count <= PUBLICATION_RECEIPT_LIMIT
+            or not valid_comment_id_list(ids) or len(ids) != count):
+        raise ValueError("publication receipt evidence has an invalid count or ID list")
+    return value
 
 
 def claude_comment_ids(pages, head_sha):
@@ -193,7 +228,17 @@ def prior_finding_evidence(pages, head_sha, current_check_run_id, pr_number, mer
 def fetch_claude_comment_ids(repo, pr_number, head_sha):
     path = f"repos/{repo}/pulls/{pr_number}/comments?per_page=100"
     text = with_retries(lambda: gh_api(["--paginate", path]), "Listing PR review comments")
-    return claude_comment_ids(parse_pages(text), head_sha)
+    try:
+        pages = parse_pages(text)
+        if not pages or any(not isinstance(page, list) for page in pages):
+            raise ValueError("expected complete comment pages")
+        for page in pages:
+            if any(not isinstance(item, dict) or not positive_comment_id(item.get("id"))
+                   or not isinstance(item.get("user"), dict) for item in page):
+                raise ValueError("malformed comment evidence")
+        return claude_comment_ids(pages, head_sha)
+    except (ValueError, TypeError, KeyError, AttributeError) as error:
+        raise GhError("PR review comment evidence is malformed or incomplete") from error
 
 
 def check_run_history(repo, head_sha):
@@ -906,7 +951,10 @@ def cmd_finalize():
     if review_completed or os.path.exists(before_file):
         try:
             with open(before_file, encoding="utf-8") as handle:
-                before = set(json.load(handle))
+                snapshot = json.load(handle)
+                if not valid_comment_id_list(snapshot):
+                    raise ValueError("expected a unique list of positive comment IDs")
+                before = set(snapshot)
         except (OSError, ValueError) as error:
             errors.append(f"the pre-review comment snapshot is unavailable ({error})")
 
@@ -920,6 +968,21 @@ def cmd_finalize():
             "earlier Claude finding comments cannot be attributed to a reviewed diff "
             f"(comment IDs: {', '.join(map(str, unscoped_ids))})"
         )
+
+    publication = None
+    if review_completed:
+        try:
+            publication = publication_receipts(env("FINDING_PUBLICATION"))
+        except (ValueError, TypeError) as error:
+            errors.append(f"finding publication receipts are unavailable or invalid ({error})")
+        if publication is not None:
+            # A receipt must be newly published on this captured PR/head by the
+            # trusted Claude bot. A prior ID or an unrelated new comment cannot
+            # stand in for an absent receipt. Keep actual findings even on failure.
+            missing_ids = sorted(set(publication["comment_ids"]) - set(new_ids))
+            if missing_ids:
+                errors.append("finding publication could not be confirmed "
+                              f"(comment IDs: {', '.join(map(str, missing_ids))})")
 
     # A completed review with incomplete evidence fails closed; after a failed
     # review the conclusion is already failure, so gaps are only warnings.
@@ -947,6 +1010,7 @@ def cmd_finalize():
         "action_conclusion": action_conclusion,
         "completion_verified": completion_verified,
         "completion_reason": completion_reason or None,
+        "finding_publication": publication,
         "same_diff_findings_recorded": bool(scoped_ids or prior_ids),
         "new_finding_comment_ids": new_ids,
         "claude_finding_comment_ids": sorted(scoped_ids),

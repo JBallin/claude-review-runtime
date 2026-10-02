@@ -241,6 +241,7 @@ jobs:
       conclusion: ${{ steps.review.outputs.conclusion }}
       completion_verified: ${{ steps.verify.outputs.completion_verified }}
       completion_reason: ${{ steps.verify.outputs.completion_reason }}
+      finding_publication: ${{ steps.verify.outputs.finding_publication }}
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -267,6 +268,7 @@ jobs:
         env:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
         with:
+          classify_inline_comments: "false"
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           # Restores .claude/, .mcp.json, etc. from the PR's actual base
           # branch rather than the repository default -- agent mode's own
@@ -363,9 +365,8 @@ jobs:
         # non-removable built-in may be offered but not used), every tool call
         # answered, correct inline commit targets, no errored publication,
         # complete captured-input Read coverage, and no subagent/background
-        # activity. Only the
-        # verdict leaves this job; the transcript is never uploaded or
-        # published.
+        # activity. Only the verdict and complete bounded publication receipts
+        # leave this job; the transcript is never uploaded or published.
         id: verify
         env:
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
@@ -449,7 +450,74 @@ jobs:
           elif ! reason=$(jq -r --arg head "$REVIEW_HEAD_SHA" --argjson allowed "$ALLOWED_TOOLS" --arg metadata "$REVIEW_METADATA_FILE" --arg diff "$REVIEW_DIFF_FILE" --rawfile metadata_content "$REVIEW_METADATA_FILE" --rawfile diff_content "$REVIEW_DIFF_FILE" "$program" "$EXECUTION_FILE" 2> /dev/null); then
             verdict false malformed_execution_file
           elif [ "$reason" = verified ]; then
-            verdict true verified
+            # Parse exact receipt integers with Python; jq numeric rounding must
+            # not turn fractional or overflowing IDs into accepted evidence.
+            if publication=$(python3 - "$EXECUTION_FILE" <<'PY_RECEIPTS'
+          import json
+          import sys
+
+          def unique_object(pairs):
+              result = {}
+              for key, value in pairs:
+                  if key in result:
+                      raise ValueError("invalid_publication_receipt")
+                  result[key] = value
+              return result
+
+          def content_blocks(message):
+              content = message.get("message", {}).get("content", [])
+              return content if isinstance(content, list) else []
+
+          try:
+              with open(sys.argv[1], encoding="utf-8") as source:
+                  stream = json.load(source, object_pairs_hook=unique_object)
+              uses = [block for message in stream if message.get("type") == "assistant"
+                      for block in content_blocks(message) if block.get("type") == "tool_use"]
+              responses = [block for message in stream if message.get("type") == "user"
+                           for block in content_blocks(message) if block.get("type") == "tool_result"]
+              use_ids = [use.get("id") for use in uses]
+              if any(not isinstance(value, str) or not value.strip() for value in use_ids) or len(set(use_ids)) != len(use_ids):
+                  raise ValueError("invalid_tool_use_identity")
+              inline = [use for use in uses if use.get("name") == "mcp__github_inline_comment__create_inline_comment"]
+              if len(inline) > 64:
+                  raise ValueError("publication_receipt_limit_exceeded")
+              ids = []
+              for use in inline:
+                  matching = [response for response in responses if response.get("tool_use_id") == use["id"]]
+                  if len(matching) != 1:
+                      raise ValueError("ambiguous_inline_tool_result")
+                  response = matching[0]
+                  if response.get("is_error") is not None and response.get("is_error") is not False:
+                      raise ValueError("errored_inline_tool_result")
+                  content = response.get("content")
+                  if isinstance(content, list) and len(content) == 1 and isinstance(content[0], dict) and content[0].get("type") == "text":
+                      content = content[0].get("text")
+                  if not isinstance(content, str):
+                      raise ValueError("invalid_publication_receipt")
+                  receipt = json.loads(content, object_pairs_hook=unique_object)
+                  if not isinstance(receipt, dict) or receipt.get("success") is not True or "error" in receipt or receipt.get("isError", False) is not False:
+                      raise ValueError("invalid_publication_receipt")
+                  if "buffered" in receipt and receipt["buffered"] is not False:
+                      raise ValueError("unconfirmed_inline_publication")
+                  comment_id = receipt.get("comment_id")
+                  if type(comment_id) is not int or not 0 < comment_id <= 9007199254740991:
+                      raise ValueError("invalid_publication_receipt")
+                  ids.append(comment_id)
+              if len(set(ids)) != len(ids):
+                  raise ValueError("duplicate_publication_receipt")
+              print(json.dumps({"attempt_count": len(inline), "comment_ids": ids}, separators=(",", ":")))
+          except (ValueError, TypeError, KeyError, AttributeError, OSError) as error:
+              reason = str(error)
+              allowed = {"invalid_tool_use_identity", "publication_receipt_limit_exceeded", "ambiguous_inline_tool_result", "errored_inline_tool_result", "invalid_publication_receipt", "unconfirmed_inline_publication", "duplicate_publication_receipt"}
+              print(reason if reason in allowed else "invalid_publication_receipt")
+              sys.exit(1)
+          PY_RECEIPTS
+            ); then
+              echo "finding_publication=$publication" >> "$GITHUB_OUTPUT"
+              verdict true verified
+            else
+              verdict false "$publication"
+            fi
           else
             verdict false "$reason"
           fi
@@ -490,8 +558,8 @@ jobs:
           path: ${{ runner.temp }}/claude-review-evidence
       - name: Publish Claude Review result
         # The review job's own result is the outer signal: a failure before
-        # the action reports anything (checkout, inputs, startup) or while it
-        # posts buffered inline comments still maps to failure, as does a
+        # the action reports anything (checkout, inputs, startup) or during
+        # publication or completion verification maps to failure, as does a
         # start-check failure after the check run was created.
         if: steps.tooling-ready.outcome == 'success'
         env:
@@ -516,6 +584,7 @@ jobs:
           ACTION_CONCLUSION: ${{ needs.review.outputs.conclusion }}
           COMPLETION_VERIFIED: ${{ needs.review.outputs.completion_verified }}
           COMPLETION_REASON: ${{ needs.review.outputs.completion_reason }}
+          FINDING_PUBLICATION: ${{ needs.review.outputs.finding_publication }}
           BEFORE_IDS_FILE: ${{ runner.temp }}/claude-review-evidence/before-comment-ids.json
           EXTERNAL_ID: ${{ github.workflow }}/${{ github.run_id }}/${{ github.run_attempt }}
           TRIGGER_LABEL: Manual request
