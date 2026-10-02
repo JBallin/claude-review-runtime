@@ -20,12 +20,13 @@ does not update their callers.
 ## What is deployed
 
 This repository’s three self-review callers use reviewed runtime revision
-`8dbcd6d786c9485670ffaaac55af4aa390c70d22`. Their manual gate accepts the exact,
+`250a7d6745285dcc7902b604aec9f62f5b204033`. Their manual gate accepts the exact,
 case-insensitive `/claude-review` command from trusted PR commenters. This pin
 includes the merged finding-publication contract and sanitized captured-read
 coverage diagnostics from [PR 16](https://github.com/JBallin/claude-review-runtime/pull/16),
 presentation ownership from [PR 11](https://github.com/JBallin/claude-review-runtime/pull/11),
-and audited Check-history validation from [PR 18](https://github.com/JBallin/claude-review-runtime/pull/18).
+audited Check-history validation from [PR 18](https://github.com/JBallin/claude-review-runtime/pull/18),
+and direct-ref base freshness from [PR 20](https://github.com/JBallin/claude-review-runtime/pull/20).
 All three pins, caller tests, and deployment guidance are updated together;
 manual eligibility, events, permissions, and credentials are unchanged.
 
