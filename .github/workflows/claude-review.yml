@@ -62,11 +62,19 @@ jobs:
     outputs:
       check_run_id: ${{ steps.check.outputs.check_run_id }}
       status_comment_id: ${{ steps.check.outputs.status_comment_id }}
+      presentation_owner: ${{ steps.check.outputs.presentation_owner }}
       merge_base_sha: ${{ steps.inputs.outputs.merge_base_sha }}
     # The event already pins the reviewed head, so the check run is created
     # before any fallible input fetching; a later failure here is then
     # published as that check's failure rather than leaving no state.
     steps:
+      - name: Capture presentation start
+        id: presentation-start
+        continue-on-error: true
+        # Captured once under the shared PR queue. Partial-job reruns retain
+        # this token; only a newly executed start can acquire a new owner.
+        run: |
+          python3 -c 'import os,time; open(os.environ["GITHUB_OUTPUT"], "a").write("token=" + str(time.time_ns()) + "\n")'
       - name: Check review tooling
         id: tooling-ready
         uses: $/actions/review-helper
@@ -86,6 +94,8 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           STATUS_COMMENTS_ENABLED: "true"
+          PRESENTATION_START: ${{ steps.presentation-start.outputs.token }}
+          TRIGGER_KIND: automatic
           PR_REACTION_MODE: automatic
           TRIGGER_LABEL: ${{ github.event.action == 'ready_for_review' && 'Draft marked ready' || 'PR opened for review' }}
           DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -481,6 +491,7 @@ jobs:
         if: steps.tooling-ready.outcome == 'success'
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
+          PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
           GH_TOKEN: ${{ github.token }}
           RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
           RUNTIME_SHA: ${{ job.workflow_sha }}
@@ -513,6 +524,7 @@ jobs:
         if: always() && steps.tooling-ready.outcome != 'success'
         timeout-minutes: 5
         env:
+          PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
           GH_TOKEN: ${{ github.token }}
           RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
           RUNTIME_SHA: ${{ job.workflow_sha }}
@@ -531,41 +543,99 @@ jobs:
           DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           repair_review_presentation() {
-            # Confirm the live PR identity before changing its presentation.
             comment_timeout=10
-            [ -n "$PR_NUMBER" ] || return 0
-            if ! live_pr=$(timeout "$comment_timeout" gh api "repos/$REPO/pulls/$PR_NUMBER" 2> /dev/null) ||
-               ! printf '%s' "$live_pr" | jq -e --arg head "$HEAD_SHA" --arg base "$BASE_REF" '.head.sha == $head and .base.ref == $base' > /dev/null; then
-              echo "::warning::Could not verify this review is the current PR head and base; leaving its presentation unchanged."
+            presentation_deadline=$((SECONDS + 120))
+            presentation_api() {
+              remaining=$((presentation_deadline - SECONDS))
+              [ "$remaining" -gt 0 ] || return 1
+              [ "$remaining" -gt "$comment_timeout" ] && remaining=$comment_timeout
+              timeout "$remaining" gh api "$@"
+            }
+            [ -n "$PR_NUMBER" ] && [ -n "$STATUS_COMMENT_ID" ] && [ -n "$PRESENTATION_OWNER" ] || return 0
+            owner_marker=$(python3 - <<'PY_OWNER'
+          import hashlib, json, os
+          from urllib.parse import quote
+          try:
+              owner = json.loads(os.environ["PRESENTATION_OWNER"])
+              fields = {"version", "repo", "pr", "run", "attempt", "kind", "target", "head", "base", "base_ref", "started", "generation"}
+              assert isinstance(owner, dict) and set(owner) == fields and owner["version"] == 1
+              identity = {key: value for key, value in owner.items() if key != "generation"}
+              assert owner["generation"] == hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+              assert owner["kind"] in ("automatic", "issue_comment", "pull_request_review_comment")
+              assert (owner["target"] is None if owner["kind"] == "automatic" else type(owner["target"]) is int and 0 < owner["target"] <= 9007199254740991)
+              assert str(owner["run"]) == os.environ["GITHUB_RUN_ID"]
+              assert str(owner["attempt"]) == os.environ["GITHUB_RUN_ATTEMPT"]
+              assert owner["repo"] == os.environ["REPO"] and str(owner["pr"]) == os.environ["PR_NUMBER"]
+              assert (owner["head"], owner["base"], owner["base_ref"]) == (os.environ["HEAD_SHA"], os.environ["BASE_SHA"], os.environ["BASE_REF"])
+              print("<!-- claude-review-runtime:presentation-owner:" + quote(json.dumps(owner, sort_keys=True, separators=(",", ":")), safe="") + " -->")
+          except (ValueError, KeyError, AssertionError):
+              raise SystemExit(1)
+          PY_OWNER
+            ) || return 0
+            verify_presentation_owner() {
+              comment=$(presentation_api "repos/$REPO/issues/comments/$STATUS_COMMENT_ID" 2> /dev/null) &&
+              printf '%s' "$comment" | jq -e --arg marker "$owner_marker" \
+                '.user.login == "github-actions[bot]" and .user.type == "Bot" and (.body | contains("<!-- claude-review-runtime:claude-review-status -->")) and (.body | split("\n") | map(select(startswith("<!-- claude-review-runtime:presentation-owner:"))) == [$marker])' > /dev/null
+            }
+            verify_current_patch() {
+              live_pr=$(presentation_api "repos/$REPO/pulls/$PR_NUMBER" 2> /dev/null) &&
+              printf '%s' "$live_pr" | jq -e --arg head "$HEAD_SHA" --arg base "$BASE_REF" --arg sha "$BASE_SHA" \
+                '.head.sha == $head and .base.ref == $base and .base.sha == $sha' > /dev/null
+            }
+            if ! verify_presentation_owner; then
+              echo "::warning::Could not verify this attempt owns presentation; leaving it unchanged."
               return 0
             fi
-            # Repo convention reserves github-actions[bot] eyes/+1 on PRs for
-            # Claude Review. Revisit ownership before another workflow uses
-            # this actor/reaction pair. GitHub reports its reaction user.type
-            # as User, so match the reserved login/content pair. Cleanup also
-            # works without a comment.
-            if reactions=$(timeout "$comment_timeout" gh api --paginate "repos/$REPO/issues/$PR_NUMBER/reactions?per_page=100" 2> /dev/null) &&
-               ids=$(printf '%s' "$reactions" | jq -rs '.[].[] | select(.user.login == "github-actions[bot]" and (.content == "eyes" or .content == "+1")) | .id'); then
-              for reaction_id in $ids; do
-                if ! timeout "$comment_timeout" gh api --method DELETE "repos/$REPO/issues/$PR_NUMBER/reactions/$reaction_id" > /dev/null; then
-                  echo "::warning::Could not clear a workflow-owned Claude Review PR reaction."
-                fi
-              done
-            else
-              echo "::warning::Could not inspect workflow-owned Claude Review PR reactions."
+            current_patch=true
+            reaction_paths="repos/$REPO/issues/$PR_NUMBER/reactions"
+            if ! verify_current_patch; then
+              current_patch=false
+              reaction_paths=
+              # Preserve historical terminal reactions. Only a still-running
+              # owned request can be cleaned after its patch is superseded.
+              if ! printf '%s' "$comment" | jq -e '.body | contains("<!-- claude-review-runtime:presentation-owner-phase:running -->")' > /dev/null; then
+                return 0
+              fi
             fi
-            # The helper's known ID is the only emergency repair target. Confirm
-            # bot ownership and marker; never discover or create a comment here.
-            [ -n "$STATUS_COMMENT_ID" ] || return 0
-            if ! comment=$(timeout "$comment_timeout" gh api "repos/$REPO/issues/comments/$STATUS_COMMENT_ID" 2> /dev/null); then
-              echo "::warning::Could not verify the known Claude Review status comment."
-              return 0
+            # A trusted captured target, not model output, chooses the endpoint.
+            kind=$(printf '%s' "$PRESENTATION_OWNER" | jq -r '.kind')
+            target=$(printf '%s' "$PRESENTATION_OWNER" | jq -r '.target')
+            namespace=
+            case "$kind" in
+              issue_comment) namespace=issues ;;
+              pull_request_review_comment) namespace=pulls ;;
+            esac
+            if [ -n "$namespace" ] && printf '%s' "$target" | jq -e 'tonumber | . > 0 and . == floor' > /dev/null; then
+              target_path="repos/$REPO/$namespace/comments/$target"
+              parent=$namespace
+              link=issue_url
+              [ "$namespace" = pulls ] && link=pull_request_url
+              if trigger=$(presentation_api "$target_path" 2> /dev/null) &&
+                 printf '%s' "$trigger" | jq -e --arg id "$target" --arg link "$link" --arg url "https://api.github.com/repos/$REPO/$parent/$PR_NUMBER" \
+                    '.id == ($id | tonumber) and .[$link] == $url' > /dev/null; then
+                reaction_paths="$reaction_paths $target_path/reactions"
+              else
+                echo "::warning::Could not verify the captured trigger comment."
+              fi
             fi
-            if ! printf '%s' "$comment" | jq -e --arg marker '<!-- claude-review-runtime:claude-review-status -->' \
-              '.user.login == "github-actions[bot]" and .user.type == "Bot" and (.body | contains($marker))' > /dev/null; then
-              echo "::warning::The known status comment is not workflow-owned."
-              return 0
-            fi
+            for reaction_path in $reaction_paths; do
+              if reactions=$(presentation_api --paginate "$reaction_path?per_page=100" 2> /dev/null) &&
+                 ids=$(printf '%s' "$reactions" | jq -rs '.[].[] | select(.user.login == "github-actions[bot]" and (.content == "eyes" or .content == "+1")) | .id'); then
+                for reaction_id in $ids; do
+                  verify_presentation_owner || return 0
+                  if [ "$reaction_path" = "repos/$REPO/issues/$PR_NUMBER/reactions" ]; then
+                    verify_current_patch || return 0
+                  fi
+                  if ! presentation_api --method DELETE "$reaction_path/$reaction_id" > /dev/null; then
+                    echo "::warning::Could not clear a workflow-owned Claude Review reaction."
+                  fi
+                done
+              else
+                echo "::warning::Could not inspect workflow-owned Claude Review reactions."
+              fi
+            done
+            [ "$current_patch" = true ] || return 0
+            verify_presentation_owner && verify_current_patch || return 0
             if [ "$1" = failure ]; then
               state=failure
               message='This review did not complete reliably; this commit is not approved by it.'
@@ -600,10 +670,12 @@ jobs:
             if [ -n "$TRIGGER_LABEL" ]; then
               trigger_line=$'\n'"**Trigger:** $TRIGGER_LABEL"
             fi
+            reviewed_markers="$owner_marker"$'\n''<!-- claude-review-runtime:presentation-owner-phase:terminal -->'$'\n'"$reviewed_markers"
             rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### ❌ Claude Review incomplete\n\n**Current commit:** `%s`%s\n\n%s\n\n[Workflow run](%s)' \
               "$HEAD_SHA" "$encoded_base" "$state" "$reviewed_markers" "${HEAD_SHA:0:7}" "$trigger_line" "$message" "$DETAILS_URL")
             body=$(jq -n --arg body "$rendered" '{body: $body}')
-            if ! printf '%s' "$body" | timeout "$comment_timeout" gh api --method PATCH "repos/$REPO/issues/comments/$STATUS_COMMENT_ID" --input - > /dev/null; then
+            verify_presentation_owner && verify_current_patch || return 0
+            if ! printf '%s' "$body" | presentation_api --method PATCH "repos/$REPO/issues/comments/$STATUS_COMMENT_ID" --input - > /dev/null; then
               echo "::warning::Could not repair the known Claude Review status comment."
             fi
           }

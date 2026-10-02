@@ -33,6 +33,10 @@ STATUS_REVIEWED_HEAD_PREFIX = "<!-- claude-review-runtime:claude-review-last-rev
 STATUS_REVIEWED_BASE_REF_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:"
 STATUS_REVIEWED_RESULT_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-result:"
 STATUS_AUTHOR = "github-actions[bot]"
+OWNER_PHASE_PREFIX = "<!-- claude-review-runtime:presentation-owner-phase:"
+OWNER_PREFIX = "<!-- claude-review-runtime:presentation-owner:"
+PRESENTATION_SECONDS = 120
+PRESENTATION_DEADLINE = None
 COMPLETION_PREFIX = "<!-- claude-review-runtime:manual-clean-completion:"
 ATTEMPTS = 3
 GH_TIMEOUT_SECONDS = 30
@@ -51,7 +55,9 @@ EVIDENCE_ID_FIELDS = (
     "unscoped_finding_comment_ids", "other_diff_finding_comment_ids",
     "prior_finding_check_run_ids",
 )
-# Worst case per command as (GitHub calls, retried operations). Each call is
+# Authoritative Check/evidence and completion-notice worst cases as
+# (GitHub calls, retried operations). Presentation uses its separate elapsed
+# PRESENTATION_SECONDS budget, including pagination and readback. Each call is
 # capped at GH_TIMEOUT_SECONDS and each retried operation adds its backoff.
 # create's retries each add a reconciliation lookup before POSTing again;
 # finalize may look up an unreported run, then read history and comments and
@@ -62,12 +68,6 @@ WORST_CASE = {
     "create": (1 + 2 * (ATTEMPTS - 1), 1),
     "snapshot": (ATTEMPTS, 1),
     "finalize": (5 * ATTEMPTS, 5),
-    # The initial live-head read, listing, update, and PR-reaction
-    # identity recheck can each exhaust their retries. A new POST is attempted
-    # once, so the update path is the larger bound. Reaction reconciliation
-    # adds up to three bounded, non-retried calls.
-    "status": (4 * ATTEMPTS + 3, 4),
-    "stale": (4 * ATTEMPTS + 3, 4),
     # Paginated dedup discovery and the live snapshot read may retry; the
     # completion POST is attempted once because a lost response is ambiguous.
     "completion": (2 * ATTEMPTS + 1, 2),
@@ -79,13 +79,18 @@ class GhError(Exception):
 
 
 def gh_api(args, body=None):
+    timeout = GH_TIMEOUT_SECONDS
+    if PRESENTATION_DEADLINE is not None:
+        timeout = min(timeout, PRESENTATION_DEADLINE - time.monotonic())
+        if timeout <= 0:
+            raise GhError("presentation budget exhausted")
     try:
         proc = subprocess.run(
             ["gh", "api", *args],
             input=None if body is None else json.dumps(body),
             capture_output=True,
             text=True,
-            timeout=GH_TIMEOUT_SECONDS,
+            timeout=timeout,
         )
     except subprocess.TimeoutExpired as error:
         raise GhError(f"gh api {args[0]} timed out") from error
@@ -103,7 +108,10 @@ def with_retries(action, description):
             print(f"::warning::{description} failed (attempt {attempt}/{ATTEMPTS}): {error}")
             if attempt == ATTEMPTS:
                 raise
-            time.sleep(delay * 2 ** (attempt - 1))
+            pause = delay * 2 ** (attempt - 1)
+            if PRESENTATION_DEADLINE is not None:
+                pause = min(pause, max(0, PRESENTATION_DEADLINE - time.monotonic()))
+            time.sleep(pause)
 
 
 def parse_pages(text):
@@ -363,7 +371,7 @@ def inline_code(value):
 
 
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
-                        trigger_label=None):
+                        trigger_label=None, owner=None, owner_running=None):
     """Render trusted informational state without affecting Check authority."""
     headings = {
         "in_progress": "🔄 Claude Review in progress",
@@ -395,6 +403,10 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         f"{STATUS_BASE_REF_PREFIX}{quote(base_ref, safe='')} -->",
         f"{STATUS_STATE_PREFIX}{state} -->",
     ]
+    if owner:
+        lines.append(owner_marker(owner))
+        running = state == "in_progress" if owner_running is None else owner_running
+        lines.append(f"{OWNER_PHASE_PREFIX}{'running' if running else 'terminal'} -->")
     if last_review:
         reviewed_sha, reviewed_base, reviewed_result = last_review
         lines += [
@@ -475,82 +487,133 @@ def last_completed_review(comment):
     return (legacy_head, legacy_base, legacy_result) if legacy_head and legacy_base else None
 
 
-def update_status_comment(repo, pr_number, head_sha, base_ref, state, *, check_available=True, create=True):
-    existing = find_status_comment(repo, pr_number)
-    if (state == "stale" and existing and status_head(existing) == head_sha
-            and status_base_ref(existing) == base_ref):
-        # A delayed refresh must not clear an active/current result. A repeat
-        # refresh of an already-stale comment may retry PR reaction cleanup.
-        return existing["id"] if status_state(existing) == "stale" else False
-    if not existing and not create:
+def owner_marker(owner):
+    return f"{OWNER_PREFIX}{quote(json.dumps(owner, sort_keys=True, separators=(',', ':')), safe='')} -->"
+
+
+def validate_owner(owner):
+    fields = {"version", "repo", "pr", "run", "attempt", "kind", "target", "head", "base", "base_ref", "started", "generation"}
+    if not isinstance(owner, dict) or set(owner) != fields or type(owner["version"]) is not int or owner["version"] != 1:
+        raise ValueError("invalid presentation owner")
+    if not isinstance(owner["repo"], str) or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", owner["repo"]):
+        raise ValueError("invalid owner repository")
+    for key in ("pr", "run", "attempt"):
+        if type(owner[key]) is not int or not 0 < owner[key] <= 9007199254740991:
+            raise ValueError("invalid owner integer")
+    if owner["kind"] not in ("automatic", "issue_comment", "pull_request_review_comment"):
+        raise ValueError("invalid owner target type")
+    if owner["kind"] == "automatic":
+        if owner["target"] is not None:
+            raise ValueError("automatic owner has a trigger")
+    elif type(owner["target"]) is not int or not 0 < owner["target"] <= 9007199254740991:
+        raise ValueError("invalid owner target")
+    for key in ("head", "base"):
+        if not isinstance(owner[key], str) or not re.fullmatch(r"[0-9a-f]{40}", owner[key]):
+            raise ValueError("invalid owner patch")
+    if not isinstance(owner["base_ref"], str) or not owner["base_ref"] or len(owner["base_ref"]) > 255:
+        raise ValueError("invalid owner base ref")
+    if type(owner["started"]) is not int or not 0 < owner["started"] < 10**20:
+        raise ValueError("invalid start token")
+    identity = {key: value for key, value in owner.items() if key != "generation"}
+    digest = hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    if owner["generation"] != digest:
+        raise ValueError("invalid owner generation")
+    return owner
+
+
+def captured_owner():
+    owner = {
+        "started": int(env("PRESENTATION_START")),
+        "version": 1, "repo": env("REPO"), "pr": int(env("PR_NUMBER")),
+        "run": int(env("GITHUB_RUN_ID")), "attempt": int(env("GITHUB_RUN_ATTEMPT")),
+        "kind": env("TRIGGER_KIND", "automatic"),
+        "target": int(env("TRIGGER_COMMENT_ID")) if env("TRIGGER_COMMENT_ID") else None,
+        "head": env("HEAD_SHA"), "base": env("BASE_SHA"), "base_ref": env("BASE_REF"),
+    }
+    owner["generation"] = hashlib.sha256(json.dumps(owner, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    return validate_owner(owner)
+
+
+def status_owner(comment):
+    matches = re.findall(re.escape(OWNER_PREFIX) + r"([A-Za-z0-9_.~%\-]+) -->", (comment or {}).get("body") or "")
+    if len(matches) != 1:
         return None
-    body = {"body": status_comment_body(
-        head_sha, base_ref, state, check_available=check_available,
-        last_review=last_completed_review(existing) if existing else None,
-        trigger_label=env("TRIGGER_LABEL"),
-    )}
-    if existing:
-        comment_id = existing["id"]
-        # The emergency no-helper fallback can still repair this known comment
-        # if the update itself fails after discovery.
-        write_output("status_comment_id", comment_id)
-        with_retries(
-            lambda: gh_api(
-                ["--method", "PATCH", f"repos/{repo}/issues/comments/{comment_id}", "--input", "-"], body
-            ),
-            "Updating Claude Review status comment",
-        )
-        return comment_id
-    # A failed POST may have succeeded remotely. Never retry it blindly; the
-    # next lifecycle step can rediscover the marker through the listing above.
-    created = gh_api(
-        ["--method", "POST", f"repos/{repo}/issues/{pr_number}/comments", "--input", "-"], body
-    )
-    comment_id = json.loads(created)["id"]
-    write_output("status_comment_id", comment_id)
-    return comment_id
+    try:
+        return validate_owner(json.loads(unquote(matches[0])))
+    except (ValueError, TypeError, KeyError):
+        return None
+
+
+def status_owner_running(comment):
+    matches = re.findall(re.escape(OWNER_PHASE_PREFIX) + r"(running|terminal) -->", (comment or {}).get("body") or "")
+    if len(matches) == 1:
+        return matches[0] == "running"
+    return status_state(comment or {}) == "in_progress"
+
+
+def owned_status(comment):
+    return ((comment.get("user") or {}).get("login") == STATUS_AUTHOR
+            and (comment.get("user") or {}).get("type") == "Bot"
+            and STATUS_MARKER in (comment.get("body") or ""))
+
+
+def trigger_reaction_path(owner):
+    if owner["kind"] == "automatic":
+        return None
+    namespace = "issues" if owner["kind"] == "issue_comment" else "pulls"
+    path = f"repos/{owner['repo']}/{namespace}/comments/{owner['target']}"
+    comment = json.loads(gh_api([path]))
+    link = "issue_url" if namespace == "issues" else "pull_request_url"
+    parent = "issues" if namespace == "issues" else "pulls"
+    expected = f"https://api.github.com/repos/{owner['repo']}/{parent}/{owner['pr']}"
+    if (type(comment.get("id")) is not int or comment["id"] != owner["target"]
+            or comment.get(link) != expected):
+        raise ValueError("trigger comment does not belong to captured PR")
+    return path + "/reactions"
 
 
 def desired_pr_reaction(state, check_available):
-    if not check_available:
-        return None
-    if state == "success":
-        return "+1"
-    if state == "in_progress" and env("PR_REACTION_MODE") in ("automatic", "manual"):
+    if state == "in_progress":
         return "eyes"
+    if state == "success" and check_available:
+        return "+1"
     return None
 
 
-def reconcile_pr_reactions(repo, pr_number, desired):
-    """Best-effort projection of Claude Review reactions on the top-level PR.
-
-    Consumers reserve github-actions[bot] eyes/+1 on top-level PRs for
-    Claude Review. GitHub returns this actor's reactions with user.type User,
-    so ownership uses the reserved login/content pair. Revisit ownership
-    before another workflow uses that pair.
-    """
-    path = f"repos/{repo}/issues/{pr_number}/reactions"
+def reconcile_reactions(path, desired, guard):
+    """The reserved bot/content pair is the only reaction ownership signal."""
     raw = gh_api(["--paginate", f"{path}?per_page=100"])
-    owned = [
-        reaction
-        for page in parse_pages(raw)
-        for reaction in page
-        if (reaction.get("user") or {}).get("login") == STATUS_AUTHOR
-        and reaction.get("content") in ("eyes", "+1")
-    ]
-    removed = True
-    kept_desired = False
+    owned = [reaction for page in parse_pages(raw) for reaction in page
+             if (reaction.get("user") or {}).get("login") == STATUS_AUTHOR
+             and reaction.get("content") in ("eyes", "+1")]
+    removed, kept = True, False
     for reaction in owned:
-        if reaction["content"] == desired and not kept_desired:
-            kept_desired = True
+        if reaction["content"] == desired and not kept:
+            kept = True
             continue
+        if type(reaction.get("id")) is not int or reaction["id"] <= 0:
+            raise ValueError("invalid reaction ID")
+        if not guard():
+            return
         try:
             gh_api(["--method", "DELETE", f"{path}/{reaction['id']}"])
-        except GhError as error:
-            removed = False
-            print(f"::warning::Could not remove an obsolete Claude Review reaction: {error}")
-    if desired and removed and not kept_desired:
-        gh_api(["--method", "POST", path, "--input", "-"], {"content": desired})
+        except GhError:
+            # DELETE may have succeeded despite the lost response. Confirm
+            # absence before permitting a different reaction on this surface.
+            current = parse_pages(gh_api(["--paginate", f"{path}?per_page=100"]))
+            if any(item.get("id") == reaction["id"] for page in current for item in page):
+                removed = False
+                print("::warning::Could not remove an obsolete Claude Review reaction.")
+    if desired and removed and not kept and guard():
+        try:
+            gh_api(["--method", "POST", path, "--input", "-"], {"content": desired})
+        except GhError:
+            # Never retry an ambiguous POST blindly. A future lifecycle step
+            # reconciles the actual state; this readback diagnoses the result.
+            current = parse_pages(gh_api(["--paginate", f"{path}?per_page=100"]))
+            if not any((item.get("user") or {}).get("login") == STATUS_AUTHOR
+                       and item.get("content") == desired for page in current for item in page):
+                raise
 
 
 def live_pr_identity(repo, pr_number, *, include_base_sha=False):
@@ -572,44 +635,116 @@ def live_pr_identity(repo, pr_number, *, include_base_sha=False):
     return head_sha, base_ref
 
 
-def best_effort_status(head_sha, state, *, check_available=True, create=True):
+def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
+    """Only trusted starts acquire; every later write requires that exact owner.
+
+    The workflow's shared PR queue serializes writers. API reads before writes
+    also detect changed patch identity and publication from another generation.
+    """
+    global PRESENTATION_DEADLINE
     if env("STATUS_COMMENTS_ENABLED") != "true" or not env("PR_NUMBER"):
         return
-    repo, pr_number = env("REPO"), env("PR_NUMBER")
-    published = False
-    identity_verified = state == "stale"  # cmd_stale checked the live identity.
+    PRESENTATION_DEADLINE = time.monotonic() + PRESENTATION_SECONDS
     try:
-        base_ref = env("BASE_REF")
-        if not base_ref:
-            raise ValueError("the reviewed PR base ref is missing")
-        # The Check is always published for the captured review SHA. Only the
-        # informational comment and reactions follow the current PR identity.
-        if state != "stale" and live_pr_identity(repo, pr_number) != (head_sha, base_ref):
-            print(f"::notice::Skipping status for superseded review identity {head_sha} on {base_ref}.")
+        repo, pr_number, base_ref = env("REPO"), env("PR_NUMBER"), env("BASE_REF")
+        existing = find_status_comment(repo, pr_number)
+        prior = status_owner(existing)
+        stale = state == "stale"
+        if stale:
+            if not prior or (prior["repo"], str(prior["pr"])) != (repo, pr_number):
+                raise ValueError("stale refresh has no verified owner")
+            owner = prior
+            expected_patch = (head_sha, base_ref)
+            if live_pr_identity(repo, pr_number) != expected_patch:
+                return
+            if (status_head(existing), status_base_ref(existing)) == expected_patch and status_state(existing) != "stale":
+                return
+        else:
+            owner = captured_owner() if acquire else validate_owner(json.loads(env("PRESENTATION_OWNER")))
+            if (owner["repo"], str(owner["pr"]), owner["head"], owner["base"], owner["base_ref"],
+                    str(owner["run"]), str(owner["attempt"])) != (
+                    repo, pr_number, head_sha, env("BASE_SHA"), base_ref,
+                    env("GITHUB_RUN_ID"), env("GITHUB_RUN_ATTEMPT")):
+                raise ValueError("captured owner differs from executing attempt")
+            if not acquire and prior != owner:
+                raise ValueError("this attempt no longer owns presentation")
+            # An older start must not reclaim a later generation. A higher
+            # attempt of the same run is accepted only by this acquisition path.
+            if acquire and prior != owner and prior and owner["started"] <= prior["started"]:
+                raise ValueError("older start cannot reclaim newer presentation")
+            if acquire and prior == owner and status_state(existing) != "in_progress":
+                write_output("presentation_owner", json.dumps(owner, separators=(",", ":")))
+                write_output("status_comment_id", existing["id"])
+                return
+            expected_patch = (head_sha, base_ref, env("BASE_SHA"))
+        current = lambda: live_pr_identity(repo, pr_number, include_base_sha=not stale) == expected_patch
+        if not current():
+            if not acquire and not stale and prior == owner and status_owner_running(existing):
+                try:
+                    path = trigger_reaction_path(owner)
+                    if path:
+                        reconcile_reactions(path, None, lambda: status_owner(find_status_comment(repo, pr_number)) == owner)
+                except Exception as error:
+                    print(f"::warning::Could not clear superseded trigger reactions: {error}")
             return
-        identity_verified = True
-        comment_id = update_status_comment(
-            repo, pr_number, head_sha, base_ref, state,
-            check_available=check_available, create=create,
-        )
-        if comment_id is False:
-            return  # A same-identity stale event must not clear an active review.
-        published = True
-    except Exception as error:
-        print(f"::warning::Could not publish Claude Review status comment: {error}")
-    if not identity_verified:
-        return
-    if env("PR_REACTION_MODE") not in ("automatic", "manual", "stale"):
-        return
-    try:
+        # Re-read the observed owner immediately before changing shared status.
+        observed = find_status_comment(repo, pr_number)
+        if observed != existing or not current():
+            raise ValueError("presentation changed before status publication")
+        body = {"body": status_comment_body(
+            head_sha, base_ref, state, check_available=check_available,
+            last_review=last_completed_review(existing) if existing else None,
+            trigger_label=env("TRIGGER_LABEL"), owner=owner,
+            owner_running=status_owner_running(existing) if stale else None)}
+        published = False
+        try:
+            if existing:
+                comment_id = existing["id"]
+                gh_api(["--method", "PATCH", f"repos/{repo}/issues/comments/{comment_id}", "--input", "-"], body)
+            elif acquire:
+                created = json.loads(gh_api(["--method", "POST", f"repos/{repo}/issues/{pr_number}/comments", "--input", "-"], body))
+                comment_id = created["id"]
+            else:
+                raise ValueError("only a start may create presentation")
+        except (GhError, ValueError, KeyError) as error:
+            print(f"::warning::Could not publish Claude Review status comment: {error}")
+        # Both successful and ambiguous writes require persisted-owner readback.
+        confirmed = find_status_comment(repo, pr_number)
+        if not confirmed or status_owner(confirmed) != owner:
+            raise ValueError("presentation owner publication could not be confirmed")
+        published = confirmed.get("body") == body["body"]
+        if acquire:
+            if not published:
+                raise ValueError("start presentation publication could not be confirmed")
+            write_output("presentation_owner", json.dumps(owner, separators=(",", ":")))
+        write_output("status_comment_id", confirmed["id"])
+        def guard(require_patch=True):
+            return (status_owner(find_status_comment(repo, pr_number)) == owner
+                    and (not require_patch or current()))
         desired = desired_pr_reaction(state, check_available) if published else None
-        # A PR reaction is shared across heads. Never add or clear one after
-        # the PR moved during comment publication.
-        if live_pr_identity(repo, pr_number) != (head_sha, base_ref):
-            return
-        reconcile_pr_reactions(repo, pr_number, desired)
+        surfaces = [(f"repos/{repo}/issues/{pr_number}/reactions", True)]
+        if not stale:
+            try:
+                path = trigger_reaction_path(owner)
+                if path:
+                    surfaces.append((path, False))
+            except Exception as error:
+                print(f"::warning::Could not verify Claude Review trigger: {error}")
+        for path, opening in surfaces:
+            try:
+                if opening:
+                    if guard():
+                        reconcile_reactions(path, desired, lambda: guard())
+                elif guard(require_patch=False):
+                    trigger_desired = desired if current() else None
+                    reconcile_reactions(path, trigger_desired,
+                                        lambda: guard(require_patch=trigger_desired is not None))
+            except Exception as error:
+                print(f"::warning::Could not reconcile Claude Review reactions: {error}")
     except Exception as error:
-        print(f"::warning::Could not reconcile Claude Review reactions: {error}")
+        print(f"::warning::Skipping Claude Review presentation: {error}")
+    finally:
+        PRESENTATION_DEADLINE = None
 
 
 def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_sha):
@@ -843,13 +978,14 @@ def cmd_create():
                 f"({error}); the review continues with inline comments as its only evidence."
             )
             write_output("check_run_id", "")
-            best_effort_status(head_sha, "in_progress", check_available=False)
+            best_effort_status(head_sha, "in_progress", check_available=False, acquire=True)
             return 0
         print(f"::error::Could not create the Claude Review check run: {error}")
+        best_effort_status(head_sha, "failure", check_available=False, acquire=True)
         return 1
     write_output("check_run_id", check_run_id)
     print(f"Created Claude Review check run {check_run_id} for {head_sha}")
-    best_effort_status(head_sha, "in_progress")
+    best_effort_status(head_sha, "in_progress", acquire=True)
     return 0
 
 
@@ -1079,7 +1215,7 @@ def cmd_stale():
     if live_identity != (head_sha, base_ref):
         print(f"::notice::PR event for {head_sha} on {base_ref} was superseded by {live_identity}.")
         return 0
-    best_effort_status(head_sha, "stale", create=False)
+    best_effort_status(head_sha, "stale")
     return 0
 
 
