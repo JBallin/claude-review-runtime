@@ -35,7 +35,7 @@ JOB_COMMANDS = {"start-check": ["create", "snapshot"], "publish-status": ["final
 
 
 def worst_case_seconds(command):
-    if command in ("status", "stale"):
+    if command in ("status", "stale", "completion", "admit-manual"):
         return check.PRESENTATION_SECONDS
     calls, retried_operations = check.WORST_CASE[command]
     backoff = sum(check.RETRY_DELAY_SECONDS * 2**attempt for attempt in range(check.ATTEMPTS - 1))
@@ -458,6 +458,7 @@ class JobStructureTests(unittest.TestCase):
                 "Resolve PR under review",
                 "Capture presentation start",
                 "Check review tooling",
+                "Verify manual base freshness",
                 "Start Claude Review check",
                 "Capture PR review snapshot",
             ],
@@ -471,7 +472,7 @@ class JobStructureTests(unittest.TestCase):
 
     def test_fork_evidence_failures_cannot_skip_the_manual_review(self):
         named = steps(job(MANUAL, "start-check"))
-        required = ["Resolve PR under review", "Capture PR review snapshot", "Upload review snapshot"]
+        required = ["Resolve PR under review", "Verify manual base freshness", "Capture PR review snapshot", "Upload review snapshot"]
         evidence_only = [
             "Check review tooling",
             "Start Claude Review check",
@@ -534,6 +535,8 @@ class JobStructureTests(unittest.TestCase):
                     needed += worst_case_seconds("status")
                     if path == MANUAL and name == "publish-status":
                         needed += worst_case_seconds("completion")
+                    if path == MANUAL and name == "start-check":
+                        needed += worst_case_seconds("admit-manual")
                     timeout = int(scalar(job(path, name), "timeout-minutes", 4)) * 60
                     self.assertLessEqual(needed + JOB_OVERHEAD_SECONDS, timeout)
                     for command in commands:
@@ -739,6 +742,8 @@ STUB_GH = textwrap.dedent(
             key = "STATUS"
         elif any(arg.endswith("/pulls/7") for arg in args):
             key = "PR"
+        elif any("/git/ref/heads/" in arg for arg in args):
+            key = "REF"
         elif any("/comments/42" in arg for arg in args):
             key = "TRIGGER"
     responses = json.loads(os.environ.get("GH_STUB_RESPONSES", "{}")).get(
@@ -751,6 +756,7 @@ STUB_GH = textwrap.dedent(
             ("REACTIONS" if any("/reactions" in arg for arg in c["args"]) else
              "STATUS" if any("/issues/comments/55" in arg for arg in c["args"]) else
              "PR" if any(arg.endswith("/pulls/7") for arg in c["args"]) else
+             "REF" if any("/git/ref/heads/" in arg for arg in c["args"]) else
              "TRIGGER" if any("/comments/42" in arg for arg in c["args"]) else "GET") == key))
     )
     response = responses[min(seen, len(responses) - 1)]
@@ -793,7 +799,8 @@ def history(*runs):
 
 
 def pr_identity(head=HEAD, base_ref=BASE_REF):
-    return json.dumps({"head": {"sha": head}, "base": {"ref": base_ref, "sha": "d" * 40}})
+    return json.dumps({"head": {"sha": head}, "base": {
+        "ref": base_ref, "sha": "d" * 40, "repo": {"full_name": REPO}}})
 
 
 class ToolingFallbackScriptTests(unittest.TestCase):
@@ -819,6 +826,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 document["body"] += "\n" + owner_marker
                 statuses.append({"stdout": json.dumps(document)})
         responses.setdefault("PR", prs or generic[-1:] or [{"stdout": pr_identity()}])
+        responses.setdefault("REF", [{"stdout": json.dumps({"ref": f"refs/heads/{owner['base_ref']}",
+            "object": {"type": "commit", "sha": "d" * 40}})}])
         default_status = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"},
                           "body": check.status_comment_body(HEAD, owner["base_ref"], "in_progress", owner=owner)}
         responses.setdefault("STATUS", statuses or [{"stdout": json.dumps(default_status)}])
@@ -1086,6 +1095,41 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         repaired = next(call for call in calls if call["method"] == "PATCH" and any("issues/comments/55" in arg for arg in call["args"]))
         self.assertIn("base-ref:release%2F2026", repaired["body"]["body"])
+        self.assertTrue(any("repos/example/repository/git/ref/heads/release%2F2026" in call["args"]
+                            for call in calls))
+
+    def test_invalid_direct_ref_never_repairs_shared_presentation(self):
+        invalid = [{"fail": True}, {"stdout": "{}"}, {"stdout": "[]"},
+            {"stdout": json.dumps({"ref": "refs/heads/wrong", "object": {"type": "commit", "sha": "d" * 40}})},
+            {"stdout": json.dumps({"ref": "refs/heads/main", "object": {"type": "tag", "sha": "d" * 40}})},
+            {"stdout": json.dumps({"ref": "refs/heads/main", "object": {"type": "commit", "sha": 5}})},
+            {"stdout": '{"ref":"refs/heads/main","ref":"refs/heads/main",'
+                       '"object":{"type":"commit","sha":"' + "d" * 40 + '"}}'}]
+        for path in (AUTOMATIC, MANUAL):
+            for response in invalid:
+                with self.subTest(workflow=path.name, response=response):
+                    result, calls = self.run_fallback(path, {"REF": [response]},
+                                                     PR_NUMBER="7", STATUS_COMMENT_ID="55")
+                    self.assertEqual(result.returncode, 1)
+                    writes = [c for c in calls if c["method"] in ("PATCH", "POST", "DELETE")]
+                    self.assertEqual(len(writes), 1)
+                    self.assertIn(f"repos/{REPO}/check-runs/99", writes[0]["args"])
+
+    def test_retarget_during_ref_lookup_cannot_repair_shared_presentation(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                result, calls = self.run_fallback(path,
+                    {"PR": [{"stdout": pr_identity()}, {"stdout": pr_identity(base_ref="release")}]},
+                    PR_NUMBER="7", STATUS_COMMENT_ID="55")
+                self.assertEqual(result.returncode, 1)
+                self.assertEqual([c["method"] for c in calls if c["method"] != "GET"], ["PATCH"])
+
+    def test_projection_ahead_of_direct_tip_cannot_claim_current_repair(self):
+        result, calls = self.run_fallback(MANUAL,
+            {"PR": [{"stdout": pr_identity().replace("d" * 40, "b" * 40)}]},
+            PR_NUMBER="7", STATUS_COMMENT_ID="55")
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual([c["method"] for c in calls if c["method"] != "GET"], ["PATCH"])
 
     def test_fallback_preserves_last_review_and_clears_only_workflow_reactions(self):
         previous = check.status_comment_body("b" * 40, "main", "success")
