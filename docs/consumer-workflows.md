@@ -1,5 +1,29 @@
 # Consumer workflows
 
+*Use this guide to install and operate the three reusable review entrypoints in a consumer repository.*
+
+## Prerequisites
+
+Use a private consumer repository owned by the same personal account as this
+runtime. The runtime must allow Actions access from that account's private
+repositories (`access_level: user`). This setting grants access across the
+owner's private repositories; it is not a per-consumer allowlist. While the
+runtime is private, public repositories cannot call it.
+
+Model authentication uses the consumer's existing Claude OAuth credential stored
+as the Actions secret `CLAUDE_CODE_OAUTH_TOKEN`. GitHub authentication uses the
+Anthropic Claude GitHub App and the action's default OIDC token exchange. The
+App must have access to the consumer. No PAT, custom App credential, or GitHub
+token override is accepted by the runtime. Adding credentials or access grants
+requires the repository owner's authorization.
+
+The supported platform is GitHub.com with GitHub-hosted Ubuntu runners. The
+runtime-local helper action uses `$/actions/review-helper`, which requires runner
+version 2.336.0 or later. GitHub Enterprise Server and public consumers are not
+validated targets. No public-release license has been selected.
+
+## Install the callers
+
 Install three separate workflow files in the consumer repository. Replace
 `<full-reviewed-runtime-sha>` with one reviewed 40-character commit SHA in all
 three files. Keep the files on the consumer's default branch before testing the
@@ -37,6 +61,10 @@ captures the pull-request event's head and base; it does not silently move the
 review to a later patch.
 
 ## Manual review
+
+For the command accepted by this repository's pinned revision, see
+[manual invocation](review-guide.md#request-a-manual-review). When selecting a
+different revision, check its documented manual interface before changing callers.
 
 ```yaml
 name: Manual Claude review
@@ -102,3 +130,6 @@ before helper steps can execute. If those stages fail, the helper's fallback
 cannot publish a failure Check. Inspect the workflow run as well as the exact-head
 Check, and verify actual model execution and completion evidence during the first
 live trial.
+
+For review evidence, trust boundaries, update and rollback guidance, and this
+repository's additional caller gates, see the [review guide](review-guide.md).
