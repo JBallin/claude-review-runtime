@@ -24,7 +24,7 @@ containing this report and the focused fix, recorded in the delivery handoff.
 Runtime source publication does not update consumers. Ownership caller adoption
 remains a separate delivery; this audit changes no caller pins.
 
-## Finding and disposition
+## Findings and dispositions
 
 **Check history did not consistently fail closed on missing or malformed API
 evidence.** `check_run_history()` accepted successful empty output and `{}` as
@@ -54,6 +54,24 @@ app metadata never grants trusted finding attribution. Regressions cover clean
 classification alongside such runs, preserved sticky findings from a separate
 trusted run, and rejection of invalid app/slug/conclusion types.
 
+Codex's review of the same initial published head identified two further
+completeness gaps, both reproduced independently on subsequent revision
+`3f961e708a38d578aeedc548067fe9919f69f456`: an inconsistent reported count was
+accepted, and finalization accepted an empty listing even though it knew its
+current Check ID. Each produced a clean Check in the offline stub. A listing
+with repeated run IDs also passed despite potentially omitting another run.
+
+The combined correction requires a nonnegative integer `total_count` on every
+page, the same total across pages, unique run IDs, and an aggregate count that
+matches the total. Duplicate JSON keys are rejected. The [CLI pagination
+contract](https://cli.github.com/manual/gh_api) returns each page separately;
+totals are compared across pages rather than summed. Finalization additionally
+requires the captured Check ID with the expected name, head and publisher.
+These requirements are inside the existing three-attempt whole-read retry.
+Creation reconciliation has no known Check requirement and still accepts a
+valid zero-result listing before another POST. No retry or job-timeout budget
+is increased.
+
 ## Reproducible offline evidence
 
 Run from the repository root:
@@ -69,6 +87,13 @@ requests; these tests perform no network operations. New regression cases are
 and `CreateAndSnapshotTests.test_ambiguous_create_never_reposts_after_invalid_history`.
 The compatibility follow-up adds
 `FinalizeTests.test_nullable_untrusted_apps_do_not_hide_trusted_sticky_findings`.
+The completeness follow-up adds
+`FinalizeTests.test_incomplete_history_counts_and_missing_current_fail_closed`,
+`FinalizeTests.test_history_retry_reads_a_complete_listing_after_pagination_movement`,
+and `CreateAndSnapshotTests.test_ambiguous_create_never_reposts_after_incomplete_history`.
+Normal history fixtures now include the API's required count and, for
+finalization, the known current Check. Explicit malformed fixtures retain their
+inconsistencies; no stub fills in missing evidence.
 
 | Fault sequence | Before fix | Expected and observed after fix |
 | --- | --- | --- |
@@ -76,8 +101,11 @@ The compatibility follow-up adds
 | Invalid JSON or null collection; otherwise completed review | Unhandled exception; no final PATCH | Failure Check with incomplete-history evidence |
 | Invalid later page or malformed run; one newly observed finding | Invalid history could escape classification | Failure Check; finding ID and same-diff presence retained |
 | Creation POST fails ambiguously; invalid history lookup | Empty history could permit another POST; malformed history could crash | One POST only; at most two recovery reads; nonzero exit |
+| Reported count differs from collected runs, duplicate IDs/keys, or missing known current Check | Success Check on revision `3f961e7` | Bounded retries; failure Check; observed findings retained; no clean notice |
+| First listing changes during pagination or omits current Check; next complete listing contains earlier findings | Incomplete first listing could be accepted | Entire history reread; trusted earlier findings remain action-required |
+| Ambiguous creation POST followed by a valid zero-result listing | Recovery may POST again | Behavior retained; finalization's known-Check requirement does not apply |
 
-The candidate suite contains 291 tests. Independent review reproduced the
+The candidate suite contains 294 tests. Independent review reproduced the
 original defect and reviewed the focused correction. Exact output revision,
 local validation result, and remote CI state are recorded in the handoff; pending
 or unavailable external gates must not be represented as passing.
@@ -103,7 +131,7 @@ or unavailable external gates must not be represented as passing.
   emergency repair. The 120-second presentation budget is independent of Check
   publication; presentation failure cannot strengthen its conclusion.
 
-Beyond the history defect and its application-metadata compatibility correction,
+Beyond the history defects and their application-metadata compatibility correction,
 no additional substantive defect was established by this bounded audit.
 Duplicate Read responses in a synthetic malformed transcript are a robustness
 question: Read coverage currently combines successful returned lines, whereas
@@ -118,9 +146,19 @@ incomplete listing can leave a duplicate in-progress Check. Exhausted API retrie
 can prevent any final Check update. Status events do not observe every base-tip
 movement. Failures before trusted tooling starts may leave no Check. These are
 not clean-success evidence or authorization to delete historical state.
+History count consistency and current-Check presence do not prove that an
+otherwise internally consistent listing contains every historical run.
+Concurrent changes may produce incomplete pages, which are retried and then
+fail closed. The [Check API](https://docs.github.com/en/rest/checks/runs#list-check-runs-for-a-git-reference)
+limits this reference endpoint to the most recent 1,000 check suites. Enumerating
+older suites or providing atomic historical snapshots would require separate
+recovery design; this correction does not claim those guarantees.
 
 Historical failed Checks and prior bounded live evidence remain intact and tied
-to their original revisions. No live model run, fixture creation, deployment,
-visibility, credential, settings, release, or merge operation is part of this
-work. Issue 13's bounded stress work must use the final reviewed candidate SHA
+to their original revisions. The source audit and deterministic reproductions
+use offline tests; the subsequent parent-initiated review of the initial
+published head is described above. No additional provider review request,
+fixture creation, stress exercise, deployment, visibility, credential, settings,
+release, or merge operation is part of these corrections. Issue 13's bounded
+stress work must use the final reviewed candidate SHA
 from the handoff and obtain its own applicable authorization.
