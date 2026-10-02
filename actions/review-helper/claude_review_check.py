@@ -114,9 +114,9 @@ def with_retries(action, description):
             time.sleep(pause)
 
 
-def parse_pages(text):
+def parse_pages(text, *, object_pairs_hook=None):
     """Decode `gh api --paginate` output: one JSON document per page, concatenated."""
-    decoder = json.JSONDecoder()
+    decoder = json.JSONDecoder(object_pairs_hook=object_pairs_hook)
     pages, index = [], 0
     while True:
         while index < len(text) and text[index].isspace():
@@ -249,15 +249,62 @@ def fetch_claude_comment_ids(repo, pr_number, head_sha):
         raise GhError("PR review comment evidence is malformed or incomplete") from error
 
 
-def check_run_history(repo, head_sha):
+def check_run_history(repo, head_sha, *, required_check_run_id=None):
     # filter=all: the endpoint's default returns only the latest run per name.
     query = urlencode({"check_name": CHECK_NAME, "filter": "all", "per_page": 100})
-    return parse_pages(gh_api(["--paginate", f"repos/{repo}/commits/{head_sha}/check-runs?{query}"]))
+    raw = gh_api(["--paginate", f"repos/{repo}/commits/{head_sha}/check-runs?{query}"])
+    try:
+        pages = parse_pages(raw, object_pairs_hook=unique_json_object)
+        # An empty body or missing collection cannot establish absence. Check
+        # all pages before consuming any history, including recovery lookups.
+        if not pages or any(not isinstance(page, dict)
+                            or not isinstance(page.get("check_runs"), list)
+                            or type(page.get("total_count")) is not int
+                            or page["total_count"] < 0 for page in pages):
+            raise ValueError("expected complete check history pages")
+        total, runs = pages[0]["total_count"], {}
+        for page in pages:
+            # Each page reports the aggregate count. A moving listing may
+            # change totals or repeat IDs; retry the entire read in that case.
+            if page["total_count"] != total:
+                raise ValueError("check history total changed during pagination")
+            for run in page["check_runs"]:
+                if (not isinstance(run, dict) or not positive_comment_id(run.get("id"))
+                        or any(not isinstance(run.get(key), str) for key in ("name", "head_sha", "status"))
+                        # Null/missing app or slug cannot identify our trusted
+                        # publisher; the classifier safely skips those runs.
+                        or (run.get("app") is not None and not isinstance(run["app"], dict))
+                        or (isinstance(run.get("app"), dict)
+                            and run["app"].get("slug") is not None
+                            and not isinstance(run["app"]["slug"], str))
+                        or (run.get("conclusion") is not None and not isinstance(run["conclusion"], str))
+                        or (run.get("external_id") is not None and not isinstance(run["external_id"], str))
+                        or (run.get("output") is not None and not isinstance(run["output"], dict))
+                        or (isinstance(run.get("output"), dict)
+                            and run["output"].get("text") is not None
+                            and not isinstance(run["output"]["text"], str))):
+                    raise ValueError("malformed check run")
+                if run["id"] in runs:
+                    raise ValueError("duplicate check run in history")
+                runs[run["id"]] = run
+        if len(runs) != total:
+            raise ValueError("check history does not match its total")
+        if required_check_run_id is not None:
+            current = next((run for run in runs.values()
+                            if str(run["id"]) == str(required_check_run_id)), None)
+            if (current is None or current["name"] != CHECK_NAME
+                    or current["head_sha"] != head_sha
+                    or (current.get("app") or {}).get("slug") != CHECK_APP_SLUG):
+                raise ValueError("captured check run is absent from history")
+        return pages
+    except (ValueError, TypeError, KeyError, AttributeError) as error:
+        raise GhError("Claude Review check history is malformed or incomplete") from error
 
 
 def fetch_prior_finding_evidence(repo, head_sha, current_check_run_id, pr_number, merge_base_sha):
     history = with_retries(
-        lambda: check_run_history(repo, head_sha), "Listing Claude Review check history"
+        lambda: check_run_history(repo, head_sha, required_check_run_id=current_check_run_id),
+        "Listing Claude Review check history"
     )
     return prior_finding_evidence(history, head_sha, current_check_run_id, pr_number, merge_base_sha)
 

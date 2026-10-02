@@ -147,6 +147,12 @@ def pages(*documents):
     return "".join(json.dumps(document) for document in documents)
 
 
+def history_pages(*documents):
+    """Valid Check API pages repeat the aggregate count on every page."""
+    total = sum(len(document["check_runs"]) for document in documents)
+    return pages(*({"total_count": total, **document} for document in documents))
+
+
 def ok(stdout):
     return {"stdout": stdout}
 
@@ -423,10 +429,112 @@ def status_comment(head=HEAD, *, base_ref="main", login="github-actions[bot]", u
 
 
 def current_run_only():
-    return ok(pages({"check_runs": [check_run(99, None, status="in_progress")]}))
+    return ok(history_pages({"check_runs": [check_run(99, None, status="in_progress")]}))
 
 
 class FinalizeTests(ScriptTestCase):
+    def test_incomplete_history_counts_and_missing_current_fail_closed(self):
+        current = check_run(99, None, status="in_progress")
+        invalid = [json.dumps({"check_runs": [current]}),
+                   pages({"total_count": 0, "check_runs": []}),
+                   pages({"total_count": 1, "check_runs": []}),
+                   pages({"total_count": 2, "check_runs": [current]}),
+                   pages({"total_count": 2, "check_runs": [current, current]}),
+                   pages({"total_count": 1, "check_runs": [check_run(98, "success")]}),
+                   pages({"total_count": 2, "check_runs": [current]},
+                         {"total_count": 3, "check_runs": [check_run(98, "success")]}),
+                   '{"total_count":1,"total_count":1,"check_runs":[]}']
+        invalid.extend(pages({"total_count": value, "check_runs": [current]})
+                       for value in (None, True, False, -1, 1.0, "1", [], {}))
+        invalid.extend(history_pages({"check_runs": [{**current, **changes}]})
+                       for changes in ({"head_sha": OTHER}, {"name": "Other Check"},
+                                       {"app": None}, {"app": {"slug": "other-app"}}))
+        for raw in invalid:
+            for findings in ([], [comment(9)]):
+                with self.subTest(raw=raw, findings=bool(findings)):
+                    self.log.unlink(missing_ok=True)
+                    result = self.finalize(
+                        [history_rule(ok(raw)), comments_rule(ok(pages(findings))), patch_rule(ok("{}"))],
+                        MANUAL_COMPLETION_ENABLED="true")
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    body = self.published()
+                    self.assertEqual(body["conclusion"], "failure")
+                    self.assertEqual(evidence_of(body)["new_finding_comment_ids"], [9] if findings else [])
+                    self.assertEqual(evidence_of(body)["same_diff_findings_recorded"], bool(findings))
+                    self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), check.ATTEMPTS)
+                    self.assertFalse(self.calls("POST"))
+
+    def test_history_retry_reads_a_complete_listing_after_pagination_movement(self):
+        current = check_run(99, None, status="in_progress")
+        earlier = {**check_run(98, "action_required"), "output": {"text": evidence_text([8])}}
+        complete = history_pages({"check_runs": [current]}, {"check_runs": [earlier]})
+        for incomplete in (pages({"total_count": 0, "check_runs": []}),
+                           pages({"total_count": 2, "check_runs": [current]},
+                                 {"total_count": 3, "check_runs": [earlier]})):
+            with self.subTest(incomplete=incomplete):
+                self.log.unlink(missing_ok=True)
+                result = self.finalize(
+                    [history_rule(ok(incomplete), ok(complete)), comments_rule(ok(pages([]))), patch_rule(ok("{}"))])
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                body = self.published()
+                self.assertEqual(body["conclusion"], "action_required")
+                self.assertEqual(evidence_of(body)["claude_finding_comment_ids"], [8])
+                self.assertEqual(evidence_of(body)["evidence_errors"], [])
+                self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), 2)
+
+    def test_invalid_history_fails_closed_and_preserves_observed_findings(self):
+        invalid = ["", "{}", "{broken", pages([]), pages({"check_runs": None}),
+                   history_pages({"check_runs": [None]}),
+                   history_pages({"check_runs": [check_run(99, None, status="in_progress"),
+                                                  {**check_run(98, "failure"), "output": {"text": []}}]}),
+                   pages({"check_runs": []}, {}),
+                   history_pages({"check_runs": [check_run(99, None, status="in_progress"),
+                                                  {**check_run(98, "failure"), "id": True}]})]
+        for changes in ({"app": []}, {"app": "github-actions"}, {"app": False},
+                        {"app": {"slug": []}}, {"app": {"slug": False}},
+                        {"conclusion": []}, {"conclusion": False}):
+            invalid.append(history_pages({"check_runs": [check_run(99, None, status="in_progress"),
+                                                        {**check_run(98, "failure"), **changes}]}))
+        for raw in invalid:
+            for findings in ([], [comment(9)]):
+                with self.subTest(raw=raw, findings=bool(findings)):
+                    self.log.unlink(missing_ok=True)
+                    result = self.finalize(
+                        [history_rule(ok(raw)), comments_rule(ok(pages(findings))), patch_rule(ok("{}"))],
+                        MANUAL_COMPLETION_ENABLED="true",
+                    )
+                    self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                    body = self.published()
+                    self.assertEqual(body["conclusion"], "failure")
+                    evidence = evidence_of(body)
+                    self.assertEqual(evidence["new_finding_comment_ids"], [9] if findings else [])
+                    self.assertEqual(evidence["same_diff_findings_recorded"], bool(findings))
+                    self.assertIn("malformed or incomplete", evidence["evidence_errors"][0])
+                    self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), check.ATTEMPTS)
+                    self.assertFalse(self.calls("POST"))
+
+    def test_nullable_untrusted_apps_do_not_hide_trusted_sticky_findings(self):
+        for app in (None, {}, {"slug": None}, {"slug": "other-app"}, "missing"):
+            for sticky, text in ((sticky, text) for sticky in (False, True)
+                                 for text in (None, evidence_text([8]))):
+                with self.subTest(app=app, sticky=sticky, populated_evidence=text is not None):
+                    self.log.unlink(missing_ok=True)
+                    untrusted = {**check_run(97, "action_required"), "app": app,
+                                 "external_id": None, "output": {"text": text}}
+                    if app == "missing":
+                        untrusted.pop("app")
+                    runs = [untrusted]
+                    if sticky:
+                        runs.append(check_run(98, "action_required"))
+                    result = self.finalize(
+                        [history_rule(ok(history_pages({"check_runs": [check_run(99, None, status="in_progress"), *runs]}))),
+                         comments_rule(ok(pages([]))), patch_rule(ok("{}"))])
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    body = self.published()
+                    self.assertEqual(body["conclusion"], "action_required" if sticky else "success")
+                    self.assertEqual(evidence_of(body)["prior_finding_check_run_ids"], [98] if sticky else [])
+                    self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), 1)
+
     def finalize(self, rules, *, before=(), review_result="success", action_conclusion="success", **extra):
         self.before.write_text(json.dumps(list(before)))
         return self.run_script(
@@ -537,7 +645,7 @@ class FinalizeTests(ScriptTestCase):
     def test_existing_claude_findings_are_not_new_but_keep_the_commit_action_required(self):
         result = self.finalize(
             [
-                history_rule(ok(pages({"check_runs": [
+                history_rule(ok(history_pages({"check_runs": [
                     check_run(99, None, status="in_progress"),
                     {**check_run(98, "failure"), "output": {"text": evidence_text([10, 11])}},
                 ]}))),
@@ -553,7 +661,7 @@ class FinalizeTests(ScriptTestCase):
         self.assertEqual(evidence_of(body)["claude_finding_comment_ids"], [10, 11])
 
     def test_earlier_action_required_stays_sticky_when_it_is_not_the_latest_run(self):
-        history = pages(
+        history = history_pages(
             {"check_runs": [check_run(99, None, status="in_progress"), check_run(98, "failure")]},
             {"check_runs": [check_run(97, "success"), check_run(42, "action_required")]},
         )
@@ -570,7 +678,7 @@ class FinalizeTests(ScriptTestCase):
         self.assertIn("--paginate", history_call["args"])
 
     def test_an_earlier_failure_is_not_sticky(self):
-        history = pages({"check_runs": [check_run(99, None, status="in_progress"), check_run(98, "failure")]})
+        history = history_pages({"check_runs": [check_run(99, None, status="in_progress"), check_run(98, "failure")]})
         result = self.finalize(
             [history_rule(ok(history)), comments_rule(ok(pages([]))), patch_rule(ok("{}"))]
         )
@@ -608,7 +716,7 @@ class FinalizeTests(ScriptTestCase):
 
     def test_findings_from_an_earlier_failed_review_stay_sticky(self):
         earlier = {**check_run(50, "failure"), "output": {"text": evidence_text([9])}}
-        history = pages({"check_runs": [check_run(99, None, status="in_progress"), earlier]})
+        history = history_pages({"check_runs": [check_run(99, None, status="in_progress"), earlier]})
         result = self.finalize(
             # The finding comment is gone; only the earlier run's evidence remains.
             [history_rule(ok(history)), comments_rule(ok(pages([]))), patch_rule(ok("{}"))],
@@ -636,7 +744,7 @@ class FinalizeTests(ScriptTestCase):
         """A later clean review of the same commit, after a run that published first_body."""
         self.log.unlink(missing_ok=True)
         earlier = {**check_run(98, first_body["conclusion"]), "output": first_body["output"]}
-        history = pages({"check_runs": [check_run(99, None, status="in_progress"), earlier]})
+        history = history_pages({"check_runs": [check_run(99, None, status="in_progress"), earlier]})
         existing = [comment(i) for i in comments]
         return self.finalize(
             [history_rule(ok(history)), comments_rule(ok(pages(existing))), patch_rule(ok("{}"))],
@@ -744,7 +852,7 @@ class FinalizeTests(ScriptTestCase):
         orphan = {**check_run(99, None, status="in_progress"), "external_id": "Claude Review/5/1"}
         result = self.run_script(
             ["finalize"],
-            [history_rule(ok(pages({"check_runs": [orphan]}))), comments_rule(ok(pages([]))), patch_rule(ok("{}"))],
+            [history_rule(ok(history_pages({"check_runs": [orphan]}))), comments_rule(ok(pages([]))), patch_rule(ok("{}"))],
             CHECK_RUN_ID="",
             EXTERNAL_ID="Claude Review/5/1",
             REVIEW_RESULT="skipped",
@@ -761,7 +869,7 @@ class FinalizeTests(ScriptTestCase):
         post = {"method": "POST", "path": f"repos/{REPO}/check-runs", "responses": [ok(json.dumps({"id": 5}))]}
         result = self.run_script(
             ["finalize"],
-            [history_rule(ok(pages({"check_runs": []}))), post],
+            [history_rule(ok(history_pages({"check_runs": []}))), post],
             CHECK_RUN_ID="",
             EXTERNAL_ID="Claude Review/5/1",
             START_RESULT="failure",
@@ -794,7 +902,7 @@ class FinalizeTests(ScriptTestCase):
         ids = list(range(1000, 11000))
         history = [check_run(i, "action_required") for i in range(20000, 30000)]
         result = self.finalize(
-            [history_rule(ok(pages({"check_runs": history}))),
+            [history_rule(ok(history_pages({"check_runs": [check_run(99, None, status="in_progress"), *history]}))),
              comments_rule(ok(pages([comment(i) for i in ids]))), patch_rule(ok("{}"))],
         )
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
@@ -832,7 +940,7 @@ class FinalizeTests(ScriptTestCase):
         self.log.unlink()
         prior = {**check_run(98, "failure"), "output": fallback["output"]}
         result = self.finalize(
-            [history_rule(ok(pages({"check_runs": [prior]}))),
+            [history_rule(ok(history_pages({"check_runs": [check_run(99, None, status="in_progress"), prior]}))),
              comments_rule(ok(pages([]))), patch_rule(ok("{}"))], review_result="failure",
         )
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
@@ -857,7 +965,7 @@ class FinalizeTests(ScriptTestCase):
         # Included exact IDs are excluded as old-diff evidence; no sticky bit
         # crosses merge-base identity, even when the originating run failed.
         result = self.finalize(
-            [history_rule(ok(pages({"check_runs": [old]}))),
+            [history_rule(ok(history_pages({"check_runs": [check_run(99, None, status="in_progress"), old]}))),
              comments_rule(ok(pages([comment(ids[0])]))), patch_rule(ok("{}"))], before=[ids[0]],
         )
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
@@ -868,7 +976,7 @@ class FinalizeTests(ScriptTestCase):
         # attribution fails closed and cannot become false current-diff evidence.
         self.log.unlink()
         result = self.finalize(
-            [history_rule(ok(pages({"check_runs": [old]}))),
+            [history_rule(ok(history_pages({"check_runs": [check_run(99, None, status="in_progress"), old]}))),
              comments_rule(ok(pages([comment(ids[-1])]))), patch_rule(ok("{}"))], before=[ids[-1]],
         )
         self.assertEqual(result.returncode, 1)
@@ -950,7 +1058,7 @@ class FinalizeTests(ScriptTestCase):
     def test_unknown_head_fails_before_any_lookup_even_with_an_external_id(self):
         # The workflows always pass EXTERNAL_ID, even when PR resolution failed.
         rules = [
-            {"method": "GET", "path": f"repos/{REPO}/commits/", "responses": [ok(pages({"check_runs": []}))]},
+            {"method": "GET", "path": f"repos/{REPO}/commits/", "responses": [ok(history_pages({"check_runs": []}))]},
             {"method": "POST", "path": f"repos/{REPO}/check-runs", "responses": [ok(json.dumps({"id": 5}))]},
         ]
         result = self.run_script(
@@ -984,7 +1092,7 @@ class FinalizeTests(ScriptTestCase):
 
     # Sticky history is scoped to the reviewed PR and diff.
     def finalize_with_history(self, *runs):
-        history = pages({"check_runs": [check_run(99, None, status="in_progress"), *runs]})
+        history = history_pages({"check_runs": [check_run(99, None, status="in_progress"), *runs]})
         result = self.finalize(
             [history_rule(ok(history)), comments_rule(ok(pages([]))), patch_rule(ok("{}"))]
         )
@@ -1004,7 +1112,7 @@ class FinalizeTests(ScriptTestCase):
     def test_same_head_retarget_ignores_comments_attributed_only_to_the_old_diff(self):
         earlier = {**check_run(98, "action_required", merge_base=OTHER),
                    "output": {"text": evidence_text([9], merge_base=OTHER)}}
-        history = pages({"check_runs": [check_run(99, None, status="in_progress"), earlier]})
+        history = history_pages({"check_runs": [check_run(99, None, status="in_progress"), earlier]})
         result = self.finalize(
             [history_rule(ok(history)), comments_rule(ok(pages([comment(9)]))), patch_rule(ok("{}"))],
             before=[9],
@@ -1034,7 +1142,7 @@ class FinalizeTests(ScriptTestCase):
         old_diff = {**check_run(97, "action_required", merge_base=OTHER),
                     "output": {"text": evidence_text([9], merge_base=OTHER)}}
         first = self.finalize(
-            [history_rule(ok(pages({"check_runs": [old_diff]}))),
+            [history_rule(ok(history_pages({"check_runs": [check_run(99, None, status="in_progress"), old_diff]}))),
              comments_rule(ok(pages([comment(9), comment(10)]))),
              patch_rule(FAIL, FAIL, FAIL, ok("{}"))], before=[9],
         )
@@ -1047,7 +1155,7 @@ class FinalizeTests(ScriptTestCase):
         self.log.unlink()
         earlier = {**check_run(98, "failure"), "output": fallback["output"]}
         result = self.finalize(
-            [history_rule(ok(pages({"check_runs": [old_diff, earlier]}))),
+            [history_rule(ok(history_pages({"check_runs": [check_run(99, None, status="in_progress"), old_diff, earlier]}))),
              comments_rule(ok(pages([comment(9)]))), patch_rule(ok("{}"))], before=[9],
         )
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
@@ -1077,7 +1185,7 @@ class FinalizeTests(ScriptTestCase):
     def test_same_diff_recorded_ids_survive_comment_deletion_and_a_failed_rerun(self):
         earlier = {**check_run(98, "failure"), "output": {"text": evidence_text([9])}}
         result = self.finalize(
-            [history_rule(ok(pages({"check_runs": [earlier]}))), comments_rule(ok(pages([]))),
+            [history_rule(ok(history_pages({"check_runs": [check_run(99, None, status="in_progress"), earlier]}))), comments_rule(ok(pages([]))),
              patch_rule(ok("{}"))], review_result="failure",
         )
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
@@ -1127,7 +1235,7 @@ class WorstCaseModelTests(ScriptTestCase):
     def test_create_worst_case_matches_the_model(self):
         rules = [
             {"method": "POST", "path": f"repos/{REPO}/check-runs", "responses": [FAIL]},
-            history_rule(ok(pages({"check_runs": []}))),
+            history_rule(ok(history_pages({"check_runs": []}))),
         ]
         result = self.run_script(["create"], rules, EXTERNAL_ID="Claude Review/5/1")
         self.assertEqual(result.returncode, 1)
@@ -1141,7 +1249,7 @@ class WorstCaseModelTests(ScriptTestCase):
         self.assertEqual(len(self.calls()), check.WORST_CASE["snapshot"][0])
 
     def test_finalize_worst_case_matches_the_model(self):
-        found = ok(pages({"check_runs": [{**check_run(99, None, status="in_progress"), "external_id": "X/1/1"}]}))
+        found = ok(history_pages({"check_runs": [{**check_run(99, None, status="in_progress"), "external_id": "X/1/1"}]}))
         self.before.write_text("[]")
         rules = [
             # Lookup fails twice, then finds the run; the history read then fails throughout.
@@ -1179,6 +1287,34 @@ class WorstCaseModelTests(ScriptTestCase):
 
 
 class CreateAndSnapshotTests(ScriptTestCase):
+    def test_ambiguous_create_never_reposts_after_incomplete_history(self):
+        created = {**check_run(77, None, status="in_progress"), "external_id": "Claude Review/5/1"}
+        invalid = [pages({"total_count": 1, "check_runs": []}),
+                   json.dumps({"check_runs": []}),
+                   pages({"total_count": 2, "check_runs": [created, created]}),
+                   '{"total_count":0,"total_count":0,"check_runs":[]}']
+        for raw in invalid:
+            with self.subTest(raw=raw):
+                self.log.unlink(missing_ok=True)
+                result = self.run_script(["create"],
+                    [{**self.create_rule, "responses": [FAIL]}, history_rule(ok(raw))],
+                    EXTERNAL_ID="Claude Review/5/1")
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertEqual(len(self.calls("POST")), 1)
+                self.assertEqual(len(self.calls("GET")), check.ATTEMPTS - 1)
+                self.assertFalse(self.output.exists())
+
+    def test_ambiguous_create_never_reposts_after_invalid_history(self):
+        for raw in ("", "{}", "{broken", pages({"check_runs": None})):
+            with self.subTest(raw=raw):
+                self.log.unlink(missing_ok=True)
+                rules = [{**self.create_rule, "responses": [FAIL]}, history_rule(ok(raw))]
+                result = self.run_script(["create"], rules, EXTERNAL_ID="Claude Review/5/1")
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertEqual(len(self.calls("POST")), 1)
+                self.assertEqual(len(self.calls("GET")), check.ATTEMPTS - 1)
+                self.assertFalse(self.output.exists())
+
     create_rule = {"method": "POST", "path": f"repos/{REPO}/check-runs", "responses": []}
 
     def create(self, responses, **extra):
@@ -1197,7 +1333,7 @@ class CreateAndSnapshotTests(ScriptTestCase):
         other = {**check_run(76, None, status="in_progress"), "external_id": "Claude Review/4/1"}
         rules = [
             {**self.create_rule, "responses": [FAIL]},
-            {**history_rule(ok(pages({"check_runs": [other]}, {"check_runs": [existing]})))},
+            {**history_rule(ok(history_pages({"check_runs": [other]}, {"check_runs": [existing]})))},
         ]
         result = self.run_script(["create"], rules, EXTERNAL_ID="Claude Review/5/1")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
@@ -1208,7 +1344,7 @@ class CreateAndSnapshotTests(ScriptTestCase):
         existing = {**check_run(77, None, status="in_progress"), "external_id": "Claude Review/5/1"}
         rules = [
             {**self.create_rule, "responses": [FAIL, ok(json.dumps({"id": 78}))]},
-            history_rule(FAIL, ok(pages({"check_runs": [existing]}))),
+            history_rule(FAIL, ok(history_pages({"check_runs": [existing]}))),
         ]
         result = self.run_script(["create"], rules, EXTERNAL_ID="Claude Review/5/1")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
@@ -1218,7 +1354,7 @@ class CreateAndSnapshotTests(ScriptTestCase):
     def test_create_posts_again_only_after_confirming_no_run_exists(self):
         rules = [
             {**self.create_rule, "responses": [FAIL, ok(json.dumps({"id": 78}))]},
-            history_rule(ok(pages({"check_runs": []}))),
+            history_rule(ok(history_pages({"check_runs": []}))),
         ]
         result = self.run_script(["create"], rules, EXTERNAL_ID="Claude Review/5/1")
         self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
@@ -1450,7 +1586,7 @@ class StatusCommentTests(ScriptTestCase):
                 result = self.run_script(
                     ["finalize"],
                     [
-                        history_rule(ok(pages({"check_runs": [check_run(99, None, status="in_progress"), *prior]}))),
+                        history_rule(ok(history_pages({"check_runs": [check_run(99, None, status="in_progress"), *prior]}))),
                         comments_rule(ok(pages(inline))),
                         patch_rule(ok("{}")),
                         status_list_rule(ok(pages([status_comment()]))),
@@ -2122,7 +2258,7 @@ class ManualCompletionTests(ScriptTestCase):
                 self.assertEqual(len(self.calls()), 3)
 
     def test_sticky_findings_and_history_errors_never_post_success(self):
-        for history in (ok(pages({"check_runs": [check_run(12, "action_required")]})), FAIL):
+        for history in (ok(history_pages({"check_runs": [check_run(99, None, status="in_progress"), check_run(12, "action_required")]})), FAIL):
             with self.subTest(history=history):
                 self.log.unlink(missing_ok=True)
                 rules = self.clean_rules()
