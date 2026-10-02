@@ -5,7 +5,7 @@
 ## Pinned callers
 
 The three self-review callers use reviewed runtime commit
-`8dbcd6d786c9485670ffaaac55af4aa390c70d22`. They leave the reusable entrypoints
+`250a7d6745285dcc7902b604aec9f62f5b204033`. They leave the reusable entrypoints
 separate and keep publication code pinned even when a PR changes the runtime.
 Reviews cover the captured PR diff and record its head, base, merge base, and
 the executing runtime's repository, SHA, and workflow path.
@@ -154,9 +154,9 @@ affects only current PR presentation. Reaction and status publication are best-e
 unverifiable ownership can leave stale or missing reactions. Consult the current
 exact-head Check.
 
-The default self-review caller pins listed below remain at `8dbcd6d`; that
-revision predates this direct-ref guard. Updating consumer pins is a separate
-reviewed deployment, not a side effect of changing the runtime implementation.
+The self-review callers pin `250a7d`, which includes the direct-ref guard from
+[PR 20](https://github.com/JBallin/claude-review-runtime/pull/20). Other consumers
+retain their own pins until a separate reviewed adoption changes them.
 
 Completion requires every captured metadata and diff line to appear in successful
 Read responses. Claude can read additional ranges after a partial response;
@@ -247,16 +247,16 @@ merge that runtime revision first, and update the manual caller and invocation
 guidance to match its interface. Keep caller-contract tests in sync with the
 approved pin and interface. To roll back a pin update, restore all three
 references and corresponding tests and deployment guidance together. For this
-adoption, the prior pin is `da81f4b17c0142fec4b6996e6c03aa725394cb1a`; keep the
+adoption, the prior pin is `8dbcd6d786c9485670ffaaac55af4aa390c70d22`; keep the
 exact `/claude-review` gate unchanged because both revisions use it.
 
-That rollback retains strict captured Read coverage, finding receipts, and
-sanitized diagnostics, but restores opening-post-only reactions without
-presentation ownership or trigger reconciliation. Historical trigger reactions
-may remain, and old status writes may omit ownership markers. It also restores
-the pre-audit Check-history validation gaps, including possible false-clean
-classification on incomplete history. Rollback is an emergency disposition,
-not equivalent correctness or release approval.
+That rollback retains strict captured Read coverage, finding receipts,
+sanitized diagnostics, presentation ownership, trigger reconciliation, and the
+audited Check-history fixes. It removes the direct-ref freshness guard: the PR
+API can retain an old comparison-base SHA after the branch advances, allowing
+an outdated snapshot to be presented as current or admitted for manual review.
+Rollback is an emergency disposition, not equivalent correctness or release
+approval.
 
 Before adoption or rollback activation, inspect active and queued reviews and
 let existing attempts settle; do not silently cancel or rerun mixed-version
