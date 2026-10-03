@@ -106,9 +106,12 @@ API's 1,000-check-suite boundary; it does not prove atomic history completeness.
 
 ## Remaining boundaries
 
-The tested configuration uses GitHub.com, hosted Ubuntu runners, an existing
-Claude OAuth secret, and the Anthropic App/default OIDC path. Public consumers,
-other owners, fork behavior, and GitHub Enterprise Server remain unvalidated.
+This runtime repository is public. Publication did not run a new consumer trial.
+
+The tested consumer configuration is a private repository owned by the same
+personal account, using GitHub.com, hosted Ubuntu runners, an existing Claude
+OAuth secret, and the Anthropic App/default OIDC path. Public consumers, other
+owners, fork behavior, and GitHub Enterprise Server remain unvalidated.
 The automatic entrypoint excludes forks; the manual entrypoint has limited fork
 handling, while this repository’s caller gate excludes them. These code paths
 are not a claim of validated fork support.

@@ -2,17 +2,11 @@
 
 ## Reporting a vulnerability
 
-GitHub private vulnerability reporting is the planned reporting channel once
-this repository is public and the feature has been enabled and verified. It is
-not available for private repositories. Choosing this channel does not change
-repository visibility or enable the feature.
-
-After reporting is enabled, use **Report a vulnerability** on the repository's
-[Security Advisories page](https://github.com/JBallin/claude-review-runtime/security/advisories).
-If that button is unavailable, the reporting route is not ready; do not post
+GitHub private vulnerability reporting is enabled for this public repository.
+Use **Report a vulnerability** on the repository's
+[Security Advisories page](https://github.com/JBallin/claude-review-runtime/security/advisories)
+to submit a private report. If that button is unavailable, do not post
 exploit details, credentials, or private project content in a public issue or PR.
-Maintainers must verify reporting availability after publication before claiming
-that reports can be submitted.
 
 A report should identify the reviewed runtime SHA, affected component, expected
 security property, realistic impact, and a sanitized reproduction. This is an

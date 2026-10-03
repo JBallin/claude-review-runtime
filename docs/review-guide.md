@@ -115,7 +115,7 @@ tool is backed by the Anthropic App credential; the job's restricted
 `GITHUB_TOKEN` permissions do not eliminate the App credential's own authority.
 
 The helper action resolves from the reusable workflow's running commit, without
-checking out private runtime code using a separate credential. Captured consumer
+checking out runtime code using a separate credential. Captured consumer
 head/base identity binds the review to its patch; `job.workflow_repository`,
 `job.workflow_sha`, and `job.workflow_file_path` identify the runtime executing
 it. These are different provenance boundaries.

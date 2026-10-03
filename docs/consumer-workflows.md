@@ -4,12 +4,10 @@
 
 ## Prerequisites
 
-While the runtime is private, GitHub restricts shared workflow access to private
-consumer repositories owned by the same personal account. The runtime must allow
-Actions access from that account's private repositories (`access_level: user`). This setting grants access across the
-owner's private repositories; it is not a per-consumer allowlist. While the
-runtime is private, public repositories cannot call it. This is a GitHub access
-restriction, not a model OAuth restriction or a permanent compatibility limit.
+This runtime repository is public. Consumers can reference its reusable
+workflows by commit SHA, subject to their GitHub Actions policies. Publication
+does not validate a new consumer configuration; the tested boundaries are listed
+below and in the [validation summary](validation.md).
 
 Model authentication uses the consumer's existing Claude OAuth credential stored
 as the Actions secret `CLAUDE_CODE_OAUTH_TOKEN`. This runtime does not accept
@@ -137,7 +135,7 @@ runtime serializes automatic, manual, and status work in one per-consumer-PR
 queue with cancellation disabled. A caller-level lock using the same group can
 interfere with that queue.
 
-Private workflow access, runtime-action resolution, and runner preparation happen
+Workflow access, runtime-action resolution, and runner preparation happen
 before helper steps can execute. If those stages fail, the helper's fallback
 cannot publish a failure Check. Inspect the workflow run as well as the exact-head
 Check, and verify actual model execution and completion evidence during the first
