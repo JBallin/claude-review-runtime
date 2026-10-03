@@ -24,7 +24,7 @@ Model authentication requires `CLAUDE_CODE_OAUTH_TOKEN`; this runtime does not
 accept `ANTHROPIC_API_KEY`. GitHub authentication separately uses the Anthropic
 Claude GitHub App and default OIDC exchange.
 
-The current supported configuration is a private consumer owned by the same
+The validated configuration is a private consumer owned by the same
 personal account, on GitHub.com with GitHub-hosted Ubuntu runners. While the
 runtime is private, public repositories cannot call it. Public, other-owner,
 fork, and GitHub Enterprise Server configurations are unvalidated.
@@ -39,12 +39,22 @@ clean-completion notices, failures, trust boundaries, and rollback.
 
 ## Validation and status
 
-This is an experimental private prototype with no commitment to ongoing support.
+This is an experimental runtime with no commitment to ongoing support.
 The [validation summary](docs/validation.md) distinguishes tested revisions from
 the deployed callers and remaining gaps.
 The pinned callers include confirmed finding publication and sanitized Read
 coverage diagnostics. A verified Check establishes those runtime contracts; keep
 independent review requirements in place.
+
+The current source includes 319 passing offline tests, including bounded
+restoration and recovery regressions. The validation summary records the exact
+tested revision and the remaining platform and concurrency limits. Source
+availability does not establish validated public-consumer or other-owner support.
+Consumers retain their own pins until a separate reviewed adoption updates them.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local checks and contribution scope.
+The [security policy](SECURITY.md) describes the planned private reporting route
+and its availability conditions.
 
 ## Validate locally
 
