@@ -1,5 +1,7 @@
 # Claude Review Runtime
 
+![Claude Review Runtime — Reusable AI pull-request reviews](docs/assets/readme-hero.jpg)
+
 Reusable GitHub Actions workflows for Claude pull-request reviews, built on
 [Anthropic’s Claude Code Action](https://github.com/anthropics/claude-code-action).
 The runtime captures the patch being reviewed, verifies model completion, and
