@@ -882,9 +882,9 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     return (
         f"{marker}\n"
         "🎉 Claude review completed—no findings on "
-        f"[`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}) against "
-        f"{inline_code(base_ref)} at "
-        f"[`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}). "
+        f"[`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}).\n\n"
+        f"Compared against {inline_code(base_ref)} at "
+        f"[`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}).\n\n"
         f"[Review run]({details_url})."
     )
 
