@@ -1,5 +1,48 @@
 # Validation and limitations
 
+## Current offline evidence
+
+[PR 22](https://github.com/JBallin/claude-review-runtime/pull/22) added test-only
+restoration and publication-recovery regressions. Reviewed candidate
+`fb656482b0070fd382bc058901c200f7899b7542` passed all 319 tests in 291.222 seconds;
+the six focused methods passed in 8.034 seconds. CI and independent review passed.
+The merge at `90c4287d88cae251232e16aac9af896c604f7163` has the identical complete
+tree, `62355d659a6425512ca4dd0aa78519b7f5f69ca8`. These are offline test results
+and review of the test patch, not a new live runtime trial or caller adoption.
+
+The new methods cover 32 parameterized cases across four groups:
+
+- Twelve actual head/base A → B → A restorations across automatic, top-level,
+  and inline requests, with and without a newer accepted owner. Restored identity
+  follows the existing exact-match policy; a newer owner blocks the old writer.
+- Process restart before and after durable Check, status, notice, and owner
+  commits, plus synthetic missing or partial finding-receipt evidence.
+- Nine finite two-writer schedules at running, Check-committed, and completed
+  boundaries, with at most twenty API events for each obsolete finalizer.
+- A three-attempt simulated history outage followed by recovery and a drifting
+  history count, plus an injected-clock check of the expired API deadline gate.
+
+Separate helper processes share a persisted synthetic API backend. Missing or
+ambiguous evidence stays non-clean, historical findings are retained, and a
+superseded writer cannot replace the newer result in these schedules.
+
+[Issue 13](https://github.com/JBallin/claude-review-runtime/issues/13) remains open.
+The finding-receipt cases represent a durable comment plus lost or partial
+receipt evidence; they do not execute or interrupt the finding publisher. The
+deadline case tests an expired API gate, not lifecycle deadline setup or reset.
+Finite schedules do not establish atomicity between separate API reads and
+writes, actual runner cancellation or queue delivery, artifact transport,
+real service outages, or sustained concurrent load. Broader live testing requires
+its own approved fixture matrix, budget, retry limits, and restoration plan.
+
+## Security scan evidence
+
+A single standard Codex Security repository scan of
+`90c4287d88cae251232e16aac9af896c604f7163` covered all 25 tracked files and
+reported zero validated findings. The 319-test offline suite also passed on that
+revision. This is bounded source assessment; it does not establish exhaustive
+security coverage or validate live authentication and deployment configurations.
+
 ## What has been tested
 
 A bounded private, same-personal-owner trial of frozen runtime candidate
@@ -74,6 +117,19 @@ Workflow access, runtime-action resolution, and runner preparation can fail
 before the trusted helper starts, preventing it from publishing a Check.
 App/OIDC validation can instead skip model execution while the Actions workflow
 succeeds; the review remains incomplete and cannot establish clean completion.
+
+[Issue 9](https://github.com/JBallin/claude-review-runtime/issues/9) tracks a
+specific trusted diagnostic for that provider condition. The existing provider
+flag is proposed as a caller-visible output in
+[upstream PR 1879](https://github.com/anthropics/claude-code-action/pull/1879).
+Contribution candidate `598e57ae7ad0df3a11f9da81d2b4965ac03bc6a5` passed a GitHub
+Actions test of a real workflow-validation mismatch and output propagation.
+It is not the runtime's
+dependency pin. A supported upstream revision, reviewed immutable dependency
+adoption, and tested runtime Check/status handling are still required. Until then,
+unknown causes retain the generic incomplete, non-clean result. Missing execution
+alone cannot identify a workflow-validation block, and no merge exception follows.
+
 The observed default-branch validation rejection published a failed Check after
 the trusted start job had created it. Inspect the workflow run and captured
 runtime identity as well as the Check. Follow the review guide’s owner-exception
