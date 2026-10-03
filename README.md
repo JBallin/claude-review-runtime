@@ -53,6 +53,8 @@ availability does not establish validated public-consumer or other-owner support
 Consumers retain their own pins until a separate reviewed adoption updates them.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for local checks and contribution scope.
+The [security policy](SECURITY.md) describes the planned private reporting route
+and its availability conditions.
 
 ## Validate locally
 
