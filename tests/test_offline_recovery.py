@@ -1,0 +1,325 @@
+"""Bounded offline restoration/restart schedules with durable synthetic API state.
+
+Each worker imports the real helper afresh. Only the API boundary is replaced;
+no GitHub requests, model execution, or production code changes are involved.
+
+These finite schedules do not prove atomicity between separate ownership reads
+and writes, runner cancellation/queue delivery, artifact transport, real API
+outages, or sustained load. Those platform acceptance gaps remain open.
+"""
+import copy
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+from unittest import mock
+
+from test_claude_review_check import (
+    check, HEAD, OTHER, BASE_TIP, MERGE_BASE, REPO, check_run, comment,
+    evidence_of, reaction,
+)
+from test_presentation_ownership import PresentationAPI
+
+
+class DurableAPI(PresentationAPI):
+    def __init__(self, path):
+        super().__init__()
+        self.path = Path(path)
+        self.__dict__.update(json.loads(self.path.read_text()))
+
+    def save(self):
+        self.path.write_text(json.dumps({key: value for key, value in self.__dict__.items()
+                                        if key not in ("path", "on_call")}))
+
+    def call(self, args, body=None):
+        method = args[args.index("--method") + 1] if "--method" in args else "GET"
+        path = next(arg for arg in args if arg.startswith("repos/")).split("?")[0]
+        special = ("/check-runs" in path or path == f"repos/{REPO}/pulls/7/comments"
+                   or (method == "POST" and path.endswith("/issues/7/comments")
+                       and check.STATUS_MARKER not in body["body"]))
+        try:
+            if self.cut == [method, path] and self.cut_before:
+                self.cut = None
+                self.save()
+                os._exit(73)
+            if not special:
+                result = super().call(args, body)
+            else:
+                self.calls.append((method, path, copy.deepcopy(body)))
+                if self.outage and method == "GET" and "/check-runs" in path:
+                    raise check.GhError("synthetic history outage")
+                if "/check-runs" in path:
+                    if method == "GET":
+                        head = path.split("/commits/", 1)[1].split("/", 1)[0]
+                        runs = [run for run in self.checks if run["head_sha"] == head]
+                        if self.drift:
+                            self.drift = False
+                            result = json.dumps({"total_count": len(runs) + 1, "check_runs": runs})
+                        else:
+                            result = json.dumps({"total_count": len(runs), "check_runs": runs})
+                    elif method == "PATCH":
+                        run = next(run for run in self.checks if str(run["id"]) == path.rsplit("/", 1)[1])
+                        run.update(body)
+                        result = json.dumps(run)
+                    else:
+                        raise AssertionError((method, path))
+                elif path.endswith("/pulls/7/comments"):
+                    result = json.dumps(self.findings)
+                else:
+                    notice = {"id": 88, "user": {"login": check.STATUS_AUTHOR, "type": "Bot"}, **body}
+                    self.comment_pages.append(notice)
+                    result = json.dumps(notice)
+            if self.cut == [method, path]:
+                self.cut = None
+                self.save()
+                os._exit(73)  # Process dies after durable commit, before receipt.
+            return result
+        finally:
+            self.save()
+
+
+def worker(path, command):
+    api = DurableAPI(path)
+    if command == "deadline":
+        # Exercise the actual gh_api timeout gate with a synthetic clock, so
+        # this check cannot spend 120 seconds or invoke a real subprocess.
+        with mock.patch.object(check.time, "monotonic", return_value=121), \
+             mock.patch.object(check, "PRESENTATION_DEADLINE", 120), \
+             mock.patch.object(check.subprocess, "run") as run:
+            try:
+                check.gh_api([f"repos/{REPO}/issues/7/reactions"])
+            except check.GhError:
+                run.assert_not_called()
+                return 0
+        return 1
+    with mock.patch.object(check, "gh_api", side_effect=api.call):
+        if command == "start":
+            check.best_effort_status(os.environ["HEAD_SHA"], "in_progress", acquire=True)
+            api.save()
+            return 0
+        if command == "finish":
+            return check.cmd_finalize()
+        if command == "probe":
+            projection = check.live_pr_projection(REPO, "7")
+            print(json.dumps(projection))
+            return 0
+        raise AssertionError(command)
+
+
+class OfflineRecoveryTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.path = Path(self.tmp.name) / "api.json"
+        self.before = Path(self.tmp.name) / "before.json"
+        self.before.write_text("[]")
+        api = PresentationAPI()
+        state = {key: value for key, value in api.__dict__.items() if key != "on_call"}
+        state.update(checks=[check_run(99, None, status="in_progress")], findings=[],
+                     outage=False, drift=False, cut=None, cut_before=False)
+        self.path.write_text(json.dumps(state))
+        self.env = {**os.environ, "REPO": REPO, "PR_NUMBER": "7", "HEAD_SHA": HEAD,
+                    "BASE_REF": "main", "BASE_SHA": BASE_TIP, "MERGE_BASE_SHA": MERGE_BASE,
+                    "GITHUB_RUN_ID": "5", "GITHUB_RUN_ATTEMPT": "1", "PRESENTATION_START": "2",
+                    "STATUS_COMMENTS_ENABLED": "true", "TRIGGER_KIND": "automatic",
+                    "PR_REACTION_MODE": "automatic", "CLAUDE_REVIEW_RETRY_DELAY": "0",
+                    "DETAILS_URL": "https://github.com/owner/repo/actions/runs/5",
+                    "CHECK_RUN_ID": "99", "REVIEW_RESULT": "success", "ACTION_CONCLUSION": "success",
+                    "COMPLETION_VERIFIED": "true", "COMPLETION_REASON": "verified",
+                    "FINDING_PUBLICATION": json.dumps({"attempt_count": 0, "comment_ids": []}),
+                    "BEFORE_IDS_FILE": str(self.before), "GITHUB_OUTPUT": str(Path(self.tmp.name) / "output")}
+        self.env.pop("PRESENTATION_OWNER", None)
+
+    def state(self):
+        return json.loads(self.path.read_text())
+
+    def update(self, **changes):
+        state = self.state()
+        state.update(changes)
+        self.path.write_text(json.dumps(state))
+
+    def run_worker(self, command, expected=0):
+        if command == "start":
+            Path(self.env["GITHUB_OUTPUT"]).write_text("")
+        result = subprocess.run([sys.executable, __file__, "--worker", str(self.path), command],
+                                env=self.env, capture_output=True, text=True, timeout=15)
+        self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
+        if command == "start" and expected == 0:
+            receipts = [line.split("=", 1)[1] for line in Path(self.env["GITHUB_OUTPUT"]).read_text().splitlines()
+                        if line.startswith("presentation_owner=")]
+            self.assertTrue(receipts, "start must export an owner receipt")
+            self.env["PRESENTATION_OWNER"] = receipts[-1]
+        return result
+
+    def surface(self, kind):
+        self.env.update(TRIGGER_KIND=kind, PR_REACTION_MODE="automatic" if kind == "automatic" else "manual")
+        if kind != "automatic":
+            namespace = "issues" if kind == "issue_comment" else "pulls"
+            path = f"repos/{REPO}/{namespace}/comments/42"
+            self.update(targets={path: {"id": 42, "issue_url" if namespace == "issues" else "pull_request_url":
+                                      f"https://api.github.com/repos/{REPO}/{namespace}/7"}})
+            self.env["TRIGGER_COMMENT_ID"] = "42"
+        opening = f"repos/{REPO}/issues/7/reactions"
+        reactions = self.state()["reactions"]
+        reactions[opening] = [reaction(701, "heart", login="unrelated-user")]
+        self.update(reactions=reactions)
+
+    def test_true_head_and_base_restoration_with_and_without_new_owner(self):
+        for field in ("head", "base"):
+            for newer in (False, True):
+                for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+                    with self.subTest(field=field, newer=newer, kind=kind):
+                        self.setUp()
+                        self.surface(kind)
+                        self.run_worker("start")
+                        old_env = self.env.copy()
+                        pr = self.state()["pr"]
+                        pr[field]["sha"] = OTHER
+                        self.update(pr=pr, base_tip=OTHER if field == "base" else BASE_TIP)
+                        # A real different captured tuple is observed by a separate process.
+                        probe = self.run_worker("probe")
+                        self.assertIn(OTHER, probe.stdout)
+                        moved = copy.deepcopy(self.state())
+                        if newer:
+                            self.env.update(GITHUB_RUN_ID="6", PRESENTATION_START="3")
+                            self.env["HEAD_SHA" if field == "head" else "BASE_SHA"] = OTHER
+                            new_check = check_run(100, None, status="in_progress")
+                            new_check["head_sha"] = self.env["HEAD_SHA"]
+                            self.update(checks=[*self.state()["checks"], new_check])
+                            self.env["CHECK_RUN_ID"] = "100"
+                            self.run_worker("start")
+                        pr[field]["sha"] = HEAD if field == "head" else BASE_TIP
+                        self.update(pr=pr, base_tip=BASE_TIP)
+                        restored = copy.deepcopy(self.state()["status"])
+                        self.env = old_env
+                        self.run_worker("finish")
+                        state = self.state()
+                        self.assertNotEqual(moved["pr"], state["pr"])
+                        self.assertEqual(state["checks"][0]["head_sha"], HEAD)
+                        self.assertEqual(state["checks"][0]["conclusion"], "success")
+                        if newer:
+                            self.assertEqual(state["status"], restored)
+                            self.assertEqual(state["checks"][1], new_check)
+                        else:
+                            self.assertEqual(check.status_state(state["status"]), "success")
+                        self.assertIn(reaction(701, "heart", login="unrelated-user"),
+                                      state["reactions"][f"repos/{REPO}/issues/7/reactions"])
+
+    def test_restart_after_durable_check_status_and_notice_commits(self):
+        for cut, before in ((cut, before) for cut in (
+                ("PATCH", f"repos/{REPO}/check-runs/99"),
+                ("PATCH", f"repos/{REPO}/issues/comments/55"),
+                ("POST", f"repos/{REPO}/issues/7/comments")) for before in (False, True)):
+            with self.subTest(cut=cut, before=before):
+                self.setUp()
+                self.surface("issue_comment")
+                self.run_worker("start")
+                self.env["MANUAL_COMPLETION_ENABLED"] = "true"
+                self.update(cut=list(cut), cut_before=before)
+                self.run_worker("finish", 73)
+                self.run_worker("finish")
+                self.assertEqual(self.state()["checks"][0]["conclusion"], "success")
+                self.assertEqual(len(self.state()["comment_pages"]), 1)
+                self.assertEqual(check.status_state(self.state()["status"]), "success")
+                for path in (f"repos/{REPO}/issues/7/reactions", f"repos/{REPO}/issues/comments/42/reactions"):
+                    owned = [item["content"] for item in self.state()["reactions"][path]
+                             if item["user"]["login"] == check.STATUS_AUTHOR]
+                    self.assertEqual(owned, ["+1"])
+
+    def assert_lost_receipt_recovery(self, receipt):
+        self.update(findings=[comment(12)])
+        self.env["FINDING_PUBLICATION"] = receipt
+        self.run_worker("finish", 1)
+        state = self.state()
+        self.assertEqual(state["checks"][0]["conclusion"], "failure")
+        self.assertIn(12, evidence_of(state["checks"][0])["new_finding_comment_ids"])
+        self.assertIsNone(state["status"])
+        self.env["FINDING_PUBLICATION"] = json.dumps({"attempt_count": 0, "comment_ids": []})
+        self.before.write_text("[12]")
+        self.update(checks=[*state["checks"], check_run(100, None, status="in_progress")])
+        self.env["CHECK_RUN_ID"] = "100"
+        self.run_worker("finish")
+        self.assertEqual(self.state()["checks"][-1]["conclusion"], "action_required")
+
+    def test_finding_receipt_handoff_and_missing_owner_restart_fail_closed(self):
+        # Finding publication itself is outside this fixture: simulate the
+        # persisted comment left behind when its cross-job receipt is lost.
+        for receipt in ("", json.dumps({"attempt_count": 1, "comment_ids": []})):
+            with self.subTest(receipt=receipt):
+                self.setUp()
+                self.assert_lost_receipt_recovery(receipt)
+
+    def test_restart_at_owner_commit_does_not_bootstrap_missing_authority(self):
+        for before in (False, True):
+            with self.subTest(before=before):
+                self.setUp()
+                self.surface("issue_comment")
+                self.update(cut=["POST", f"repos/{REPO}/issues/7/comments"], cut_before=before)
+                self.run_worker("start", 73)
+                committed_status = copy.deepcopy(self.state()["status"])
+                self.assertEqual(committed_status is None, before)
+                self.run_worker("finish")
+                self.assertEqual(self.state()["checks"][0]["conclusion"], "success")
+                self.assertEqual(self.state()["status"], committed_status)
+
+    def test_competing_accepted_writers_in_three_finite_schedules(self):
+        for boundary in ("running", "check_committed", "completed"):
+            for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+                with self.subTest(boundary=boundary, kind=kind):
+                    self.setUp()
+                    self.surface(kind)
+                    self.run_worker("start")
+                    old = self.env.copy()
+                    if boundary == "check_committed":
+                        self.update(cut=["PATCH", f"repos/{REPO}/check-runs/99"])
+                        self.run_worker("finish", 73)
+                    elif boundary == "completed":
+                        self.run_worker("finish")
+                    self.env.update(GITHUB_RUN_ID="6", PRESENTATION_START="3")
+                    new_check = check_run(100, None, status="in_progress")
+                    self.update(checks=[*self.state()["checks"], new_check])
+                    self.env["CHECK_RUN_ID"] = "100"
+                    self.run_worker("start")
+                    if boundary == "completed":
+                        self.run_worker("finish")
+                    owner = copy.deepcopy(self.state()["status"])
+                    current_check = copy.deepcopy(self.state()["checks"][1])
+                    calls_before = len(self.state()["calls"])
+                    self.env = old
+                    self.run_worker("finish")
+                    self.assertEqual(self.state()["status"], owner)
+                    self.assertEqual(self.state()["checks"][1], current_check)
+                    writes = [call for call in self.state()["calls"][calls_before:] if call[0] != "GET"]
+                    self.assertLessEqual(len(self.state()["calls"]) - calls_before, 20)
+                    self.assertEqual([call[1] for call in writes], [f"repos/{REPO}/check-runs/99"])
+
+    def test_history_outage_then_recovery_retains_sticky_findings(self):
+        self.run_worker("start")
+        self.update(findings=[comment(12)], outage=True)
+        self.run_worker("finish", 1)
+        failed = self.state()
+        self.assertEqual(failed["checks"][0]["conclusion"], "failure")
+        history_calls = [call for call in failed["calls"] if call[0] == "GET" and "/check-runs" in call[1]]
+        self.assertEqual(len(history_calls), check.ATTEMPTS)
+        self.update(outage=False, checks=[*failed["checks"], check_run(100, None, status="in_progress")])
+        self.env["CHECK_RUN_ID"] = "100"
+        self.before.write_text("[12]")
+        self.update(drift=True)
+        prior_calls = len(self.state()["calls"])
+        self.run_worker("finish")
+        self.assertEqual(self.state()["checks"][-1]["conclusion"], "action_required")
+        recovered_reads = [call for call in self.state()["calls"][prior_calls:]
+                           if call[0] == "GET" and "/check-runs" in call[1]]
+        self.assertEqual(len(recovered_reads), 2)
+        before_deadline = self.state()
+        self.run_worker("deadline")
+        self.assertEqual(self.state(), before_deadline)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--worker":
+        sys.exit(worker(sys.argv[2], sys.argv[3]))
+    unittest.main()
