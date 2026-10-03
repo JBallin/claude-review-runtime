@@ -17,8 +17,7 @@ git diff --check
 Include the commands and results in your pull request. Use deterministic,
 sanitized reproductions for bugs. Never include credentials, private project
 content, or exploit details in public issues or pull requests.
-See [SECURITY.md](SECURITY.md) for the private reporting plan and availability
-conditions.
+See [SECURITY.md](SECURITY.md) for private vulnerability reporting.
 
 ## Change scope
 

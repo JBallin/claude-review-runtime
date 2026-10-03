@@ -24,10 +24,10 @@ Model authentication requires `CLAUDE_CODE_OAUTH_TOKEN`; this runtime does not
 accept `ANTHROPIC_API_KEY`. GitHub authentication separately uses the Anthropic
 Claude GitHub App and default OIDC exchange.
 
-The validated configuration is a private consumer owned by the same
-personal account, on GitHub.com with GitHub-hosted Ubuntu runners. While the
-runtime is private, public repositories cannot call it. Public, other-owner,
-fork, and GitHub Enterprise Server configurations are unvalidated.
+This runtime repository is public. The validated configuration is a private
+consumer owned by the same personal account, on GitHub.com with GitHub-hosted
+Ubuntu runners. Public, other-owner, fork, and GitHub Enterprise Server
+configurations remain unvalidated.
 
 ## Read the result
 
@@ -53,14 +53,4 @@ availability does not establish validated public-consumer or other-owner support
 Consumers retain their own pins until a separate reviewed adoption updates them.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for local checks and contribution scope.
-The [security policy](SECURITY.md) describes the planned private reporting route
-and its availability conditions.
-
-## Validate locally
-
-```sh
-python3 -m unittest discover -s tests
-```
-
-Offline tests establish local contracts; they do not prove live authentication
-or model execution.
+The [security policy](SECURITY.md) explains how to report a vulnerability privately.
