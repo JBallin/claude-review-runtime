@@ -21,9 +21,10 @@ experimental runtime with no commitment to ongoing support or response times.
 ## System and security boundaries
 
 The reusable workflows capture a consumer PR's patch identity and separate the
-model review job from trusted Check and status publication. The helper in
-`actions/review-helper` verifies execution and finding evidence. Authentication
-and publication rely on GitHub Actions, the Anthropic App/OIDC path, the pinned
+model review job from trusted Check and status publication. The workflows verify
+execution records; `actions/review-helper` consumes that verdict and validates
+finding and publication evidence. Authentication and publication rely on GitHub
+Actions, the Anthropic App/OIDC path, the pinned
 provider action, and the consumer's OAuth credential.
 
 PR code, comments, and model output are untrusted inputs. Captured
