@@ -26,9 +26,13 @@ Model authentication requires `CLAUDE_CODE_OAUTH_TOKEN`; this runtime does not
 accept `ANTHROPIC_API_KEY`. GitHub authentication separately uses the Anthropic
 Claude GitHub App and default OIDC exchange.
 
-This runtime repository is public. The validated configuration is a private
-consumer owned by the same personal account, on GitHub.com with GitHub-hosted
-Ubuntu runners. Public, other-owner, fork, and GitHub Enterprise Server
+Used by [Ballin](https://github.com/JBallin/ballin-scripts): see its
+[pinned manual caller](https://github.com/JBallin/ballin-scripts/blob/729264f35ce52d5605a0b2681b762c85bbe4346e/.github/workflows/claude.yml)
+and [verified manual-review evidence](https://github.com/JBallin/claude-review-runtime/issues/29#issuecomment-5974625017).
+
+Bounded validation covers a same-account private consumer and one manual review
+in public Ballin, on GitHub.com with GitHub-hosted Ubuntu runners. Broader
+public-consumer coverage, other-owner, fork, and GitHub Enterprise Server
 configurations remain unvalidated.
 
 ## Read the result
@@ -51,5 +55,5 @@ independent review requirements in place.
 The current source includes 319 passing offline tests, including bounded
 restoration and recovery regressions. The validation summary records the exact
 tested revision and the remaining platform and concurrency limits. Source
-availability does not establish validated public-consumer or other-owner support.
+availability does not establish broad public-consumer or other-owner support.
 Consumers retain their own pins until a separate reviewed adoption updates them.
