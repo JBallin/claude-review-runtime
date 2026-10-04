@@ -29,8 +29,10 @@ for tested revisions. The runtime is licensed under the [MIT License](../LICENSE
 
 Install three separate workflow files in the consumer repository. Replace
 `<full-reviewed-runtime-sha>` with one reviewed 40-character commit SHA in all
-three files. Keep the files on the consumer's default branch before testing the
-default Anthropic App/OIDC path.
+three files. Have the caller installation reviewed by a human and merged to
+the consumer's default branch, then validate on a separate PR that does not
+modify the workflows. See [installation and incomplete reviews](review-guide.md#installation-and-incomplete-reviews)
+for default Anthropic App/OIDC validation limits and completion evidence.
 
 These examples forward event context directly to the reusable workflows. Add
 any consumer-specific branch or eligibility restrictions to the calling jobs;

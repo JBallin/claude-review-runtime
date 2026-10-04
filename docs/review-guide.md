@@ -211,10 +211,12 @@ presence, not credential validity or successful live App/OIDC execution. The
 caller setup does not install an App or configure credentials. New credentials
 or access grants require a separate decision.
 
-Default App/OIDC validation can reject a caller that does not exist with matching
-content on the default branch. If that validation rejects a caller, model
-execution may be skipped even when the workflow succeeds; required review remains unsatisfied. This is a provider
-validation condition, not a rule that every PR changing a workflow is unreviewable.
+Default Anthropic App/OIDC validation can reject a new or modified caller
+workflow until it exists with matching content on the default branch. A rejected
+caller may skip model execution even when Actions orchestration is green; the
+trusted `Claude Review` Check remains incomplete or failed, and required review
+remains unsatisfied. This condition does not mean every first run fails or every
+PR changing a workflow is unreviewable.
 
 A skipped action or successful workflow without verified model completion is
 not a Claude review. Do not suppress the incomplete Check or bypass it. Keep an
@@ -232,10 +234,12 @@ are exported. Diagnostics are best-effort and do not change acceptance: missing
 captured lines still fail completion. A partial page can be followed by complete
 reads; consult coverage and the authoritative Check together.
 
-After an approved live run, inspect actual completion, captured identities,
-runtime provenance, and posted findings. An incomplete result does not approve
-the commit. Inspect the workflow run and exact-head Check together; input
-capture, authentication, action resolution, or runner preparation can prevent
+After the human-reviewed caller installation is merged, validate with an approved
+live run on a separate PR that does not modify the workflows. Inspect actual
+model completion, captured identities, runtime provenance, and posted findings.
+An incomplete result does not approve the commit. Inspect the workflow run and
+exact-head Check together; input capture, authentication, action resolution, or
+runner preparation can prevent
 model execution or publication. Resolve the reported prerequisite before
 requesting another approved review; do not switch credentials or expand access
 to bypass a rejection.
