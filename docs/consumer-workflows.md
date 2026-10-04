@@ -21,9 +21,10 @@ requires the repository owner's authorization.
 
 The supported platform is GitHub.com with GitHub-hosted Ubuntu runners. The
 runtime-local helper action uses `$/actions/review-helper`, which requires runner
-version 2.336.0 or later. Public, other-owner, fork, and GitHub Enterprise Server
-consumers are not validated targets. See the [validation summary](validation.md)
-for tested revisions. The runtime is licensed under the [MIT License](../LICENSE).
+version 2.336.0 or later. Broader public-consumer coverage, other-owner, fork, and
+GitHub Enterprise Server configurations remain unvalidated. See the
+[validation summary](validation.md) for tested revisions. The runtime is licensed
+under the [MIT License](../LICENSE).
 
 ## Install the callers
 
