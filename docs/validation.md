@@ -106,17 +106,15 @@ API's 1,000-check-suite boundary; it does not prove atomic history completeness.
 
 ## Remaining boundaries
 
-This runtime repository is public. Publication did not run a new consumer trial.
-
-The original tested consumer configuration is a private repository owned by the
-same personal account, using GitHub.com, hosted Ubuntu runners, an existing Claude
-OAuth secret, and the Anthropic App/default OIDC path.
+Confirmed consumer reviews used GitHub.com, hosted Ubuntu runners, and Claude
+OAuth with default Anthropic App/OIDC authentication.
 
 [Ballin's verified consumer evidence](https://github.com/JBallin/claude-review-runtime/issues/29#issuecomment-5974625017)
-also confirms one manual review in a public, same-account repository using runtime
-`d63506dda127e0509346c19457c1d992292a9c29`. It does not validate automatic triggers
-or failure paths. Broader public-consumer coverage, other owners, fork behavior,
-and GitHub Enterprise Server remain unvalidated.
+confirms one manual review in a public repository using the
+[installed caller](https://github.com/JBallin/ballin-scripts/blob/729264f35ce52d5605a0b2681b762c85bbe4346e/.github/workflows/claude.yml)
+and runtime `d63506dda127e0509346c19457c1d992292a9c29`. It does not validate
+automatic triggers or failure paths. Broader public-consumer coverage, other
+owners, fork behavior, and GitHub Enterprise Server remain unvalidated.
 The automatic entrypoint excludes forks; the manual entrypoint has limited fork
 handling, while this repository’s caller gate excludes them. These code paths
 are not a claim of validated fork support.
