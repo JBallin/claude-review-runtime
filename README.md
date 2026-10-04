@@ -27,13 +27,11 @@ accept `ANTHROPIC_API_KEY`. GitHub authentication separately uses the Anthropic
 Claude GitHub App and default OIDC exchange.
 
 Used by [Ballin](https://github.com/JBallin/ballin-scripts): see its
-[pinned manual caller](https://github.com/JBallin/ballin-scripts/blob/729264f35ce52d5605a0b2681b762c85bbe4346e/.github/workflows/claude.yml)
+[manual caller example](https://github.com/JBallin/ballin-scripts/blob/main/.github/workflows/claude.yml)
 and [verified manual-review evidence](https://github.com/JBallin/claude-review-runtime/issues/29#issuecomment-5974625017).
 
-Bounded validation covers a same-account private consumer and one manual review
-in public Ballin, on GitHub.com with GitHub-hosted Ubuntu runners. Broader
-public-consumer coverage, other-owner, fork, and GitHub Enterprise Server
-configurations remain unvalidated.
+The Ballin evidence confirms one manual review. Broader public-consumer coverage,
+other-owner, fork, and GitHub Enterprise Server configurations remain unvalidated.
 
 ## Read the result
 
