@@ -26,6 +26,9 @@ Model authentication requires `CLAUDE_CODE_OAUTH_TOKEN`; this runtime does not
 accept `ANTHROPIC_API_KEY`. GitHub authentication separately uses the Anthropic
 Claude GitHub App and default OIDC exchange.
 
+If you need [API-key support](https://github.com/JBallin/claude-review-runtime/issues/3),
+[open an issue](https://github.com/JBallin/claude-review-runtime/issues/new) with a concrete consumer use case.
+
 Used by [Ballin](https://github.com/JBallin/ballin-scripts): see its
 [manual caller example](https://github.com/JBallin/ballin-scripts/blob/main/.github/workflows/claude.yml)
 and [verified manual-review evidence](https://github.com/JBallin/claude-review-runtime/issues/29#issuecomment-5974625017).
