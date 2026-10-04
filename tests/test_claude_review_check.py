@@ -2221,7 +2221,13 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertEqual([call["method"] for call in calls], ["GET", "GET", "PATCH", "GET", "GET", "GET", "GET", "POST"])
         self.assertEqual(calls[2]["body"]["conclusion"], "success")
         body = calls[-1]["body"]["body"]
-        self.assertEqual(body, self.notice()["body"])
+        marker = check.completion_marker(REPO, "7", HEAD, "main", BASE_TIP, MERGE_BASE)
+        self.assertEqual(body, (
+            f"{marker}\n"
+            f"🎉 Claude review completed—no findings on [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).\n\n"
+            f"Compared against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}).\n\n"
+            "[Review run](https://github.com/owner/repo/actions/runs/1)."
+        ))
         for identity in (HEAD, BASE_TIP, MERGE_BASE):
             self.assertIn(identity, body)
         self.assertIn("🎉 Claude review completed—no findings on", body)
@@ -2230,7 +2236,15 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertNotIn("@claude", body)
 
     def test_same_identity_notice_on_a_later_page_suppresses_rerun_noise(self):
-        result = self.run_manual(self.clean_rules(listed=ok(pages([], [self.notice()]))))
+        legacy_notice = self.notice()
+        marker = check.completion_marker(REPO, "7", HEAD, "main", BASE_TIP, MERGE_BASE)
+        legacy_notice["body"] = (
+            f"{marker}\n"
+            f"🎉 Claude review completed—no findings on [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}) "
+            f"against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}). "
+            "[Review run](https://github.com/owner/repo/actions/runs/1)."
+        )
+        result = self.run_manual(self.clean_rules(listed=ok(pages([], [legacy_notice]))))
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertFalse(self.calls("POST"))
         self.assertEqual([call["path"] for call in self.calls("PATCH")], [f"repos/{REPO}/check-runs/99"])
@@ -2404,11 +2418,22 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertEqual(check.WORST_CASE["completion"][1], 4)
 
     def test_base_ref_is_rendered_as_literal_text(self):
-        result = self.run_manual(self.clean_rules(live=live_head(HEAD, "topic/with`tick")),
-                                 BASE_REF="topic/with`tick")
-        self.assertEqual(result.returncode, 0, result.stdout)
-        body = self.calls("POST")[0]["body"]["body"]
-        self.assertIn(check.inline_code("topic/with`tick"), body)
+        for base_ref, rendered_ref in (("release/2026", "`release/2026`"),
+                                       ("topic/with`tick", "`` topic/with`tick ``")):
+            with self.subTest(base_ref=base_ref):
+                self.log.unlink(missing_ok=True)
+                result = self.run_manual(self.clean_rules(live=live_head(HEAD, base_ref, OTHER)),
+                                         BASE_REF=base_ref, BASE_SHA=OTHER)
+                self.assertEqual(result.returncode, 0, result.stdout)
+                body = self.calls("POST")[0]["body"]["body"]
+                marker = check.completion_marker(REPO, "7", HEAD, base_ref, OTHER, MERGE_BASE)
+                self.assertEqual(body.split("\n\n"), [
+                    f"{marker}\n"
+                    f"🎉 Claude review completed—no findings on [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).",
+                    f"Compared against {rendered_ref} at [`bbbbbbb`](https://github.com/{REPO}/commit/{OTHER}).",
+                    "[Review run](https://github.com/owner/repo/actions/runs/1).",
+                ])
+                self.assertNotIn(f"/commit/{MERGE_BASE}", body)
 
 
 if __name__ == "__main__":
