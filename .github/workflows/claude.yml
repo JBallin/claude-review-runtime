@@ -289,7 +289,7 @@ jobs:
           path: ${{ runner.temp }}/pr-review
       - name: Review pull request
         id: review
-        uses: anthropics/claude-code-action@12dd8d74c712f5f3669365b2369b558c495b1104
+        uses: anthropics/claude-code-action@cab360f6565aa35a51d6ce9e43f1f4287c0a32ea
         # Runs any subagent in the foreground, as a backstop to --tools below:
         # a background task lets the run end early on an interim result.
         env:
