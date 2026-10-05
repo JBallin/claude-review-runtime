@@ -661,6 +661,35 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(check.status_owner(self.api.status), newer)
         self.assertEqual(self.writes(), [])
 
+    def test_late_patch_change_is_reported_as_patch_suppression(self):
+        for field in ("head", "base"):
+            with self.subTest(field=field):
+                self.api = PresentationAPI()
+                self.gh_mock.side_effect = self.api.call
+                self.output.clear()
+                reads = 0
+                def change(method, path):
+                    nonlocal reads
+                    if method == "GET" and path == f"repos/{REPO}/issues/7/comments":
+                        reads += 1
+                        if reads == 2:
+                            self.api.pr[field]["sha"] = OTHER
+                            if field == "base":
+                                self.api.base_tip = OTHER
+                self.api.on_call = change
+                log = io.StringIO()
+                with redirect_stdout(log):
+                    self.start()
+                self.assertIn("captured head/base changed before status publication", log.getvalue())
+                self.assertEqual(self.output, [("presentation_outcome", "suppressed_patch_changed")])
+                self.assertIsNone(self.api.status)
+                self.assertEqual(self.writes(), [])
+                with mock.patch.dict(os.environ, PRESENTATION_OWNER="", PRESENTATION_OUTCOME="suppressed_patch_changed"):
+                    with redirect_stdout(log):
+                        self.finish()
+                    self.assertIn("captured head/base was already superseded", log.getvalue())
+                self.assertEqual(self.writes(), [])
+
     def test_absent_persisted_owner_is_unavailable_not_supersession(self):
         os.environ["PRESENTATION_OWNER"] = json.dumps(presentation_owner())
         log = io.StringIO()

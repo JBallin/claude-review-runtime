@@ -887,10 +887,15 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
             return
         # Re-read the observed owner immediately before changing shared status.
         observed = find_status_comment(repo, pr_number)
-        if status_publication_identity(observed) != status_publication_identity(existing) or not current():
+        if status_publication_identity(observed) != status_publication_identity(existing):
             if acquire:
                 write_output("presentation_outcome", "suppressed_presentation_changed")
             print("::notice::Claude Review presentation suppressed: presentation changed before status publication.")
+            return
+        if not current():
+            if acquire:
+                write_output("presentation_outcome", "suppressed_patch_changed")
+            print("::notice::Claude Review presentation suppressed: captured head/base changed before status publication.")
             return
         body = {"body": status_comment_body(
             head_sha, base_ref, state, check_available=check_available,
