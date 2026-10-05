@@ -19,7 +19,7 @@ from unittest import mock
 
 from test_claude_review_check import (
     check, HEAD, OTHER, BASE_TIP, MERGE_BASE, REPO, check_run, comment,
-    evidence_of, reaction,
+    evidence_of, reaction, presentation_owner,
 )
 from test_presentation_ownership import PresentationAPI
 
@@ -357,6 +357,83 @@ class OfflineRecoveryTests(unittest.TestCase):
                                           and item["content"] in ("eyes", "+1")])
                     self.assertIn(reaction(701, "heart", login="unrelated-user"),
                                   state["reactions"][f"repos/{REPO}/issues/7/reactions"])
+
+    def test_base_advance_retains_just_completed_review_with_and_without_history(self):
+        for previous in (False, True):
+            for conclusion in ("success", "action_required"):
+                for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+                    with self.subTest(previous=previous, conclusion=conclusion, kind=kind):
+                        self.setUp()
+                        self.surface(kind)
+                        self.env["MANUAL_COMPLETION_ENABLED"] = "true" if kind != "automatic" else "false"
+                        old_check = check_run(98, "success")
+                        old_check["head_sha"] = OTHER
+                        unrelated = {"id": 77, "user": {"login": "human"}, "body": "Keep this comment"}
+                        old_finding = comment(11, commit=OTHER)
+                        self.update(checks=[old_check, *self.state()["checks"]],
+                                    comment_pages=[unrelated], findings=[old_finding])
+                        if previous:
+                            old_owner = presentation_owner(head=OTHER, base=MERGE_BASE,
+                                                           base_ref="release", run=4, started=1)
+                            prior_result = "action_required" if conclusion == "success" else "success"
+                            with mock.patch.dict(os.environ, BASE_SHA=MERGE_BASE,
+                                                 DETAILS_URL="https://github.com/owner/repo/actions/runs/4"):
+                                body = check.status_comment_body(OTHER, "release", prior_result, owner=old_owner)
+                            self.update(status={"id": 55, "user": {"login": check.STATUS_AUTHOR, "type": "Bot"},
+                                                "body": body})
+                        self.run_worker("start")
+                        owner = check.status_owner(self.state()["status"])
+                        pr = self.state()["pr"]
+                        # Cover both an updated PR projection and one still showing the captured base.
+                        if previous:
+                            pr["base"]["sha"] = OTHER
+                        findings = [old_finding, comment(12)] if conclusion == "action_required" else [old_finding]
+                        self.update(pr=pr, base_tip=OTHER, findings=findings)
+                        self.env["FINDING_PUBLICATION"] = json.dumps({
+                            "attempt_count": int(conclusion == "action_required"),
+                            "comment_ids": [12] if conclusion == "action_required" else [],
+                        })
+                        self.run_worker("finish")
+                        state = self.state()
+                        completed = state["checks"][1]
+                        evidence = evidence_of(completed)
+                        self.assertEqual(completed["conclusion"], conclusion)
+                        self.assertTrue(evidence["completion_verified"])
+                        self.assertEqual((evidence["reviewed_sha"], evidence["base_sha"],
+                                          evidence["merge_base_sha"]), (HEAD, BASE_TIP, MERGE_BASE))
+                        self.assertEqual(check.status_state(state["status"]), "stale")
+                        self.assertEqual(check.status_owner(state["status"]), owner)
+                        self.assertFalse(check.status_owner_running(state["status"]))
+                        self.assertEqual(check.last_completed_review(state["status"]), (HEAD, "main", conclusion))
+                        self.assertEqual(check.last_completed_review_details(state["status"]), {
+                            "base_sha": BASE_TIP, "run_url": self.env["DETAILS_URL"],
+                        })
+                        body = state["status"]["body"]
+                        self.assertIn(f"**Current commit:** `{HEAD[:7]}` on `main` — not reviewed", body)
+                        self.assertIn(f"**Current baseline:** `{OTHER[:7]}` — not reviewed", body)
+                        self.assertIn(f"**Reviewed baseline:** `{BASE_TIP[:7]}`", body)
+                        self.assertIn(f"[Reviewed workflow run]({self.env['DETAILS_URL']})", body)
+                        self.assertNotIn("Claude Review passed", body)
+                        self.assertNotIn("runs/4)", body)
+                        self.assertEqual(state["checks"][0], old_check)
+                        self.assertEqual(state["findings"], findings)
+                        self.assertEqual(state["comment_pages"], [unrelated])  # No clean completion notice.
+                        for items in state["reactions"].values():
+                            self.assertFalse([item for item in items if item["user"]["login"] == check.STATUS_AUTHOR
+                                              and item["content"] in ("eyes", "+1")])
+                        self.assertIn(reaction(701, "heart", login="unrelated-user"),
+                                      state["reactions"][f"repos/{REPO}/issues/7/reactions"])
+                        # A fresh process and a later status run cannot relabel the reviewed base/run.
+                        self.env["DETAILS_URL"] = "https://github.com/owner/repo/actions/runs/6"
+                        self.update(base_tip=MERGE_BASE)
+                        self.run_worker("stale")
+                        refreshed = self.state()["status"]
+                        self.assertEqual(check.last_completed_review(refreshed), (HEAD, "main", conclusion))
+                        self.assertEqual(check.last_completed_review_details(refreshed), {
+                            "base_sha": BASE_TIP, "run_url": "https://github.com/owner/repo/actions/runs/5",
+                        })
+                        self.assertIn(f"**Current baseline:** `{MERGE_BASE[:7]}` — not reviewed", refreshed["body"])
+                        self.assertNotIn("runs/6)", refreshed["body"])
 
     def test_deleted_finding_after_outage_survives_failed_attempt_and_restart(self):
         for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
