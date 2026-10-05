@@ -46,6 +46,10 @@ class DurableAPI(PresentationAPI):
                 self.save()
                 os._exit(73)
             if not special:
+                if (getattr(self, "presentation_outage", False) and method == "GET"
+                        and path == f"repos/{REPO}/issues/7/comments"):
+                    self.calls.append((method, path, copy.deepcopy(body)))
+                    raise check.GhError("synthetic presentation outage")
                 result = super().call(args, body)
             else:
                 self.calls.append((method, path, copy.deepcopy(body)))
@@ -143,7 +147,7 @@ class OfflineRecoveryTests(unittest.TestCase):
         state.update(changes)
         self.path.write_text(json.dumps(state))
 
-    def run_worker(self, command, expected=0):
+    def run_worker(self, command, expected=0, *, require_owner=True):
         if command == "start":
             Path(self.env["GITHUB_OUTPUT"]).write_text("")
         result = subprocess.run([sys.executable, __file__, "--worker", str(self.path), command],
@@ -152,9 +156,90 @@ class OfflineRecoveryTests(unittest.TestCase):
         if command == "start" and expected == 0:
             receipts = [line.split("=", 1)[1] for line in Path(self.env["GITHUB_OUTPUT"]).read_text().splitlines()
                         if line.startswith("presentation_owner=")]
-            self.assertTrue(receipts, "start must export an owner receipt")
-            self.env["PRESENTATION_OWNER"] = receipts[-1]
+            if require_owner:
+                self.assertTrue(receipts, "start must export an owner receipt")
+            self.env["PRESENTATION_OWNER"] = receipts[-1] if receipts else ""
+            outcomes = [line.split("=", 1)[1] for line in Path(self.env["GITHUB_OUTPUT"]).read_text().splitlines()
+                        if line.startswith("presentation_outcome=")]
+            self.env["PRESENTATION_OUTCOME"] = outcomes[-1] if outcomes else ""
         return result
+
+    def test_advanced_base_before_start_preserves_captured_check_without_acquiring_owner(self):
+        for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+            for conclusion in ("success", "action_required"):
+                with self.subTest(kind=kind, conclusion=conclusion):
+                    self.setUp()
+                    self.surface(kind)
+                    historical = comment(11, commit=OTHER)
+                    unrelated = {"id": 77, "user": {"login": "human"}, "body": "Keep this comment"}
+                    self.update(base_tip=OTHER, findings=[historical], comment_pages=[unrelated])
+                    start = self.run_worker("start", require_owner=False)
+                    self.assertEqual(self.env["PRESENTATION_OWNER"], "")
+                    self.assertEqual(self.env["PRESENTATION_OUTCOME"], "suppressed_patch_changed")
+                    self.assertIn("::notice::", start.stdout)
+                    if conclusion == "action_required":
+                        self.update(findings=[historical, comment(12)])
+                        self.env["FINDING_PUBLICATION"] = json.dumps({"attempt_count": 1, "comment_ids": [12]})
+                    # Even restoration of the old base does not grant an absent receipt authority.
+                    self.update(base_tip=BASE_TIP)
+                    for _ in range(2):
+                        result = self.run_worker("finish")
+                        self.assertIn("presentation suppressed at start", result.stdout)
+                        self.assertNotIn("::warning::", result.stdout)
+                    state = self.state()
+                    completed = state["checks"][0]
+                    self.assertEqual(completed["head_sha"], HEAD)
+                    self.assertEqual(completed["conclusion"], conclusion)
+                    evidence = evidence_of(completed)
+                    self.assertEqual((evidence["reviewed_sha"], evidence["base_sha"], evidence["merge_base_sha"]),
+                                     (HEAD, BASE_TIP, MERGE_BASE))
+                    self.assertIn(historical, state["findings"])
+                    self.assertEqual(state["comment_pages"], [unrelated])
+                    self.assertIsNone(state["status"])
+                    self.assertFalse([call for call in state["calls"]
+                                      if call[0] != "GET" and "/check-runs/" not in call[1]])
+                    self.assertEqual(state["reactions"][f"repos/{REPO}/issues/7/reactions"],
+                                     [reaction(701, "heart", login="unrelated-user")])
+
+    def test_missing_or_malformed_receipt_preserves_new_owner_and_successful_check(self):
+        for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+            for receipt in ("", "{", "{}"):
+                with self.subTest(kind=kind, receipt=receipt):
+                    self.setUp()
+                    self.surface(kind)
+                    self.run_worker("start")
+                    old_env = self.env.copy()
+                    self.env.update(GITHUB_RUN_ID="6", PRESENTATION_START="3")
+                    self.run_worker("start")
+                    previous = copy.deepcopy(self.state()["status"])
+                    reactions = copy.deepcopy(self.state()["reactions"])
+                    self.env = old_env
+                    self.env["PRESENTATION_OWNER"] = receipt
+                    for _ in range(2):
+                        result = self.run_worker("finish")
+                        self.assertIn("::warning::", result.stdout)
+                        self.assertNotIn("Expecting value", result.stdout)
+                    state = self.state()
+                    self.assertEqual(state["checks"][0]["conclusion"], "success")
+                    self.assertEqual(state["status"], previous)
+                    self.assertEqual(state["reactions"], reactions)
+
+    def test_unavailable_start_does_not_acquire_when_api_recovers(self):
+        for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+            with self.subTest(kind=kind):
+                self.setUp()
+                self.surface(kind)
+                self.update(presentation_outage=True,
+                            comment_pages=[{"id": 77, "user": {"login": "human"}, "body": "Keep this comment"}])
+                start = self.run_worker("start", require_owner=False)
+                self.assertEqual(self.env["PRESENTATION_OUTCOME"], "unavailable")
+                self.assertIn("::warning::", start.stdout)
+                self.update(presentation_outage=False)
+                for _ in range(2):
+                    result = self.run_worker("finish")
+                    self.assertIn("no owner receipt from start (unavailable)", result.stdout)
+                self.assertEqual(self.state()["checks"][0]["conclusion"], "success")
+                self.assertIsNone(self.state()["status"])
 
     def surface(self, kind):
         self.env.update(TRIGGER_KIND=kind, PR_REACTION_MODE="automatic" if kind == "automatic" else "manual")

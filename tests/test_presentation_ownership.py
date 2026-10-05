@@ -1,5 +1,7 @@
 """Stateful offline tests for trusted request ownership and both reaction surfaces."""
 import copy
+from contextlib import redirect_stdout
+import io
 import json
 import os
 import unittest
@@ -429,7 +431,7 @@ class OwnershipTests(unittest.TestCase):
     def test_failed_owner_publication_suppresses_reactions_and_outputs(self):
         self.api.faults[("POST", f"repos/{REPO}/issues/7/comments")] = "fail"
         self.start()
-        self.assertEqual(self.output, [])
+        self.assertEqual(self.output, [("presentation_outcome", "unavailable")])
         self.assertEqual(self.owned(self.opening), [])
         self.assertEqual(len([c for c in self.writes() if c[0] == "POST"]), 1)
 
@@ -569,6 +571,142 @@ class OwnershipTests(unittest.TestCase):
                 self.api.calls.clear()
                 self.finish()
                 self.assertEqual(self.writes(), [])
+
+    def test_empty_owner_diagnostics_do_not_read_or_acquire_presentation(self):
+        cases = [("", "::warning::", "unknown outcome"),
+                 ("unavailable", "::warning::", "unavailable"),
+                 ("acquired", "::warning::", "no owner receipt"),
+                 ("suppressed_patch_changed", "::notice::", "captured head/base was already superseded"),
+                 ("suppressed_newer_owner", "::notice::", "a newer attempt already owned presentation"),
+                 ("suppressed_presentation_changed", "::notice::", "presentation changed before publication"),
+                 ("untrusted diagnostic text", "::warning::", "unknown outcome")]
+        for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+            for outcome, severity, reason in cases:
+                with self.subTest(kind=kind, outcome=outcome), mock.patch.dict(
+                        os.environ, PRESENTATION_OWNER="", PRESENTATION_OUTCOME=outcome, TRIGGER_KIND=kind):
+                    self.api.calls.clear()
+                    self.output.clear()
+                    log = io.StringIO()
+                    with redirect_stdout(log):
+                        self.finish()
+                        self.finish()
+                    self.assertIn(severity, log.getvalue())
+                    self.assertIn(reason, log.getvalue())
+                    self.assertNotIn("Expecting value", log.getvalue())
+                    self.assertNotIn("untrusted diagnostic text", log.getvalue())
+                    self.assertEqual(self.api.calls, [])
+                    self.assertEqual(self.output, [])
+                    self.assertIsNone(check.PRESENTATION_DEADLINE)
+
+    def test_malformed_owner_diagnostics_never_touch_presentation_api(self):
+        for receipt in (" ", "{", "[]", "null", "{}", json.dumps({**presentation_owner(), "generation": "0" * 64})):
+            with self.subTest(receipt=receipt), mock.patch.dict(os.environ, PRESENTATION_OWNER=receipt):
+                self.api.calls.clear()
+                log = io.StringIO()
+                with redirect_stdout(log):
+                    self.finish()
+                self.assertIn("::warning::", log.getvalue())
+                self.assertIn("malformed owner receipt", log.getvalue())
+                self.assertEqual(self.api.calls, [])
+
+    def test_start_api_failures_export_unavailable_without_authority(self):
+        for method, path in (("GET", f"repos/{REPO}/issues/7/comments"),
+                             ("GET", f"repos/{REPO}/git/ref/heads/main"),
+                             ("POST", f"repos/{REPO}/issues/7/comments")):
+            with self.subTest(method=method, path=path):
+                self.api = PresentationAPI()
+                self.gh_mock.side_effect = self.api.call
+                self.api.faults[(method, path)] = "fail"
+                self.output.clear()
+                log = io.StringIO()
+                with redirect_stdout(log):
+                    self.start()
+                self.assertIn("::warning::", log.getvalue())
+                self.assertIn(("presentation_outcome", "unavailable"), self.output)
+                self.assertFalse(any(name == "presentation_owner" for name, _ in self.output))
+                self.assertEqual(self.owned(self.opening), [])
+
+    def test_superseded_start_exports_notice_and_preserves_new_owner(self):
+        newer = self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3")
+        previous = copy.deepcopy(self.api.status)
+        reactions = copy.deepcopy(self.api.reactions)
+        self.api.calls.clear()
+        self.output.clear()
+        log = io.StringIO()
+        with redirect_stdout(log):
+            self.start(GITHUB_RUN_ID="5", PRESENTATION_START="2")
+        self.assertIn("::notice::", log.getvalue())
+        self.assertEqual(self.output, [("presentation_outcome", "suppressed_newer_owner")])
+        self.assertEqual(self.api.status, previous)
+        self.assertEqual(check.status_owner(self.api.status), newer)
+        self.assertEqual(self.api.reactions, reactions)
+        self.assertEqual(self.writes(), [])
+
+    def test_changed_status_before_acquisition_exports_suppression(self):
+        newer = presentation_owner(run=6, started=3)
+        reads = 0
+        def change(method, path):
+            nonlocal reads
+            if method == "GET" and path == f"repos/{REPO}/issues/7/comments":
+                reads += 1
+                if reads == 2:
+                    self.api.status = {"id": 55, "user": {"login": check.STATUS_AUTHOR, "type": "Bot"},
+                                       "body": check.status_comment_body(HEAD, "main", "in_progress", owner=newer)}
+        self.api.on_call = change
+        log = io.StringIO()
+        with redirect_stdout(log):
+            self.start()
+        self.assertIn("::notice::", log.getvalue())
+        self.assertEqual(self.output, [("presentation_outcome", "suppressed_presentation_changed")])
+        self.assertEqual(check.status_owner(self.api.status), newer)
+        self.assertEqual(self.writes(), [])
+
+    def test_late_patch_change_is_reported_as_patch_suppression(self):
+        for field in ("head", "base"):
+            with self.subTest(field=field):
+                self.api = PresentationAPI()
+                self.gh_mock.side_effect = self.api.call
+                self.output.clear()
+                reads = 0
+                def change(method, path):
+                    nonlocal reads
+                    if method == "GET" and path == f"repos/{REPO}/issues/7/comments":
+                        reads += 1
+                        if reads == 2:
+                            self.api.pr[field]["sha"] = OTHER
+                            if field == "base":
+                                self.api.base_tip = OTHER
+                self.api.on_call = change
+                log = io.StringIO()
+                with redirect_stdout(log):
+                    self.start()
+                self.assertIn("captured head/base changed before status publication", log.getvalue())
+                self.assertEqual(self.output, [("presentation_outcome", "suppressed_patch_changed")])
+                self.assertIsNone(self.api.status)
+                self.assertEqual(self.writes(), [])
+                with mock.patch.dict(os.environ, PRESENTATION_OWNER="", PRESENTATION_OUTCOME="suppressed_patch_changed"):
+                    with redirect_stdout(log):
+                        self.finish()
+                    self.assertIn("captured head/base was already superseded", log.getvalue())
+                self.assertEqual(self.writes(), [])
+
+    def test_absent_persisted_owner_is_unavailable_not_supersession(self):
+        os.environ["PRESENTATION_OWNER"] = json.dumps(presentation_owner())
+        log = io.StringIO()
+        with redirect_stdout(log):
+            self.finish()
+        self.assertIn("::warning::", log.getvalue())
+        self.assertIn("persisted owner is missing or malformed", log.getvalue())
+        self.assertEqual(self.writes(), [])
+
+    def test_output_failure_remains_best_effort_and_resets_deadline(self):
+        log = io.StringIO()
+        with mock.patch.object(check, "write_output", side_effect=OSError("injected output failure")), redirect_stdout(log):
+            self.start()
+        self.assertIn("Could not export the Claude Review presentation diagnostic", log.getvalue())
+        self.assertIsNone(check.PRESENTATION_DEADLINE)
+        self.assertEqual(self.output, [])
+        self.assertEqual(self.owned(self.opening), [])
 
     def test_foreign_stale_owner_cannot_authorize_writes(self):
         self.start()

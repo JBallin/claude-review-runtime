@@ -63,6 +63,7 @@ jobs:
       check_run_id: ${{ steps.check.outputs.check_run_id }}
       status_comment_id: ${{ steps.check.outputs.status_comment_id }}
       presentation_owner: ${{ steps.check.outputs.presentation_owner }}
+      presentation_outcome: ${{ steps.check.outputs.presentation_outcome }}
       merge_base_sha: ${{ steps.inputs.outputs.merge_base_sha }}
     # The event already pins the reviewed head, so the check run is created
     # before any fallible input fetching; a later failure here is then
@@ -531,6 +532,7 @@ jobs:
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
           PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
+          PRESENTATION_OUTCOME: ${{ needs.start-check.outputs.presentation_outcome }}
           GH_TOKEN: ${{ github.token }}
           RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
           RUNTIME_SHA: ${{ job.workflow_sha }}

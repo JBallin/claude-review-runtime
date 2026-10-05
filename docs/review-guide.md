@@ -156,6 +156,12 @@ affects only current PR presentation. Reaction and status publication are best-e
 unverifiable ownership can leave stale or missing reactions. Consult the current
 exact-head Check.
 
+If the captured head or base is already superseded at start, presentation is
+intentionally suppressed and no owner is acquired. The finalizer reports that
+suppression as a notice; missing or malformed ownership and API failures produce
+warnings. Neither changes the captured Check result nor authorizes finalization
+to acquire ownership or replace a newer status.
+
 The self-review callers pin `250a7d`, which includes the direct-ref guard from
 [PR 20](https://github.com/JBallin/claude-review-runtime/pull/20). Other consumers
 retain their own pins until a separate reviewed adoption changes them.

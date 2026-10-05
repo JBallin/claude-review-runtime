@@ -788,9 +788,33 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
     PRESENTATION_DEADLINE = time.monotonic() + PRESENTATION_SECONDS
     try:
         repo, pr_number, base_ref = env("REPO"), env("PR_NUMBER"), env("BASE_REF")
+        stale = state == "stale"
+        if not acquire and not stale and not env("PRESENTATION_OWNER"):
+            # An intentionally suppressed or unavailable start has no receipt.
+            # Its diagnostic output never grants finalization write authority.
+            outcome = env("PRESENTATION_OUTCOME")
+            reasons = {
+                "suppressed_patch_changed": "captured head/base was already superseded",
+                "suppressed_newer_owner": "a newer attempt already owned presentation",
+                "suppressed_presentation_changed": "presentation changed before publication",
+            }
+            if outcome in reasons:
+                print(f"::notice::Claude Review presentation suppressed at start: {reasons[outcome]}. "
+                      "No owner was acquired; the captured Check remains authoritative.")
+            else:
+                print("::warning::Claude Review presentation unavailable: no owner receipt from start "
+                      f"({outcome if outcome in ('acquired', 'unavailable') else 'unknown outcome'}). "
+                      "The captured Check remains authoritative; finalization will not acquire ownership.")
+            return
+        if not acquire and not stale:
+            try:
+                owner = validate_owner(json.loads(env("PRESENTATION_OWNER")))
+            except (ValueError, TypeError, KeyError):
+                print("::warning::Claude Review presentation unavailable: malformed owner receipt. "
+                      "The captured Check remains authoritative; no presentation writes were attempted.")
+                return
         existing = find_status_comment(repo, pr_number)
         prior = status_owner(existing)
-        stale = state == "stale"
         if stale:
             if not prior or (prior["repo"], str(prior["pr"])) != (repo, pr_number):
                 raise ValueError("stale refresh has no verified owner")
@@ -804,21 +828,29 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
                 return
             expected_patch = live
         else:
-            owner = captured_owner() if acquire else validate_owner(json.loads(env("PRESENTATION_OWNER")))
+            if acquire:
+                owner = captured_owner()
             if (owner["repo"], str(owner["pr"]), owner["head"], owner["base"], owner["base_ref"],
                     str(owner["run"]), str(owner["attempt"])) != (
                     repo, pr_number, head_sha, env("BASE_SHA"), base_ref,
                     env("GITHUB_RUN_ID"), env("GITHUB_RUN_ATTEMPT")):
                 raise ValueError("captured owner differs from executing attempt")
             if not acquire and prior != owner:
-                raise ValueError("this attempt no longer owns presentation")
+                if prior:
+                    print("::notice::Claude Review presentation suppressed: this attempt no longer owns presentation.")
+                else:
+                    print("::warning::Claude Review presentation unavailable: persisted owner is missing or malformed.")
+                return
             # An older start must not reclaim a later generation. A higher
             # attempt of the same run is accepted only by this acquisition path.
             if acquire and prior != owner and prior and owner["started"] <= prior["started"]:
-                raise ValueError("older start cannot reclaim newer presentation")
+                write_output("presentation_outcome", "suppressed_newer_owner")
+                print("::notice::Claude Review presentation suppressed: older start cannot reclaim newer presentation.")
+                return
             if acquire and prior == owner and status_state(existing) != "in_progress":
                 write_output("presentation_owner", json.dumps(owner, separators=(",", ":")))
                 write_output("status_comment_id", existing["id"])
+                write_output("presentation_outcome", "acquired")
                 return
             expected_patch = (head_sha, base_ref, env("BASE_SHA"))
         projection_must_match = not stale
@@ -839,6 +871,12 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
             expected_patch = live
             projection_must_match = False
         if live != expected_patch:
+            if acquire:
+                write_output("presentation_outcome", "suppressed_patch_changed")
+                print("::notice::Claude Review presentation suppressed: captured head/base is no longer current; "
+                      "no owner was acquired.")
+            else:
+                print("::notice::Claude Review presentation suppressed: captured head/base is no longer current.")
             if not acquire and not stale and prior == owner and status_owner_running(existing):
                 try:
                     path = trigger_reaction_path(owner)
@@ -849,8 +887,16 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
             return
         # Re-read the observed owner immediately before changing shared status.
         observed = find_status_comment(repo, pr_number)
-        if status_publication_identity(observed) != status_publication_identity(existing) or not current():
-            raise ValueError("presentation changed before status publication")
+        if status_publication_identity(observed) != status_publication_identity(existing):
+            if acquire:
+                write_output("presentation_outcome", "suppressed_presentation_changed")
+            print("::notice::Claude Review presentation suppressed: presentation changed before status publication.")
+            return
+        if not current():
+            if acquire:
+                write_output("presentation_outcome", "suppressed_patch_changed")
+            print("::notice::Claude Review presentation suppressed: captured head/base changed before status publication.")
+            return
         body = {"body": status_comment_body(
             head_sha, base_ref, state, check_available=check_available,
             last_review=last_review, last_review_details=last_review_details, base_sha=expected_patch[2],
@@ -877,6 +923,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
             if not published:
                 raise ValueError("start presentation publication could not be confirmed")
             write_output("presentation_owner", json.dumps(owner, separators=(",", ":")))
+            write_output("presentation_outcome", "acquired")
         write_output("status_comment_id", confirmed["id"])
         def guard(require_patch=True):
             return (status_owner(find_status_comment(repo, pr_number)) == owner
@@ -902,7 +949,12 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
             except Exception as error:
                 print(f"::warning::Could not reconcile Claude Review reactions: {error}")
     except Exception as error:
-        print(f"::warning::Skipping Claude Review presentation: {error}")
+        if acquire:
+            try:
+                write_output("presentation_outcome", "unavailable")
+            except Exception:
+                print("::warning::Could not export the Claude Review presentation diagnostic.")
+        print(f"::warning::Claude Review presentation unavailable: {error}")
     finally:
         PRESENTATION_DEADLINE = None
 

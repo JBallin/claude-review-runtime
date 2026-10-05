@@ -81,6 +81,7 @@ jobs:
       check_run_id: ${{ steps.check.outputs.check_run_id }}
       status_comment_id: ${{ steps.check.outputs.status_comment_id }}
       presentation_owner: ${{ steps.check.outputs.presentation_owner }}
+      presentation_outcome: ${{ steps.check.outputs.presentation_outcome }}
     # The check run is created as soon as the reviewed head SHA is resolved,
     # before the remaining fallible input capture, so a later failure is
     # published as that check's failure. A failure before the head SHA is
@@ -631,6 +632,7 @@ jobs:
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
           PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
+          PRESENTATION_OUTCOME: ${{ needs.start-check.outputs.presentation_outcome }}
           GH_TOKEN: ${{ github.token }}
           RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
           RUNTIME_SHA: ${{ job.workflow_sha }}

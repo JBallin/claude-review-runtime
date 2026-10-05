@@ -419,6 +419,17 @@ class ConcurrencyGroupTests(unittest.TestCase):
 
 
 class JobStructureTests(unittest.TestCase):
+    def test_presentation_diagnostic_is_carried_only_between_trusted_jobs(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                outputs = block(job(path, "start-check"), "outputs", 4)
+                self.assertEqual(scalar(outputs, "presentation_outcome", 6),
+                                 "${{ steps.check.outputs.presentation_outcome }}")
+                publish = steps(job(path, "publish-status"))["Publish Claude Review result"]
+                self.assertEqual(scalar(block(publish, "env", 8), "PRESENTATION_OUTCOME", 10),
+                                 "${{ needs.start-check.outputs.presentation_outcome }}")
+                self.assertNotIn("PRESENTATION_OUTCOME", "\n".join(job(path, "review")))
+
     def test_review_runs_only_after_a_successful_start_check(self):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
