@@ -2225,8 +2225,8 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertEqual(body, (
             f"{marker}\n"
             f"🎉 Claude review completed—no findings on [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).\n\n"
-            f"Compared against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}).\n\n"
-            "[Review run](https://github.com/owner/repo/actions/runs/1)."
+            f"Compared against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) · "
+            "[Review run](https://github.com/owner/repo/actions/runs/1)"
         ))
         for identity in (HEAD, BASE_TIP, MERGE_BASE):
             self.assertIn(identity, body)
@@ -2238,18 +2238,31 @@ class ManualCompletionTests(ScriptTestCase):
     def test_same_identity_notice_on_a_later_page_suppresses_rerun_noise(self):
         legacy_notice = self.notice()
         marker = check.completion_marker(REPO, "7", HEAD, "main", BASE_TIP, MERGE_BASE)
-        legacy_notice["body"] = (
-            f"{marker}\n"
-            f"🎉 Claude review completed—no findings on [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}) "
-            f"against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}). "
-            "[Review run](https://github.com/owner/repo/actions/runs/1)."
-        )
-        result = self.run_manual(self.clean_rules(listed=ok(pages([], [legacy_notice]))))
-        self.assertEqual(result.returncode, 0, result.stdout)
-        self.assertFalse(self.calls("POST"))
-        self.assertEqual([call["path"] for call in self.calls("PATCH")], [f"repos/{REPO}/check-runs/99"])
-        listing = self.calls()[-1]
-        self.assertIn("--paginate", listing["args"])
+        for layout in ("single_paragraph", "three_paragraphs", "compact"):
+            with self.subTest(layout=layout):
+                self.log.unlink(missing_ok=True)
+                if layout == "single_paragraph":
+                    legacy_notice["body"] = (
+                        f"{marker}\n"
+                        f"🎉 Claude review completed—no findings on [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}) "
+                        f"against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}). "
+                        "[Review run](https://github.com/owner/repo/actions/runs/1)."
+                    )
+                elif layout == "three_paragraphs":
+                    legacy_notice["body"] = (
+                        f"{marker}\n"
+                        f"🎉 Claude review completed—no findings on [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).\n\n"
+                        f"Compared against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}).\n\n"
+                        "[Review run](https://github.com/owner/repo/actions/runs/1)."
+                    )
+                else:
+                    legacy_notice = self.notice()
+                result = self.run_manual(self.clean_rules(listed=ok(pages([], [legacy_notice]))))
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertFalse(self.calls("POST"))
+                self.assertEqual([call["path"] for call in self.calls("PATCH")], [f"repos/{REPO}/check-runs/99"])
+                listing = self.calls()[-1]
+                self.assertIn("--paginate", listing["args"])
 
     def test_notice_with_a_different_captured_identity_does_not_suppress_completion(self):
         cases = [{"head": OTHER}, {"base_ref": "release"}, {"base_sha": OTHER},
@@ -2430,8 +2443,8 @@ class ManualCompletionTests(ScriptTestCase):
                 self.assertEqual(body.split("\n\n"), [
                     f"{marker}\n"
                     f"🎉 Claude review completed—no findings on [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).",
-                    f"Compared against {rendered_ref} at [`bbbbbbb`](https://github.com/{REPO}/commit/{OTHER}).",
-                    "[Review run](https://github.com/owner/repo/actions/runs/1).",
+                    f"Compared against {rendered_ref} at [`bbbbbbb`](https://github.com/{REPO}/commit/{OTHER}) · "
+                    "[Review run](https://github.com/owner/repo/actions/runs/1)",
                 ])
                 self.assertNotIn(f"/commit/{MERGE_BASE}", body)
 
