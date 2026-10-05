@@ -106,6 +106,8 @@ def worker(path, command):
             projection = check.live_pr_projection(REPO, "7")
             print(json.dumps(projection))
             return 0
+        if command == "stale":
+            return check.cmd_stale()
         raise AssertionError(command)
 
 
@@ -317,6 +319,141 @@ class OfflineRecoveryTests(unittest.TestCase):
         before_deadline = self.state()
         self.run_worker("deadline")
         self.assertEqual(self.state(), before_deadline)
+
+    def test_committed_check_restart_after_stale_refresh_cannot_publish_clean_ux(self):
+        for field in ("head", "base"):
+            for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+                with self.subTest(field=field, kind=kind):
+                    self.setUp()
+                    self.surface(kind)
+                    self.env["MANUAL_COMPLETION_ENABLED"] = "true" if kind != "automatic" else "false"
+                    self.run_worker("start")
+                    captured = self.env.copy()
+                    owner = check.status_owner(self.state()["status"])
+                    self.update(cut=["PATCH", f"repos/{REPO}/check-runs/99"])
+                    self.run_worker("finish", 73)
+                    committed = self.state()["checks"][0]
+                    self.assertEqual(committed["conclusion"], "success")
+                    pr = self.state()["pr"]
+                    pr[field]["sha"] = OTHER
+                    self.update(pr=pr, base_tip=OTHER if field == "base" else BASE_TIP)
+                    if field == "head":
+                        self.env["HEAD_SHA"] = OTHER
+                    self.run_worker("stale")
+                    self.assertEqual(check.status_state(self.state()["status"]), "stale")
+                    self.env = captured
+                    self.run_worker("finish")
+                    state = self.state()
+                    evidence = evidence_of(state["checks"][0])
+                    self.assertEqual(state["checks"][0]["head_sha"], HEAD)
+                    self.assertEqual(state["checks"][0]["conclusion"], "success")
+                    self.assertEqual((evidence["reviewed_sha"], evidence["base_sha"],
+                                      evidence["merge_base_sha"]), (HEAD, BASE_TIP, MERGE_BASE))
+                    self.assertEqual(check.status_owner(state["status"]), owner)
+                    self.assertEqual(check.status_state(state["status"]), "stale")
+                    self.assertEqual(state["comment_pages"], [])
+                    for items in state["reactions"].values():
+                        self.assertFalse([item for item in items if item["user"]["login"] == check.STATUS_AUTHOR
+                                          and item["content"] in ("eyes", "+1")])
+                    self.assertIn(reaction(701, "heart", login="unrelated-user"),
+                                  state["reactions"][f"repos/{REPO}/issues/7/reactions"])
+
+    def test_deleted_finding_after_outage_survives_failed_attempt_and_restart(self):
+        for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+            with self.subTest(kind=kind):
+                self.setUp()
+                self.surface(kind)
+                self.env["MANUAL_COMPLETION_ENABLED"] = "true" if kind != "automatic" else "false"
+                self.run_worker("start")
+                self.update(findings=[comment(12)], outage=True)
+                self.env["FINDING_PUBLICATION"] = ""  # Lost receipt accompanies unavailable history.
+                self.run_worker("finish", 1)
+                failed = copy.deepcopy(self.state()["checks"][0])
+                self.assertEqual(failed["conclusion"], "failure")
+                self.assertTrue(evidence_of(failed)["same_diff_findings_recorded"])
+                self.assertEqual(evidence_of(failed)["new_finding_comment_ids"], [12])
+                self.assertEqual(len([call for call in self.state()["calls"]
+                                     if call[0] == "GET" and "/check-runs" in call[1]]), check.ATTEMPTS)
+                # The next attempt sees no surviving comment. Only the failed
+                # Check can retain this finding's captured-diff attribution.
+                self.update(findings=[], outage=False, drift=True,
+                            checks=[failed, check_run(100, None, status="in_progress")])
+                self.env.update(CHECK_RUN_ID="100", GITHUB_RUN_ID="6", PRESENTATION_START="3",
+                                FINDING_PUBLICATION=json.dumps({"attempt_count": 0, "comment_ids": []}))
+                self.run_worker("start")
+                prior_calls = len(self.state()["calls"])
+                self.run_worker("finish")
+                state = self.state()
+                self.assertEqual(state["checks"][0], failed)
+                self.assertEqual(state["checks"][1]["conclusion"], "action_required")
+                evidence = evidence_of(state["checks"][1])
+                self.assertEqual(evidence["prior_finding_check_run_ids"], [99])
+                self.assertEqual(evidence["evidence_errors"], [])
+                self.assertEqual(state["comment_pages"], [])
+                reads = [call for call in state["calls"][prior_calls:]
+                         if call[0] == "GET" and "/check-runs" in call[1]]
+                self.assertEqual(len(reads), 2)
+                self.assertEqual(check.status_state(state["status"]), "action_required")
+                for items in state["reactions"].values():
+                    self.assertFalse([item for item in items if item["user"]["login"] == check.STATUS_AUTHOR
+                                      and item["content"] in ("eyes", "+1")])
+
+    def test_reaction_commit_restart_with_or_without_superseding_attempt(self):
+        for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+            opening = f"repos/{REPO}/issues/7/reactions"
+            paths = [opening]
+            if kind != "automatic":
+                namespace = "issues" if kind == "issue_comment" else "pulls"
+                paths.append(f"repos/{REPO}/{namespace}/comments/42/reactions")
+            for path in paths:
+                for before in (False, True):
+                    for newer in (False, True):
+                        with self.subTest(kind=kind, path=path, before=before, newer=newer):
+                            self.setUp()
+                            self.surface(kind)
+                            preserved = [reaction(702, "+1", login="unrelated-user"),
+                                         reaction(703, "eyes", login="other-bot")]
+                            reactions = self.state()["reactions"]
+                            for surface in paths:
+                                reactions.setdefault(surface, []).extend(preserved)
+                            self.update(reactions=reactions)
+                            self.run_worker("start")
+                            old = self.env.copy()
+                            self.update(cut=["POST", path], cut_before=before)
+                            self.run_worker("finish", 73)
+                            cut_state = self.state()
+                            owned = [item["content"] for item in cut_state["reactions"][path]
+                                     if item["user"]["login"] == check.STATUS_AUTHOR]
+                            self.assertEqual(owned, [] if before else ["+1"])
+                            if newer:
+                                self.env.update(GITHUB_RUN_ID="6", GITHUB_RUN_ATTEMPT="2",
+                                                PRESENTATION_START="3", CHECK_RUN_ID="100")
+                                self.update(checks=[*cut_state["checks"],
+                                                    check_run(100, None, status="in_progress")])
+                                self.run_worker("start")
+                            durable = copy.deepcopy(self.state())
+                            prior_calls = len(durable["calls"])
+                            self.env = old
+                            self.run_worker("finish")
+                            state = self.state()
+                            self.assertEqual(state["checks"][0]["conclusion"], "success")
+                            if newer:
+                                self.assertEqual(state["status"], durable["status"])
+                                self.assertEqual(state["checks"][1], durable["checks"][1])
+                                self.assertEqual(state["reactions"], durable["reactions"])
+                                writes = [call for call in state["calls"][prior_calls:] if call[0] != "GET"]
+                                self.assertEqual([call[1] for call in writes], [f"repos/{REPO}/check-runs/99"])
+                            else:
+                                self.assertEqual(check.status_state(state["status"]), "success")
+                                self.assertEqual(check.status_owner(state["status"]),
+                                                 check.status_owner(durable["status"]))
+                            for surface in paths:
+                                items = state["reactions"][surface]
+                                self.assertTrue(all(item in items for item in preserved))
+                                owned = [item["content"] for item in items
+                                         if item["user"]["login"] == check.STATUS_AUTHOR]
+                                self.assertEqual(owned, ["eyes"] if newer else ["+1"])
+                            self.assertLessEqual(len(state["calls"]) - prior_calls, 100)
 
 
 if __name__ == "__main__":

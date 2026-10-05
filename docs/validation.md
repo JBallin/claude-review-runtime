@@ -35,6 +35,25 @@ writes, actual runner cancellation or queue delivery, artifact transport,
 real service outages, or sustained concurrent load. Broader live testing requires
 its own approved fixture matrix, budget, retry limits, and restoration plan.
 
+Additional deterministic schedules compose those boundaries on source revision
+`09574d8e03259351798019f48ed57b6c15fecff4`:
+
+- Six Check-commit → patch movement → stale refresh → restart cases retain the
+  captured Check identity and suppress clean notices and reactions for the moved
+  patch, across automatic, top-level manual, and inline manual requests.
+- Three history-outage and lost-receipt cases delete the finding before a new
+  attempt. The failed historical Check retains attribution; recovered history
+  keeps the new result `action_required` without a surviving comment.
+- Twenty reaction-publication cuts, immediately before or after a durable POST,
+  recover across the opening and both manual endpoints. A newer accepted attempt
+  blocks the obsolete finalizer; unrelated reactions survive both schedules.
+
+These 29 cases use fresh helper processes and persisted synthetic API state.
+They add no runtime behavior or live coverage. In particular, successful
+instrumented provider interruption does not establish ordinary Actions
+cancellation behavior; [the controlled result](https://github.com/JBallin/claude-review-runtime/issues/13#issuecomment-5988261454)
+keeps that distinction explicit.
+
 ## Security scan evidence
 
 A single standard Codex Security repository scan of
