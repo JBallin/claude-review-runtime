@@ -246,6 +246,13 @@ model execution or publication. Resolve the reported prerequisite before
 requesting another approved review; do not switch credentials or expand access
 to bypass a rejection.
 
+### Unexpected Check grouping
+
+GitHub may group `Claude Review` under another workflow name, such as
+[CodeQL in this example](https://github.com/JBallin/claude-review-runtime/pull/40/checks),
+without implying a dependency. The cause and a reliable fix are unconfirmed; use
+the `Claude Review` Check for the result.
+
 ## Update or roll back
 
 Updating all three pins to a reviewed revision is a separate change. Review and
