@@ -33,6 +33,8 @@ STATUS_STATE_PREFIX = "<!-- claude-review-runtime:claude-review-status-state:"
 STATUS_REVIEWED_HEAD_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-head:"
 STATUS_REVIEWED_BASE_REF_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:"
 STATUS_REVIEWED_RESULT_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-result:"
+STATUS_REVIEWED_BASE_SHA_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-base-sha:"
+STATUS_REVIEWED_RUN_URL_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-run-url:"
 STATUS_AUTHOR = "github-actions[bot]"
 OWNER_PHASE_PREFIX = "<!-- claude-review-runtime:presentation-owner-phase:"
 OWNER_PREFIX = "<!-- claude-review-runtime:presentation-owner:"
@@ -422,7 +424,8 @@ def inline_code(value):
 
 
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
-                        trigger_label=None, owner=None, owner_running=None):
+                        last_review_details=None, base_sha=None, trigger_label=None,
+                        owner=None, owner_running=None):
     """Render trusted informational state without affecting Check authority."""
     headings = {
         "in_progress": "🔄 Claude Review in progress",
@@ -448,6 +451,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         )
     if state in ("success", "action_required"):
         last_review = (head_sha, base_ref, state)
+        last_review_details = {"base_sha": env("BASE_SHA"), "run_url": env("DETAILS_URL")}
+    last_review_details = last_review_details or {}
     lines = [
         STATUS_MARKER,
         f"{STATUS_HEAD_PREFIX}{head_sha} -->",
@@ -465,6 +470,11 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             f"{STATUS_REVIEWED_BASE_REF_PREFIX}{quote(reviewed_base, safe='')} -->",
             f"{STATUS_REVIEWED_RESULT_PREFIX}{reviewed_result} -->",
         ]
+        reviewed_base_sha = last_review_details.get("base_sha")
+        if reviewed_base_sha and re.fullmatch(r"[0-9a-f]{40}", reviewed_base_sha):
+            lines.append(f"{STATUS_REVIEWED_BASE_SHA_PREFIX}{reviewed_base_sha} -->")
+        if last_review_details.get("run_url"):
+            lines.append(f"{STATUS_REVIEWED_RUN_URL_PREFIX}{quote(last_review_details['run_url'], safe='')} -->")
     lines += [
         f"### {headings[state]}",
         "",
@@ -473,13 +483,20 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     ]
     if state != "stale" and trigger_label:
         lines.append(f"**Trigger:** {trigger_label}")
+    if state == "stale" and base_sha:
+        lines.append(f"**Current baseline:** `{base_sha[:7]}` — not reviewed")
     if state == "stale" and last_review:
         reviewed_sha, reviewed_base, reviewed_result = last_review
         result = "✅ clean" if reviewed_result == "success" else "⚠️ findings"
         lines.append(f"**Last reviewed:** `{reviewed_sha[:7]}` on {inline_code(reviewed_base)} — {result}")
+        if last_review_details.get("base_sha"):
+            lines.append(f"**Reviewed baseline:** `{last_review_details['base_sha'][:7]}`")
     lines += ["", messages[state]]
-    if env("DETAILS_URL"):
-        lines += ["", f"[Workflow run]({env('DETAILS_URL')})"]
+    historical = state == "stale" and last_review is not None
+    run_url = last_review_details.get("run_url") if historical else env("DETAILS_URL")
+    if run_url:
+        label = "Reviewed workflow run" if historical else "Workflow run"
+        lines += ["", f"[{label}]({run_url})"]
     return "\n".join(lines)
 
 
@@ -536,6 +553,19 @@ def last_completed_review(comment):
         return None
     legacy_head, legacy_base = status_head(comment), status_base_ref(comment)
     return (legacy_head, legacy_base, legacy_result) if legacy_head and legacy_base else None
+
+
+def last_completed_review_details(comment):
+    """Read optional historical metadata without substituting the current owner's patch/run."""
+    body = (comment or {}).get("body") or ""
+    details = {}
+    for key, prefix, pattern in (
+            ("base_sha", STATUS_REVIEWED_BASE_SHA_PREFIX, r"([0-9a-f]{40}) -->"),
+            ("run_url", STATUS_REVIEWED_RUN_URL_PREFIX, r"([A-Za-z0-9_.~%\-]+) -->")):
+        match = re.search(re.escape(prefix) + pattern, body)
+        if match:
+            details[key] = unquote(match.group(1))
+    return details
 
 
 def owner_marker(owner):
@@ -794,12 +824,17 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
         projection_must_match = not stale
         current = lambda: live_pr_identity(repo, pr_number, include_base_sha=True,
                                           require_projection_match=projection_must_match) == expected_patch
+        last_review = last_completed_review(existing) if existing else None
+        last_review_details = last_completed_review_details(existing)
         live = live_pr_identity(repo, pr_number, include_base_sha=True)
         if (live != expected_patch and not acquire and not stale and prior == owner
                 and status_owner_running(existing)
                 and live[:2] == (head_sha, base_ref)):
             # The captured Check still describes its original base. Finish this
             # owner's presentation without implying the advanced base was reviewed.
+            if state in ("success", "action_required") and check_available:
+                last_review = (head_sha, base_ref, state)
+                last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL")}
             state = "stale"
             expected_patch = live
             projection_must_match = False
@@ -818,7 +853,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
             raise ValueError("presentation changed before status publication")
         body = {"body": status_comment_body(
             head_sha, base_ref, state, check_available=check_available,
-            last_review=last_completed_review(existing) if existing else None,
+            last_review=last_review, last_review_details=last_review_details, base_sha=expected_patch[2],
             trigger_label=env("TRIGGER_LABEL"), owner=owner,
             owner_running=status_owner_running(existing) if stale else None)}
         published = False
