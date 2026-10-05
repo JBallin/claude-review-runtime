@@ -5,7 +5,7 @@ import os
 import unittest
 from unittest import mock
 
-from test_claude_review_check import check, HEAD, OTHER, BASE_TIP, REPO, reaction, presentation_owner
+from test_claude_review_check import check, HEAD, OTHER, BASE_TIP, MERGE_BASE, REPO, reaction, presentation_owner
 
 
 class PresentationAPI:
@@ -143,6 +143,71 @@ class OwnershipTests(unittest.TestCase):
         self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3")
         self.assertEqual(self.api.status, previous)
         self.assertEqual(self.writes(), [])
+
+    def test_non_completed_base_advance_preserves_only_previous_review_evidence(self):
+        for previous in (False, True):
+            for state, available in (("failure", True), ("publication_incomplete", False), ("success", False)):
+                with self.subTest(previous=previous, state=state, available=available):
+                    self.api = PresentationAPI()
+                    self.gh_mock.side_effect = self.api.call
+                    os.environ.update(GITHUB_RUN_ID="5", PRESENTATION_START="2",
+                                      DETAILS_URL="https://github.com/owner/repo/actions/runs/5")
+                    if previous:
+                        self.start()
+                        self.finish()
+                    self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3",
+                               DETAILS_URL="https://github.com/owner/repo/actions/runs/6")
+                    self.api.base_tip = OTHER
+                    self.finish(state, available)
+                    self.assertEqual(check.status_state(self.api.status), "stale")
+                    self.assertEqual(check.last_completed_review(self.api.status),
+                                     (HEAD, "main", "success") if previous else None)
+                    self.assertEqual(check.last_completed_review_details(self.api.status),
+                                     {"base_sha": BASE_TIP, "run_url": "https://github.com/owner/repo/actions/runs/5"}
+                                     if previous else {})
+                    self.assertEqual(self.owned(self.opening), [])
+
+    def test_new_base_owner_keeps_historical_metadata_and_blocks_old_finalizer(self):
+        old_url = "https://github.com/owner/repo/actions/runs/5"
+        old = self.start(DETAILS_URL=old_url)
+        self.finish()
+        self.api.base_tip = OTHER
+        self.api.pr["base"]["sha"] = OTHER
+        newer = self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3", BASE_SHA=OTHER,
+                           DETAILS_URL="https://github.com/owner/repo/actions/runs/6")
+        self.finish("failure")
+        self.assertEqual(check.last_completed_review_details(self.api.status), {"base_sha": BASE_TIP, "run_url": old_url})
+        self.assertEqual(check.status_owner(self.api.status), newer)
+        previous = copy.deepcopy(self.api.status)
+        reactions = copy.deepcopy(self.api.reactions)
+        self.api.calls.clear()
+        os.environ.update(PRESENTATION_OWNER=json.dumps(old), GITHUB_RUN_ID="5", BASE_SHA=BASE_TIP,
+                          DETAILS_URL=old_url)
+        self.finish()
+        self.assertEqual(self.api.status, previous)
+        self.assertEqual(self.api.reactions, reactions)
+        self.assertEqual(self.writes(), [])
+        os.environ["DETAILS_URL"] = "https://github.com/owner/repo/actions/runs/7"
+        self.api.base_tip = MERGE_BASE
+        check.cmd_stale()
+        self.assertEqual(check.last_completed_review_details(self.api.status), {"base_sha": BASE_TIP, "run_url": old_url})
+        self.assertIn(f"**Reviewed baseline:** `{BASE_TIP[:7]}`", self.api.status["body"])
+        self.assertIn(f"[Reviewed workflow run]({old_url})", self.api.status["body"])
+
+    def test_legacy_review_does_not_inherit_current_base_or_run_metadata(self):
+        with mock.patch.dict(os.environ, BASE_SHA="", DETAILS_URL=""):
+            # Older runtime comments lack the newly stored historical metadata.
+            self.api.status = {"id": 55, "user": {"login": check.STATUS_AUTHOR, "type": "Bot"},
+                               "body": check.status_comment_body(OTHER, "release", "success")}
+        self.assertEqual(check.last_completed_review_details(self.api.status), {})
+        self.start(DETAILS_URL="https://github.com/owner/repo/actions/runs/5")
+        self.finish("failure")
+        self.api.base_tip = OTHER
+        check.cmd_stale()
+        self.assertEqual(check.last_completed_review(self.api.status), (OTHER, "release", "success"))
+        self.assertEqual(check.last_completed_review_details(self.api.status), {})
+        self.assertNotIn("**Reviewed baseline:**", self.api.status["body"])
+        self.assertNotIn("[Reviewed workflow run]", self.api.status["body"])
 
     def test_direct_tip_advancement_ignores_stale_pr_projection(self):
         self.target("issue_comment")

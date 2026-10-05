@@ -141,7 +141,9 @@ information when the patch changes or another comment requests a review. A new
 accepted attempt on the same comment replaces its owned reactions. Superseded
 attempts never add clean thumbs-up or overwrite another request's presentation.
 If finalization observes a base tip that advanced during a still-owned review,
-it marks presentation stale and clears progress reactions; the captured Check
+it marks presentation stale and clears progress reactions. A verified completed
+result remains historical evidence with its captured head, base commit, and
+workflow run; the current baseline is shown as unreviewed. The captured Check
 retains its original authority. Freshness checks read the exact encoded branch
 ref directly and validate its ref name, commit type, and full SHA, with PR
 identity reads around that lookup. A status refresh can observe this movement
@@ -243,6 +245,13 @@ runner preparation can prevent
 model execution or publication. Resolve the reported prerequisite before
 requesting another approved review; do not switch credentials or expand access
 to bypass a rejection.
+
+### Unexpected Check grouping
+
+GitHub may group `Claude Review` under another workflow name, such as
+[CodeQL in this example](https://github.com/JBallin/claude-review-runtime/pull/40/checks),
+without implying a dependency. The cause and a reliable fix are unconfirmed; use
+the `Claude Review` Check for the result.
 
 ## Update or roll back
 
