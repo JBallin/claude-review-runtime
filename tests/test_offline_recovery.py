@@ -164,7 +164,7 @@ class OfflineRecoveryTests(unittest.TestCase):
             self.env["PRESENTATION_OUTCOME"] = outcomes[-1] if outcomes else ""
         return result
 
-    def test_advanced_base_before_start_preserves_captured_check_without_acquiring_owner(self):
+    def test_stale_start_retains_captured_check_and_finishes_after_exact_base_restoration(self):
         for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
             for conclusion in ("success", "action_required"):
                 with self.subTest(kind=kind, conclusion=conclusion):
@@ -173,18 +173,19 @@ class OfflineRecoveryTests(unittest.TestCase):
                     historical = comment(11, commit=OTHER)
                     unrelated = {"id": 77, "user": {"login": "human"}, "body": "Keep this comment"}
                     self.update(base_tip=OTHER, findings=[historical], comment_pages=[unrelated])
-                    start = self.run_worker("start", require_owner=False)
-                    self.assertEqual(self.env["PRESENTATION_OWNER"], "")
-                    self.assertEqual(self.env["PRESENTATION_OUTCOME"], "suppressed_patch_changed")
-                    self.assertIn("::notice::", start.stdout)
+                    self.run_worker("start")
+                    owner = json.loads(self.env["PRESENTATION_OWNER"])
+                    self.assertEqual(self.env["PRESENTATION_OUTCOME"], "acquired")
+                    self.assertEqual(check.status_state(self.state()["status"]), "stale")
+                    self.assertEqual((owner["head"], owner["base"]), (HEAD, BASE_TIP))
                     if conclusion == "action_required":
                         self.update(findings=[historical, comment(12)])
                         self.env["FINDING_PUBLICATION"] = json.dumps({"attempt_count": 1, "comment_ids": [12]})
-                    # Even restoration of the old base does not grant an absent receipt authority.
+                    # The accepted receipt binds the immutable patch. Restoring
+                    # that exact identity follows the established freshness policy.
                     self.update(base_tip=BASE_TIP)
                     for _ in range(2):
                         result = self.run_worker("finish")
-                        self.assertIn("presentation suppressed at start", result.stdout)
                         self.assertNotIn("::warning::", result.stdout)
                     state = self.state()
                     completed = state["checks"][0]
@@ -195,11 +196,15 @@ class OfflineRecoveryTests(unittest.TestCase):
                                      (HEAD, BASE_TIP, MERGE_BASE))
                     self.assertIn(historical, state["findings"])
                     self.assertEqual(state["comment_pages"], [unrelated])
-                    self.assertIsNone(state["status"])
-                    self.assertFalse([call for call in state["calls"]
-                                      if call[0] != "GET" and "/check-runs/" not in call[1]])
-                    self.assertEqual(state["reactions"][f"repos/{REPO}/issues/7/reactions"],
-                                     [reaction(701, "heart", login="unrelated-user")])
+                    self.assertEqual(check.status_state(state["status"]), conclusion)
+                    self.assertEqual(check.status_owner(state["status"]), owner)
+                    self.assertEqual(len([call for call in state["calls"] if call[0] == "POST"
+                                          and call[1].endswith("/comments")]), 1)
+                    reactions = state["reactions"][f"repos/{REPO}/issues/7/reactions"]
+                    self.assertIn(reaction(701, "heart", login="unrelated-user"), reactions)
+                    self.assertEqual([item["content"] for item in reactions
+                                      if item["user"]["login"] == check.STATUS_AUTHOR],
+                                     ["+1"] if conclusion == "success" else [])
 
     def test_missing_or_malformed_receipt_preserves_new_owner_and_successful_check(self):
         for kind in ("automatic", "issue_comment", "pull_request_review_comment"):

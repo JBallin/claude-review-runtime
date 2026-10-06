@@ -1001,7 +1001,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         self.assertIn("Check publication is unavailable", body)
         self.assertIn("claude-review-status-base-ref:main", body)
 
-    def test_manual_fork_no_check_repair_skips_changed_or_unverifiable_identity(self):
+    def test_manual_fork_no_check_repairs_known_moved_head_but_skips_unknown_authority(self):
         for response in ({"stdout": pr_identity("b" * 40)},
                          {"stdout": pr_identity(HEAD, "release")}, {"fail": True}):
             with self.subTest(response=response):
@@ -1010,7 +1010,12 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     CHECK_RUN_ID="", IS_FORK="true", STATUS_COMMENT_ID="55", PR_NUMBER="7",
                 )
                 self.assertEqual(result.returncode, 1)
-                self.assertEqual(self.methods(calls)[-1], "GET")
+                if response.get("stdout") == pr_identity("b" * 40):
+                    repaired = calls[-1]["body"]["body"]
+                    self.assertEqual(check.status_state({"body": repaired}), "stale")
+                    self.assertIn("current patch is not reviewed", repaired)
+                else:
+                    self.assertEqual(self.methods(calls)[-1], "GET")
 
     def test_manual_fork_no_check_repair_leaves_unowned_comment_untouched(self):
         unowned = {"user": {"login": "other", "type": "User"},
@@ -1209,7 +1214,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         self.assertEqual(self.methods(calls), ["PATCH", "GET"])
         self.assertEqual(calls[0]["body"]["conclusion"], "failure")
 
-    def test_fallback_never_rewrites_a_newer_or_unverifiable_status(self):
+    def test_fallback_marks_owned_moved_head_stale_and_skips_unverifiable_authority(self):
         for response in ({"stdout": pr_identity("b" * 40)},
                          {"stdout": pr_identity(HEAD, "release")}, {"fail": True}):
             for path in (AUTOMATIC, MANUAL):
@@ -1219,7 +1224,16 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     )
                     self.assertEqual(result.returncode, 1)
                     self.assertEqual(self.methods(calls)[0], "PATCH")
-                    self.assertEqual(len([call for call in calls if call["method"] == "PATCH"]), 1)
+                    patches = [call for call in calls if call["method"] == "PATCH"]
+                    if response.get("stdout") == pr_identity("b" * 40):
+                        self.assertEqual(len(patches), 2)
+                        repaired = patches[-1]["body"]["body"]
+                        self.assertEqual(check.status_state({"body": repaired}), "stale")
+                        self.assertEqual(check.status_head({"body": repaired}), "b" * 40)
+                        self.assertIn(f"**Captured commit:** `{HEAD}`", repaired)
+                        self.assertIn("**Reason:**", repaired)
+                    else:
+                        self.assertEqual(len(patches), 1)
                     self.assertEqual(calls[0]["body"]["conclusion"], "failure")
 
     def test_unpublishable_check_repairs_known_comment_as_incomplete(self):
