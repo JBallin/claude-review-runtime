@@ -375,7 +375,7 @@ jobs:
           # A built-in the CLI cannot remove, such as EndConversation, may still
           # be offered, so the verifier below rejects any unexpected tool use.
           claude_args: >-
-            --max-turns 15
+            --max-turns 30
             --setting-sources user
             --strict-mcp-config
             --permission-mode default
