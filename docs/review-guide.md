@@ -47,7 +47,11 @@ and the fail-closed Check-history validation from
 
 The exact-SHA `Claude Review` Check is authoritative. The stable workflow-owned
 status comment and opening-post reactions present progress, clean completion,
-findings, failure, and stale state. Accepted manual requests also receive runtime
+findings, failure, and stale state. One shared status comment shows the latest
+accepted attempt, including its captured head/base and workflow run. Checks and
+workflow runs retain earlier attempts. Incomplete and cancelled reviews include
+a reason; a comment API or permission failure is reported in the Check/run when
+publication is possible. Accepted manual requests also receive runtime
 reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
 publication. Automatic reviews react only to the opening post. Running eyes can
@@ -64,9 +68,10 @@ the guard is required even for a manual fork request. It does not silently
 replace the captured base or change the reviewed diff. Automatic reviews retain
 the triggering event's immutable head/base and historical Check identity.
 
-When the existing trusted result reports clean completion, trusted finalization
-adds a fixed notice after successful Check publication, identifying its captured
-head, base commit, and workflow run.
+After a verified clean manual review and successful Check publication, trusted
+finalization adds a completion notice identifying its captured head, base commit,
+and workflow run. Automatic reviews update the shared status comment without
+adding a separate completion notice.
 Reserve this runtime's namespaced comment markers for its trusted publication jobs.
 
 Completion notices are historical information, not review authority or merge
@@ -140,10 +145,12 @@ Terminal reactions on older trigger comments remain historical snapshot
 information when the patch changes or another comment requests a review. A new
 accepted attempt on the same comment replaces its owned reactions. Superseded
 attempts never add clean thumbs-up or overwrite another request's presentation.
-If finalization observes a base tip that advanced during a still-owned review,
-it marks presentation stale and clears progress reactions. A verified completed
-result remains historical evidence with its captured head, base commit, and
-workflow run; the current baseline is shown as unreviewed. The captured Check
+If the captured head or base is already superseded at start, the latest accepted
+owner shows a stale status instead of leaving its comment absent. If the head,
+base ref, or base tip moves during a still-owned review, finalization marks the
+shared status stale and clears progress reactions. Older attempts cannot replace
+a newer owner's status. A verified completed result remains historical evidence
+with its captured head, base commit, and workflow run; the current baseline is shown as unreviewed. The captured Check
 retains its original authority. Freshness checks read the exact encoded branch
 ref directly and validate its ref name, commit type, and full SHA, with PR
 identity reads around that lookup. A status refresh can observe this movement

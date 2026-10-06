@@ -38,6 +38,14 @@ STATUS_REVIEWED_RUN_URL_PREFIX = "<!-- claude-review-runtime:claude-review-last-
 STATUS_AUTHOR = "github-actions[bot]"
 OWNER_PHASE_PREFIX = "<!-- claude-review-runtime:presentation-owner-phase:"
 OWNER_PREFIX = "<!-- claude-review-runtime:presentation-owner:"
+STATUS_REASONS = {
+    "cancelled": "The review was cancelled before verified completion.",
+    "preparation_failed": "Review preparation failed; Claude did not complete this review.",
+    "incomplete": "The review did not complete with reliable execution and finding evidence.",
+    "check_publication_failed": "The authoritative Check result could not be published.",
+    "tooling_unavailable": "Trusted review tooling was unavailable; the review could not be finalized reliably.",
+    "stale": "The captured head or base was superseded; the current patch is not reviewed by this attempt.",
+}
 PRESENTATION_SECONDS = 120
 PRESENTATION_DEADLINE = None
 COMPLETION_PREFIX = "<!-- claude-review-runtime:manual-clean-completion:"
@@ -425,7 +433,7 @@ def inline_code(value):
 
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
                         last_review_details=None, base_sha=None, trigger_label=None,
-                        owner=None, owner_running=None):
+                        owner=None, owner_running=None, reason=None):
     """Render trusted informational state without affecting Check authority."""
     headings = {
         "in_progress": "🔄 Claude Review in progress",
@@ -441,7 +449,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         "action_required": "Claude recorded findings. Assess them in the inline review threads.",
         "failure": "This review did not complete reliably; this commit is not approved by it.",
         "publication_incomplete": "The authoritative Check result could not be published. Treat this commit as not reviewed.",
-        "stale": "The current head or base is not covered by a completed Claude Review. Request a new review.",
+        "stale": "This attempt does not establish a completed review of the current head and base. Request a new review.",
     }
     if not check_available:
         messages["in_progress"] = "Claude is reviewing this commit, but authoritative Check publication is unavailable."
@@ -483,6 +491,10 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     ]
     if state != "stale" and trigger_label:
         lines.append(f"**Trigger:** {trigger_label}")
+    if owner:
+        if state == "stale":
+            lines.append(f"**Captured commit:** `{owner['head'][:7]}`")
+        lines.append(f"**Captured baseline:** `{owner['base'][:7]}` on {inline_code(owner['base_ref'])}")
     if state == "stale" and base_sha:
         lines.append(f"**Current baseline:** `{base_sha[:7]}` — not reviewed")
     if state == "stale" and last_review:
@@ -491,10 +503,16 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines.append(f"**Last reviewed:** `{reviewed_sha[:7]}` on {inline_code(reviewed_base)} — {result}")
         if last_review_details.get("base_sha"):
             lines.append(f"**Reviewed baseline:** `{last_review_details['base_sha'][:7]}`")
+    if reason:
+        lines += ["", f"**Reason:** {reason}"]
     lines += ["", messages[state]]
+    attempt_url = (env("DETAILS_URL") if not owner else
+                   f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
     historical = state == "stale" and last_review is not None
-    run_url = last_review_details.get("run_url") if historical else env("DETAILS_URL")
-    if run_url:
+    if owner and state == "stale" and (not historical or last_review_details.get("run_url") != attempt_url):
+        lines += ["", f"[Attempt workflow run]({attempt_url})"]
+    run_url = last_review_details.get("run_url") if historical else attempt_url
+    if run_url and (historical or not (owner and state == "stale")):
         label = "Reviewed workflow run" if historical else "Workflow run"
         lines += ["", f"[{label}]({run_url})"]
     return "\n".join(lines)
@@ -636,6 +654,28 @@ def owned_status(comment):
     return ((comment.get("user") or {}).get("login") == STATUS_AUTHOR
             and (comment.get("user") or {}).get("type") == "Bot"
             and STATUS_MARKER in (comment.get("body") or ""))
+
+
+def stale_status_reason(reason):
+    stale_reason = STATUS_REASONS["stale"]
+    if reason and (reason == stale_reason or reason.startswith(stale_reason + " ")):
+        return reason
+    return stale_reason + (f" {reason}" if reason else "")
+
+
+def terminal_status_reason(comment, owner):
+    """Recover only fixed terminal copy from this trusted owner's receipt."""
+    if not owned_status(comment) or status_owner(comment) != owner:
+        return None
+    body = comment.get("body") or ""
+    phases = re.findall(re.escape(OWNER_PHASE_PREFIX) + r"(running|terminal) -->", body)
+    reasons = re.findall(r"^\*\*Reason:\*\* (.+)$", body, re.MULTILINE)
+    if phases != ["terminal"] or len(reasons) != 1:
+        return None
+    allowed = set(STATUS_REASONS.values()) | {
+        f"{STATUS_REASONS['stale']} {text}" for key, text in STATUS_REASONS.items() if key != "stale"
+    }
+    return reasons[0] if reasons[0] in allowed else None
 
 
 def trigger_reaction_path(owner):
@@ -789,6 +829,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
     try:
         repo, pr_number, base_ref = env("REPO"), env("PR_NUMBER"), env("BASE_REF")
         stale = state == "stale"
+        acquiring_running = acquire and state == "in_progress"
         if not acquire and not stale and not env("PRESENTATION_OWNER"):
             # An intentionally suppressed or unavailable start has no receipt.
             # Its diagnostic output never grants finalization write authority.
@@ -805,14 +846,14 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
                 print("::warning::Claude Review presentation unavailable: no owner receipt from start "
                       f"({outcome if outcome in ('acquired', 'unavailable') else 'unknown outcome'}). "
                       "The captured Check remains authoritative; finalization will not acquire ownership.")
-            return
+            return "suppressed" if outcome in reasons else "unavailable"
         if not acquire and not stale:
             try:
                 owner = validate_owner(json.loads(env("PRESENTATION_OWNER")))
             except (ValueError, TypeError, KeyError):
                 print("::warning::Claude Review presentation unavailable: malformed owner receipt. "
                       "The captured Check remains authoritative; no presentation writes were attempted.")
-                return
+                return "unavailable"
         existing = find_status_comment(repo, pr_number)
         prior = status_owner(existing)
         if stale:
@@ -853,21 +894,38 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
                 write_output("presentation_outcome", "acquired")
                 return
             expected_patch = (head_sha, base_ref, env("BASE_SHA"))
+        # A refresh has no execution verdict of its own. Preserve only this
+        # owner's allowlisted terminal reason; acquisition starts a new lifecycle.
+        reason = terminal_status_reason(existing, owner) if stale else None
+        if stale:
+            reason = stale_status_reason(reason)
+        if state == "failure":
+            if env("REVIEW_RESULT") == "cancelled":
+                reason = STATUS_REASONS["cancelled"]
+            elif acquire or env("START_RESULT", "success") != "success":
+                reason = STATUS_REASONS["preparation_failed"]
+            else:
+                reason = STATUS_REASONS["incomplete"]
+        elif state == "publication_incomplete":
+            reason = STATUS_REASONS["check_publication_failed"]
         projection_must_match = not stale
         current = lambda: live_pr_identity(repo, pr_number, include_base_sha=True,
                                           require_projection_match=projection_must_match) == expected_patch
         last_review = last_completed_review(existing) if existing else None
         last_review_details = last_completed_review_details(existing)
         live = live_pr_identity(repo, pr_number, include_base_sha=True)
-        if (live != expected_patch and not acquire and not stale and prior == owner
-                and status_owner_running(existing)
-                and live[:2] == (head_sha, base_ref)):
-            # The captured Check still describes its original base. Finish this
-            # owner's presentation without implying the advanced base was reviewed.
+        if (live != expected_patch and not stale
+                and (acquire or (prior == owner and status_owner_running(existing)))):
+            # The Check and owner retain their captured patch. Only the visible
+            # current identity follows movement; it must never imply approval.
+            # The newer-owner gate above still prevents old starts/finalizers
+            # from replacing another accepted attempt's presentation.
             if state in ("success", "action_required") and check_available:
                 last_review = (head_sha, base_ref, state)
                 last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL")}
             state = "stale"
+            reason = stale_status_reason(reason)
+            head_sha, base_ref = live[:2]
             expected_patch = live
             projection_must_match = False
         if live != expected_patch:
@@ -892,16 +950,32 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
                 write_output("presentation_outcome", "suppressed_presentation_changed")
             print("::notice::Claude Review presentation suppressed: presentation changed before status publication.")
             return
-        if not current():
-            if acquire:
-                write_output("presentation_outcome", "suppressed_patch_changed")
-            print("::notice::Claude Review presentation suppressed: captured head/base changed before status publication.")
-            return
+        publication_patch = live_pr_identity(repo, pr_number, include_base_sha=True)
+        if publication_patch == expected_patch and projection_must_match and not current():
+            raise ValueError("captured patch authority changed before status publication")
+        if publication_patch != expected_patch:
+            if not stale and (acquire or (prior == owner and status_owner_running(existing))):
+                if state in ("success", "action_required") and check_available:
+                    last_review = (owner["head"], owner["base_ref"], state)
+                    last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL")}
+                state = "stale"
+                reason = stale_status_reason(reason)
+                head_sha, base_ref = publication_patch[:2]
+                expected_patch = publication_patch
+                projection_must_match = False
+                if not current():
+                    raise ValueError("PR identity kept changing before status publication")
+            else:
+                if acquire:
+                    write_output("presentation_outcome", "suppressed_patch_changed")
+                print("::notice::Claude Review presentation suppressed: captured head/base changed before status publication.")
+                return
         body = {"body": status_comment_body(
             head_sha, base_ref, state, check_available=check_available,
             last_review=last_review, last_review_details=last_review_details, base_sha=expected_patch[2],
             trigger_label=env("TRIGGER_LABEL"), owner=owner,
-            owner_running=status_owner_running(existing) if stale else None)}
+            owner_running=status_owner_running(existing) if stale else acquiring_running if state == "stale" else None,
+            reason=reason)}
         published = False
         try:
             if existing:
@@ -948,6 +1022,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
                                         lambda: guard(require_patch=trigger_desired is not None))
             except Exception as error:
                 print(f"::warning::Could not reconcile Claude Review reactions: {error}")
+        return "published" if published else "unavailable"
     except Exception as error:
         if acquire:
             try:
@@ -955,6 +1030,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
             except Exception:
                 print("::warning::Could not export the Claude Review presentation diagnostic.")
         print(f"::warning::Claude Review presentation unavailable: {error}")
+        return "unavailable"
     finally:
         PRESENTATION_DEADLINE = None
 
@@ -1359,6 +1435,9 @@ def cmd_finalize():
         **review_identity(head_sha),
         "trigger": env("TRIGGER_LABEL"),
         "start_check_result": start_result,
+        "presentation_outcome": env("PRESENTATION_OUTCOME") if env("PRESENTATION_OUTCOME") in (
+            "acquired", "unavailable", "suppressed_patch_changed", "suppressed_newer_owner",
+            "suppressed_presentation_changed") else None,
         "review_job_result": review_result,
         "action_conclusion": action_conclusion,
         "completion_verified": completion_verified,
@@ -1379,7 +1458,10 @@ def cmd_finalize():
         "completed_at": now(),
         "output": {
             "title": title,
-            "summary": summary_lines(head_sha, sentence),
+            "summary": bounded_string((
+                "The shared status comment was unavailable at review start; consult this Check and workflow run.\n\n"
+                if env("PRESENTATION_OUTCOME") == "unavailable" else "") + summary_lines(head_sha, sentence),
+                CHECK_SUMMARY_BYTES),
             "text": evidence_text(evidence),
         },
     }
@@ -1408,7 +1490,17 @@ def cmd_finalize():
             best_effort_status(head_sha, "publication_incomplete")
         return 1
     print(f"Claude Review check run {check_run_id}: {conclusion} ({title})")
-    best_effort_status(head_sha, conclusion)
+    presentation_outcome = best_effort_status(head_sha, conclusion)
+    if presentation_outcome == "unavailable":
+        body["output"]["summary"] = bounded_string(
+            "The shared status comment could not be updated; consult this Check and workflow run.\n\n" +
+            body["output"]["summary"], CHECK_SUMMARY_BYTES)
+        try:
+            # One bounded PATCH; do not let informational presentation failures
+            # change the captured review conclusion or finding evidence.
+            gh_api(["--method", "PATCH", f"repos/{repo}/check-runs/{check_run_id}", "--input", "-"], body)
+        except GhError:
+            print("::warning::Could not record status comment publication failure in the Check.")
     if conclusion == "success":
         best_effort_manual_completion(head_sha)
     if evidence_error:

@@ -720,11 +720,11 @@ jobs:
               printf '%s' "$comment" | jq -e --arg marker "$owner_marker" \
                 '.user.login == "github-actions[bot]" and .user.type == "Bot" and (.body | contains("<!-- claude-review-runtime:claude-review-status -->")) and (.body | split("\n") | map(select(startswith("<!-- claude-review-runtime:presentation-owner:"))) == [$marker])' > /dev/null
             }
-            verify_current_patch() {
+            verify_known_patch() {
               # PR.base.sha may remain old after the branch advances. Resolve
               # the exact direct ref and recheck PR identity around that read.
-              # Running-owner cleanup can tolerate a known moved base; unknown
-              # authority never permits shared presentation writes.
+              # A still-owned running attempt may finish as stale after known
+              # movement. Unknown authority never permits presentation writes.
               running=$(printf '%s' "$comment" | jq -r '.body | contains("<!-- claude-review-runtime:presentation-owner-phase:running -->")')
               remaining=$((presentation_deadline - SECONDS))
               [ "$remaining" -gt 0 ] || return 1
@@ -754,21 +754,26 @@ jobs:
               def projection():
                   pr = read(f"repos/{repo}/pulls/{number}")
                   value = (pr["head"]["sha"], pr["base"]["ref"], pr["base"]["sha"])
-                  if (pr["base"]["repo"]["full_name"] != repo or value[:2] != (head, base)
+                  if (pr["base"]["repo"]["full_name"] != repo
+                          or not isinstance(value[0], str) or not re.fullmatch(r"[0-9a-f]{40}", value[0])
+                          or not isinstance(value[1], str) or not value[1] or len(value[1]) > 255
                           or not isinstance(value[2], str) or not re.fullmatch(r"[0-9a-f]{40}", value[2])):
                       raise ValueError("PR identity differs")
                   return value
               before = projection()
+              base = before[1]
               ref = read(f"repos/{repo}/git/ref/heads/{quote(base, safe='')}")
               tip = ref["object"]["sha"]
               if (ref["ref"] != f"refs/heads/{base}" or ref["object"]["type"] != "commit"
                       or not isinstance(tip, str) or not re.fullmatch(r"[0-9a-f]{40}", tip)
                       or projection() != before):
                   raise ValueError("base branch authority differs")
-              if tip == os.environ["BASE_SHA"] and before[2] != tip:
+              if before[:2] == (head, os.environ["BASE_REF"]) and tip == os.environ["BASE_SHA"] and before[2] != tip:
                   raise ValueError("PR projection and current branch authority disagree")
-              if tip != os.environ["BASE_SHA"] and os.environ["PRESENTATION_RUNNING"] != "true":
+              if ((before[0], base, tip) != (head, os.environ["BASE_REF"], os.environ["BASE_SHA"])
+                      and os.environ["PRESENTATION_RUNNING"] != "true"):
                   raise ValueError("terminal snapshot is historical")
+              print(json.dumps({"head": before[0], "base_ref": base, "base": tip}))
           except (ValueError, TypeError, KeyError, subprocess.SubprocessError):
               raise SystemExit(1)
           PY_FRESHNESS
@@ -777,17 +782,9 @@ jobs:
               echo "::warning::Could not verify this attempt owns presentation; leaving it unchanged."
               return 0
             fi
-            current_patch=true
+            live_patch=$(verify_known_patch) || return 0
+            current_patch=$(printf '%s' "$live_patch" | jq -r --arg head "$HEAD_SHA" --arg ref "$BASE_REF" --arg base "$BASE_SHA" '.head == $head and .base_ref == $ref and .base == $base')
             reaction_paths="repos/$REPO/issues/$PR_NUMBER/reactions"
-            if ! verify_current_patch; then
-              current_patch=false
-              reaction_paths=
-              # Preserve historical terminal reactions. Only a still-running
-              # owned request can be cleaned after its patch is superseded.
-              if ! printf '%s' "$comment" | jq -e '.body | contains("<!-- claude-review-runtime:presentation-owner-phase:running -->")' > /dev/null; then
-                return 0
-              fi
-            fi
             # A trusted captured target, not model output, chooses the endpoint.
             kind=$(printf '%s' "$PRESENTATION_OWNER" | jq -r '.kind')
             target=$(printf '%s' "$PRESENTATION_OWNER" | jq -r '.target')
@@ -814,9 +811,8 @@ jobs:
                  ids=$(printf '%s' "$reactions" | jq -rs '.[].[] | select(.user.login == "github-actions[bot]" and (.content == "eyes" or .content == "+1")) | .id'); then
                 for reaction_id in $ids; do
                   verify_presentation_owner || return 0
-                  if [ "$reaction_path" = "repos/$REPO/issues/$PR_NUMBER/reactions" ]; then
-                    verify_current_patch || return 0
-                  fi
+                  observed_patch=$(verify_known_patch) || return 0
+                  [ "$observed_patch" = "$live_patch" ] || return 0
                   if ! presentation_api --method DELETE "$reaction_path/$reaction_id" > /dev/null; then
                     echo "::warning::Could not clear a workflow-owned Claude Review reaction."
                   fi
@@ -825,9 +821,16 @@ jobs:
                 echo "::warning::Could not inspect workflow-owned Claude Review reactions."
               fi
             done
-            [ "$current_patch" = true ] || return 0
-            verify_presentation_owner && verify_current_patch || return 0
-            if [ "$1" = failure ]; then
+            verify_presentation_owner || return 0
+            observed_patch=$(verify_known_patch) || return 0
+            [ "$observed_patch" = "$live_patch" ] || return 0
+            heading='❌ Claude Review incomplete'
+            reason='Trusted review tooling was unavailable; the review could not be finalized reliably.'
+            if [ "$current_patch" != true ]; then
+              state=stale
+              heading='⚠️ Claude Review stale'
+              message='The captured head or base was superseded; the current patch is not reviewed by this attempt.'
+            elif [ "$1" = failure ]; then
               state=failure
               message='This review did not complete reliably; this commit is not approved by it.'
             elif [ "$IS_FORK" = true ] && [ -z "$CHECK_RUN_ID" ]; then
@@ -837,7 +840,10 @@ jobs:
               state=publication_incomplete
               message='The authoritative Check result could not be published. Treat this commit as not reviewed.'
             fi
-            encoded_base=$(jq -nr --arg ref "$BASE_REF" '$ref | @uri')
+            display_head=$(printf '%s' "$live_patch" | jq -r '.head')
+            display_ref=$(printf '%s' "$live_patch" | jq -r '.base_ref')
+            display_base=$(printf '%s' "$live_patch" | jq -r '.base')
+            encoded_base=$(jq -nr --arg ref "$display_ref" '$ref | @uri')
             reviewed_markers=$(printf '%s' "$comment" | jq -r '.body | split("\n") | map(select(startswith("<!-- claude-review-runtime:claude-review-last-reviewed-"))) | join("\n")')
             if [ -z "$reviewed_markers" ]; then
               old_body=$(printf '%s' "$comment" | jq -r '.body')
@@ -862,10 +868,16 @@ jobs:
               trigger_line=$'\n'"**Trigger:** $TRIGGER_LABEL"
             fi
             reviewed_markers="$owner_marker"$'\n''<!-- claude-review-runtime:presentation-owner-phase:terminal -->'$'\n'"$reviewed_markers"
-            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### ❌ Claude Review incomplete\n\n**Current commit:** `%s`%s\n\n%s\n\n[Workflow run](%s)' \
-              "$HEAD_SHA" "$encoded_base" "$state" "$reviewed_markers" "${HEAD_SHA:0:7}" "$trigger_line" "$message" "$DETAILS_URL")
+            captured_line=$'\n'"**Captured commit:** \`$HEAD_SHA\`"$'\n'"**Captured baseline:** \`$BASE_SHA\`"
+            if [ "$state" = stale ]; then
+              captured_line="$captured_line"$'\n'"**Current baseline:** \`$display_base\` — not reviewed"
+            fi
+            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n**Current commit:** `%s`%s%s\n\n%s\n\n**Reason:** %s\n\n[Workflow run](%s)' \
+              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "${display_head:0:7}" "$trigger_line" "$captured_line" "$message" "$reason" "$DETAILS_URL")
             body=$(jq -n --arg body "$rendered" '{body: $body}')
-            verify_presentation_owner && verify_current_patch || return 0
+            verify_presentation_owner || return 0
+            observed_patch=$(verify_known_patch) || return 0
+            [ "$observed_patch" = "$live_patch" ] || return 0
             if ! printf '%s' "$body" | presentation_api --method PATCH "repos/$REPO/issues/comments/$STATUS_COMMENT_ID" --input - > /dev/null; then
               echo "::warning::Could not repair the known Claude Review status comment."
             fi

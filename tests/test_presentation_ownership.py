@@ -7,7 +7,7 @@ import os
 import unittest
 from unittest import mock
 
-from test_claude_review_check import check, HEAD, OTHER, BASE_TIP, MERGE_BASE, REPO, reaction, presentation_owner
+from test_claude_review_check import check, HEAD, OTHER, NEWER, BASE_TIP, MERGE_BASE, REPO, reaction, presentation_owner
 
 
 class PresentationAPI:
@@ -143,8 +143,11 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(self.api.status, previous)
         self.assertEqual(self.owned(path), ["+1"])
         self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3")
-        self.assertEqual(self.api.status, previous)
-        self.assertEqual(self.writes(), [])
+        self.assertEqual(check.status_state(self.api.status), "stale")
+        self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", "success"))
+        self.assertEqual(check.status_owner(self.api.status)["run"], 6)
+        self.assertEqual(self.owned(self.opening), [])
+        self.assertEqual(self.owned(path), [])
 
     def test_non_completed_base_advance_preserves_only_previous_review_evidence(self):
         for previous in (False, True):
@@ -531,15 +534,17 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(self.writes(), [])
         self.assertEqual(self.owned(self.opening), ["eyes"])
 
-    def test_superseded_active_attempt_only_cleans_its_trigger(self):
+    def test_still_owned_superseded_attempt_marks_shared_status_stale_and_cleans(self):
         path = self.target("issue_comment")
         self.start()
         self.api.pr["head"]["sha"] = OTHER
         self.api.calls.clear()
         self.finish()
         self.assertEqual(self.owned(path), [])
-        self.assertEqual(self.owned(self.opening), ["eyes"])
-        self.assertFalse(any(call[0] != "GET" and call[1] == self.opening for call in self.api.calls))
+        self.assertEqual(self.owned(self.opening), [])
+        self.assertEqual(check.status_state(self.api.status), "stale")
+        self.assertEqual(check.status_head(self.api.status), OTHER)
+        self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", "success"))
 
     def test_superseded_terminal_attempt_preserves_historical_thumbs(self):
         path = self.target("issue_comment")
@@ -661,7 +666,7 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(check.status_owner(self.api.status), newer)
         self.assertEqual(self.writes(), [])
 
-    def test_late_patch_change_is_reported_as_patch_suppression(self):
+    def test_late_patch_change_creates_visible_stale_status(self):
         for field in ("head", "base"):
             with self.subTest(field=field):
                 self.api = PresentationAPI()
@@ -680,15 +685,13 @@ class OwnershipTests(unittest.TestCase):
                 log = io.StringIO()
                 with redirect_stdout(log):
                     self.start()
-                self.assertIn("captured head/base changed before status publication", log.getvalue())
-                self.assertEqual(self.output, [("presentation_outcome", "suppressed_patch_changed")])
-                self.assertIsNone(self.api.status)
-                self.assertEqual(self.writes(), [])
-                with mock.patch.dict(os.environ, PRESENTATION_OWNER="", PRESENTATION_OUTCOME="suppressed_patch_changed"):
-                    with redirect_stdout(log):
-                        self.finish()
-                    self.assertIn("captured head/base was already superseded", log.getvalue())
-                self.assertEqual(self.writes(), [])
+                self.assertEqual(check.status_state(self.api.status), "stale")
+                self.assertEqual(check.status_owner(self.api.status)["head"], HEAD)
+                self.assertEqual(check.status_owner(self.api.status)["base"], BASE_TIP)
+                self.assertEqual(dict(self.output)["presentation_outcome"], "acquired")
+                self.assertEqual(self.owned(self.opening), [])
+                self.assertEqual(len([call for call in self.writes() if call[0] == "POST"
+                                      and call[1].endswith("/comments")]), 1)
 
     def test_absent_persisted_owner_is_unavailable_not_supersession(self):
         os.environ["PRESENTATION_OWNER"] = json.dumps(presentation_owner())
@@ -722,6 +725,164 @@ class OwnershipTests(unittest.TestCase):
             with mock.patch.object(check, "gh_api", wraps=self.real_gh):
                 self.start()
         self.assertIsNone(check.PRESENTATION_DEADLINE)
+
+    def test_stale_at_start_persists_captured_patch_and_reuses_one_comment(self):
+        for moved in ("head", "base", "ref"):
+            with self.subTest(moved=moved):
+                self.api = PresentationAPI()
+                self.gh_mock.side_effect = self.api.call
+                self.output.clear()
+                os.environ.update(GITHUB_RUN_ID="5", GITHUB_RUN_ATTEMPT="1", PRESENTATION_START="2")
+                if moved == "head":
+                    self.api.pr["head"]["sha"] = OTHER
+                elif moved == "base":
+                    self.api.base_tip = OTHER
+                else:
+                    self.api.pr["base"]["ref"] = "release"
+                owner = self.start()
+                self.assertEqual(check.status_state(self.api.status), "stale")
+                self.assertEqual((owner["head"], owner["base"], owner["base_ref"]), (HEAD, BASE_TIP, "main"))
+                self.assertIn("superseded", self.api.status["body"])
+                self.assertIn(f"**Captured baseline:** `{BASE_TIP[:7]}`", self.api.status["body"])
+                self.assertIn("/actions/runs/5", self.api.status["body"])
+                self.assertEqual(self.owned(self.opening), [])
+                self.start()  # Retry does not recreate/reset the existing stale owner.
+                self.assertEqual(len([call for call in self.writes() if call[0] == "POST"
+                                      and call[1].endswith("/comments")]), 1)
+                self.finish("failure")
+                self.assertEqual(check.status_state(self.api.status), "stale")
+
+    def test_cancelled_review_has_visible_reason_and_no_success_reaction(self):
+        for moved in (False, True):
+            with self.subTest(moved=moved):
+                self.api = PresentationAPI()
+                self.gh_mock.side_effect = self.api.call
+                path = self.target("issue_comment")
+                self.start()
+                if moved:
+                    self.api.pr["head"]["sha"] = OTHER
+                os.environ["REVIEW_RESULT"] = "cancelled"
+                self.finish("failure")
+                self.assertEqual(check.status_state(self.api.status), "stale" if moved else "failure")
+                self.assertIn("cancelled before verified completion", self.api.status["body"])
+                self.assertEqual(self.owned(self.opening) + self.owned(path), [])
+                self.assertEqual(len([call for call in self.writes() if call[0] == "POST"
+                                      and call[1].endswith("/comments")]), 1)
+
+    def test_terminal_reason_survives_movement_and_repeated_stale_refreshes(self):
+        cases = (("failure", {"REVIEW_RESULT":"cancelled"}, "cancelled"),
+                 ("failure", {"REVIEW_RESULT":"failure"}, "incomplete"),
+                 ("failure", {"START_RESULT":"failure"}, "preparation_failed"),
+                 ("publication_incomplete", {}, "check_publication_failed"))
+        for state, changes, reason_key in cases:
+            for moved_before_finish in (False, True):
+                with self.subTest(state=state, reason=reason_key, moved_before_finish=moved_before_finish):
+                    self.api = PresentationAPI()
+                    self.gh_mock.side_effect = self.api.call
+                    os.environ.update(REVIEW_RESULT="success", START_RESULT="success", HEAD_SHA=HEAD)
+                    owner = self.start()
+                    if moved_before_finish:
+                        self.api.pr["head"]["sha"] = OTHER
+                    os.environ.update(changes)
+                    self.finish(state)
+                    self.assertIn(check.STATUS_REASONS[reason_key], self.api.status["body"])
+                    self.api.pr["head"]["sha"] = OTHER
+                    with mock.patch.dict(os.environ, HEAD_SHA=OTHER):
+                        for _ in range(3):
+                            check.cmd_stale()
+                            self.assertIn(check.STATUS_REASONS[reason_key], self.api.status["body"])
+                            self.assertEqual(check.status_state(self.api.status), "stale")
+                            self.assertEqual(check.status_owner(self.api.status), owner)
+                            self.assertFalse(check.status_owner_running(self.api.status))
+                            self.assertEqual(self.api.status["body"].count("**Reason:**"),1)
+                            self.assertEqual(self.api.status["body"].count(check.STATUS_REASONS["stale"]),1)
+                    self.assertEqual(self.owned(self.opening), [])
+                    self.assertEqual(len([call for call in self.writes() if call[0] == "POST"
+                                          and call[1].endswith("/comments")]),1)
+
+    def test_two_head_movements_during_finalization_preserve_terminal_reason_on_refresh(self):
+        for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
+            for result, reason_key in (("cancelled", "cancelled"), ("failure", "incomplete")):
+                with self.subTest(kind=kind, result=result):
+                    self.api = PresentationAPI()
+                    self.gh_mock.side_effect = self.api.call
+                    os.environ.update(TRIGGER_KIND="automatic", PR_REACTION_MODE="automatic",
+                                      TRIGGER_COMMENT_ID="", REVIEW_RESULT=result, START_RESULT="success", HEAD_SHA=HEAD)
+                    trigger = self.target(kind) if kind != "automatic" else None
+                    owner = self.start()
+                    self.api.pr["head"]["sha"] = OTHER
+                    reads = 0
+                    def move_again(method, path):
+                        nonlocal reads
+                        if method == "GET" and path == f"repos/{REPO}/issues/7/comments":
+                            reads += 1
+                            if reads == 2:
+                                self.api.pr["head"]["sha"] = NEWER
+                    self.api.on_call = move_again
+                    self.finish("failure")
+                    self.api.on_call = None
+                    expected = check.STATUS_REASONS["stale"] + " " + check.STATUS_REASONS[reason_key]
+                    self.assertGreaterEqual(reads,2)
+                    self.assertEqual(check.status_head(self.api.status),NEWER)
+                    self.assertEqual(check.terminal_status_reason(self.api.status,owner),expected)
+                    with mock.patch.dict(os.environ,HEAD_SHA=NEWER):
+                        for _ in range(3):
+                            check.cmd_stale()
+                            self.assertEqual(check.terminal_status_reason(self.api.status,owner),expected)
+                            self.assertEqual(self.api.status["body"].count(check.STATUS_REASONS["stale"]),1)
+                            self.assertEqual(self.api.status["body"].count(check.STATUS_REASONS[reason_key]),1)
+                            self.assertEqual(check.status_owner(self.api.status),owner)
+                            self.assertFalse(check.status_owner_running(self.api.status))
+                    self.assertEqual(self.owned(self.opening),[])
+                    if trigger:
+                        self.assertEqual(self.owned(trigger),[])
+
+    def test_new_acquisition_does_not_inherit_previous_terminal_reason(self):
+        self.start()
+        os.environ["REVIEW_RESULT"] = "cancelled"
+        self.finish("failure")
+        self.assertIn(check.STATUS_REASONS["cancelled"],self.api.status["body"])
+        self.api.base_tip = OTHER
+        newer = self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3")
+        self.assertEqual(check.status_state(self.api.status),"stale")
+        self.assertNotIn(check.STATUS_REASONS["cancelled"],self.api.status["body"])
+        check.cmd_stale()
+        self.assertNotIn(check.STATUS_REASONS["cancelled"],self.api.status["body"])
+        self.assertEqual(check.status_owner(self.api.status),newer)
+
+    def test_stale_refresh_does_not_carry_arbitrary_or_ambiguous_reason_copy(self):
+        for corruption in ("arbitrary", "duplicate", "running"):
+            with self.subTest(corruption=corruption):
+                self.api = PresentationAPI()
+                self.gh_mock.side_effect = self.api.call
+                os.environ.update(REVIEW_RESULT="cancelled", START_RESULT="success", HEAD_SHA=HEAD)
+                self.start()
+                self.finish("failure")
+                original = copy.deepcopy(self.api.status)
+                self.assertIsNone(check.terminal_status_reason(original,presentation_owner(run=6,started=3)))
+                if corruption == "arbitrary":
+                    self.api.status["body"] = self.api.status["body"].replace(
+                        check.STATUS_REASONS["cancelled"],"Untrusted terminal assertion.")
+                elif corruption == "duplicate":
+                    self.api.status["body"] += "\n**Reason:** " + check.STATUS_REASONS["cancelled"]
+                else:
+                    self.api.status["body"] = self.api.status["body"].replace(
+                        check.OWNER_PHASE_PREFIX+"terminal -->",check.OWNER_PHASE_PREFIX+"running -->")
+                self.api.pr["head"]["sha"] = OTHER
+                with mock.patch.dict(os.environ,HEAD_SHA=OTHER):
+                    check.cmd_stale()
+                self.assertNotIn("Untrusted terminal assertion",self.api.status["body"])
+                self.assertNotIn(check.STATUS_REASONS["cancelled"],self.api.status["body"])
+                self.assertIn(check.STATUS_REASONS["stale"],self.api.status["body"])
+
+    def test_stale_refresh_links_its_owner_run_without_current_run_substitution(self):
+        self.start()
+        self.api.pr["head"]["sha"] = OTHER
+        with mock.patch.dict(os.environ, HEAD_SHA=OTHER, DETAILS_URL="https://github.com/owner/repo/actions/runs/99"):
+            check.cmd_stale()
+        self.assertIn(f"[Attempt workflow run](https://github.com/{REPO}/actions/runs/5)", self.api.status["body"])
+        self.assertNotIn("/actions/runs/99", self.api.status["body"])
+
 
 class TrustedOutcomeIntegrationTests(unittest.TestCase):
     """The real finalizer, including #7 verification, feeds presentation state."""
@@ -769,6 +930,40 @@ class TrustedOutcomeIntegrationTests(unittest.TestCase):
                                          [{"content":desired}, {"content":desired}] if desired else [])
                     finally:
                         harness.tearDown()
+
+    def test_status_api_failure_is_recorded_in_check_without_changing_review_evidence(self):
+        from test_claude_review_check import (ScriptTestCase, history_rule, current_run_only,
+            comments_rule, patch_rule, status_list_rule, status_patch_rule, pages, ok, FAIL,
+            reaction_list_rule, reaction_delete_rule)
+        for failure in ("write", "read", "start"):
+            with self.subTest(failure=failure):
+                harness = ScriptTestCase()
+                harness.setUp()
+                try:
+                    owner = presentation_owner()
+                    status = {"id":55, "user":{"login":check.STATUS_AUTHOR,"type":"Bot"},
+                              "body":check.status_comment_body(HEAD,"main","in_progress",owner=owner)}
+                    rules = [history_rule(current_run_only()), comments_rule(ok(pages([]))), patch_rule(ok("{}")),
+                             status_list_rule(FAIL if failure == "read" else ok(pages([status]))),
+                             status_patch_rule(FAIL if failure == "write" else ok("{}")),
+                             reaction_list_rule(ok(pages([reaction(70,"eyes")]))), reaction_delete_rule(70,ok(""))]
+                    harness.before.write_text("[]")
+                    result = harness.run_script(["finalize"], rules, CHECK_RUN_ID="99", REVIEW_RESULT="success",
+                        ACTION_CONCLUSION="success", BEFORE_IDS_FILE=str(harness.before), STATUS_COMMENTS_ENABLED="true",
+                        PRESENTATION_OWNER="" if failure == "start" else json.dumps(owner),
+                        PRESENTATION_OUTCOME="unavailable" if failure == "start" else "acquired")
+                    self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+                    checks = [call["body"] for call in harness.calls("PATCH") if "/check-runs/" in call["path"]]
+                    self.assertEqual(len(checks),2)
+                    self.assertEqual(checks[-1]["conclusion"],"success")
+                    self.assertEqual(checks[-1]["output"]["text"],checks[0]["output"]["text"])
+                    self.assertIn("shared status comment could not be updated",checks[-1]["output"]["summary"])
+                    self.assertLessEqual(len(checks[-1]["output"]["summary"].encode()),check.CHECK_SUMMARY_BYTES)
+                    if failure == "start":
+                        self.assertIn("unavailable at review start",checks[-1]["output"]["summary"])
+                    self.assertFalse(harness.calls("POST"))
+                finally:
+                    harness.tearDown()
 
     def test_failed_check_creation_still_bootstraps_terminal_owner_and_cleans(self):
         from test_claude_review_check import (ScriptTestCase, status_list_rule, status_patch_rule,
@@ -854,6 +1049,24 @@ class EmergencyOwnershipTests(unittest.TestCase):
                     self.assertTrue(any(call["method"] == "DELETE" for call in writes))
                     self.assertTrue(any(call["method"] == "PATCH" for call in writes))
                     self.assertFalse(any(call["method"] == "POST" for call in writes))
+
+    def test_emergency_known_retarget_marks_shared_comment_stale(self):
+        from test_claude_review_workflows import ToolingFallbackScriptTests, AUTOMATIC, MANUAL, pr_identity
+        for workflow in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=workflow.name):
+                result, calls = ToolingFallbackScriptTests().run_fallback(workflow,
+                    PR_NUMBER="7", STATUS_COMMENT_ID="55", responses={
+                        "PR":[{"stdout":pr_identity(OTHER,"release")}],
+                        "REF":[{"stdout":json.dumps({"ref":"refs/heads/release", "object":{
+                            "type":"commit", "sha":OTHER}})}]})
+                self.assertEqual(result.returncode,1,result.stderr)
+                repaired = next(call["body"]["body"] for call in calls if call["method"] == "PATCH"
+                                and any("issues/comments/55" in arg for arg in call["args"]))
+                self.assertEqual(check.status_state({"body":repaired}),"stale")
+                self.assertEqual(check.status_head({"body":repaired}),OTHER)
+                self.assertEqual(check.status_base_ref({"body":repaired}),"release")
+                self.assertEqual(check.status_owner({"body":repaired})["head"],HEAD)
+                self.assertFalse(any(call["method"] == "POST" for call in calls))
 
     def test_emergency_partial_rerun_cannot_claim_ownership(self):
         result, calls = self.fallback(PR_NUMBER="7", STATUS_COMMENT_ID="55", GITHUB_RUN_ATTEMPT="2")

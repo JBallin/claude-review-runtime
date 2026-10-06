@@ -1469,8 +1469,10 @@ class StatusCommentTests(ScriptTestCase):
         self.assertEqual(len(self.calls("POST")), 1)
         self.assertEqual(len(self.calls("PATCH")), 1)
 
-    def test_superseded_review_never_creates_or_overwrites_current_status(self):
-        for command, comments in (("create", [status_comment(NEWER)]), ("create", [])):
+    def test_superseded_start_creates_stale_status_only_without_a_newer_owner(self):
+        newer = status_comment(NEWER)
+        newer["body"] += "\n" + check.owner_marker(presentation_owner(run=6, started=3, head=NEWER))
+        for command, comments in (("create", [newer]), ("create", [])):
             with self.subTest(command=command, comments=comments):
                 self.log.unlink(missing_ok=True)
                 result = self.run_script(
@@ -1482,8 +1484,16 @@ class StatusCommentTests(ScriptTestCase):
                     STATUS_COMMENTS_ENABLED="true",
                 )
                 self.assertEqual(result.returncode, 0)
-                self.assertEqual([call["path"] for call in self.calls() if call["method"] != "GET"],
-                                 [f"repos/{REPO}/check-runs"])
+                writes = [call for call in self.calls() if call["method"] != "GET"]
+                if comments:
+                    self.assertEqual([call["path"] for call in writes], [f"repos/{REPO}/check-runs"])
+                else:
+                    self.assertEqual([call["path"] for call in writes],
+                                     [f"repos/{REPO}/check-runs", f"repos/{REPO}/issues/7/comments"])
+                    body = writes[-1]["body"]["body"]
+                    self.assertEqual(check.status_state({"body":body}), "stale")
+                    self.assertEqual(check.status_owner({"body":body})["head"], HEAD)
+                    self.assertEqual(check.status_head({"body":body}), NEWER)
 
     def test_superseded_rerun_preserves_newer_status_after_check_finalization(self):
         self.before.write_text("[]")
@@ -1656,7 +1666,7 @@ class StatusCommentTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0)
         body = self.calls("PATCH")[0]["body"]["body"]
         self.assertIn(OTHER, body)
-        self.assertIn("not covered", body)
+        self.assertIn("does not establish a completed review", body)
         self.assertEqual(check.status_head({"body": body}), OTHER)
 
     def test_base_ref_edit_stales_prior_status_even_when_head_is_unchanged(self):
@@ -1669,7 +1679,7 @@ class StatusCommentTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0)
         body = self.calls("PATCH")[0]["body"]["body"]
-        self.assertIn("not covered", body)
+        self.assertIn("does not establish a completed review", body)
         self.assertEqual(check.status_head({"body": body}), HEAD)
         self.assertEqual(check.status_base_ref({"body": body}), "release")
 
@@ -2169,7 +2179,7 @@ class PRReactionTests(ScriptTestCase):
 
     def test_stale_without_a_completed_review_does_not_imply_one_exists(self):
         body = check.status_comment_body(OTHER, "main", "stale")
-        self.assertIn("not covered by a completed Claude Review", body)
+        self.assertIn("does not establish a completed review", body)
         self.assertNotIn("**Last reviewed:**", body)
 
     def test_legacy_terminal_result_is_preserved_on_first_stale_transition(self):
