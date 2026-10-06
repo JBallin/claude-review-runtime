@@ -1639,7 +1639,7 @@ class StatusCommentTests(ScriptTestCase):
                 self.assertNotIn("unresolved", body)
 
     def test_failed_check_publication_projects_fallback_or_unknown_state(self):
-        for fallback_ok, phrase in ((True, "did not complete reliably"), (False, "could not be published")):
+        for fallback_ok in (True, False):
             with self.subTest(fallback_ok=fallback_ok):
                 self.log.unlink(missing_ok=True)
                 self.before.write_text("[]")
@@ -1654,7 +1654,22 @@ class StatusCommentTests(ScriptTestCase):
                     BEFORE_IDS_FILE=str(self.before), STATUS_COMMENTS_ENABLED="true",
                 )
                 self.assertEqual(result.returncode, 1)
-                self.assertIn(phrase, self.calls("PATCH")[-1]["body"]["body"])
+                body = self.calls("PATCH")[-1]["body"]["body"]
+                status = {"body": body}
+                self.assertEqual(check.status_state(status), "publication_incomplete")
+                self.assertIn("**Reason:** " + check.STATUS_REASONS["check_publication_failed"], body)
+                self.assertNotIn(check.STATUS_REASONS["incomplete"], body)
+                self.assertFalse(check.status_owner_running(status))
+                self.assertEqual(check.status_owner(status), presentation_owner())
+                check_patches = [call["body"] for call in self.calls("PATCH")
+                                 if call["path"].endswith("/check-runs/99")]
+                self.assertEqual(check_patches[0]["conclusion"], "success")
+                self.assertEqual(check_patches[-1]["conclusion"], "failure")
+                self.assertEqual(check_patches[-1]["output"]["title"], "Review outcome could not be published")
+                self.assertEqual(check_patches[-1]["output"]["text"], check_patches[0]["output"]["text"])
+                self.assertIn("Published a fallback failure state" if fallback_ok else
+                              "Could not finalize the Claude Review check run", result.stdout)
+                self.assertFalse(self.calls("POST"))
 
     def test_stale_updates_only_an_older_owned_comment_when_event_head_is_live(self):
         result = self.run_script(

@@ -1484,7 +1484,7 @@ def cmd_finalize():
         try:
             patch_check_run(repo, check_run_id, fallback, "Publishing the fallback failure state")
             print("::error::Published a fallback failure state instead of the review outcome.")
-            best_effort_status(head_sha, "failure")
+            best_effort_status(head_sha, "publication_incomplete")
         except GhError:
             print("::error::Could not finalize the Claude Review check run; it may remain in progress.")
             best_effort_status(head_sha, "publication_incomplete")
