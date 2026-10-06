@@ -881,6 +881,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False):
                     print("::notice::Claude Review presentation suppressed: this attempt no longer owns presentation.")
                 else:
                     print("::warning::Claude Review presentation unavailable: persisted owner is missing or malformed.")
+                    return "unavailable"
                 return
             # An older start must not reclaim a later generation. A higher
             # attempt of the same run is accepted only by this acquisition path.

@@ -933,18 +933,26 @@ class TrustedOutcomeIntegrationTests(unittest.TestCase):
 
     def test_status_api_failure_is_recorded_in_check_without_changing_review_evidence(self):
         from test_claude_review_check import (ScriptTestCase, history_rule, current_run_only,
-            comments_rule, patch_rule, status_list_rule, status_patch_rule, pages, ok, FAIL,
+            comments_rule, comment, patch_rule, status_list_rule, status_patch_rule, pages, ok, FAIL,
             reaction_list_rule, reaction_delete_rule)
-        for failure in ("write", "read", "start"):
-            with self.subTest(failure=failure):
+        for failure, findings in ((failure, findings) for failure in
+                ("write", "read", "start", "missing", "malformed", "newer_owner")
+                for findings in ([], [comment(9)])):
+            with self.subTest(failure=failure, findings=bool(findings)):
                 harness = ScriptTestCase()
                 harness.setUp()
                 try:
                     owner = presentation_owner()
                     status = {"id":55, "user":{"login":check.STATUS_AUTHOR,"type":"Bot"},
                               "body":check.status_comment_body(HEAD,"main","in_progress",owner=owner)}
-                    rules = [history_rule(current_run_only()), comments_rule(ok(pages([]))), patch_rule(ok("{}")),
-                             status_list_rule(FAIL if failure == "read" else ok(pages([status]))),
+                    if failure == "malformed":
+                        status["body"] = status["body"].replace(check.owner_marker(owner), check.OWNER_PREFIX + "invalid -->")
+                    elif failure == "newer_owner":
+                        newer = presentation_owner(run=6, started=owner["started"] + 1)
+                        status["body"] = check.status_comment_body(HEAD,"main","in_progress",owner=newer)
+                    statuses = [] if failure == "missing" else [status]
+                    rules = [history_rule(current_run_only()), comments_rule(ok(pages(findings))), patch_rule(ok("{}")),
+                             status_list_rule(FAIL if failure == "read" else ok(pages(statuses))),
                              status_patch_rule(FAIL if failure == "write" else ok("{}")),
                              reaction_list_rule(ok(pages([reaction(70,"eyes")]))), reaction_delete_rule(70,ok(""))]
                     harness.before.write_text("[]")
@@ -954,10 +962,17 @@ class TrustedOutcomeIntegrationTests(unittest.TestCase):
                         PRESENTATION_OUTCOME="unavailable" if failure == "start" else "acquired")
                     self.assertEqual(result.returncode,0,result.stdout+result.stderr)
                     checks = [call["body"] for call in harness.calls("PATCH") if "/check-runs/" in call["path"]]
-                    self.assertEqual(len(checks),2)
-                    self.assertEqual(checks[-1]["conclusion"],"success")
+                    self.assertEqual(len(checks),1 if failure == "newer_owner" else 2)
+                    if failure in ("missing", "malformed", "newer_owner"):
+                        self.assertFalse(any("/reactions" in call["path"] for call in harness.calls()))
+                        self.assertFalse(any("/issues/comments/" in call["path"] for call in harness.calls("PATCH")))
+                    self.assertEqual(checks[-1]["conclusion"],"action_required" if findings else "success")
                     self.assertEqual(checks[-1]["output"]["text"],checks[0]["output"]["text"])
-                    self.assertIn("shared status comment could not be updated",checks[-1]["output"]["summary"])
+                    diagnostic = "shared status comment could not be updated"
+                    if failure == "newer_owner":
+                        self.assertNotIn(diagnostic,checks[-1]["output"]["summary"])
+                    else:
+                        self.assertIn(diagnostic,checks[-1]["output"]["summary"])
                     self.assertLessEqual(len(checks[-1]["output"]["summary"].encode()),check.CHECK_SUMMARY_BYTES)
                     if failure == "start":
                         self.assertIn("unavailable at review start",checks[-1]["output"]["summary"])
@@ -1067,6 +1082,54 @@ class EmergencyOwnershipTests(unittest.TestCase):
                 self.assertEqual(check.status_base_ref({"body":repaired}),"release")
                 self.assertEqual(check.status_owner({"body":repaired})["head"],HEAD)
                 self.assertFalse(any(call["method"] == "POST" for call in calls))
+
+    def test_emergency_stale_renders_only_valid_historical_metadata(self):
+        from test_claude_review_workflows import ToolingFallbackScriptTests, AUTOMATIC, MANUAL, REPO as workflow_repo, pr_identity
+        from urllib.parse import quote
+        reviewed_head, reviewed_base = "a" * 40, "b" * 40
+        reviewed_url = f"https://github.com/{workflow_repo}/actions/runs/9"
+        for workflow in (AUTOMATIC, MANUAL):
+            for result_state in ("success", "action_required"):
+                for metadata in ("complete", "legacy", "invalid_optional", "invalid_required", "duplicate_required"):
+                    with self.subTest(workflow=workflow.name, result=result_state, metadata=metadata):
+                        owner = presentation_owner(repo=workflow_repo)
+                        details = {"base_sha": reviewed_base, "run_url": reviewed_url} if metadata == "complete" else {}
+                        body = check.status_comment_body(HEAD,"main","in_progress",owner=owner,
+                            last_review=(reviewed_head,"release/old",result_state),last_review_details=details)
+                        if metadata == "invalid_optional":
+                            body += "\n" + check.STATUS_REVIEWED_BASE_SHA_PREFIX + "invalid -->"
+                            body += "\n" + check.STATUS_REVIEWED_RUN_URL_PREFIX + quote("javascript:alert(1)",safe="") + " -->"
+                        elif metadata == "invalid_required":
+                            body = body.replace(check.STATUS_REVIEWED_HEAD_PREFIX + reviewed_head,
+                                                check.STATUS_REVIEWED_HEAD_PREFIX + "invalid")
+                        elif metadata == "duplicate_required":
+                            body += "\n" + check.STATUS_REVIEWED_HEAD_PREFIX + reviewed_head + " -->"
+                        status = {"id":55,"user":{"login":check.STATUS_AUTHOR,"type":"Bot"},"body":body}
+                        run, calls = ToolingFallbackScriptTests().run_fallback(workflow,
+                            OWNER_FIXTURE=owner,PR_NUMBER="7",STATUS_COMMENT_ID="55",responses={
+                                "STATUS":[{"stdout":json.dumps(status)}],
+                                "PR":[{"stdout":pr_identity(OTHER)}]})
+                        self.assertEqual(run.returncode,1,run.stderr)
+                        repaired = next(c["body"]["body"] for c in calls if c["method"] == "PATCH"
+                                        and any("issues/comments/55" in a for a in c["args"]))
+                        self.assertEqual(check.status_state({"body":repaired}),"stale")
+                        self.assertEqual(check.status_owner({"body":repaired}),owner)
+                        self.assertIn("not reviewed",repaired)
+                        if metadata in ("invalid_required","duplicate_required"):
+                            self.assertNotIn("**Last reviewed",repaired)
+                            self.assertNotIn("[Reviewed workflow run]",repaired)
+                        else:
+                            label = "clean" if result_state == "success" else "findings"
+                            self.assertIn(f"**Last reviewed (historical):** `{reviewed_head[:7]}` on `release/old`",repaired)
+                            self.assertIn(label,repaired)
+                            self.assertEqual("**Reviewed baseline:**" in repaired,metadata == "complete")
+                            self.assertEqual("[Reviewed workflow run]" in repaired,metadata == "complete")
+                            if metadata == "complete":
+                                self.assertIn(f"**Reviewed baseline:** `{reviewed_base[:7]}`",repaired)
+                                self.assertIn(f"[Reviewed workflow run]({reviewed_url})",repaired)
+                        self.assertIn("[Attempt workflow run](https://example.invalid/run)",repaired)
+                        self.assertNotIn("javascript:",repaired)
+                        self.assertFalse(any(c["method"] == "POST" for c in calls))
 
     def test_emergency_partial_rerun_cannot_claim_ownership(self):
         result, calls = self.fallback(PR_NUMBER="7", STATUS_COMMENT_ID="55", GITHUB_RUN_ATTEMPT="2")
