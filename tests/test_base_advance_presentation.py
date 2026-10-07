@@ -79,7 +79,12 @@ class BaseAdvancePresentationTests(unittest.TestCase):
                     self.api.pr["base"]["ref"] = "release"
                     os.environ["BASE_REF"] = "release"
                 check.best_effort_status(self.api.pr["head"]["sha"], "stale")
-                self.assert_no_positive_result()
+                body = self.api.status["body"]
+                self.assertIn("### Last Claude review: no findings", body)
+                self.assertIn("This review doesn’t cover the current version.", body)
+                self.assertNotIn(" — base advanced", body)
+                self.assertIn(" — not reviewed", body)
+                self.assertEqual(check.status_state(self.api.status), "stale")
 
     def test_running_newer_failed_and_same_owner_failed_attempts_remain_stale(self):
         for result in ("in_progress", "failure", "cancelled", "publication_incomplete", "same_owner_failure"):

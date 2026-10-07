@@ -477,7 +477,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         "action_required": "Claude recorded findings. Assess them in the inline review threads.",
         "failure": "This review did not complete reliably; this commit is not approved by it.",
         "publication_incomplete": "The authoritative Check result could not be published. Treat this commit as not reviewed.",
-        "stale": "This attempt does not establish a completed review of the current head and base. Request a new review.",
+        "stale": "Current head and base coverage is not established by this attempt.",
     }
     if not check_available:
         messages["in_progress"] = "Claude is reviewing this commit, but authoritative Check publication is unavailable."
@@ -508,6 +508,14 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             else "Claude recorded findings on this unchanged commit. Assess them in the inline review threads."
         )
         reason = STATUS_REASONS["base_advanced"]
+    elif (state == "stale" and check_available and completed_owner_verified
+          and last_review and last_review[:2] != (head_sha, base_ref)
+          and not owner_running and reason == STATUS_REASONS["stale"]):
+        headings["stale"] = (
+            "Last Claude review: no findings" if last_review[2] == "success"
+            else "Last Claude review: findings"
+        )
+        messages["stale"] = "This review doesn’t cover the current version."
     lines = [
         STATUS_MARKER,
         f"{STATUS_HEAD_PREFIX}{head_sha} -->",
@@ -537,9 +545,26 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         generation = last_review_details.get("generation")
         if isinstance(generation, str) and re.fullmatch(r"[0-9a-f]{64}", generation):
             lines.append(f"{STATUS_REVIEWED_GENERATION_PREFIX}{generation} -->")
+    lines += [f"### {headings[state]}", ""]
+    # Failure and running receipts remain ahead of historical completion.
+    # Keep the fixed Reason line visible and parseable for terminal recovery.
+    if reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]):
+        lines += [f"**Reason:** {reason}", ""]
+    if state == "stale" and owner_running:
+        lines += ["🔄 The latest review attempt is still in progress.", ""]
+    if state == "stale" and last_review:
+        reviewed_sha, reviewed_base, reviewed_result = last_review
+        result = "✅ clean" if reviewed_result == "success" else "⚠️ findings"
+        lines.append(f"**Last reviewed:** `{reviewed_sha[:7]}` on {inline_code(reviewed_base)} — {result}")
+    if state in ("success", "action_required"):
+        lines.append(f"**Reviewed commit:** `{head_sha[:7]}`")
+    lines += ["", messages[state]]
+    if base_advanced:
+        lines += ["", "Integration with the current baseline has not been reviewed."]
+    if state == "stale" and last_review and last_review[2] == "action_required":
+        lines += ["", "Recorded findings remain in the inline review threads."]
+    lines += ["", "<details>", "<summary>Review details</summary>", ""]
     lines += [
-        f"### {headings[state]}",
-        "",
         f"**Current commit:** `{head_sha[:7]}`" +
         (f" on {inline_code(base_ref)} — " +
          ("reviewed clean" if last_review[2] == "success" else "reviewed with findings")
@@ -559,15 +584,11 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if state == "stale" and base_sha:
         lines.append(f"**Current baseline:** `{base_sha[:7]}` — " +
                      ("integration not reviewed" if base_advanced else "not reviewed"))
-    if state == "stale" and last_review:
-        reviewed_sha, reviewed_base, reviewed_result = last_review
-        result = "✅ clean" if reviewed_result == "success" else "⚠️ findings"
-        lines.append(f"**Last reviewed:** `{reviewed_sha[:7]}` on {inline_code(reviewed_base)} — {result}")
-        if last_review_details.get("base_sha"):
-            lines.append(f"**Reviewed baseline:** `{last_review_details['base_sha'][:7]}`")
-    if reason:
+    if state == "stale" and last_review_details.get("base_sha"):
+        lines.append(f"**Reviewed baseline:** `{last_review_details['base_sha'][:7]}`")
+    if reason in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]):
         lines += ["", f"**Reason:** {reason}"]
-    lines += ["", messages[state]]
+    lines += ["", "</details>"]
     attempt_url = (env("DETAILS_URL") if not owner else
                    f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
     historical = state == "stale" and last_review is not None
