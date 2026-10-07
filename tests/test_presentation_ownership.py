@@ -158,7 +158,7 @@ class OwnershipTests(unittest.TestCase):
                     os.environ.update(GITHUB_RUN_ID="5", PRESENTATION_START="2",
                                       DETAILS_URL="https://github.com/owner/repo/actions/runs/5")
                     if previous:
-                        self.start()
+                        old = self.start()
                         self.finish()
                     self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3",
                                DETAILS_URL="https://github.com/owner/repo/actions/runs/6")
@@ -168,7 +168,8 @@ class OwnershipTests(unittest.TestCase):
                     self.assertEqual(check.last_completed_review(self.api.status),
                                      (HEAD, "main", "success") if previous else None)
                     self.assertEqual(check.last_completed_review_details(self.api.status),
-                                     {"base_sha": BASE_TIP, "run_url": "https://github.com/owner/repo/actions/runs/5"}
+                                     {"base_sha": BASE_TIP, "run_url": "https://github.com/owner/repo/actions/runs/5",
+                                      "generation": old["generation"]}
                                      if previous else {})
                     self.assertEqual(self.owned(self.opening), [])
 
@@ -181,7 +182,8 @@ class OwnershipTests(unittest.TestCase):
         newer = self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3", BASE_SHA=OTHER,
                            DETAILS_URL="https://github.com/owner/repo/actions/runs/6")
         self.finish("failure")
-        self.assertEqual(check.last_completed_review_details(self.api.status), {"base_sha": BASE_TIP, "run_url": old_url})
+        self.assertEqual(check.last_completed_review_details(self.api.status), {"base_sha": BASE_TIP, "run_url": old_url,
+                                                                            "generation": old["generation"]})
         self.assertEqual(check.status_owner(self.api.status), newer)
         previous = copy.deepcopy(self.api.status)
         reactions = copy.deepcopy(self.api.reactions)
@@ -195,7 +197,8 @@ class OwnershipTests(unittest.TestCase):
         os.environ["DETAILS_URL"] = "https://github.com/owner/repo/actions/runs/7"
         self.api.base_tip = MERGE_BASE
         check.cmd_stale()
-        self.assertEqual(check.last_completed_review_details(self.api.status), {"base_sha": BASE_TIP, "run_url": old_url})
+        self.assertEqual(check.last_completed_review_details(self.api.status), {"base_sha": BASE_TIP, "run_url": old_url,
+                                                                            "generation": old["generation"]})
         self.assertIn(f"**Reviewed baseline:** `{BASE_TIP[:7]}`", self.api.status["body"])
         self.assertIn(f"[Reviewed workflow run]({old_url})", self.api.status["body"])
 

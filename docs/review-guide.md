@@ -141,6 +141,13 @@ unverifiable owner evidence suppresses presentation writes. A start can establis
 ownership on a legacy status; finalization cannot. Duplicate starts do not reset
 a completed result or reclaim presentation from a newer request.
 
+The status shows the accepted attempt's start time and, for a verified clean or
+findings result, its completion time. GitHub renders these as relative times.
+Stale status retains the last completed review's time; historical results without
+a recorded completion time remain undated. These timestamps describe lifecycle
+events, not a heartbeat or proof that a runner is still active. Failed, cancelled,
+and incomplete attempts do not receive a review completion timestamp.
+
 Terminal reactions on older trigger comments remain historical snapshot
 information when the patch changes or another comment requests a review. A new
 accepted attempt on the same comment replaces its owned reactions. Superseded

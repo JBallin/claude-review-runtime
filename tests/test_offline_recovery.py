@@ -497,8 +497,10 @@ class OfflineRecoveryTests(unittest.TestCase):
                         self.assertEqual(check.last_completed_review(state["status"]), (HEAD, "main", conclusion))
                         self.assertEqual(check.last_completed_review_details(state["status"]), {
                             "base_sha": BASE_TIP, "run_url": self.env["DETAILS_URL"],
+                            "completed_at": completed["completed_at"], "generation": owner["generation"],
                         })
                         body = state["status"]["body"]
+                        self.assertIn("**Last review completed:** " + check.relative_time(completed["completed_at"]), body)
                         self.assertIn(f"**Current commit:** `{HEAD[:7]}` on `main` — not reviewed", body)
                         self.assertIn(f"**Current baseline:** `{OTHER[:7]}` — not reviewed", body)
                         self.assertIn(f"**Reviewed baseline:** `{BASE_TIP[:7]}`", body)
@@ -521,7 +523,9 @@ class OfflineRecoveryTests(unittest.TestCase):
                         self.assertEqual(check.last_completed_review(refreshed), (HEAD, "main", conclusion))
                         self.assertEqual(check.last_completed_review_details(refreshed), {
                             "base_sha": BASE_TIP, "run_url": "https://github.com/owner/repo/actions/runs/5",
+                            "completed_at": completed["completed_at"], "generation": owner["generation"],
                         })
+                        self.assertIn("**Last review completed:** " + check.relative_time(completed["completed_at"]), refreshed["body"])
                         self.assertIn(f"**Current baseline:** `{MERGE_BASE[:7]}` — not reviewed", refreshed["body"])
                         self.assertNotIn("runs/6)", refreshed["body"])
 
