@@ -758,6 +758,43 @@ jobs:
                 fi
               fi
             fi
+            # Preserve provenance of an undated legacy completion before the
+            # emergency repair replaces its terminal state. The owner gate above
+            # has already bound this trusted comment to the captured attempt.
+            legacy_generation=$(printf '%s' "$comment" | python3 -c '
+          import json, re, sys
+          from urllib.parse import quote, unquote
+          comment = json.load(sys.stdin)
+          owner = json.loads(sys.argv[1])
+          body = comment.get("body") or ""
+          prefix = "<!-- claude-review-runtime:claude-review-"
+          def values(name):
+              text = sys.argv[3] if name.startswith("last-reviewed-") else body
+              return re.findall(re.escape(prefix + name + ":") + r"(.*?) -->", text)
+          def exact(name, expected):
+              return values(name) == [expected]
+          phases = re.findall(r"<!-- claude-review-runtime:presentation-owner-phase:(.*?) -->", body)
+          state = values("status-state")
+          result = state[0] if len(state) == 1 and state[0] in ("success", "action_required") else None
+          base = values("last-reviewed-base-sha")
+          runs = values("last-reviewed-run-url")
+          expected_run = sys.argv[2].rstrip("/") + "/" + owner["repo"] + "/actions/runs/" + str(owner["run"])
+          if ((comment.get("user") or {}).get("login") == "github-actions[bot]"
+                  and (comment.get("user") or {}).get("type") == "Bot"):
+              if (result and phases in ([], ["terminal"])
+                      and not values("last-reviewed-completed-at") and not values("last-reviewed-generation")
+                      and exact("status-head", owner["head"])
+                      and exact("status-base-ref", quote(owner["base_ref"], safe=""))
+                      and exact("last-reviewed-head", owner["head"])
+                      and exact("last-reviewed-base-ref", quote(owner["base_ref"], safe=""))
+                      and exact("last-reviewed-result", result)
+                      and (not base or base == [owner["base"]])
+                      and (not runs or len(runs) == 1 and unquote(runs[0]) == expected_run)):
+                  print(prefix + "last-reviewed-generation:" + owner["generation"] + " -->")
+          ' "$PRESENTATION_OWNER" "${GITHUB_SERVER_URL:-https://github.com}" "$reviewed_markers") || return 0
+            if [ -n "$legacy_generation" ]; then
+              reviewed_markers="$reviewed_markers"$'\n'"$legacy_generation"
+            fi
             if [ -n "$reviewed_markers" ]; then
               reviewed_markers="$reviewed_markers"$'\n'
             fi
@@ -773,6 +810,7 @@ jobs:
               # never fill missing values from the current attempt.
               historical_lines=$(printf '%s' "$reviewed_markers" | python3 -c '
           import re, sys
+          from datetime import datetime
           from urllib.parse import unquote
           text = sys.stdin.read()
           prefix = "<!-- claude-review-runtime:claude-review-last-reviewed-"
@@ -795,6 +833,14 @@ jobs:
               code_ref = ticks + padding + ref + padding + ticks
               label = "✅ clean" if result == "success" else "⚠️ findings"
               print("**Last reviewed (historical):** " + chr(96) + head[:7] + chr(96) + " on " + code_ref + " — " + label)
+              completed = field("completed-at", r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
+              if completed:
+                  try:
+                      datetime.strptime(completed, "%Y-%m-%dT%H:%M:%SZ")
+                  except ValueError:
+                      completed = None
+              if completed:
+                  print("**Last review completed:** <relative-time datetime=" + chr(34) + completed + chr(34) + ">" + completed + "</relative-time>")
               base = field("base-sha", r"[0-9a-f]{40}")
               if base:
                   print("**Reviewed baseline:** " + chr(96) + base[:7] + chr(96))
@@ -806,6 +852,21 @@ jobs:
             fi
             reviewed_markers="$owner_marker"$'\n''<!-- claude-review-runtime:presentation-owner-phase:terminal -->'$'\n'"$reviewed_markers"
             captured_line=$'\n'"**Captured commit:** \`$HEAD_SHA\`"$'\n'"**Captured baseline:** \`$BASE_SHA\`"
+            started_line=$(printf '%s' "$PRESENTATION_OWNER" | python3 -c '
+          import json, sys
+          from datetime import datetime, timezone
+          try:
+              token = json.load(sys.stdin)["started"]
+              if type(token) is not int:
+                  raise ValueError("invalid start token")
+              started = datetime.fromtimestamp(token // 10**9, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+              print("**Started:** <relative-time datetime=" + chr(34) + started + chr(34) + ">" + started + "</relative-time>")
+          except (ValueError, KeyError, TypeError, OverflowError, OSError):
+              pass
+          ') || return 0
+            if [ -n "$started_line" ]; then
+              captured_line="$captured_line"$'\n'"$started_line"
+            fi
             if [ "$state" = stale ]; then
               captured_line="$captured_line"$'\n'"**Current baseline:** \`$display_base\` — not reviewed"
               if [ -n "$historical_lines" ]; then
