@@ -156,9 +156,15 @@ If the captured head or base is already superseded at start, the latest accepted
 owner shows a stale status instead of leaving its comment absent. If the head,
 base ref, or base tip moves during a still-owned review, finalization marks the
 shared status stale and clears progress reactions. Older attempts cannot replace
-a newer owner's status. A verified completed result remains historical evidence
-with its captured head, base commit, and workflow run; the current baseline is shown as unreviewed. The captured Check
-retains its original authority. Freshness checks read the exact encoded branch
+a newer owner's status. When a trustworthy completed result belongs to that
+same owner and the head and target ref are unchanged, the comment keeps the
+completed result prominent and notes that the base advanced. It identifies the
+reviewed baseline separately from the current baseline, whose integration has
+not been reviewed. Findings remain findings; changed heads or target refs,
+incomplete attempts, and missing or ambiguous completion provenance retain the
+stale presentation. Undated completed results remain undated. The machine
+freshness state remains stale, reactions do not gain approval, and the captured
+Check retains its original authority. Freshness checks read the exact encoded branch
 ref directly and validate its ref name, commit type, and full SHA, with PR
 identity reads around that lookup. A status refresh can observe this movement
 even if the PR API still reports the old comparison base. This is not a watcher

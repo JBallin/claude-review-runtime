@@ -47,6 +47,8 @@ STATUS_REASONS = {
     "check_publication_failed": "The authoritative Check result could not be published.",
     "tooling_unavailable": "Trusted review tooling was unavailable; the review could not be finalized reliably.",
     "stale": "The captured head or base was superseded; the current patch is not reviewed by this attempt.",
+    "base_advanced": "The target branch advanced; integration with the current baseline has not been reviewed.",
+    "completion_metadata_unverified": "The stored presentation metadata cannot establish a completed result for this attempt.",
 }
 PRESENTATION_SECONDS = 120
 PRESENTATION_DEADLINE = None
@@ -458,7 +460,8 @@ def owner_start_time(owner):
 
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
                         last_review_details=None, base_sha=None, trigger_label=None,
-                        owner=None, owner_running=None, reason=None, completed_at=None):
+                        owner=None, owner_running=None, reason=None, completed_at=None,
+                        completed_owner_verified=False):
     """Render trusted informational state without affecting Check authority."""
     headings = {
         "in_progress": "🔄 Claude Review in progress",
@@ -488,6 +491,23 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                                "completed_at": completed_at,
                                "generation": owner["generation"] if owner else None}
     last_review_details = last_review_details or {}
+    base_advanced = (
+        state == "stale" and check_available and completed_owner_verified and owner and not owner_running
+        and last_review in ((head_sha, base_ref, "success"), (head_sha, base_ref, "action_required"))
+        and (owner["head"], owner["base_ref"]) == (head_sha, base_ref)
+        and last_review_details.get("generation") == owner["generation"]
+        and last_review_details.get("base_sha") == owner["base"]
+        and isinstance(base_sha, str) and re.fullmatch(r"[0-9a-f]{40}", base_sha)
+        and base_sha != owner["base"]
+        and reason in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
+    )
+    if base_advanced:
+        headings["stale"] = headings[last_review[2]] + " — base advanced"
+        messages["stale"] = (
+            "Claude reviewed this unchanged commit with no findings." if last_review[2] == "success"
+            else "Claude recorded findings on this unchanged commit. Assess them in the inline review threads."
+        )
+        reason = STATUS_REASONS["base_advanced"]
     lines = [
         STATUS_MARKER,
         f"{STATUS_HEAD_PREFIX}{head_sha} -->",
@@ -521,7 +541,9 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         f"### {headings[state]}",
         "",
         f"**Current commit:** `{head_sha[:7]}`" +
-        (f" on {inline_code(base_ref)} — not reviewed" if state == "stale" else ""),
+        (f" on {inline_code(base_ref)} — " +
+         ("reviewed clean" if last_review[2] == "success" else "reviewed with findings")
+         if base_advanced else f" on {inline_code(base_ref)} — not reviewed" if state == "stale" else ""),
     ]
     if state != "stale" and trigger_label:
         lines.append(f"**Trigger:** {trigger_label}")
@@ -535,7 +557,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             lines.append(f"**Captured commit:** `{owner['head'][:7]}`")
         lines.append(f"**Captured baseline:** `{owner['base'][:7]}` on {inline_code(owner['base_ref'])}")
     if state == "stale" and base_sha:
-        lines.append(f"**Current baseline:** `{base_sha[:7]}` — not reviewed")
+        lines.append(f"**Current baseline:** `{base_sha[:7]}` — " +
+                     ("integration not reviewed" if base_advanced else "not reviewed"))
     if state == "stale" and last_review:
         reviewed_sha, reviewed_base, reviewed_result = last_review
         result = "✅ clean" if reviewed_result == "success" else "⚠️ findings"
@@ -640,6 +663,37 @@ def last_completed_review_details(comment):
     return details
 
 
+def completed_review_for_owner(comment, owner):
+    """Require unambiguous trusted completion provenance before positive presentation."""
+    if not owner or not owned_status(comment or {}) or status_owner(comment) != owner:
+        return False
+    body = comment.get("body") or ""
+    values = lambda prefix: re.findall(re.escape(prefix) + r"(.*?) -->", body)
+    review = last_completed_review(comment)
+    if not review or review[:2] != (owner["head"], owner["base_ref"]):
+        return False
+    expected = (
+        (OWNER_PHASE_PREFIX, "terminal"),
+        (STATUS_REVIEWED_HEAD_PREFIX, owner["head"]),
+        (STATUS_REVIEWED_BASE_REF_PREFIX, quote(owner["base_ref"], safe="")),
+        (STATUS_REVIEWED_RESULT_PREFIX, review[2]),
+        (STATUS_REVIEWED_BASE_SHA_PREFIX, owner["base"]),
+    )
+    if any(values(prefix) != [value] for prefix, value in expected):
+        return False
+    generations = values(STATUS_REVIEWED_GENERATION_PREFIX)
+    # Existing trusted migration can establish an undated terminal owner's generation.
+    if generations and generations != [owner["generation"]]:
+        return False
+    if last_completed_review_details(comment).get("generation") != owner["generation"]:
+        return False
+    timestamps = values(STATUS_REVIEWED_COMPLETED_PREFIX)
+    runs = values(STATUS_REVIEWED_RUN_URL_PREFIX)
+    run_url = f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}"
+    return (len(timestamps) <= 1 and all(valid_review_timestamp(value) for value in timestamps)
+            and runs == [quote(run_url, safe="")])
+
+
 def owner_marker(owner):
     return f"{OWNER_PREFIX}{quote(json.dumps(owner, sort_keys=True, separators=(',', ':')), safe='')} -->"
 
@@ -712,6 +766,8 @@ def owned_status(comment):
 
 def stale_status_reason(reason):
     stale_reason = STATUS_REASONS["stale"]
+    if reason == STATUS_REASONS["base_advanced"]:
+        return stale_reason
     if reason and (reason == stale_reason or reason.startswith(stale_reason + " ")):
         return reason
     return stale_reason + (f" {reason}" if reason else "")
@@ -968,6 +1024,14 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                                           require_projection_match=projection_must_match) == expected_patch
         last_review = last_completed_review(existing) if existing else None
         last_review_details = last_completed_review_details(existing)
+        completed_owner_verified = (
+            state in ("success", "action_required") and check_available
+            or stale and completed_review_for_owner(existing, owner)
+        )
+        if (stale and not completed_owner_verified and not status_owner_running(existing)
+                and last_review_details.get("generation") == owner["generation"]
+                and reason == STATUS_REASONS["stale"]):
+            reason = stale_status_reason(STATUS_REASONS["completion_metadata_unverified"])
         if state in ("success", "action_required") and check_available:
             # A terminal owner can still carry a previous review's history after
             # failure. Reuse a timestamp only when its completed generation matches.
@@ -1040,7 +1104,8 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             last_review=last_review, last_review_details=last_review_details, base_sha=expected_patch[2],
             trigger_label=env("TRIGGER_LABEL"), owner=owner,
             owner_running=status_owner_running(existing) if stale else acquiring_running if state == "stale" else None,
-            reason=reason, completed_at=completed_at)}
+            reason=reason, completed_at=completed_at,
+            completed_owner_verified=completed_owner_verified)}
         published = False
         try:
             if existing:
