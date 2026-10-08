@@ -27,6 +27,9 @@ class StatusPresentationTests(unittest.TestCase):
                 body = self.api.status['body']
                 visible = self.visible(body)
                 self.assertIn(f'**Last reviewed:** `{HEAD[:7]}`', visible)
+                timestamp = '**Last review completed:** ' + check.relative_time('2026-10-07T13:09:19Z')
+                self.assertIn(timestamp, visible)
+                self.assertEqual(body.count(timestamp), 1)
                 expected = 'Last Claude review: no findings' if result == 'success' else 'Last Claude review: findings'
                 heading = next(line for line in visible.splitlines() if line.startswith('### '))
                 self.assertEqual(heading, '### ' + expected)
@@ -88,3 +91,25 @@ class StatusPresentationTests(unittest.TestCase):
         visible = self.visible(self.api.status['body'])
         self.assertIn('Claude Review passed — base advanced', visible)
         self.assertIn('Integration with the current baseline has not been reviewed.', visible)
+        self.assertIn('**Last review completed:** ' + check.relative_time('2026-10-07T13:09:19Z'), visible)
+
+    def test_current_completion_visible_and_legacy_time_absent(self):
+        for state in ('success', 'action_required'):
+            for when in (None, 'invalid', '2026-10-07T13:09:19Z'):
+                with self.subTest(state=state, when=when):
+                    body = check.status_comment_body(HEAD, 'main', state, completed_at=when)
+                    visible = self.visible(body)
+                    if when == '2026-10-07T13:09:19Z':
+                        timestamp = '**Completed:** ' + check.relative_time(when)
+                        self.assertIn(timestamp, visible)
+                        self.assertEqual(body.count(timestamp), 1)
+                    else:
+                        self.assertNotIn('**Completed:**', body)
+
+    def test_check_summary_validates_optional_completion_time(self):
+        for when in (None, 'invalid', '2026-10-07T13:09:19Z'):
+            summary = check.summary_lines(HEAD, 'Review result.', completed_at=when)
+            if when == '2026-10-07T13:09:19Z':
+                self.assertIn('**Completed:** ' + check.relative_time(when), summary)
+            else:
+                self.assertNotIn('**Completed:**', summary)

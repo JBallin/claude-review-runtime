@@ -62,7 +62,8 @@ class BaseAdvancePresentationTests(unittest.TestCase):
                         check.best_effort_status(HEAD, "stale")
                         self.assert_completed_result(result)
                         self.assertEqual(check.last_completed_review_details(self.api.status), details)
-                    self.assertEqual(self.api.reactions.get(self.opening, []), [])
+                    self.assertEqual([item["content"] for item in self.api.reactions.get(self.opening, [])],
+                                     ["+1"] if result == "success" else [])
 
     def test_changed_head_or_target_ref_remains_stale(self):
         for changed_head in (True, False):

@@ -54,10 +54,18 @@ a reason; a comment API or permission failure is reported in the Check/run when
 publication is possible. Accepted manual requests also receive runtime
 reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
-publication. Automatic reviews react only to the opening post. Running eyes can
+publication. The 👍 means the latest completed review was clean. It can remain
+after the head or base changes; it does not establish review coverage of the
+current version. The status comment identifies the reviewed commit, preserves
+its completion time when available, and shows the current coverage caveat.
+Successful and findings Check summaries display their recorded completion time.
+Automatic reviews react only to the opening post. Running eyes can
 appear while Check publication is unavailable; they indicate an active attempt,
 not a review result. Findings, failure, cancellation, unverified completion, and
 terminal unavailable Check remove the runtime's eyes/thumbs-up pair best-effort.
+Ambiguous completion evidence also removes 👍; an older clean result never
+restores it over a newer running, findings, or incomplete attempt.
+Stale refreshes retain an existing historical 👍 but do not recreate a removed one.
 
 Runtime revisions containing the direct-ref freshness guard distinguish the
 PR API's comparison-base SHA from the actual base branch tip. Before a manual

@@ -1,5 +1,6 @@
 """Offline lifecycle coverage for timestamps in the shared status comment."""
 import json
+import copy
 import os
 import unittest
 
@@ -50,6 +51,13 @@ class StatusTimestampTests(unittest.TestCase):
         self.assertIn("**Last review completed:** " + check.relative_time(DONE), self.body())
         check.best_effort_status(HEAD, "stale")
         self.assertIn("**Last review completed:** " + check.relative_time(DONE), self.body())
+
+    def test_published_check_time_does_not_date_undated_same_owner_history(self):
+        self.start()
+        self.finish(when=None)
+        check.best_effort_status(HEAD, "success", completed_at=LATER, check_completed_at=True)
+        self.assertNotIn("**Completed:**", self.body())
+        self.assertNotIn("completed_at", check.last_completed_review_details(self.api.status))
 
     def test_new_failed_or_cancelled_attempt_does_not_complete_history(self):
         self.start(PRESENTATION_START=START_NS)
@@ -230,6 +238,27 @@ class StatusTimestampTests(unittest.TestCase):
 
 
 class FinalCheckTimestampTests(unittest.TestCase):
+    def test_retry_timestamp_requires_matching_verified_check_evidence(self):
+        for result in ("success", "action_required"):
+            evidence = {**check.review_identity(HEAD), "completion_verified": True}
+            original = {"id": 99, "name": check.CHECK_NAME, "app": {"slug": check.CHECK_APP_SLUG},
+                        "head_sha": HEAD, "status": "completed", "conclusion": result, "completed_at": DONE,
+                        "output": {"text": "```json\n" + json.dumps(evidence) + "\n```"}}
+            self.assertEqual(check.completed_check_timestamp([{"check_runs": [original]}], "99", HEAD, result), DONE)
+            for field, value in (("id", 100), ("name", "Other check"), ("head_sha", OTHER),
+                                 ("status", "in_progress"), ("conclusion", "failure"),
+                                 ("completed_at", None), ("completed_at", "invalid"),
+                                 ("app", {"slug": "untrusted"}), ("output", {"text": "legacy"})):
+                with self.subTest(result=result, field=field, value=value):
+                    run = copy.deepcopy(original)
+                    run[field] = value
+                    self.assertIsNone(check.completed_check_timestamp([{"check_runs": [run]}], "99", HEAD, result))
+            for field, value in (("completion_verified", False), ("base_sha", OTHER), ("reviewed_sha", OTHER)):
+                run = copy.deepcopy(original)
+                run["output"]["text"] = "```json\n" + json.dumps({**evidence, field: value}) + "\n```"
+                self.assertIsNone(check.completed_check_timestamp([{"check_runs": [run]}], "99", HEAD, result))
+            self.assertIsNone(check.completed_check_timestamp([{"check_runs": [original]}], "99", HEAD, "failure"))
+
     def test_completion_time_matches_the_published_check(self):
         import test_claude_review_check as fixtures
         harness = fixtures.ScriptTestCase()
@@ -256,6 +285,8 @@ class FinalCheckTimestampTests(unittest.TestCase):
                              final_check["completed_at"])
             self.assertIn("**Completed:** " + check.relative_time(final_check["completed_at"]),
                           final_comment["body"])
+            self.assertIn("**Completed:** " + check.relative_time(final_check["completed_at"]),
+                          final_check["output"]["summary"])
         finally:
             harness.tearDown()
 

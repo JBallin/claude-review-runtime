@@ -601,6 +601,7 @@ class FinalizeTests(ScriptTestCase):
                 self.assertEqual(body["conclusion"], "failure")
                 self.assertEqual(body["output"]["title"], "Review completion could not be verified")
                 self.assertIs(evidence_of(body)["completion_verified"], False)
+                self.assertNotIn("**Completed:**", body["output"]["summary"])
 
     def test_rejected_tool_or_input_evidence_cannot_publish_a_clean_check(self):
         for reason in ("errored_inline_tool_result", "captured_inputs_not_read"):

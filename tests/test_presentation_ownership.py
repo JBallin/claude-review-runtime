@@ -146,8 +146,8 @@ class OwnershipTests(unittest.TestCase):
         self.assertEqual(check.status_state(self.api.status), "stale")
         self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", "success"))
         self.assertEqual(check.status_owner(self.api.status)["run"], 6)
-        self.assertEqual(self.owned(self.opening), [])
-        self.assertEqual(self.owned(path), [])
+        self.assertEqual(self.owned(self.opening), ["eyes"])
+        self.assertEqual(self.owned(path), ["eyes"])
 
     def test_non_completed_base_advance_preserves_only_previous_review_evidence(self):
         for previous in (False, True):
@@ -228,13 +228,13 @@ class OwnershipTests(unittest.TestCase):
 
     def test_same_head_status_refresh_observes_direct_base_movement(self):
         trigger = self.target("pull_request_review_comment")
-        owner = self.start()
+        owner = self.start(DETAILS_URL="https://github.com/owner/repo/actions/runs/5")
         self.finish()
         self.api.base_tip = OTHER
         check.cmd_stale()
         self.assertEqual(check.status_state(self.api.status), "stale")
         self.assertEqual(check.status_owner(self.api.status), owner)
-        self.assertEqual(self.owned(self.opening), [])
+        self.assertEqual(self.owned(self.opening), ["+1"])
         # The completed trigger remains valid historical information.
         self.assertEqual(self.owned(trigger), ["+1"])
 
@@ -508,14 +508,14 @@ class OwnershipTests(unittest.TestCase):
 
     def test_stale_retains_owner_and_terminal_trigger_history(self):
         path = self.target("issue_comment")
-        owner = self.start()
+        owner = self.start(DETAILS_URL="https://github.com/owner/repo/actions/runs/5")
         self.finish()
         self.api.pr["head"]["sha"] = OTHER
         os.environ["HEAD_SHA"] = OTHER
         check.best_effort_status(OTHER, "stale")
         self.assertEqual(check.status_owner(self.api.status), owner)
         self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", "success"))
-        self.assertEqual(self.owned(self.opening), [])
+        self.assertEqual(self.owned(self.opening), ["+1"])
         self.assertEqual(self.owned(path), ["+1"])
 
     def test_stale_running_owner_can_finish_with_trigger_cleanup(self):
@@ -692,7 +692,7 @@ class OwnershipTests(unittest.TestCase):
                 self.assertEqual(check.status_owner(self.api.status)["head"], HEAD)
                 self.assertEqual(check.status_owner(self.api.status)["base"], BASE_TIP)
                 self.assertEqual(dict(self.output)["presentation_outcome"], "acquired")
-                self.assertEqual(self.owned(self.opening), [])
+                self.assertEqual(self.owned(self.opening), ["eyes"])
                 self.assertEqual(len([call for call in self.writes() if call[0] == "POST"
                                       and call[1].endswith("/comments")]), 1)
 
@@ -748,7 +748,7 @@ class OwnershipTests(unittest.TestCase):
                 self.assertIn("superseded", self.api.status["body"])
                 self.assertIn(f"**Captured baseline:** `{BASE_TIP[:7]}`", self.api.status["body"])
                 self.assertIn("/actions/runs/5", self.api.status["body"])
-                self.assertEqual(self.owned(self.opening), [])
+                self.assertEqual(self.owned(self.opening), ["eyes"])
                 self.start()  # Retry does not recreate/reset the existing stale owner.
                 self.assertEqual(len([call for call in self.writes() if call[0] == "POST"
                                       and call[1].endswith("/comments")]), 1)

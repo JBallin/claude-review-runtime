@@ -324,7 +324,27 @@ def fetch_prior_finding_evidence(repo, head_sha, current_check_run_id, pr_number
         lambda: check_run_history(repo, head_sha, required_check_run_id=current_check_run_id),
         "Listing Claude Review check history"
     )
-    return prior_finding_evidence(history, head_sha, current_check_run_id, pr_number, merge_base_sha)
+    return history, prior_finding_evidence(history, head_sha, current_check_run_id, pr_number, merge_base_sha)
+
+
+def completed_check_timestamp(history, check_run_id, head_sha, conclusion):
+    """Retain a dated completion of this captured Check across finalization retries."""
+    if conclusion not in ("success", "action_required"):
+        return None
+    for page in history:
+        for run in page.get("check_runs", []):
+            evidence = recorded_evidence(run)
+            if (str(run.get("id")) == str(check_run_id)
+                    and run.get("name") == CHECK_NAME
+                    and (run.get("app") or {}).get("slug") == CHECK_APP_SLUG
+                    and run.get("head_sha") == head_sha
+                    and run.get("status") == "completed"
+                    and run.get("conclusion") == conclusion
+                    and evidence.get("completion_verified") is True
+                    and all(key in evidence and evidence[key] == value
+                            for key, value in review_identity(head_sha).items())):
+                return valid_review_timestamp(run.get("completed_at"))
+    return None
 
 
 def find_check_run_by_external_id(repo, head_sha, external_id):
@@ -558,6 +578,9 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines.append(f"**Last reviewed:** `{reviewed_sha[:7]}` on {inline_code(reviewed_base)} — {result}")
     if state in ("success", "action_required"):
         lines.append(f"**Reviewed commit:** `{head_sha[:7]}`")
+    if completed and state in ("success", "action_required", "stale"):
+        label = "Last review completed" if state == "stale" else "Completed"
+        lines.append(f"**{label}:** {relative_time(completed)}")
     lines += ["", messages[state]]
     if base_advanced:
         lines += ["", "Integration with the current baseline has not been reviewed."]
@@ -574,9 +597,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines.append(f"**Trigger:** {trigger_label}")
     if owner and (started := owner_start_time(owner)):
         lines.append(f"**Started:** {relative_time(started)}")
-    if completed and state in ("success", "action_required", "stale"):
-        label = "Last review completed" if state == "stale" else "Completed"
-        lines.append(f"**{label}:** {relative_time(completed)}")
     if owner:
         if state == "stale":
             lines.append(f"**Captured commit:** `{owner['head'][:7]}`")
@@ -690,8 +710,21 @@ def completed_review_for_owner(comment, owner):
         return False
     body = comment.get("body") or ""
     values = lambda prefix: re.findall(re.escape(prefix) + r"(.*?) -->", body)
+    states = values(STATUS_STATE_PREFIX)
+    reasons = re.findall(r"^\*\*Reason:\*\* (.+)$", body, re.MULTILINE)
+    if states in (["success"], ["action_required"]):
+        if reasons:
+            return False
+    elif states == ["stale"]:
+        if terminal_status_reason(comment, owner) not in (
+                STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]):
+            return False
+    else:
+        return False
     review = last_completed_review(comment)
     if not review or review[:2] != (owner["head"], owner["base_ref"]):
+        return False
+    if states in (["success"], ["action_required"]) and states[0] != review[2]:
         return False
     expected = (
         (OWNER_PHASE_PREFIX, "terminal"),
@@ -832,7 +865,7 @@ def desired_pr_reaction(state, check_available):
     return None
 
 
-def reconcile_reactions(path, desired, guard):
+def reconcile_reactions(path, desired, guard, *, create=True):
     """The reserved bot/content pair is the only reaction ownership signal."""
     raw = gh_api(["--paginate", f"{path}?per_page=100"])
     owned = [reaction for page in parse_pages(raw) for reaction in page
@@ -856,7 +889,7 @@ def reconcile_reactions(path, desired, guard):
             if any(item.get("id") == reaction["id"] for page in current for item in page):
                 removed = False
                 print("::warning::Could not remove an obsolete Claude Review reaction.")
-    if desired and removed and not kept and guard():
+    if desired and create and removed and not kept and guard():
         try:
             gh_api(["--method", "POST", path, "--input", "-"], {"content": desired})
         except GhError:
@@ -947,7 +980,8 @@ def status_publication_identity(comment):
     return comment.get("id"), author.get("login"), author.get("type"), comment.get("body")
 
 
-def best_effort_status(head_sha, state, *, check_available=True, acquire=False, completed_at=None):
+def best_effort_status(head_sha, state, *, check_available=True, acquire=False, completed_at=None,
+                       check_completed_at=False):
     """Only trusted starts acquire; every later write requires that exact owner.
 
     The workflow's shared PR queue serializes writers. API reads before writes
@@ -956,6 +990,8 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
     global PRESENTATION_DEADLINE
     if env("STATUS_COMMENTS_ENABLED") != "true" or not env("PR_NUMBER"):
         return
+    if state in ("success", "action_required") and not check_available:
+        state = "publication_incomplete"
     PRESENTATION_DEADLINE = time.monotonic() + PRESENTATION_SECONDS
     try:
         repo, pr_number, base_ref = env("REPO"), env("PR_NUMBER"), env("BASE_REF")
@@ -1060,7 +1096,9 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             if (prior == owner and not status_owner_running(existing)
                     and last_review == (head_sha, base_ref, state)
                     and same_completion):
-                completed_at = last_review_details.get("completed_at")
+                stored_time = last_review_details.get("completed_at")
+                if not check_completed_at or stored_time is None:
+                    completed_at = stored_time
         live = live_pr_identity(repo, pr_number, include_base_sha=True)
         if (live != expected_patch and not stale
                 and (acquire or (prior == owner and status_owner_running(existing)))):
@@ -1151,26 +1189,36 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             write_output("presentation_outcome", "acquired")
         write_output("status_comment_id", confirmed["id"])
         def guard(require_patch=True):
-            return (status_owner(find_status_comment(repo, pr_number)) == owner
+            return (status_publication_identity(find_status_comment(repo, pr_number)) ==
+                    status_publication_identity(confirmed)
                     and (not require_patch or current()))
         desired = desired_pr_reaction(state, check_available) if published else None
+        if published and state == "stale":
+            if status_owner_running(confirmed):
+                desired = "eyes"
+            elif (check_available and completed_owner_verified
+                  and completed_review_for_owner(confirmed, owner)
+                  and last_completed_review(confirmed)[2] == "success"):
+                desired = "+1"
         surfaces = [(f"repos/{repo}/issues/{pr_number}/reactions", True)]
-        if not stale:
-            try:
-                path = trigger_reaction_path(owner)
-                if path:
-                    surfaces.append((path, False))
-            except Exception as error:
-                print(f"::warning::Could not verify Claude Review trigger: {error}")
+        try:
+            path = trigger_reaction_path(owner)
+            if path:
+                surfaces.append((path, False))
+        except Exception as error:
+            print(f"::warning::Could not verify Claude Review trigger: {error}")
         for path, opening in surfaces:
             try:
+                # A refresh may retain a clean historical signal, but cannot
+                # recreate one cleared by a later unsuccessful publication.
+                create = not (stale and desired == "+1")
                 if opening:
                     if guard():
-                        reconcile_reactions(path, desired, lambda: guard())
+                        reconcile_reactions(path, desired, lambda: guard(), create=create)
                 elif guard(require_patch=False):
                     trigger_desired = desired if current() else None
                     reconcile_reactions(path, trigger_desired,
-                                        lambda: guard(require_patch=trigger_desired is not None))
+                                        lambda: guard(require_patch=trigger_desired is not None), create=create)
             except Exception as error:
                 print(f"::warning::Could not reconcile Claude Review reactions: {error}")
         return "published" if published else "unavailable"
@@ -1247,13 +1295,15 @@ def best_effort_manual_completion(head_sha):
         PRESENTATION_DEADLINE = None
 
 
-def summary_lines(head_sha, sentence):
+def summary_lines(head_sha, sentence, *, completed_at=None):
     lines = [
         f"**Reviewed commit:** `{head_sha}`",
         f"**Trigger:** {env('TRIGGER_LABEL', 'Claude review')}",
         "",
         sentence,
     ]
+    if completed := valid_review_timestamp(completed_at):
+        lines += ["", f"**Completed:** {relative_time(completed)}"]
     if env("DETAILS_URL"):
         lines += ["", f"[Workflow run]({env('DETAILS_URL')})"]
     return bounded_string("\n".join(lines), CHECK_SUMMARY_BYTES)
@@ -1512,8 +1562,9 @@ def cmd_finalize():
     # comments to this run's captured diff; trusted Check history attributes
     # preexisting comments. A raw head SHA alone cannot identify their diff.
     errors = []
+    history = []
     try:
-        prior_ids, recorded_ids, other_diff_ids = fetch_prior_finding_evidence(
+        history, (prior_ids, recorded_ids, other_diff_ids) = fetch_prior_finding_evidence(
             repo, head_sha, check_run_id, pr_number, merge_base_sha
         )
     except GhError as error:
@@ -1603,15 +1654,18 @@ def cmd_finalize():
         "prior_finding_check_run_ids": prior_ids,
         "evidence_errors": errors,
     }
+    completed_at = completed_check_timestamp(history, check_run_id, head_sha, conclusion) or now()
     body = {
         "status": "completed",
         "conclusion": conclusion,
-        "completed_at": now(),
+        "completed_at": completed_at,
         "output": {
             "title": title,
             "summary": bounded_string((
                 "The shared status comment was unavailable at review start; consult this Check and workflow run.\n\n"
-                if env("PRESENTATION_OUTCOME") == "unavailable" else "") + summary_lines(head_sha, sentence),
+                if env("PRESENTATION_OUTCOME") == "unavailable" else "") + summary_lines(
+                    head_sha, sentence,
+                    completed_at=completed_at if conclusion in ("success", "action_required") else None),
                 CHECK_SUMMARY_BYTES),
             "text": evidence_text(evidence),
         },
@@ -1641,7 +1695,8 @@ def cmd_finalize():
             best_effort_status(head_sha, "publication_incomplete")
         return 1
     print(f"Claude Review check run {check_run_id}: {conclusion} ({title})")
-    presentation_outcome = best_effort_status(head_sha, conclusion, completed_at=body["completed_at"])
+    presentation_outcome = best_effort_status(head_sha, conclusion, completed_at=body["completed_at"],
+                                             check_completed_at=True)
     if presentation_outcome == "unavailable":
         body["output"]["summary"] = bounded_string(
             "The shared status comment could not be updated; consult this Check and workflow run.\n\n" +

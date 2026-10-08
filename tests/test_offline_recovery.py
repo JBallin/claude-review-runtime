@@ -105,6 +105,9 @@ def worker(path, command):
             api.save()
             return 0
         if command == "finish":
+            if os.environ.get("TEST_COMPLETION_TIME"):
+                with mock.patch.object(check, "now", return_value=os.environ["TEST_COMPLETION_TIME"]):
+                    return check.cmd_finalize()
             return check.cmd_finalize()
         if command == "probe":
             projection = check.live_pr_projection(REPO, "7")
@@ -310,9 +313,17 @@ class OfflineRecoveryTests(unittest.TestCase):
                 self.surface("issue_comment")
                 self.run_worker("start")
                 self.env["MANUAL_COMPLETION_ENABLED"] = "true"
+                self.env["TEST_COMPLETION_TIME"] = "2026-10-07T13:09:19Z"
                 self.update(cut=list(cut), cut_before=before)
                 self.run_worker("finish", 73)
+                committed_time = self.state()["checks"][0].get("completed_at")
+                self.env["TEST_COMPLETION_TIME"] = "2026-10-07T14:09:19Z"
                 self.run_worker("finish")
+                expected_time = committed_time or self.env["TEST_COMPLETION_TIME"]
+                completed = self.state()["checks"][0]
+                self.assertEqual(completed["completed_at"], expected_time)
+                self.assertEqual(check.last_completed_review_details(self.state()["status"])["completed_at"], expected_time)
+                self.assertIn("**Completed:** " + check.relative_time(expected_time), completed["output"]["summary"])
                 self.assertEqual(self.state()["checks"][0]["conclusion"], "success")
                 self.assertEqual(len(self.state()["comment_pages"]), 1)
                 self.assertEqual(check.status_state(self.state()["status"]), "success")
@@ -320,6 +331,22 @@ class OfflineRecoveryTests(unittest.TestCase):
                     owned = [item["content"] for item in self.state()["reactions"][path]
                              if item["user"]["login"] == check.STATUS_AUTHOR]
                     self.assertEqual(owned, ["+1"])
+
+    def test_same_owner_failure_recovery_uses_the_new_published_check_time(self):
+        self.run_worker("start")
+        self.env["TEST_COMPLETION_TIME"] = "2026-10-07T13:09:19Z"
+        self.run_worker("finish")
+        self.env.update(REVIEW_RESULT="failure", TEST_COMPLETION_TIME="2026-10-07T14:09:19Z")
+        self.run_worker("finish")
+        self.assertEqual(check.last_completed_review_details(self.state()["status"])["completed_at"],
+                         "2026-10-07T13:09:19Z")
+        self.env.update(REVIEW_RESULT="success", TEST_COMPLETION_TIME="2026-10-07T15:09:19Z")
+        self.run_worker("finish")
+        completed = self.state()["checks"][0]
+        self.assertEqual(completed["completed_at"], self.env["TEST_COMPLETION_TIME"])
+        self.assertEqual(check.last_completed_review_details(self.state()["status"])["completed_at"],
+                         completed["completed_at"])
+        self.assertIn("**Completed:** " + check.relative_time(completed["completed_at"]), completed["output"]["summary"])
 
     def assert_lost_receipt_recovery(self, receipt):
         self.update(findings=[comment(12)])
@@ -410,7 +437,7 @@ class OfflineRecoveryTests(unittest.TestCase):
         self.run_worker("deadline")
         self.assertEqual(self.state(), before_deadline)
 
-    def test_committed_check_restart_after_stale_refresh_cannot_publish_clean_ux(self):
+    def test_committed_check_restart_after_stale_refresh_publishes_only_historical_clean_signal(self):
         for field in ("head", "base"):
             for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
                 with self.subTest(field=field, kind=kind):
@@ -443,8 +470,8 @@ class OfflineRecoveryTests(unittest.TestCase):
                     self.assertEqual(check.status_state(state["status"]), "stale")
                     self.assertEqual(state["comment_pages"], [])
                     for items in state["reactions"].values():
-                        self.assertFalse([item for item in items if item["user"]["login"] == check.STATUS_AUTHOR
-                                          and item["content"] in ("eyes", "+1")])
+                        self.assertEqual([item["content"] for item in items if item["user"]["login"] == check.STATUS_AUTHOR
+                                          and item["content"] in ("eyes", "+1")], ["+1"])
                     self.assertIn(reaction(701, "heart", login="unrelated-user"),
                                   state["reactions"][f"repos/{REPO}/issues/7/reactions"])
 
@@ -514,8 +541,9 @@ class OfflineRecoveryTests(unittest.TestCase):
                         self.assertEqual(state["findings"], findings)
                         self.assertEqual(state["comment_pages"], [unrelated])  # No clean completion notice.
                         for items in state["reactions"].values():
-                            self.assertFalse([item for item in items if item["user"]["login"] == check.STATUS_AUTHOR
-                                              and item["content"] in ("eyes", "+1")])
+                            self.assertEqual([item["content"] for item in items if item["user"]["login"] == check.STATUS_AUTHOR
+                                              and item["content"] in ("eyes", "+1")],
+                                             ["+1"] if conclusion == "success" else [])
                         self.assertIn(reaction(701, "heart", login="unrelated-user"),
                                       state["reactions"][f"repos/{REPO}/issues/7/reactions"])
                         # A fresh process and a later status run cannot relabel the reviewed base/run.
