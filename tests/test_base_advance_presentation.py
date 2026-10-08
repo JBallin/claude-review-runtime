@@ -20,9 +20,9 @@ class BaseAdvancePresentationTests(unittest.TestCase):
 
     def assert_completed_result(self, result):
         body = self.api.status["body"]
-        title = "✅ Claude Review passed" if result == "success" else "⚠️ Claude Review found issues"
         label = "reviewed clean" if result == "success" else "reviewed with findings"
-        self.assertIn("### " + title + " — base advanced", body)
+        self.assertIn("### Claude Review", body)
+        self.assertIn("Last completed review: " + ("✅ No findings" if result == "success" else "⚠️ Findings"), body)
         self.assertIn(f"**Current commit:** `{HEAD[:7]}` on `main` — {label}", body)
         self.assertIn("**Current baseline:** " + f"`{self.api.base_tip[:7]}` — integration not reviewed", body)
         self.assertIn(check.STATUS_REASONS["base_advanced"], body)
@@ -36,7 +36,8 @@ class BaseAdvancePresentationTests(unittest.TestCase):
 
     def assert_no_positive_result(self):
         body = self.api.status["body"]
-        self.assertIn("### ⚠️ Claude Review stale", body)
+        self.assertIn("Claude Review", body)
+        self.assertNotIn("| Claude | ✅ No findings", body)
         self.assertNotIn(" — base advanced", body)
         self.assertIn(" — not reviewed", body)
 
@@ -62,7 +63,8 @@ class BaseAdvancePresentationTests(unittest.TestCase):
                         check.best_effort_status(HEAD, "stale")
                         self.assert_completed_result(result)
                         self.assertEqual(check.last_completed_review_details(self.api.status), details)
-                    self.assertEqual(self.api.reactions.get(self.opening, []), [])
+                    self.assertEqual([item["content"] for item in self.api.reactions.get(self.opening, [])],
+                                     ["+1"] if result == "success" else [])
 
     def test_changed_head_or_target_ref_remains_stale(self):
         for changed_head in (True, False):
@@ -80,7 +82,7 @@ class BaseAdvancePresentationTests(unittest.TestCase):
                     os.environ["BASE_REF"] = "release"
                 check.best_effort_status(self.api.pr["head"]["sha"], "stale")
                 body = self.api.status["body"]
-                self.assertIn("### Last Claude review: no findings", body)
+                self.assertIn("### Claude Review", body)
                 self.assertIn("This review doesn’t cover the current version.", body)
                 self.assertNotIn(" — base advanced", body)
                 self.assertIn(" — not reviewed", body)

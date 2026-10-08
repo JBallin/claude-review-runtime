@@ -601,6 +601,7 @@ class FinalizeTests(ScriptTestCase):
                 self.assertEqual(body["conclusion"], "failure")
                 self.assertEqual(body["output"]["title"], "Review completion could not be verified")
                 self.assertIs(evidence_of(body)["completion_verified"], False)
+                self.assertNotIn("**Completed:**", body["output"]["summary"])
 
     def test_rejected_tool_or_input_evidence_cannot_publish_a_clean_check(self):
         for reason in ("errored_inline_tool_result", "captured_inputs_not_read"):
@@ -1412,7 +1413,7 @@ class CreateAndSnapshotTests(ScriptTestCase):
 
 
 class StatusCommentTests(ScriptTestCase):
-    def test_start_creates_one_comment_after_the_check_for_all_triggers(self):
+    def test_start_creates_one_comment_after_the_check_for_trigger_labels(self):
         for label in ("Manual request", "Draft marked ready", "PR opened for review"):
             with self.subTest(label=label):
                 self.log.unlink(missing_ok=True)
@@ -1431,7 +1432,8 @@ class StatusCommentTests(ScriptTestCase):
                 self.assertIn(HEAD, body)
                 self.assertEqual(check.status_base_ref({"body": body}), "main")
                 self.assertIn("in progress", body)
-                self.assertIn(f"**Current commit:** `{HEAD[:7]}`\n**Trigger:** {label}\n", body)
+                self.assertIn(f"**Current commit:** `{HEAD[:7]}`", body)
+                self.assertIn(f"| `{HEAD[:7]}` | " + ("Not recorded" if label == "Manual request" else label) + " |", body)
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("@claude", body)
                 self.assertIn("status_comment_id=55", self.output.read_text())
@@ -1635,7 +1637,9 @@ class StatusCommentTests(ScriptTestCase):
                 body = self.calls("PATCH")[-1]["body"]["body"]
                 self.assertIn(phrase, body)
                 self.assertIn(HEAD, body)
-                self.assertIn(f"**Current commit:** `{HEAD[:7]}`\n**Trigger:** Draft marked ready\n", body)
+                self.assertIn(f"**Current commit:** `{HEAD[:7]}`", body)
+                self.assertIn("| Review | Status | Commit | Review trigger |", body)
+                self.assertIn(f"| `{HEAD[:7]}` |", body)
                 self.assertNotIn("unresolved", body)
 
     def test_failed_check_publication_projects_fallback_or_unknown_state(self):
@@ -1798,18 +1802,20 @@ class StatusCommentTests(ScriptTestCase):
         incomplete = check.status_comment_body(HEAD, "main", "publication_incomplete")
         self.assertIn("authoritative Check result could not be published", incomplete)
 
-    def test_known_trigger_is_compact_in_run_states_and_omitted_when_stale(self):
+    def test_known_trigger_is_in_run_table_and_unknown_for_unrecorded_history(self):
         for label in ("Manual request", "Draft marked ready", "PR opened for review"):
             for state in ("in_progress", "success", "action_required", "failure", "publication_incomplete"):
                 with self.subTest(label=label, state=state):
-                    body = check.status_comment_body(HEAD, "main", state, trigger_label=label)
-                    self.assertIn(f"**Current commit:** `{HEAD[:7]}`\n**Trigger:** {label}\n", body)
-                    self.assertEqual(body.count("**Trigger:**"), 1)
+                    owner = presentation_owner(kind="issue_comment", target=42) if label == "Manual request" else presentation_owner()
+                    body = check.status_comment_body(HEAD, "main", state, trigger_label=label, owner=owner)
+                    self.assertIn(f"| `{HEAD[:7]}` | {label} |", body)
+                    self.assertNotIn("**Trigger:**", body)
             stale = check.status_comment_body(OTHER, "main", "stale", trigger_label=label,
                                               last_review=(HEAD, "main", "success"))
             self.assertNotIn("**Trigger:**", stale)
             self.assertIn(f"**Current commit:** `{OTHER[:7]}` on `main` — not reviewed", stale)
-            self.assertIn(f"**Last reviewed:** `{HEAD[:7]}` on `main` — ✅ clean", stale)
+            self.assertIn("| Claude | Last completed review: ✅ No findings", stale)
+            self.assertIn(f"| `{HEAD[:7]}` | Not recorded |", stale)
 
     def test_status_identity_round_trips_a_base_ref_with_a_slash(self):
         body = check.status_comment_body(HEAD, "release/2026", "success")
@@ -1914,7 +1920,7 @@ class PRReactionTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual(self.calls("PATCH")[0]["body"]["conclusion"], "success")
-        self.assertIn("✅ Claude Review passed", self.calls("PATCH")[-1]["body"]["body"])
+        self.assertIn("| Claude | ✅ No findings", self.calls("PATCH")[-1]["body"]["body"])
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
                          [f"repos/{REPO}/issues/7/reactions/70"])
         self.assertEqual(self.calls("POST")[0]["body"], {"content": "+1"})
@@ -2006,7 +2012,7 @@ class PRReactionTests(ScriptTestCase):
         body = self.calls("PATCH")[0]["body"]["body"]
         self.assertIn("⚠️ Claude Review stale", body)
         self.assertIn(f"**Current commit:** `{OTHER[:7]}` on `main` — not reviewed", body)
-        self.assertIn(f"**Last reviewed:** `{HEAD[:7]}` on `main` — ✅ clean", body)
+        self.assertIn("| Claude | Last completed review: ✅ No findings", body)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
                          [f"repos/{REPO}/issues/7/reactions/70"])
@@ -2162,7 +2168,7 @@ class PRReactionTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0)
         body = self.calls("PATCH")[0]["body"]["body"]
-        self.assertIn(f"**Last reviewed:** `{HEAD[:7]}` on `main` — ⚠️ findings", body)
+        self.assertIn("| Claude | Last completed review: ⚠️ Findings", body)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "action_required"))
 
     def test_stale_without_owner_does_not_clear_pr_reactions(self):
@@ -2195,7 +2201,7 @@ class PRReactionTests(ScriptTestCase):
     def test_stale_without_a_completed_review_does_not_imply_one_exists(self):
         body = check.status_comment_body(OTHER, "main", "stale")
         self.assertIn("Current head and base coverage is not established by this attempt.", body)
-        self.assertNotIn("**Last reviewed:**", body)
+        self.assertNotIn("Last completed review:", body)
 
     def test_legacy_terminal_result_is_preserved_on_first_stale_transition(self):
         legacy = status_comment()
@@ -2418,7 +2424,7 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         patches = self.calls("PATCH")
         self.assertEqual(patches[0]["body"]["conclusion"], "success")
-        self.assertIn("Claude Review passed", patches[1]["body"]["body"])
+        self.assertIn("| Claude | ✅ No findings", patches[1]["body"]["body"])
         self.assertEqual(self.calls("DELETE")[0]["path"], f"repos/{REPO}/issues/7/reactions/70")
         self.assertEqual(len(self.calls("DELETE")), 1)
         self.assertEqual(self.calls()[-1]["method"], "POST")

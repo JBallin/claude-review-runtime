@@ -54,10 +54,18 @@ a reason; a comment API or permission failure is reported in the Check/run when
 publication is possible. Accepted manual requests also receive runtime
 reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
-publication. Automatic reviews react only to the opening post. Running eyes can
+publication. The 👍 means the latest completed review was clean. It can remain
+after the head or base changes; it does not establish review coverage of the
+current version. The status comment identifies the reviewed commit, preserves
+its completion time when available, and shows the current coverage caveat.
+Successful and findings Check summaries display their recorded completion time.
+Automatic reviews react only to the opening post. Running eyes can
 appear while Check publication is unavailable; they indicate an active attempt,
 not a review result. Findings, failure, cancellation, unverified completion, and
 terminal unavailable Check remove the runtime's eyes/thumbs-up pair best-effort.
+Ambiguous completion evidence also removes 👍; an older clean result never
+restores it over a newer running, findings, or incomplete attempt.
+Stale refreshes retain an existing historical 👍 but do not recreate a removed one.
 
 Runtime revisions containing the direct-ref freshness guard distinguish the
 PR API's comparison-base SHA from the actual base branch tip. Before a manual
@@ -141,12 +149,23 @@ unverifiable owner evidence suppresses presentation writes. A start can establis
 ownership on a legacy status; finalization cannot. Duplicate starts do not reset
 a completed result or reclaim presentation from a newer request.
 
-The status shows the accepted attempt's start time and, for a verified clean or
-findings result, its completion time. GitHub renders these as relative times.
+The status presents one Claude row with Review, Status, Commit, and Review trigger.
+For a verified clean or findings result, Status shows its persisted completion time
+and Commit identifies the reviewed SHA. The current-version or integration caveat
+appears below the row; newer running, failed, or incomplete attempts remain prominent
+above historical results. Technical details, including the accepted attempt's start
+time, are collapsed. GitHub renders recorded times as relative times.
 Stale status retains the last completed review's time; historical results without
 a recorded completion time remain undated. These timestamps describe lifecycle
 events, not a heartbeat or proof that a runner is still active. Failed, cancelled,
 and incomplete attempts do not receive a review completion timestamp.
+
+Review trigger retains the original accepted event that produced the completed
+result: PR opened for review, Draft marked ready, or Manual request. Status refreshes
+and repeated completion cannot replace or backfill that event. Legacy records without
+trusted original-event metadata show Not recorded; automatic ownership alone cannot
+distinguish opening a PR from marking a draft ready. Emergency fallback preserves
+these historical markers for subsequent helper rendering.
 
 Terminal reactions on older trigger comments remain historical snapshot
 information when the patch changes or another comment requests a review. A new
