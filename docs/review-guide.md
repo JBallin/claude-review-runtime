@@ -259,6 +259,14 @@ trusted `Claude Review` Check remains incomplete or failed, and required review
 remains unsatisfied. This condition does not mean every first run fails or every
 PR changing a workflow is unreviewable.
 
+Reconcile the automatic review's Check and workflow run before requesting
+recovery. After a confirmed caller-validation rejection, use the already deployed
+trusted manual caller only when no applicable review request is completed or
+pending. Follow its documented command and verify the captured head, base, and
+executing Runtime revision in the resulting Check and workflow run. A pin update
+alone does not require manual review; this recovery applies to the confirmed
+rejection, not every caller change.
+
 A skipped action or successful workflow without verified model completion is
 not a Claude review. Do not suppress the incomplete Check or bypass it. Keep an
 initial setup draft while authentication and independent review are outstanding.

@@ -2255,13 +2255,21 @@ class ManualCompletionTests(ScriptTestCase):
         marker = check.completion_marker(REPO, "7", HEAD, "main", BASE_TIP, MERGE_BASE)
         self.assertEqual(body, (
             f"{marker}\n"
-            f"🎉 Claude review completed—no findings on [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).\n\n"
+            "🎉 Claude review completed with no findings on "
+            f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).\n\n"
+            "<details>\n<summary>ℹ️ Details</summary>\n\n"
             f"Compared against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) · "
-            "[Review run](https://github.com/owner/repo/actions/runs/1)"
+            "[Review run](https://github.com/owner/repo/actions/runs/1)\n\n</details>"
         ))
+        visible, details = body.split("<details>", 1)
+        self.assertIn(f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})", visible)
+        self.assertEqual(body.count(f"/commit/{HEAD}"), 1)
+        self.assertNotIn("Compared against", visible)
+        self.assertNotIn("Review run", visible)
+        self.assertIn(f"/commit/{BASE_TIP}", details)
         for identity in (HEAD, BASE_TIP, MERGE_BASE):
             self.assertIn(identity, body)
-        self.assertIn("🎉 Claude review completed—no findings on", body)
+        self.assertIn("🎉 Claude review completed with no findings", body)
         self.assertNotIn("current", body.lower())
         self.assertNotIn("approved", body.lower())
         self.assertNotIn("@claude", body)
@@ -2471,12 +2479,12 @@ class ManualCompletionTests(ScriptTestCase):
                 self.assertEqual(result.returncode, 0, result.stdout)
                 body = self.calls("POST")[0]["body"]["body"]
                 marker = check.completion_marker(REPO, "7", HEAD, base_ref, OTHER, MERGE_BASE)
-                self.assertEqual(body.split("\n\n"), [
-                    f"{marker}\n"
-                    f"🎉 Claude review completed—no findings on [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).",
-                    f"Compared against {rendered_ref} at [`bbbbbbb`](https://github.com/{REPO}/commit/{OTHER}) · "
-                    "[Review run](https://github.com/owner/repo/actions/runs/1)",
-                ])
+                visible, details = body.split("<details>", 1)
+                self.assertIn(marker, visible)
+                self.assertIn("🎉 Claude review completed with no findings", visible)
+                self.assertIn(f"Compared against {rendered_ref} at [`bbbbbbb`](https://github.com/{REPO}/commit/{OTHER})", details)
+                self.assertIn("[Review run](https://github.com/owner/repo/actions/runs/1)", details)
+                self.assertTrue(body.endswith("</details>"))
                 self.assertNotIn(f"/commit/{MERGE_BASE}", body)
 
 

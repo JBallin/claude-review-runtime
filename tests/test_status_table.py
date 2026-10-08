@@ -64,13 +64,14 @@ class StatusTableTests(unittest.TestCase):
                             os.environ["TRIGGER_LABEL"] = refresh_label
                             check.best_effort_status(self.api.pr["head"]["sha"], "stale")
                             self.assertIn(expected, self.row())
-                            self.assertIn("**Last completed review**", self.visible())
+                            self.assertNotIn("**Last completed review**", self.visible())
                             self.assertNotIn("Last completed review", self.row())
                             self.assertTrue(self.row().endswith(f"| `{HEAD[:7]}` | {label} |"))
                             self.assertIn(check.relative_time(DONE), self.row())
                             self.assertEqual(check.last_completed_review_details(self.api.status)["trigger"], label)
                             caveat = ("Integration with the current baseline has not been reviewed."
-                                      if movement == "base" else "This review doesn’t cover the current version.")
+                                      if movement == "base" else "⚠️ This completed review doesn’t cover the current version."
+                                      if result == "success" else "⚠️ These recorded findings are from a review of a previous version.")
                             self.assertGreater(self.visible().index(caveat), self.visible().index(HEADER))
 
     def test_repeat_neither_relabels_nor_backfills_legacy_event(self):

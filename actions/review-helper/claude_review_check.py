@@ -545,7 +545,10 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             "Last Claude review: no findings" if last_review[2] == "success"
             else "Last Claude review: findings"
         )
-        messages["stale"] = "This review doesn’t cover the current version."
+        messages["stale"] = (
+            "⚠️ This completed review doesn’t cover the current version." if last_review[2] == "success"
+            else "⚠️ These recorded findings are from a review of a previous version."
+        )
     lines = [
         STATUS_MARKER,
         f"{STATUS_HEAD_PREFIX}{head_sha} -->",
@@ -595,7 +598,10 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines += [messages[state], ""]
     if last_review:
         row_status = "✅ **Completed**" if last_review[2] == "success" else "⚠️ **Findings**"
-        if state not in ("success", "action_required"):
+        if state not in ("success", "action_required") and not (
+                base_advanced or (state == "stale" and check_available and completed_owner_verified
+                                  and last_review[:2] != (head_sha, base_ref)
+                                  and not owner_running and reason == STATUS_REASONS["stale"])):
             lines += ["**Last completed review**", ""]
         if completed:
             row_status += " " + relative_time(completed)
@@ -616,7 +622,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if state != "success" and not adverse and not (state == "stale" and owner_running):
         lines += ["", messages[state]]
     if base_advanced:
-        lines += ["", "Integration with the current baseline has not been reviewed."]
+        lines += ["", "⚠️ Integration with the current baseline has not been reviewed."]
     if state == "stale" and last_review and last_review[2] == "action_required":
         lines += ["", "Recorded findings remain in the inline review threads."]
     lines += ["", "<details>", "<summary>ℹ️ Details</summary>", ""]
@@ -1297,11 +1303,12 @@ def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_
 def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url):
     return (
         f"{marker}\n"
-        "🎉 Claude review completed—no findings on "
+        "🎉 Claude review completed with no findings on "
         f"[`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}).\n\n"
+        "<details>\n<summary>ℹ️ Details</summary>\n\n"
         f"Compared against {inline_code(base_ref)} at "
         f"[`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) · "
-        f"[Review run]({details_url})"
+        f"[Review run]({details_url})\n\n</details>"
     )
 
 
