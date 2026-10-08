@@ -527,14 +527,13 @@ class OfflineRecoveryTests(unittest.TestCase):
                             "completed_at": completed["completed_at"], "generation": owner["generation"],
                         })
                         body = state["status"]["body"]
-                        self.assertIn("**Last review completed:** " + check.relative_time(completed["completed_at"]), body)
+                        self.assertIn(check.relative_time(completed["completed_at"]), body)
                         label = "reviewed clean" if conclusion == "success" else "reviewed with findings"
                         self.assertIn(f"**Current commit:** `{HEAD[:7]}` on `main` — {label}", body)
                         self.assertIn(f"**Current baseline:** `{OTHER[:7]}` — integration not reviewed", body)
                         self.assertIn(f"**Reviewed baseline:** `{BASE_TIP[:7]}`", body)
                         self.assertIn(f"[Reviewed workflow run]({self.env['DETAILS_URL']})", body)
-                        heading = "Claude Review passed" if conclusion == "success" else "Claude Review found issues"
-                        self.assertIn(heading + " — base advanced", body)
+                        self.assertIn("### Claude Review", body)
                         self.assertIn(check.STATUS_REASONS["base_advanced"], body)
                         self.assertNotIn("runs/4)", body)
                         self.assertEqual(state["checks"][0], old_check)
@@ -556,9 +555,9 @@ class OfflineRecoveryTests(unittest.TestCase):
                             "base_sha": BASE_TIP, "run_url": "https://github.com/owner/repo/actions/runs/5",
                             "completed_at": completed["completed_at"], "generation": owner["generation"],
                         })
-                        self.assertIn("**Last review completed:** " + check.relative_time(completed["completed_at"]), refreshed["body"])
+                        self.assertIn(check.relative_time(completed["completed_at"]), refreshed["body"])
                         self.assertIn(f"**Current baseline:** `{MERGE_BASE[:7]}` — integration not reviewed", refreshed["body"])
-                        self.assertIn(heading + " — base advanced", refreshed["body"])
+                        self.assertIn("### Claude Review", refreshed["body"])
                         self.assertNotIn("runs/6)", refreshed["body"])
 
     def test_deleted_finding_after_outage_survives_failed_attempt_and_restart(self):

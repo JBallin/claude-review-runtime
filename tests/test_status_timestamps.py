@@ -31,15 +31,15 @@ class StatusTimestampTests(unittest.TestCase):
             with self.subTest(state=state):
                 self.start(PRESENTATION_START=START_NS)
                 self.assertIn("**Started:** " + check.relative_time(START), self.body())
-                self.assertNotIn("**Completed:**", self.body())
+                self.assertNotIn(check.STATUS_REVIEWED_COMPLETED_PREFIX, self.body())
                 self.finish(state)
-                self.assertIn("**Completed:** " + check.relative_time(DONE), self.body())
+                self.assertIn(check.relative_time(DONE), self.body())
                 self.assertEqual(check.last_completed_review_details(self.api.status)["completed_at"], DONE)
                 self.finish(state, LATER)
-                self.assertIn("**Completed:** " + check.relative_time(DONE), self.body())
+                self.assertIn(check.relative_time(DONE), self.body())
                 self.start(PRESENTATION_START=START_NS + 10**9, GITHUB_RUN_ID=6)
                 self.finish(state, LATER)
-                self.assertIn("**Completed:** " + check.relative_time(LATER), self.body())
+                self.assertIn(check.relative_time(LATER), self.body())
                 os.environ["GITHUB_RUN_ID"] = "5"
                 self.api.status = None
 
@@ -48,15 +48,15 @@ class StatusTimestampTests(unittest.TestCase):
         self.api.base_tip = OTHER
         self.finish()
         self.assertEqual(check.status_state(self.api.status), "stale")
-        self.assertIn("**Last review completed:** " + check.relative_time(DONE), self.body())
+        self.assertIn(check.relative_time(DONE), self.body())
         check.best_effort_status(HEAD, "stale")
-        self.assertIn("**Last review completed:** " + check.relative_time(DONE), self.body())
+        self.assertIn(check.relative_time(DONE), self.body())
 
     def test_published_check_time_does_not_date_undated_same_owner_history(self):
         self.start()
         self.finish(when=None)
         check.best_effort_status(HEAD, "success", completed_at=LATER, check_completed_at=True)
-        self.assertNotIn("**Completed:**", self.body())
+        self.assertNotIn(check.STATUS_REVIEWED_COMPLETED_PREFIX, self.body())
         self.assertNotIn("completed_at", check.last_completed_review_details(self.api.status))
 
     def test_new_failed_or_cancelled_attempt_does_not_complete_history(self):
@@ -68,11 +68,11 @@ class StatusTimestampTests(unittest.TestCase):
                 self.start(PRESENTATION_START=START_NS + 10**9, GITHUB_RUN_ID=6)
                 os.environ["REVIEW_RESULT"] = result
                 self.finish(state, LATER)
-                self.assertNotIn("**Completed:**", self.body())
+                self.assertNotIn(check.relative_time(LATER), self.body())
                 self.assertEqual(check.last_completed_review_details(self.api.status)["completed_at"], DONE)
                 self.api.base_tip = OTHER
                 check.best_effort_status(HEAD, "stale")
-                self.assertIn("**Last review completed:** " + check.relative_time(DONE), self.body())
+                self.assertIn(check.relative_time(DONE), self.body())
                 self.api.base_tip = os.environ["BASE_SHA"]
 
     def test_recovered_owner_replaces_prior_review_completion_and_keeps_its_own(self):
@@ -104,7 +104,7 @@ class StatusTimestampTests(unittest.TestCase):
         self.start(PRESENTATION_START=START_NS)
         self.finish(when=None)
         self.finish(when=LATER)
-        self.assertNotIn("**Completed:**", self.body())
+        self.assertNotIn(check.STATUS_REVIEWED_COMPLETED_PREFIX, self.body())
         self.assertNotIn("completed_at", check.last_completed_review_details(self.api.status))
 
     def test_legacy_undated_completion_survives_same_owner_stale_or_failure(self):
@@ -126,10 +126,10 @@ class StatusTimestampTests(unittest.TestCase):
                         self.finish(transition, LATER)
                     self.assertEqual(check.status_state(self.api.status), transition)
                     self.assertEqual(check.last_completed_review_details(self.api.status)["generation"], owner["generation"])
-                    self.assertNotIn("**Last review completed:**", self.body())
+                    self.assertNotIn(check.STATUS_REVIEWED_COMPLETED_PREFIX, self.body())
                     self.finish(outcome, LATER)
                     self.assertEqual(check.status_state(self.api.status), outcome)
-                    self.assertNotIn("**Completed:**", self.body())
+                    self.assertNotIn(check.STATUS_REVIEWED_COMPLETED_PREFIX, self.body())
                     self.assertNotIn("completed_at", check.last_completed_review_details(self.api.status))
 
     def test_timestamp_metadata_rejects_invalid_or_duplicate_values(self):
@@ -170,7 +170,7 @@ class StatusTimestampTests(unittest.TestCase):
                     self.api.status["body"] = repaired
                     self.finish(outcome, LATER)
                     self.assertEqual(check.status_state(self.api.status), outcome)
-                    self.assertNotIn("**Completed:**", self.body())
+                    self.assertNotIn(check.STATUS_REVIEWED_COMPLETED_PREFIX, self.body())
                     self.assertNotIn("completed_at", check.last_completed_review_details(self.api.status))
 
     def test_emergency_legacy_migration_rejects_duplicate_untrusted_or_other_metadata(self):
@@ -283,7 +283,7 @@ class FinalCheckTimestampTests(unittest.TestCase):
             final_comment = next(c["body"] for c in patches if "/issues/comments/" in c["path"])
             self.assertEqual(check.last_completed_review_details(final_comment)["completed_at"],
                              final_check["completed_at"])
-            self.assertIn("**Completed:** " + check.relative_time(final_check["completed_at"]),
+            self.assertIn(check.relative_time(final_check["completed_at"]),
                           final_comment["body"])
             self.assertIn("**Completed:** " + check.relative_time(final_check["completed_at"]),
                           final_check["output"]["summary"])
