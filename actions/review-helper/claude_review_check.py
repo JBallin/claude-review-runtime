@@ -588,13 +588,15 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     lines += [f"## {heading}", ""]
     # Failure and running receipts remain ahead of historical completion.
     # Keep the fixed Reason line visible and parseable for terminal recovery.
-    if reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]):
+    visible_reason = reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
+    if visible_reason:
         lines += [f"**Reason:** {reason}", ""]
     if state == "stale" and owner_running:
         lines += [f"Claude is reviewing captured commit `{(owner['head'] if owner else head_sha)[:7]}`. "
                   "Review coverage of the current head and baseline is not established.", ""]
     adverse = state in ("in_progress", "failure", "publication_incomplete")
-    if adverse:
+    if adverse and not ((state == "in_progress" and check_available)
+                        or (state == "failure" and visible_reason)):
         lines += [messages[state], ""]
     if last_review:
         row_status = "✅ **Completed**" if last_review[2] == "success" else "⚠️ **Findings**"
