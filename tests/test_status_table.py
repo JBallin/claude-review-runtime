@@ -1,4 +1,4 @@
-"""One visible Claude row retains the event that produced its completed result."""
+"""One visible status row retains the event that produced its completed result."""
 import copy
 import os
 import unittest
@@ -7,7 +7,7 @@ from test_claude_review_check import check, HEAD, OTHER
 import test_presentation_ownership as ownership
 
 DONE = "2026-10-07T13:09:19Z"
-HEADER = "| Review | Status | Commit | Review trigger |"
+HEADER = "| Status | Commit | Review trigger |"
 
 
 class StatusTableTests(unittest.TestCase):
@@ -27,7 +27,8 @@ class StatusTableTests(unittest.TestCase):
     def row(self):
         visible = self.visible()
         self.assertEqual(visible.count(HEADER), 1)
-        rows = [line for line in visible.splitlines() if line.startswith("| Claude |")]
+        rows = [line for line in visible.splitlines()
+                if line.startswith("| ") and line not in (HEADER, "| --- | --- | --- |")]
         self.assertEqual(len(rows), 1)
         return rows[0]
 
@@ -50,8 +51,8 @@ class StatusTableTests(unittest.TestCase):
                             self.target(kind)
                         self.start()
                         self.finish(result)
-                        expected = ("✅ No findings" if result == "success" else "⚠️ Findings")
-                        self.assertEqual(self.row(), f"| Claude | {expected}<br>{check.relative_time(DONE)} | `{HEAD[:7]}` | {label} |")
+                        expected = ("✅ Completed" if result == "success" else "⚠️ Findings")
+                        self.assertEqual(self.row(), f"| {expected} {check.relative_time(DONE)} | `{HEAD[:7]}` | {label} |")
                         if movement == "head":
                             self.api.pr["head"]["sha"] = OTHER
                         elif movement == "base":
@@ -62,7 +63,9 @@ class StatusTableTests(unittest.TestCase):
                         for refresh_label in ("synchronize", "Manual request", "Draft marked ready"):
                             os.environ["TRIGGER_LABEL"] = refresh_label
                             check.best_effort_status(self.api.pr["head"]["sha"], "stale")
-                            self.assertIn("Last completed review: " + expected, self.row())
+                            self.assertIn(expected, self.row())
+                            self.assertIn("**Last completed review**", self.visible())
+                            self.assertNotIn("Last completed review", self.row())
                             self.assertTrue(self.row().endswith(f"| `{HEAD[:7]}` | {label} |"))
                             self.assertIn(check.relative_time(DONE), self.row())
                             self.assertEqual(check.last_completed_review_details(self.api.status)["trigger"], label)
@@ -102,7 +105,8 @@ class StatusTableTests(unittest.TestCase):
                     check.best_effort_status(HEAD, state, completed_at="2026-10-07T14:00:00Z")
                 latest = "Claude is reviewing this commit." if state == "in_progress" else "**Reason:**"
                 self.assertLess(self.visible().index(latest), self.visible().index(HEADER))
-                self.assertIn("Last completed review: ✅ No findings", self.row())
+                self.assertIn("✅ Completed", self.row())
+                self.assertIn("**Last completed review**", self.visible())
                 self.assertTrue(self.row().endswith("| PR opened for review |"))
                 self.assertNotIn("14:00:00Z", self.row())
                 self.finish()

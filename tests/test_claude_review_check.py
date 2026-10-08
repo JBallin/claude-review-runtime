@@ -1638,7 +1638,7 @@ class StatusCommentTests(ScriptTestCase):
                 self.assertIn(phrase, body)
                 self.assertIn(HEAD, body)
                 self.assertIn(f"**Current commit:** `{HEAD[:7]}`", body)
-                self.assertIn("| Review | Status | Commit | Review trigger |", body)
+                self.assertIn("| Status | Commit | Review trigger |", body)
                 self.assertIn(f"| `{HEAD[:7]}` |", body)
                 self.assertNotIn("unresolved", body)
 
@@ -1814,7 +1814,7 @@ class StatusCommentTests(ScriptTestCase):
                                               last_review=(HEAD, "main", "success"))
             self.assertNotIn("**Trigger:**", stale)
             self.assertIn(f"**Current commit:** `{OTHER[:7]}` on `main` — not reviewed", stale)
-            self.assertIn("| Claude | Last completed review: ✅ No findings", stale)
+            self.assertIn("| ✅ Completed", stale)
             self.assertIn(f"| `{HEAD[:7]}` | Not recorded |", stale)
 
     def test_status_identity_round_trips_a_base_ref_with_a_slash(self):
@@ -1920,7 +1920,7 @@ class PRReactionTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual(self.calls("PATCH")[0]["body"]["conclusion"], "success")
-        self.assertIn("| Claude | ✅ No findings", self.calls("PATCH")[-1]["body"]["body"])
+        self.assertIn("| ✅ Completed", self.calls("PATCH")[-1]["body"]["body"])
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
                          [f"repos/{REPO}/issues/7/reactions/70"])
         self.assertEqual(self.calls("POST")[0]["body"], {"content": "+1"})
@@ -2012,7 +2012,7 @@ class PRReactionTests(ScriptTestCase):
         body = self.calls("PATCH")[0]["body"]["body"]
         self.assertIn("⚠️ Claude Review stale", body)
         self.assertIn(f"**Current commit:** `{OTHER[:7]}` on `main` — not reviewed", body)
-        self.assertIn("| Claude | Last completed review: ✅ No findings", body)
+        self.assertIn("| ✅ Completed", body)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
                          [f"repos/{REPO}/issues/7/reactions/70"])
@@ -2168,7 +2168,7 @@ class PRReactionTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0)
         body = self.calls("PATCH")[0]["body"]["body"]
-        self.assertIn("| Claude | Last completed review: ⚠️ Findings", body)
+        self.assertIn("| ⚠️ Findings", body)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "action_required"))
 
     def test_stale_without_owner_does_not_clear_pr_reactions(self):
@@ -2201,7 +2201,7 @@ class PRReactionTests(ScriptTestCase):
     def test_stale_without_a_completed_review_does_not_imply_one_exists(self):
         body = check.status_comment_body(OTHER, "main", "stale")
         self.assertIn("Current head and base coverage is not established by this attempt.", body)
-        self.assertNotIn("Last completed review:", body)
+        self.assertNotIn("**Last completed review**", body)
 
     def test_legacy_terminal_result_is_preserved_on_first_stale_transition(self):
         legacy = status_comment()
@@ -2424,7 +2424,7 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         patches = self.calls("PATCH")
         self.assertEqual(patches[0]["body"]["conclusion"], "success")
-        self.assertIn("| Claude | ✅ No findings", patches[1]["body"]["body"])
+        self.assertIn("| ✅ Completed", patches[1]["body"]["body"])
         self.assertEqual(self.calls("DELETE")[0]["path"], f"repos/{REPO}/issues/7/reactions/70")
         self.assertEqual(len(self.calls("DELETE")), 1)
         self.assertEqual(self.calls()[-1]["method"], "POST")
