@@ -29,12 +29,9 @@ Claude GitHub App and default OIDC exchange.
 If you need [API-key support](https://github.com/JBallin/claude-review-runtime/issues/3),
 [open an issue](https://github.com/JBallin/claude-review-runtime/issues/new) with a concrete consumer use case.
 
-Used by [Ballin](https://github.com/JBallin/ballin-scripts): see its
-[manual caller example](https://github.com/JBallin/ballin-scripts/blob/main/.github/workflows/claude.yml)
-and [verified manual-review evidence](https://github.com/JBallin/claude-review-runtime/issues/29#issuecomment-5974625017).
-
-The Ballin evidence confirms one manual review. Broader public-consumer coverage,
-other-owner, fork, and GitHub Enterprise Server configurations remain unvalidated.
+Used by [Ballin](https://github.com/JBallin/ballin-scripts). See its
+[workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
+and [pull requests](https://github.com/JBallin/ballin-scripts/pulls) for examples in action.
 
 ## Read the result
 
