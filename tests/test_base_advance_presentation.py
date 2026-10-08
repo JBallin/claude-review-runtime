@@ -22,7 +22,8 @@ class BaseAdvancePresentationTests(unittest.TestCase):
         body = self.api.status["body"]
         label = "reviewed clean" if result == "success" else "reviewed with findings"
         self.assertIn("### Claude Review", body)
-        self.assertIn("Last completed review: " + ("✅ No findings" if result == "success" else "⚠️ Findings"), body)
+        self.assertIn("**Last completed review**", body)
+        self.assertIn("✅ Completed" if result == "success" else "⚠️ Findings", body)
         self.assertIn(f"**Current commit:** `{HEAD[:7]}` on `main` — {label}", body)
         self.assertIn("**Current baseline:** " + f"`{self.api.base_tip[:7]}` — integration not reviewed", body)
         self.assertIn(check.STATUS_REASONS["base_advanced"], body)
@@ -37,7 +38,8 @@ class BaseAdvancePresentationTests(unittest.TestCase):
     def assert_no_positive_result(self):
         body = self.api.status["body"]
         self.assertIn("Claude Review", body)
-        self.assertNotIn("| Claude | ✅ No findings", body)
+        if "| ✅ Completed" in body:
+            self.assertIn("**Last completed review**", body)
         self.assertNotIn(" — base advanced", body)
         self.assertIn(" — not reviewed", body)
 

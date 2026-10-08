@@ -581,22 +581,25 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     heading = "Claude Review" if state in ("success", "action_required") or base_advanced or (
         state == "stale" and completed_owner_verified and not owner_running
         and reason == STATUS_REASONS["stale"]) else headings[state]
+    if state == "stale" and owner_running:
+        heading = headings["in_progress"]
     lines += [f"### {heading}", ""]
     # Failure and running receipts remain ahead of historical completion.
     # Keep the fixed Reason line visible and parseable for terminal recovery.
     if reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]):
         lines += [f"**Reason:** {reason}", ""]
     if state == "stale" and owner_running:
-        lines += ["🔄 The latest review attempt is still in progress.", ""]
+        lines += [f"Claude is reviewing captured commit `{(owner['head'] if owner else head_sha)[:7]}`. "
+                  "Review coverage of the current head and baseline is not established.", ""]
     adverse = state in ("in_progress", "failure", "publication_incomplete")
     if adverse:
         lines += [messages[state], ""]
     if last_review:
-        row_status = "✅ No findings" if last_review[2] == "success" else "⚠️ Findings"
+        row_status = "✅ Completed" if last_review[2] == "success" else "⚠️ Findings"
         if state not in ("success", "action_required"):
-            row_status = "Last completed review: " + row_status
+            lines += ["**Last completed review**", ""]
         if completed:
-            row_status += "<br>" + relative_time(completed)
+            row_status += " " + relative_time(completed)
         row_commit = last_review[0]
         row_trigger = last_review_details.get("trigger")
         if row_trigger not in REVIEW_TRIGGERS:
@@ -604,12 +607,14 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     else:
         row_status = {"in_progress": "🔄 In progress", "failure": "❌ Incomplete",
                       "publication_incomplete": "❌ Incomplete", "stale": "Not reviewed"}[state]
+        if state == "stale" and owner_running:
+            row_status = "🔄 In progress"
         row_commit = owner["head"] if owner else head_sha
         row_trigger = review_trigger(trigger_label, owner) if state != "stale" else None
         row_trigger = row_trigger or "Not recorded"
-    lines += ["| Review | Status | Commit | Review trigger |", "| --- | --- | --- | --- |",
-              f"| Claude | {row_status} | `{row_commit[:7]}` | {row_trigger} |"]
-    if not adverse:
+    lines += ["| Status | Commit | Review trigger |", "| --- | --- | --- |",
+              f"| {row_status} | `{row_commit[:7]}` | {row_trigger} |"]
+    if not adverse and not (state == "stale" and owner_running):
         lines += ["", messages[state]]
     if base_advanced:
         lines += ["", "Integration with the current baseline has not been reviewed."]

@@ -149,7 +149,7 @@ unverifiable owner evidence suppresses presentation writes. A start can establis
 ownership on a legacy status; finalization cannot. Duplicate starts do not reset
 a completed result or reclaim presentation from a newer request.
 
-The status presents one Claude row with Review, Status, Commit, and Review trigger.
+The status presents one row with Status, Commit, and Review trigger.
 For a verified clean or findings result, Status shows its persisted completion time
 and Commit identifies the reviewed SHA. The current-version or integration caveat
 appears below the row; newer running, failed, or incomplete attempts remain prominent
