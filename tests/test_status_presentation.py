@@ -31,8 +31,8 @@ class StatusPresentationTests(unittest.TestCase):
                 self.assertIn(timestamp, visible)
                 self.assertEqual(body.count(timestamp), 1)
                 expected = 'Claude Review'
-                heading = next(line for line in visible.splitlines() if line.startswith('### '))
-                self.assertEqual(heading, '### ' + expected)
+                heading = next(line for line in visible.splitlines() if line.startswith('## '))
+                self.assertEqual(heading, '## ' + expected)
                 self.assertIn('This review doesn’t cover the current version.', visible)
                 self.assertNotIn('Claude Review stale', visible)
                 self.assertNotIn('coverage', visible)
@@ -64,14 +64,14 @@ class StatusPresentationTests(unittest.TestCase):
                 latest = 'Claude is reviewing captured commit' if state == 'in_progress' else '**Reason:**'
                 self.assertLess(visible.index(latest), visible.index('| Status |'))
                 self.assertNotIn('Claude Review passed', visible)
-                self.assertNotIn('### Last Claude review:', visible)
+                self.assertNotIn('## Last Claude review:', visible)
                 if state != 'in_progress':
                     reason = check.terminal_status_reason(self.api.status, check.status_owner(self.api.status))
                     self.assertIsNotNone(reason)
                     check.best_effort_status(OTHER, 'stale')
                     self.assertEqual(check.terminal_status_reason(self.api.status, check.status_owner(self.api.status)), reason)
                 else:
-                    self.assertIn('### 🔄 Claude Review in progress', visible)
+                    self.assertIn('## 🔄 Claude Review in progress', visible)
                     self.assertIn(f'Claude is reviewing captured commit `{HEAD[:7]}`.', visible)
                     self.assertIn('Review coverage of the current head and baseline is not established.', visible)
                     self.assertLess(visible.index('in progress'), visible.index('**Last completed review**'))
@@ -85,27 +85,62 @@ class StatusPresentationTests(unittest.TestCase):
         self.api.pr['head']['sha'] = OTHER
         check.best_effort_status(OTHER, 'stale')
         visible = self.visible(self.api.status['body'])
-        self.assertIn('### 🔄 Claude Review in progress', visible)
+        self.assertIn('## 🔄 Claude Review in progress', visible)
         self.assertIn(f'captured commit `{HEAD[:7]}`', visible)
         self.assertIn('current head and baseline is not established', visible)
         self.assertNotIn('**Last completed review**', visible)
-        self.assertIn(f'| 🔄 In progress | `{HEAD[:7]}` | Not recorded |', visible)
+        self.assertIn(f'| 🔄 **In progress** | `{HEAD[:7]}` | Not recorded |', visible)
         self.assertNotIn('Not reviewed', visible)
         self.assertEqual(visible.count('coverage'), 1)
         self.assertEqual(check.status_state(self.api.status), 'stale')
         self.assertTrue(check.status_owner_running(self.api.status))
 
     def test_compact_completion_and_findings_remain_distinct(self):
-        for state, label in (('success', '✅ Completed'), ('action_required', '⚠️ Findings')):
+        for state, label in (('success', '✅ **Completed**'), ('action_required', '⚠️ **Findings**')):
             body = check.status_comment_body(HEAD, 'main', state,
                                             completed_at='2026-10-07T13:09:19Z')
             visible = self.visible(body)
-            self.assertIn('### Claude Review', visible)
+            self.assertIn('## Claude Review', visible)
             self.assertIn('| Status | Commit | Review trigger |', visible)
             self.assertIn(f'| {label} ' + check.relative_time('2026-10-07T13:09:19Z'), visible)
             self.assertNotIn('| Review |', visible)
             self.assertNotIn('<br>', visible)
             self.assertNotIn('Last completed review', visible)
+            if state == 'success':
+                self.assertNotIn('no findings', visible.lower())
+                self.assertIn('**Result:** No findings.', body.split('<details>')[1])
+            else:
+                self.assertIn('inline review threads', visible)
+
+    def test_uncompleted_status_labels_are_bold(self):
+        for state, label in (('in_progress', '🔄 **In progress**'),
+                             ('failure', '❌ **Incomplete**'),
+                             ('publication_incomplete', '❌ **Incomplete**'),
+                             ('stale', '**Not reviewed**')):
+            with self.subTest(state=state):
+                body = check.status_comment_body(HEAD, 'main', state)
+                visible = self.visible(body)
+                self.assertIn(f'| {label} | `{HEAD[:7]}` | Not recorded |', visible)
+                self.assertNotIn('<relative-time', visible)
+
+    def test_workflow_links_are_collapsed_and_keep_attempt_association(self):
+        owner = self.start()
+        attempt_url = f"https://github.com/{owner['repo']}/actions/runs/{owner['run']}"
+        reviewed_url = f"https://github.com/{owner['repo']}/actions/runs/4"
+        for state in ('success', 'action_required', 'failure', 'publication_incomplete', 'in_progress', 'stale'):
+            with self.subTest(state=state):
+                body = check.status_comment_body(OTHER, 'main', state, owner=owner,
+                    owner_running=state in ('in_progress', 'stale'),
+                    last_review=(HEAD, 'main', 'success') if state == 'stale' else None,
+                    last_review_details={'run_url': reviewed_url})
+                self.assertNotIn('workflow run', self.visible(body).lower())
+                self.assertIn('<summary>ℹ️ Details</summary>', body)
+                details = body.split('<details>')[1].split('</details>')[0]
+                label = 'Attempt workflow run' if state == 'stale' else 'Workflow run'
+                self.assertIn(f'[{label}]({attempt_url})', details)
+                if state == 'stale':
+                    self.assertIn(f'[Reviewed workflow run]({reviewed_url})', details)
+                self.assertEqual(body.count(attempt_url), 1)
 
     def test_collapsed_reason_remains_parseable_and_duplicate_rejected(self):
         self.start()
@@ -125,7 +160,7 @@ class StatusPresentationTests(unittest.TestCase):
         self.api.base_tip = OTHER
         check.best_effort_status(HEAD, 'stale')
         visible = self.visible(self.api.status['body'])
-        self.assertIn('### Claude Review', visible)
+        self.assertIn('## Claude Review', visible)
         self.assertIn('Integration with the current baseline has not been reviewed.', visible)
         self.assertIn(check.relative_time('2026-10-07T13:09:19Z'), visible)
 

@@ -51,7 +51,7 @@ class StatusTableTests(unittest.TestCase):
                             self.target(kind)
                         self.start()
                         self.finish(result)
-                        expected = ("✅ Completed" if result == "success" else "⚠️ Findings")
+                        expected = ("✅ **Completed**" if result == "success" else "⚠️ **Findings**")
                         self.assertEqual(self.row(), f"| {expected} {check.relative_time(DONE)} | `{HEAD[:7]}` | {label} |")
                         if movement == "head":
                             self.api.pr["head"]["sha"] = OTHER
@@ -90,7 +90,7 @@ class StatusTableTests(unittest.TestCase):
                                  "PR opened for review" if recorded else None)
                 self.finish("action_required")
                 self.assertTrue(self.row().endswith("| " + ("PR opened for review" if recorded else "Not recorded") + " |"))
-                self.assertIn("⚠️ Findings", self.row())
+                self.assertIn("⚠️ **Findings**", self.row())
 
     def test_newer_attempt_prominent_while_history_keeps_its_original_event(self):
         for state in ("in_progress", "failure", "publication_incomplete"):
@@ -105,7 +105,7 @@ class StatusTableTests(unittest.TestCase):
                     check.best_effort_status(HEAD, state, completed_at="2026-10-07T14:00:00Z")
                 latest = "Claude is reviewing this commit." if state == "in_progress" else "**Reason:**"
                 self.assertLess(self.visible().index(latest), self.visible().index(HEADER))
-                self.assertIn("✅ Completed", self.row())
+                self.assertIn("✅ **Completed**", self.row())
                 self.assertIn("**Last completed review**", self.visible())
                 self.assertTrue(self.row().endswith("| PR opened for review |"))
                 self.assertNotIn("14:00:00Z", self.row())
