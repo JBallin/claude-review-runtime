@@ -104,7 +104,7 @@ class StatusTableTests(unittest.TestCase):
                            DETAILS_URL="https://github.com/owner/repo/actions/runs/6")
                 if state != "in_progress":
                     check.best_effort_status(HEAD, state, completed_at="2026-10-07T14:00:00Z")
-                latest = "Claude is reviewing this commit." if state == "in_progress" else "**Reason:**"
+                latest = "## 🔄 Claude Review in progress" if state == "in_progress" else "**Reason:**"
                 self.assertLess(self.visible().index(latest), self.visible().index(HEADER))
                 self.assertIn("✅ **Completed**", self.row())
                 self.assertIn("**Last completed review**", self.visible())

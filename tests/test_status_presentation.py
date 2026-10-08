@@ -82,6 +82,43 @@ class StatusPresentationTests(unittest.TestCase):
                     self.assertEqual(visible.count('in progress'), 1)
                     self.assertEqual(visible.count('coverage'), 1)
 
+    def test_running_copy_is_compact_but_unavailable_check_warning_remains(self):
+        for history in (None, (OTHER, 'main', 'success')):
+            for available in (True, False):
+                with self.subTest(history=history, available=available):
+                    body = check.status_comment_body(HEAD, 'main', 'in_progress',
+                        last_review=history, check_available=available)
+                    visible = self.visible(body)
+                    self.assertIn('## 🔄 Claude Review in progress', visible)
+                    self.assertNotIn('Claude is reviewing this commit.', visible)
+                    if available:
+                        self.assertNotIn('Claude is reviewing this commit', visible)
+                    else:
+                        self.assertIn('authoritative Check publication is unavailable.', visible)
+                    if history:
+                        self.assertIn('**Last completed review**', visible)
+                        self.assertIn('| ✅ **Completed** |', visible)
+                    else:
+                        self.assertIn('| 🔄 **In progress** |', visible)
+
+    def test_failure_reason_replaces_repetition_but_missing_reason_keeps_fallback(self):
+        owner = self.start()
+        for reason in (None, check.STATUS_REASONS['incomplete'], check.STATUS_REASONS['stale']):
+            with self.subTest(reason=reason):
+                body = check.status_comment_body(HEAD, 'main', 'failure', owner=owner,
+                    reason=reason, last_review=(OTHER, 'main', 'success'))
+                visible = self.visible(body)
+                fallback = 'This review did not complete reliably; this commit is not approved by it.'
+                self.assertIn('## ❌ Claude Review incomplete', visible)
+                self.assertIn('**Last completed review**', visible)
+                if reason == check.STATUS_REASONS['incomplete']:
+                    self.assertIn('**Reason:** ' + reason, visible)
+                    self.assertNotIn(fallback, visible)
+                    self.assertEqual(check.terminal_status_reason({**self.api.status, 'body': body}, owner), reason)
+                else:
+                    self.assertIn(fallback, visible)
+                    self.assertNotIn('**Reason:**', visible)
+
     def test_stale_running_without_history_still_leads_with_active_attempt(self):
         self.start()
         self.api.pr['head']['sha'] = OTHER
