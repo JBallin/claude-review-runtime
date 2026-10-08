@@ -22,7 +22,7 @@ class BaseAdvancePresentationTests(unittest.TestCase):
         body = self.api.status["body"]
         label = "reviewed clean" if result == "success" else "reviewed with findings"
         self.assertIn("## Claude Review", body)
-        self.assertIn("**Last completed review**", body)
+        self.assertNotIn("**Last completed review**", body)
         self.assertIn("✅ **Completed**" if result == "success" else "⚠️ **Findings**", body)
         self.assertIn(f"**Current commit:** `{HEAD[:7]}` on `main` — {label}", body)
         self.assertIn("**Current baseline:** " + f"`{self.api.base_tip[:7]}` — integration not reviewed", body)
@@ -85,7 +85,7 @@ class BaseAdvancePresentationTests(unittest.TestCase):
                 check.best_effort_status(self.api.pr["head"]["sha"], "stale")
                 body = self.api.status["body"]
                 self.assertIn("## Claude Review", body)
-                self.assertIn("This review doesn’t cover the current version.", body)
+                self.assertIn("⚠️ This completed review doesn’t cover the current version.", body)
                 self.assertNotIn(" — base advanced", body)
                 self.assertIn(" — not reviewed", body)
                 self.assertEqual(check.status_state(self.api.status), "stale")

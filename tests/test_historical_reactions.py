@@ -72,7 +72,8 @@ class HistoricalReactionTests(unittest.TestCase):
                                 self.assertIn("| Status | Commit | Review trigger |", visible)
                                 self.assertIn(check.relative_time(DONE), visible)
                                 self.assertIn("Integration with the current baseline has not been reviewed."
-                                              if field == "base" else "This review doesn’t cover the current version.", visible)
+                                              if field == "base" else "⚠️ This completed review doesn’t cover the current version."
+                                              if result == "success" else "⚠️ These recorded findings are from a review of a previous version.", visible)
                             self.assertFalse(any("/check-runs" in path for _, path, _ in self.writes()))
 
     def test_newer_attempt_and_same_owner_failure_block_old_clean_signal(self):

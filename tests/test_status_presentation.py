@@ -33,7 +33,9 @@ class StatusPresentationTests(unittest.TestCase):
                 expected = 'Claude Review'
                 heading = next(line for line in visible.splitlines() if line.startswith('## '))
                 self.assertEqual(heading, '## ' + expected)
-                self.assertIn('This review doesn’t cover the current version.', visible)
+                self.assertIn('⚠️ This completed review doesn’t cover the current version.' if result == 'success'
+                              else '⚠️ These recorded findings are from a review of a previous version.', visible)
+                self.assertNotIn('**Last completed review**', visible)
                 self.assertNotIn('Claude Review stale', visible)
                 self.assertNotIn('coverage', visible)
                 self.assertNotIn('head and base', visible)
