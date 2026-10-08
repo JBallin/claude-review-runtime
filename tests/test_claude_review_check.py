@@ -2255,16 +2255,18 @@ class ManualCompletionTests(ScriptTestCase):
         marker = check.completion_marker(REPO, "7", HEAD, "main", BASE_TIP, MERGE_BASE)
         self.assertEqual(body, (
             f"{marker}\n"
-            "🎉 Claude review completed with no findings\n\n"
+            "🎉 Claude review completed with no findings on "
+            f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).\n\n"
             "<details>\n<summary>ℹ️ Details</summary>\n\n"
-            f"**Reviewed commit:** [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})\n\n"
             f"Compared against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) · "
             "[Review run](https://github.com/owner/repo/actions/runs/1)\n\n</details>"
         ))
         visible, details = body.split("<details>", 1)
-        self.assertNotIn("/commit/", visible)
+        self.assertIn(f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})", visible)
+        self.assertEqual(body.count(f"/commit/{HEAD}"), 1)
+        self.assertNotIn("Compared against", visible)
         self.assertNotIn("Review run", visible)
-        self.assertIn("**Reviewed commit:**", details)
+        self.assertIn(f"/commit/{BASE_TIP}", details)
         for identity in (HEAD, BASE_TIP, MERGE_BASE):
             self.assertIn(identity, body)
         self.assertIn("🎉 Claude review completed with no findings", body)

@@ -1303,9 +1303,9 @@ def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_
 def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url):
     return (
         f"{marker}\n"
-        "🎉 Claude review completed with no findings\n\n"
+        "🎉 Claude review completed with no findings on "
+        f"[`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}).\n\n"
         "<details>\n<summary>ℹ️ Details</summary>\n\n"
-        f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha})\n\n"
         f"Compared against {inline_code(base_ref)} at "
         f"[`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) · "
         f"[Review run]({details_url})\n\n</details>"
