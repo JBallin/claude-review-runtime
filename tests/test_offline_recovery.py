@@ -533,7 +533,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                         self.assertIn(f"**Current baseline:** `{OTHER[:7]}` — integration not reviewed", body)
                         self.assertIn(f"**Reviewed baseline:** `{BASE_TIP[:7]}`", body)
                         self.assertIn(f"[Reviewed workflow run]({self.env['DETAILS_URL']})", body)
-                        self.assertIn("### Claude Review", body)
+                        self.assertIn("## Claude Review", body)
                         self.assertIn(check.STATUS_REASONS["base_advanced"], body)
                         self.assertNotIn("runs/4)", body)
                         self.assertEqual(state["checks"][0], old_check)
@@ -557,7 +557,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                         })
                         self.assertIn(check.relative_time(completed["completed_at"]), refreshed["body"])
                         self.assertIn(f"**Current baseline:** `{MERGE_BASE[:7]}` — integration not reviewed", refreshed["body"])
-                        self.assertIn("### Claude Review", refreshed["body"])
+                        self.assertIn("## Claude Review", refreshed["body"])
                         self.assertNotIn("runs/6)", refreshed["body"])
 
     def test_deleted_finding_after_outage_survives_failed_attempt_and_restart(self):

@@ -503,7 +503,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     }
     messages = {
         "in_progress": "Claude is reviewing this commit.",
-        "success": "Claude completed this review with no findings.",
         "action_required": "Claude recorded findings. Assess them in the inline review threads.",
         "failure": "This review did not complete reliably; this commit is not approved by it.",
         "publication_incomplete": "The authoritative Check result could not be published. Treat this commit as not reviewed.",
@@ -583,7 +582,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         and reason == STATUS_REASONS["stale"]) else headings[state]
     if state == "stale" and owner_running:
         heading = headings["in_progress"]
-    lines += [f"### {heading}", ""]
+    lines += [f"## {heading}", ""]
     # Failure and running receipts remain ahead of historical completion.
     # Keep the fixed Reason line visible and parseable for terminal recovery.
     if reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]):
@@ -595,7 +594,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if adverse:
         lines += [messages[state], ""]
     if last_review:
-        row_status = "✅ Completed" if last_review[2] == "success" else "⚠️ Findings"
+        row_status = "✅ **Completed**" if last_review[2] == "success" else "⚠️ **Findings**"
         if state not in ("success", "action_required"):
             lines += ["**Last completed review**", ""]
         if completed:
@@ -605,22 +604,24 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         if row_trigger not in REVIEW_TRIGGERS:
             row_trigger = "Not recorded"
     else:
-        row_status = {"in_progress": "🔄 In progress", "failure": "❌ Incomplete",
-                      "publication_incomplete": "❌ Incomplete", "stale": "Not reviewed"}[state]
+        row_status = {"in_progress": "🔄 **In progress**", "failure": "❌ **Incomplete**",
+                      "publication_incomplete": "❌ **Incomplete**", "stale": "**Not reviewed**"}[state]
         if state == "stale" and owner_running:
-            row_status = "🔄 In progress"
+            row_status = "🔄 **In progress**"
         row_commit = owner["head"] if owner else head_sha
         row_trigger = review_trigger(trigger_label, owner) if state != "stale" else None
         row_trigger = row_trigger or "Not recorded"
     lines += ["| Status | Commit | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | `{row_commit[:7]}` | {row_trigger} |"]
-    if not adverse and not (state == "stale" and owner_running):
+    if state != "success" and not adverse and not (state == "stale" and owner_running):
         lines += ["", messages[state]]
     if base_advanced:
         lines += ["", "Integration with the current baseline has not been reviewed."]
     if state == "stale" and last_review and last_review[2] == "action_required":
         lines += ["", "Recorded findings remain in the inline review threads."]
-    lines += ["", "<details>", "<summary>Review details</summary>", ""]
+    lines += ["", "<details>", "<summary>ℹ️ Details</summary>", ""]
+    if state == "success":
+        lines += ["**Result:** No findings.", ""]
     lines += [
         f"**Current commit:** `{head_sha[:7]}`" +
         (f" on {inline_code(base_ref)} — " +
@@ -640,7 +641,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines.append(f"**Reviewed baseline:** `{last_review_details['base_sha'][:7]}`")
     if reason in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]):
         lines += ["", f"**Reason:** {reason}"]
-    lines += ["", "</details>"]
     attempt_url = (env("DETAILS_URL") if not owner else
                    f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
     historical = state == "stale" and last_review is not None
@@ -650,6 +650,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if run_url and (historical or not (owner and state == "stale")):
         label = "Reviewed workflow run" if historical else "Workflow run"
         lines += ["", f"[{label}]({run_url})"]
+    lines += ["", "</details>"]
     return "\n".join(lines)
 
 
