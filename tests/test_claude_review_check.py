@@ -1681,7 +1681,7 @@ class StatusCommentTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0)
         body = self.calls("PATCH")[0]["body"]["body"]
         self.assertIn(OTHER, body)
-        self.assertIn("does not establish a completed review", body)
+        self.assertIn("Current head and base coverage is not established by this attempt.", body)
         self.assertEqual(check.status_head({"body": body}), OTHER)
 
     def test_base_ref_edit_stales_prior_status_even_when_head_is_unchanged(self):
@@ -1694,7 +1694,7 @@ class StatusCommentTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0)
         body = self.calls("PATCH")[0]["body"]["body"]
-        self.assertIn("does not establish a completed review", body)
+        self.assertIn("Current head and base coverage is not established by this attempt.", body)
         self.assertEqual(check.status_head({"body": body}), HEAD)
         self.assertEqual(check.status_base_ref({"body": body}), "release")
 
@@ -2194,7 +2194,7 @@ class PRReactionTests(ScriptTestCase):
 
     def test_stale_without_a_completed_review_does_not_imply_one_exists(self):
         body = check.status_comment_body(OTHER, "main", "stale")
-        self.assertIn("does not establish a completed review", body)
+        self.assertIn("Current head and base coverage is not established by this attempt.", body)
         self.assertNotIn("**Last reviewed:**", body)
 
     def test_legacy_terminal_result_is_preserved_on_first_stale_transition(self):
