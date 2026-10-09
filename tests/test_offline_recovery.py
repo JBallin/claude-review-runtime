@@ -529,9 +529,9 @@ class OfflineRecoveryTests(unittest.TestCase):
                         body = state["status"]["body"]
                         self.assertIn(check.relative_time(completed["completed_at"]), body)
                         label = "reviewed clean" if conclusion == "success" else "reviewed with findings"
-                        self.assertIn(f"**Current commit:** `{HEAD[:7]}` on `main` — {label}", body)
-                        self.assertIn(f"**Current baseline:** `{OTHER[:7]}` — integration not reviewed", body)
-                        self.assertIn(f"**Reviewed baseline:** `{BASE_TIP[:7]}`", body)
+                        self.assertIn(f"**Current commit:** {check.commit_link(HEAD, REPO)} on `main` — {label}", body)
+                        self.assertIn(f"**Current baseline:** {check.commit_link(OTHER, REPO)} — integration not reviewed", body)
+                        self.assertIn(f"**Reviewed baseline:** {check.commit_link(BASE_TIP, REPO)}", body)
                         self.assertIn(f"[Reviewed workflow run]({self.env['DETAILS_URL']})", body)
                         self.assertIn("## Claude Review", body)
                         self.assertIn(check.STATUS_REASONS["base_advanced"], body)
@@ -556,7 +556,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                             "completed_at": completed["completed_at"], "generation": owner["generation"],
                         })
                         self.assertIn(check.relative_time(completed["completed_at"]), refreshed["body"])
-                        self.assertIn(f"**Current baseline:** `{MERGE_BASE[:7]}` — integration not reviewed", refreshed["body"])
+                        self.assertIn(f"**Current baseline:** {check.commit_link(MERGE_BASE, REPO)} — integration not reviewed", refreshed["body"])
                         self.assertIn("## Claude Review", refreshed["body"])
                         self.assertNotIn("runs/6)", refreshed["body"])
 

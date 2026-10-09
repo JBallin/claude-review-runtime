@@ -199,7 +199,7 @@ class OwnershipTests(unittest.TestCase):
         check.cmd_stale()
         self.assertEqual(check.last_completed_review_details(self.api.status), {"base_sha": BASE_TIP, "run_url": old_url,
                                                                             "generation": old["generation"]})
-        self.assertIn(f"**Reviewed baseline:** `{BASE_TIP[:7]}`", self.api.status["body"])
+        self.assertIn(f"**Reviewed baseline:** {check.commit_link(BASE_TIP)}", self.api.status["body"])
         self.assertIn(f"[Reviewed workflow run]({old_url})", self.api.status["body"])
 
     def test_legacy_review_does_not_inherit_current_base_or_run_metadata(self):
@@ -746,7 +746,7 @@ class OwnershipTests(unittest.TestCase):
                 self.assertEqual(check.status_state(self.api.status), "stale")
                 self.assertEqual((owner["head"], owner["base"], owner["base_ref"]), (HEAD, BASE_TIP, "main"))
                 self.assertIn("superseded", self.api.status["body"])
-                self.assertIn(f"**Captured baseline:** `{BASE_TIP[:7]}`", self.api.status["body"])
+                self.assertIn(f"**Captured baseline:** {check.commit_link(BASE_TIP)}", self.api.status["body"])
                 self.assertIn("/actions/runs/5", self.api.status["body"])
                 self.assertEqual(self.owned(self.opening), ["eyes"])
                 self.start()  # Retry does not recreate/reset the existing stale owner.
