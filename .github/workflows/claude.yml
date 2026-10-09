@@ -18,7 +18,7 @@ name: Claude
 on:
   workflow_call:
     secrets:
-      CLAUDE_CODE_OAUTH_TOKEN:
+      ANTHROPIC_API_KEY:
         required: true
 
 permissions:
@@ -288,6 +288,14 @@ jobs:
         with:
           name: pr-review-snapshot
           path: ${{ runner.temp }}/pr-review
+      - name: Validate model authentication
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY is required by the experimental api-key runtime."
+            exit 1
+          fi
       - name: Review pull request
         id: review
         uses: anthropics/claude-code-action@cab360f6565aa35a51d6ce9e43f1f4287c0a32ea
@@ -297,7 +305,7 @@ jobs:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
         with:
           classify_inline_comments: "false"
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # Restores .claude/, .mcp.json, etc. from the PR's actual base
           # branch rather than the repository default -- agent mode's own
           # fallback is "still secure" per the action's source but less

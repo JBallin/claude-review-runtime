@@ -9,11 +9,16 @@ workflows by commit SHA, subject to their GitHub Actions policies. Publication
 does not validate a new consumer configuration; the tested boundaries are listed
 below and in the [validation summary](validation.md).
 
-Model authentication uses the consumer's existing Claude OAuth credential stored
-as the Actions secret `CLAUDE_CODE_OAUTH_TOKEN`. This runtime does not accept
-`ANTHROPIC_API_KEY`; API-key support is deferred (see the
-[authentication assessment](https://github.com/JBallin/claude-review-runtime/issues/3#issuecomment-5941743869)).
-This is the runtime's contract, not a limitation of Anthropic's action.
+This guide describes the experimental `api-key` branch. It has not been
+live-API-tested; source availability and offline tests do not establish validated
+API-key support. The [main branch](https://github.com/JBallin/claude-review-runtime/tree/main)
+remains OAuth-only.
+
+Model authentication requires the consumer Actions secret `ANTHROPIC_API_KEY`.
+Only that named secret is accepted by this variant; do not forward
+`CLAUDE_CODE_OAUTH_TOKEN` or use `secrets: inherit`. Missing or empty API-key
+configuration fails before the model action. A nonempty invalid key requires
+provider validation and is not detected by the offline check.
 GitHub authentication uses the Anthropic Claude GitHub App and the action's
 default OIDC token exchange. The App must have access to the consumer. No PAT,
 custom App credential, or GitHub token override is accepted by the runtime. Adding credentials or access grants
@@ -29,8 +34,8 @@ under the [MIT License](../LICENSE).
 ## Install the callers
 
 Install three separate workflow files in the consumer repository. Replace
-`<full-reviewed-runtime-sha>` with one reviewed 40-character commit SHA in all
-three files. Have the caller installation reviewed by a human and merged to
+`<full-reviewed-runtime-sha>` with one reviewed 40-character commit SHA reachable from `api-key`
+in all three files. Have the caller installation reviewed by a human and merged to
 the consumer's default branch, then validate on a separate PR that does not
 modify the workflows. See [installation and incomplete reviews](review-guide.md#installation-and-incomplete-reviews)
 for default Anthropic App/OIDC validation limits and completion evidence.
@@ -59,7 +64,7 @@ jobs:
       id-token: write
     uses: JBallin/claude-review-runtime/.github/workflows/claude-review.yml@<full-reviewed-runtime-sha>
     secrets:
-      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 The runtime preserves draft, fork, and Dependabot exclusions. Automatic review
@@ -95,7 +100,7 @@ jobs:
       id-token: write
     uses: JBallin/claude-review-runtime/.github/workflows/claude.yml@<full-reviewed-runtime-sha>
     secrets:
-      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 For the current reusable entrypoint, post `/claude-review` as the entire comment,
@@ -125,7 +130,8 @@ jobs:
     uses: JBallin/claude-review-runtime/.github/workflows/claude-review-status.yml@<full-reviewed-runtime-sha>
 ```
 
-This entrypoint needs no OAuth secret, OIDC permission, or Check write permission.
+This entrypoint needs no model-authentication secret, OIDC permission, or Check
+write permission.
 It refreshes existing presentation after head changes and qualifying base
 retargeting edits; it does not create a review when none exists.
 

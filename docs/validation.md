@@ -1,5 +1,20 @@
 # Validation and limitations
 
+## API-key variant boundary
+
+The `api-key` branch is experimental and has not been live-API-tested. Its
+required secret and action input are API-key-only; GitHub App/OIDC, permissions,
+review identity, completion verification, immediate finding publication, and
+trusted finalization retain the main-branch contract. Offline configuration and
+regression tests do not validate a real key, App/OIDC execution, clean model
+completion, inline publication through a live API-key run, or provider secret
+handling. Those need a separately authorized live fixture matrix and budget.
+
+The historical live results below exercised OAuth. This repository's self-review
+callers remain pinned to the existing OAuth runtime and forward its OAuth secret;
+they do not exercise this variant. Consumer adoption is a separate reviewed
+change, with all three callers pinned to one reviewed full `api-key` commit SHA.
+
 ## Current offline evidence
 
 [PR 22](https://github.com/JBallin/claude-review-runtime/pull/22) added test-only

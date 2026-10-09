@@ -102,12 +102,12 @@ requirements in place.
 
 ## Permissions and authentication
 
-All callers start with `permissions: {}`. Only the named OAuth secret is
+All callers start with `permissions: {}`. Only the named API-key secret is
 forwarded, and only to the two review calls.
 
-| Job role | Workflow-token permissions | OAuth secret |
+| Job role | Workflow-token permissions | Model secret |
 | --- | --- | --- |
-| Automatic or manual review call | `contents: read`, `pull-requests: write`, `checks: write`, `issues: write`, `id-token: write` | `CLAUDE_CODE_OAUTH_TOKEN` |
+| Automatic or manual review call | `contents: read`, `pull-requests: write`, `checks: write`, `issues: write`, `id-token: write` | `ANTHROPIC_API_KEY` |
 | Manual eligibility | `pull-requests: read` | None |
 | Status call | `contents: read`, `pull-requests: write`, `issues: write` | None |
 
@@ -246,8 +246,8 @@ credential, or permission is required.
 ## Installation and incomplete reviews
 
 Before live use, the owner must confirm the existing Anthropic App has access
-to this repository and make the existing OAuth credential available as the
-repository Actions secret `CLAUDE_CODE_OAUTH_TOKEN`. Secret-name metadata verifies
+to this repository and make the API key available as the
+repository Actions secret `ANTHROPIC_API_KEY`. Secret-name metadata verifies
 presence, not credential validity or successful live App/OIDC execution. The
 caller setup does not install an App or configure credentials. New credentials
 or access grants require a separate decision.
