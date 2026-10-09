@@ -52,7 +52,7 @@ class StatusTableTests(unittest.TestCase):
                         self.start()
                         self.finish(result)
                         expected = ("✅ **Completed**" if result == "success" else "⚠️ **Findings**")
-                        self.assertEqual(self.row(), f"| {expected} {check.relative_time(DONE)} | `{HEAD[:7]}` | {label} |")
+                        self.assertEqual(self.row(), f"| {expected} {check.relative_time(DONE)} | {check.commit_link(HEAD)} | {label} |")
                         if movement == "head":
                             self.api.pr["head"]["sha"] = OTHER
                         elif movement == "base":
@@ -66,7 +66,7 @@ class StatusTableTests(unittest.TestCase):
                             self.assertIn(expected, self.row())
                             self.assertNotIn("**Last completed review**", self.visible())
                             self.assertNotIn("Last completed review", self.row())
-                            self.assertTrue(self.row().endswith(f"| `{HEAD[:7]}` | {label} |"))
+                            self.assertTrue(self.row().endswith(f"| {check.commit_link(HEAD)} | {label} |"))
                             self.assertIn(check.relative_time(DONE), self.row())
                             self.assertEqual(check.last_completed_review_details(self.api.status)["trigger"], label)
                             caveat = ("Integration with the current baseline has not been reviewed."
@@ -142,7 +142,7 @@ class StatusTableTests(unittest.TestCase):
                 self.assertNotIn("trigger", details)
                 body = check.status_comment_body(OTHER, "main", "stale", owner=check.status_owner(original),
                     last_review=check.last_completed_review(original), last_review_details=details)
-                self.assertIn(f"| `{HEAD[:7]}` | Not recorded |", body)
+                self.assertIn(f"| {check.commit_link(HEAD)} | Not recorded |", body)
 
     def test_trigger_must_match_accepted_request_kind_and_no_codex_markers(self):
         for label in (None, "synchronize", "Manual request"):
