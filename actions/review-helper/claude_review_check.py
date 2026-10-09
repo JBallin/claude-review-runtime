@@ -457,6 +457,14 @@ def inline_code(value):
     return f"{ticks}{padding}{value}{padding}{ticks}"
 
 
+def commit_link(sha, repo=None):
+    repo = repo or env("REPO")
+    if not repo:
+        return inline_code(sha[:7])
+    return (f"[{inline_code(sha[:7])}]"
+            f"({env('GITHUB_SERVER_URL', 'https://github.com')}/{repo}/commit/{sha})")
+
+
 def valid_review_timestamp(value):
     """Accept only canonical UTC timestamps from trusted persisted metadata."""
     if not isinstance(value, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", value):
@@ -592,7 +600,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if visible_reason:
         lines += [f"**Reason:** {reason}", ""]
     if state == "stale" and owner_running:
-        lines += [f"Claude is reviewing captured commit `{(owner['head'] if owner else head_sha)[:7]}`. "
+        lines += [f"Claude is reviewing captured commit {commit_link(owner['head'] if owner else head_sha, owner['repo'] if owner else None)}. "
                   "Review coverage of the current head and baseline is not established.", ""]
     adverse = state in ("in_progress", "failure", "publication_incomplete")
     if adverse and not ((state == "in_progress" and check_available)
@@ -619,45 +627,60 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         row_commit = owner["head"] if owner else head_sha
         row_trigger = review_trigger(trigger_label, owner) if state != "stale" else None
         row_trigger = row_trigger or "Not recorded"
+    repo = owner["repo"] if owner else env("REPO")
     lines += ["| Status | Commit | Review trigger |", "| --- | --- | --- |",
-              f"| {row_status} | `{row_commit[:7]}` | {row_trigger} |"]
+              f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
     if state != "success" and not adverse and not (state == "stale" and owner_running):
         lines += ["", messages[state]]
     if base_advanced:
         lines += ["", "⚠️ Integration with the current baseline has not been reviewed."]
     if state == "stale" and last_review and last_review[2] == "action_required":
         lines += ["", "Recorded findings remain in the inline review threads."]
+    attempt_url = (env("DETAILS_URL") if not owner else
+                   f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
+    historical = last_review is not None and state not in ("success", "action_required")
+    reviewed_url = last_review_details.get("run_url") if historical else None
+    separate_attempt = historical and (
+        attempt_url != reviewed_url
+        or (owner and last_review_details.get("generation")
+            and last_review_details["generation"] != owner["generation"])
+    )
     lines += ["", "<details>", "<summary>ℹ️ Details</summary>", ""]
     if state == "success":
         lines += ["**Result:** No findings.", ""]
     lines += [
-        f"**Current commit:** `{head_sha[:7]}`" +
+        f"**Current commit:** {commit_link(head_sha, repo)}" +
         (f" on {inline_code(base_ref)} — " +
          ("reviewed clean" if last_review[2] == "success" else "reviewed with findings")
          if base_advanced else f" on {inline_code(base_ref)} — not reviewed" if state == "stale" else ""),
+        "",
     ]
     if owner and (started := owner_start_time(owner)):
-        lines.append(f"**Started:** {relative_time(started)}")
+        label = "Attempt started" if separate_attempt else "Started"
+        lines += [f"**{label}:** {relative_time(started)}", ""]
     if owner:
-        if state == "stale":
-            lines.append(f"**Captured commit:** `{owner['head'][:7]}`")
-        lines.append(f"**Captured baseline:** `{owner['base'][:7]}` on {inline_code(owner['base_ref'])}")
+        if state == "stale" or separate_attempt:
+            label = "Attempt commit" if separate_attempt else "Captured commit"
+            lines += [f"**{label}:** {commit_link(owner['head'], repo)}", ""]
+        label = "Attempt baseline" if separate_attempt else "Captured baseline"
+        lines += [f"**{label}:** {commit_link(owner['base'], repo)} on {inline_code(owner['base_ref'])}", ""]
     if state == "stale" and base_sha:
-        lines.append(f"**Current baseline:** `{base_sha[:7]}` — " +
-                     ("integration not reviewed" if base_advanced else "not reviewed"))
-    if state == "stale" and last_review_details.get("base_sha"):
-        lines.append(f"**Reviewed baseline:** `{last_review_details['base_sha'][:7]}`")
+        lines += [f"**Current baseline:** {commit_link(base_sha, repo)} — " +
+                  ("integration not reviewed" if base_advanced else "not reviewed"), ""]
+    if historical and last_review_details.get("base_sha"):
+        lines += [f"**Reviewed baseline:** {commit_link(last_review_details['base_sha'], repo)} "
+                  f"on {inline_code(last_review[1])}", ""]
     if reason in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]):
-        lines += ["", f"**Reason:** {reason}"]
-    attempt_url = (env("DETAILS_URL") if not owner else
-                   f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
-    historical = state == "stale" and last_review is not None
-    if owner and state == "stale" and (not historical or last_review_details.get("run_url") != attempt_url):
-        lines += ["", f"[Attempt workflow run]({attempt_url})"]
-    run_url = last_review_details.get("run_url") if historical else attempt_url
-    if run_url and (historical or not (owner and state == "stale")):
-        label = "Reviewed workflow run" if historical else "Workflow run"
-        lines += ["", f"[{label}]({run_url})"]
+        lines += [f"**Reason:** {reason}", ""]
+    if historical:
+        if attempt_url and attempt_url != reviewed_url:
+            lines += [f"[Attempt workflow run]({attempt_url})", ""]
+        if reviewed_url:
+            label = "Attempt and reviewed workflow run" if separate_attempt and attempt_url == reviewed_url else "Reviewed workflow run"
+            lines += [f"[{label}]({reviewed_url})", ""]
+    elif attempt_url:
+        label = "Attempt workflow run" if owner and state == "stale" else "Workflow run"
+        lines += [f"[{label}]({attempt_url})", ""]
     lines += ["", "</details>"]
     return "\n".join(lines)
 
