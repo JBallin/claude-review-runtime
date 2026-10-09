@@ -102,14 +102,21 @@ requirements in place.
 
 ## Permissions and authentication
 
-All callers start with `permissions: {}`. Only the named API-key secret is
-forwarded, and only to the two review calls.
+This repository's installed self-review callers start with `permissions: {}`.
+They remain pinned to the reviewed OAuth runtime and forward only
+`CLAUDE_CODE_OAUTH_TOKEN`, only to the two review calls.
 
 | Job role | Workflow-token permissions | Model secret |
 | --- | --- | --- |
-| Automatic or manual review call | `contents: read`, `pull-requests: write`, `checks: write`, `issues: write`, `id-token: write` | `ANTHROPIC_API_KEY` |
+| Automatic or manual self-review call | `contents: read`, `pull-requests: write`, `checks: write`, `issues: write`, `id-token: write` | `CLAUDE_CODE_OAUTH_TOKEN` |
 | Manual eligibility | `pull-requests: read` | None |
 | Status call | `contents: read`, `pull-requests: write`, `issues: write` | None |
+
+Consumers of the experimental `api-key` variant instead forward only
+`ANTHROPIC_API_KEY` to its automatic and manual entrypoints, following the
+[variant consumer guide](consumer-workflows.md). That branch is not
+live-API-tested. Its consumer examples do not change this repository's installed
+OAuth callers or their pins.
 
 The called runtime narrows the permission envelope independently: the model job
 receives reads and OIDC, while trusted publication jobs receive writes. Its
@@ -245,9 +252,13 @@ credential, or permission is required.
 
 ## Installation and incomplete reviews
 
-Before live use, the owner must confirm the existing Anthropic App has access
-to this repository and make the API key available as the
-repository Actions secret `ANTHROPIC_API_KEY`. Secret-name metadata verifies
+For this repository's installed self-review callers, the owner must confirm the
+existing Anthropic App has access to this repository and make the OAuth credential
+available as the repository Actions secret `CLAUDE_CODE_OAUTH_TOKEN`.
+API-key variant consumers use `ANTHROPIC_API_KEY` in their own consumer repository
+under the [variant prerequisites](consumer-workflows.md#prerequisites); that
+secret does not replace the installed self-review callers' OAuth secret.
+Secret-name metadata verifies
 presence, not credential validity or successful live App/OIDC execution. The
 caller setup does not install an App or configure credentials. New credentials
 or access grants require a separate decision.
