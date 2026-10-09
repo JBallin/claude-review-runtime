@@ -170,7 +170,7 @@ class ReusableBoundaryTests(unittest.TestCase):
                     self.assertNotIn("secrets:", trigger)
                 else:
                     self.assertEqual(re.findall(r"^      ([A-Z_]+):$", trigger, re.MULTILINE),
-                                     ["CLAUDE_CODE_OAUTH_TOKEN"])
+                                     ["ANTHROPIC_API_KEY"])
                     self.assertIn("required: true", trigger)
                 self.assertNotIn("secrets: inherit", text)
 
