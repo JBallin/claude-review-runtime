@@ -19,22 +19,20 @@ bounded experiments do not establish universal quality or security superiority.
 
 ## Set up a consumer
 
-For OAuth on `main`, start with the [consumer guide](docs/consumer-workflows.md): it contains the
-prerequisites and three copyable callers for automatic review, manual requests,
-and stale-status updates. Pin all three to the same reviewed full runtime SHA.
-Model authentication on `main` requires `CLAUDE_CODE_OAUTH_TOKEN`; it does not
-accept `ANTHROPIC_API_KEY`. GitHub authentication separately uses the Anthropic
-Claude GitHub App and default OIDC exchange.
+The OAuth-only `main` branch requires `CLAUDE_CODE_OAUTH_TOKEN`.
+Follow the [main setup guide](docs/consumer-workflows.md) for its three callers.
 
-Choose the [experimental API-key-only branch](https://github.com/JBallin/claude-review-runtime/tree/api-key)
-if your consumer requires `ANTHROPIC_API_KEY` for model authentication. It has
-not been live-API-tested and does not establish validated API-key support.
-Use the variant's [consumer guide](https://github.com/JBallin/claude-review-runtime/blob/api-key/docs/consumer-workflows.md)
-for its `ANTHROPIC_API_KEY` caller examples.
-`main` remains OAuth-only; neither branch accepts both authentication modes.
-Pin all three consumer workflows to one reviewed full commit SHA from the
-chosen branch. See the [authentication decision](https://github.com/JBallin/claude-review-runtime/issues/3)
-and [variant maintenance guidance](CONTRIBUTING.md#api-key-variant-maintenance).
+The experimental [API-key-only branch](https://github.com/JBallin/claude-review-runtime/tree/api-key)
+requires `ANTHROPIC_API_KEY`. It has not been live-API-tested and does not
+establish validated API-key support. Follow the
+[variant setup guide](https://github.com/JBallin/claude-review-runtime/blob/api-key/docs/consumer-workflows.md):
+use the variant's workflow refs, pin all three callers to the same reviewed full
+commit SHA from `api-key`, and forward only the named `ANTHROPIC_API_KEY` secret.
+Renaming a secret while keeping `main` workflow refs does not enable API-key
+authentication.
+
+Both branches use the Anthropic Claude GitHub App and default OIDC exchange
+separately for GitHub authentication.
 
 Used by [Ballin](https://github.com/JBallin/ballin-scripts). See its
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
