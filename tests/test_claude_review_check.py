@@ -1432,8 +1432,8 @@ class StatusCommentTests(ScriptTestCase):
                 self.assertIn(HEAD, body)
                 self.assertEqual(check.status_base_ref({"body": body}), "main")
                 self.assertIn("in progress", body)
-                self.assertIn(f"**Current commit:** `{HEAD[:7]}`", body)
-                self.assertIn(f"| `{HEAD[:7]}` | " + ("Not recorded" if label == "Manual request" else label) + " |", body)
+                self.assertIn(f"**Current commit:** {check.commit_link(HEAD, REPO)}", body)
+                self.assertIn(f"| {check.commit_link(HEAD, REPO)} | " + ("Not recorded" if label == "Manual request" else label) + " |", body)
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("@claude", body)
                 self.assertIn("status_comment_id=55", self.output.read_text())
@@ -1637,9 +1637,9 @@ class StatusCommentTests(ScriptTestCase):
                 body = self.calls("PATCH")[-1]["body"]["body"]
                 self.assertIn(phrase, body)
                 self.assertIn(HEAD, body)
-                self.assertIn(f"**Current commit:** `{HEAD[:7]}`", body)
+                self.assertIn(f"**Current commit:** {check.commit_link(HEAD, REPO)}", body)
                 self.assertIn("| Status | Commit | Review trigger |", body)
-                self.assertIn(f"| `{HEAD[:7]}` |", body)
+                self.assertIn(f"| {check.commit_link(HEAD, REPO)} |", body)
                 self.assertNotIn("unresolved", body)
 
     def test_failed_check_publication_projects_fallback_or_unknown_state(self):
@@ -1808,14 +1808,14 @@ class StatusCommentTests(ScriptTestCase):
                 with self.subTest(label=label, state=state):
                     owner = presentation_owner(kind="issue_comment", target=42) if label == "Manual request" else presentation_owner()
                     body = check.status_comment_body(HEAD, "main", state, trigger_label=label, owner=owner)
-                    self.assertIn(f"| `{HEAD[:7]}` | {label} |", body)
+                    self.assertIn(f"| {check.commit_link(HEAD, REPO)} | {label} |", body)
                     self.assertNotIn("**Trigger:**", body)
             stale = check.status_comment_body(OTHER, "main", "stale", trigger_label=label,
                                               last_review=(HEAD, "main", "success"))
             self.assertNotIn("**Trigger:**", stale)
-            self.assertIn(f"**Current commit:** `{OTHER[:7]}` on `main` — not reviewed", stale)
+            self.assertIn(f"**Current commit:** {check.commit_link(OTHER)} on `main` — not reviewed", stale)
             self.assertIn("| ✅ **Completed**", stale)
-            self.assertIn(f"| `{HEAD[:7]}` | Not recorded |", stale)
+            self.assertIn(f"| {check.commit_link(HEAD)} | Not recorded |", stale)
 
     def test_status_identity_round_trips_a_base_ref_with_a_slash(self):
         body = check.status_comment_body(HEAD, "release/2026", "success")
@@ -2011,7 +2011,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         body = self.calls("PATCH")[0]["body"]["body"]
         self.assertIn("⚠️ Claude Review stale", body)
-        self.assertIn(f"**Current commit:** `{OTHER[:7]}` on `main` — not reviewed", body)
+        self.assertIn(f"**Current commit:** {check.commit_link(OTHER, REPO)} on `main` — not reviewed", body)
         self.assertIn("| ✅ **Completed**", body)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
@@ -2034,7 +2034,7 @@ class PRReactionTests(ScriptTestCase):
                 self.assertEqual(result.returncode, 0, result.stdout)
                 body = self.calls("PATCH")[0]["body"]["body"]
                 self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
-                self.assertIn(f"**Current commit:** `{current_head[:7]}` on `{current_base}` — not reviewed", body)
+                self.assertIn(f"**Current commit:** {check.commit_link(current_head, REPO)} on `{current_base}` — not reviewed", body)
                 prior = {**prior, "body": body}
 
     def test_findings_and_failure_remove_workflow_pr_reactions(self):
