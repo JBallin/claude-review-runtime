@@ -22,12 +22,17 @@ bounded experiments do not establish universal quality or security superiority.
 Start with the [consumer guide](docs/consumer-workflows.md): it contains the
 prerequisites and three copyable callers for automatic review, manual requests,
 and stale-status updates. Pin all three to the same reviewed full runtime SHA.
-Model authentication requires `CLAUDE_CODE_OAUTH_TOKEN`; this runtime does not
+Model authentication on `main` requires `CLAUDE_CODE_OAUTH_TOKEN`; it does not
 accept `ANTHROPIC_API_KEY`. GitHub authentication separately uses the Anthropic
 Claude GitHub App and default OIDC exchange.
 
-If you need [API-key support](https://github.com/JBallin/claude-review-runtime/issues/3),
-[open an issue](https://github.com/JBallin/claude-review-runtime/issues/new) with a concrete consumer use case.
+Choose the [experimental API-key-only branch](https://github.com/JBallin/claude-review-runtime/tree/api-key)
+if your consumer requires `ANTHROPIC_API_KEY` for model authentication. It has
+not been live-API-tested and does not establish validated API-key support.
+`main` remains OAuth-only; neither branch accepts both authentication modes.
+Pin all three consumer workflows to one reviewed full commit SHA from the
+chosen branch. See the [authentication decision](https://github.com/JBallin/claude-review-runtime/issues/3)
+and [variant maintenance guidance](CONTRIBUTING.md#api-key-variant-maintenance).
 
 Used by [Ballin](https://github.com/JBallin/ballin-scripts). See its
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
