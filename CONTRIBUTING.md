@@ -31,6 +31,10 @@ three consumer pins coherent, and preserve historical Checks, findings, notices,
 and unrelated reactions during recovery or rollback. Review the permission and
 authentication boundaries before changing workflow inputs or dependencies.
 
+GitHub authentication uses the Claude GitHub App's default token exchange.
+Do not add PAT, custom App credential, or GitHub-token overrides; new credentials
+or access grants require the repository owner's authorization.
+
 Local tests use simulated faults and make no model calls. Live exercises need a
 separately approved fixture matrix, model-run and time budget, concurrency and
 retry bounds, stop conditions, and restoration plan. Do not broaden credentials
@@ -39,5 +43,8 @@ or access to work around a rejected run.
 ## API-key variant maintenance
 
 After changes merge to `main`, merge `main` into `api-key`. Preserve API-key-only
-authentication and run the local checks before pushing. Never rebase or force-push
-published history; keep old commits reachable for pinned consumers.
+authentication and run the local checks. Routine merges of already-approved
+`main` changes can use a normal push without another PR. Substantive changes,
+including API-specific behavior or nontrivial conflict resolutions, require a PR.
+Never rebase or force-push published history; keep old commits reachable for
+pinned consumers.

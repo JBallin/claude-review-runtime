@@ -25,13 +25,10 @@ Choose one of two branches:
 - The experimental [`api-key` branch](https://github.com/JBallin/claude-review-runtime/tree/api-key)
   uses `ANTHROPIC_API_KEY` instead and does not require OAuth (not live-API-tested).
 
-For either branch, install the [Claude GitHub App](https://github.com/apps/claude)
-with access to your repository, then follow the [setup guide](docs/consumer-workflows.md)
-to install the three callers. Use its workflow paths and pin all three callers to
-the same reviewed full commit SHA from your chosen branch. Forward only the
-chosen branch's named secret; the status caller needs no secret. The app grants
-GitHub access, while the chosen secret authenticates Claude. Changing only the
-secret name on `main` workflow refs does not enable API-key authentication.
+For either branch, follow the [setup guide](docs/consumer-workflows.md) for
+installation, branch-specific commit pins, and secret forwarding.
+See the [branch comparison](https://github.com/JBallin/claude-review-runtime/compare/main...api-key)
+for the current differences.
 
 Used by [Ballin](https://github.com/JBallin/ballin-scripts). See its
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
@@ -54,8 +51,8 @@ The pinned callers include confirmed finding publication and sanitized Read
 coverage diagnostics. A verified Check establishes those runtime contracts; keep
 independent review requirements in place.
 
-The current source includes 319 passing offline tests, including bounded
-restoration and recovery regressions. The validation summary records the exact
+Offline evidence includes bounded restoration and recovery regressions.
+The validation summary records the exact
 tested revision and the remaining platform and concurrency limits. Source
 availability does not establish broad public-consumer or other-owner support.
 Consumers retain their own pins until a separate reviewed adoption updates them.

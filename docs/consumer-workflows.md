@@ -13,8 +13,8 @@ Choose a runtime branch and its model authentication secret:
 
 | Branch | Actions secret |
 | --- | --- |
-| `main` (OAuth-only) | `CLAUDE_CODE_OAUTH_TOKEN` |
-| [`api-key`](https://github.com/JBallin/claude-review-runtime/tree/api-key) (API-key-only) | `ANTHROPIC_API_KEY` |
+| `main` | `CLAUDE_CODE_OAUTH_TOKEN` |
+| [`api-key`](https://github.com/JBallin/claude-review-runtime/tree/api-key) | `ANTHROPIC_API_KEY` |
 
 The `api-key` branch is experimental and not live-API-tested; it does not require
 OAuth. `main` does not accept API keys. Offline checks do not establish validated
@@ -22,9 +22,7 @@ API-key support.
 
 Install the [Claude GitHub App](https://github.com/apps/claude) with access to the
 consumer repository. The app provides GitHub access separately from the model
-secret above. No PAT,
-custom App credential, or GitHub token override is accepted by the runtime. Adding credentials or access grants
-requires the repository owner's authorization.
+secret above. Custom GitHub authentication is unsupported by this runtime.
 
 The supported platform is GitHub.com with GitHub-hosted Ubuntu runners. The
 runtime-local helper action uses `$/actions/review-helper`, which requires runner
