@@ -13,7 +13,7 @@
 2. Choose one reviewed, full immutable 40-character SHA from that
    authentication-compatible branch for all three callers; consult the
    [validation summary](validation.md) for evidence and limits. The `api-key`
-   branch is not live-API-tested; a published SHA alone proves no live validation.
+   branch is not live-API-tested; publication alone does not validate a pin.
 3. [Install the callers](#install-the-callers) as three separate files under
    `.github/workflows/`: [automatic](#automatic-review), [manual](#manual-review),
    and [stale status](#stale-presentation-refresh). Forward only the selected
