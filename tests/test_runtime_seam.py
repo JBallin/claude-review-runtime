@@ -10,11 +10,14 @@ import textwrap
 import unittest
 from pathlib import Path
 
+import test_claude_review_workflows as w
+
 ROOT = Path(__file__).resolve().parent.parent
 ACTION = ROOT / "actions" / "review-helper" / "action.yml"
 HELPER = ACTION.parent / "claude_review_check.py"
 WORKFLOWS = ROOT / ".github" / "workflows"
 ENTRYPOINTS = ("claude-review.yml", "claude.yml", "claude-review-status.yml")
+MODEL_AUTH = ("CLAUDE_CODE_OAUTH_TOKEN", "claude_code_oauth_token")
 
 
 def preparation_script():
@@ -170,9 +173,76 @@ class ReusableBoundaryTests(unittest.TestCase):
                     self.assertNotIn("secrets:", trigger)
                 else:
                     self.assertEqual(re.findall(r"^      ([A-Z_]+):$", trigger, re.MULTILINE),
-                                     ["CLAUDE_CODE_OAUTH_TOKEN"])
+                                     [MODEL_AUTH[0]])
                     self.assertIn("required: true", trigger)
                 self.assertNotIn("secrets: inherit", text)
+
+    def test_model_authentication_is_exact_and_excluded_from_publishers(self):
+        secret, action_input = MODEL_AUTH
+        other_secret, other_input = (
+            ("ANTHROPIC_API_KEY", "anthropic_api_key") if secret == "CLAUDE_CODE_OAUTH_TOKEN"
+            else ("CLAUDE_CODE_OAUTH_TOKEN", "claude_code_oauth_token"))
+        for path, job_name in ((w.AUTOMATIC, "review"), (w.MANUAL, "review")):
+            with self.subTest(workflow=path.name):
+                text = path.read_text()
+                named = w.steps(w.job(path, job_name))
+                action = "\n".join(named["Review pull request"])
+                self.assertIn(action_input + ": ${{ secrets." + secret + " }}", action)
+                self.assertNotIn(other_secret, text)
+                self.assertNotIn(other_input + ":", text)
+                self.assertIn('classify_inline_comments: "false"', action)
+                for override in ("github_token:", "use_oidc:", "app_id:", "app_private_key:"):
+                    self.assertNotIn(override, action)
+                # API-key authentication also passes the secret to its local guard.
+                self.assertEqual(text.count("${{ secrets." + secret + " }}"),
+                                 2 if secret == "ANTHROPIC_API_KEY" else 1)
+                for publisher in ("start-check", "publish-status"):
+                    self.assertNotIn(secret, "\n".join(w.job(path, publisher)))
+
+    def test_api_key_guard_rejects_missing_values_without_logging_values(self):
+        secret, _ = MODEL_AUTH
+        if secret != "ANTHROPIC_API_KEY":
+            self.skipTest("The OAuth branch has no API-key guard")
+        for path, job_name in ((w.AUTOMATIC, "review"), (w.MANUAL, "review")):
+            named = w.steps(w.job(path, job_name))
+            guard = named["Validate model authentication"]
+            self.assertLess(list(named).index("Validate model authentication"),
+                            list(named).index("Review pull request"))
+            self.assertIn("          " + secret + ": ${{ secrets." + secret + " }}", guard)
+            for value in (None, "", "offline-placeholder", "$(echo injected) `echo injected`"):
+                with self.subTest(workflow=path.name, configured=bool(value)):
+                    env = {"PATH": os.environ["PATH"]}
+                    if value is not None:
+                        env[secret] = value
+                    result = subprocess.run(["bash", "-eo", "pipefail", "-c", w.run_block(guard)],
+                                            env=env, capture_output=True, text=True)
+                    self.assertEqual(result.returncode, 0 if value else 1)
+                    self.assertEqual(result.stdout, "" if value else (
+                        "::error::ANTHROPIC_API_KEY is required by the experimental api-key runtime.\n"))
+                    self.assertEqual(result.stderr, "")
+
+    def test_shared_setup_examples_and_installed_oauth_callers(self):
+        guide = (ROOT / "docs/consumer-workflows.md").read_text()
+        blocks = re.findall(r"```yaml\n(.*?)\n```", guide, re.DOTALL)
+        api_secret = next(block for block in blocks if block.startswith("    secrets:"))
+        self.assertEqual(api_secret, (
+            "    secrets:\n      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}"))
+        for path in (w.AUTOMATIC, w.MANUAL):
+            example = next(block for block in blocks
+                           if f"/.github/workflows/{path.name}@" in block)
+            self.assertIn("CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}", example)
+            rendered = (re.sub(r"    secrets:\n      [^\n]+", api_secret, example)
+                        if MODEL_AUTH[0] == "ANTHROPIC_API_KEY" else example)
+            self.assertEqual(re.findall(r"^      ([A-Z_]+):", rendered, re.MULTILINE),
+                             [MODEL_AUTH[0]])
+            self.assertNotIn("secrets: inherit", rendered)
+            self.assertIn(f"{path.name}@<full-reviewed-runtime-sha>", rendered)
+        status = next(block for block in blocks if f"/{w.STALE.name}@" in block)
+        self.assertNotIn("secrets:", status)
+        self.assertNotIn("secrets:", w.STALE.read_text())
+        for name in ("self-review-automatic.yml", "self-review-manual.yml"):
+            self.assertIn("CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}",
+                          (WORKFLOWS / name).read_text())
 
     def test_runtime_identity_comes_from_the_called_workflow_context(self):
         for name in ENTRYPOINTS:

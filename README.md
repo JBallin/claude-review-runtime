@@ -19,15 +19,16 @@ bounded experiments do not establish universal quality or security superiority.
 
 ## Set up a consumer
 
-Start with the [consumer guide](docs/consumer-workflows.md): it contains the
-prerequisites and three copyable callers for automatic review, manual requests,
-and stale-status updates. Pin all three to the same reviewed full runtime SHA.
-Model authentication requires `CLAUDE_CODE_OAUTH_TOKEN`; this runtime does not
-accept `ANTHROPIC_API_KEY`. GitHub authentication separately uses the Anthropic
-Claude GitHub App and default OIDC exchange.
+Choose one of two branches:
 
-If you need [API-key support](https://github.com/JBallin/claude-review-runtime/issues/3),
-[open an issue](https://github.com/JBallin/claude-review-runtime/issues/new) with a concrete consumer use case.
+- `main` uses `CLAUDE_CODE_OAUTH_TOKEN`.
+- The experimental [`api-key` branch](https://github.com/JBallin/claude-review-runtime/tree/api-key)
+  uses `ANTHROPIC_API_KEY` instead and does not require OAuth (not live-API-tested).
+
+For either branch, follow the [setup guide](docs/consumer-workflows.md) for
+installation, branch-specific commit pins, and secret forwarding.
+See the [branch comparison](https://github.com/JBallin/claude-review-runtime/compare/main...api-key)
+for the current differences.
 
 Used by [Ballin](https://github.com/JBallin/ballin-scripts). See its
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
@@ -50,8 +51,8 @@ The pinned callers include confirmed finding publication and sanitized Read
 coverage diagnostics. A verified Check establishes those runtime contracts; keep
 independent review requirements in place.
 
-The current source includes 319 passing offline tests, including bounded
-restoration and recovery regressions. The validation summary records the exact
+Offline evidence includes bounded restoration and recovery regressions.
+The validation summary records the exact
 tested revision and the remaining platform and concurrency limits. Source
 availability does not establish broad public-consumer or other-owner support.
 Consumers retain their own pins until a separate reviewed adoption updates them.
