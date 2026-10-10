@@ -19,20 +19,19 @@ bounded experiments do not establish universal quality or security superiority.
 
 ## Set up a consumer
 
-The OAuth-only `main` branch requires `CLAUDE_CODE_OAUTH_TOKEN`.
-Follow the [main setup guide](docs/consumer-workflows.md) for its three callers.
+Choose one of two branches:
 
-The experimental [API-key-only branch](https://github.com/JBallin/claude-review-runtime/tree/api-key)
-requires `ANTHROPIC_API_KEY`. It has not been live-API-tested and does not
-establish validated API-key support. Follow the
-[variant setup guide](https://github.com/JBallin/claude-review-runtime/blob/api-key/docs/consumer-workflows.md):
-use the variant's workflow refs, pin all three callers to the same reviewed full
-commit SHA from `api-key`, and forward only the named `ANTHROPIC_API_KEY` secret.
-Renaming a secret while keeping `main` workflow refs does not enable API-key
-authentication.
+- `main` uses `CLAUDE_CODE_OAUTH_TOKEN`.
+- The experimental [`api-key` branch](https://github.com/JBallin/claude-review-runtime/tree/api-key)
+  uses `ANTHROPIC_API_KEY` instead and does not require OAuth (not live-API-tested).
 
-Both branches use the Anthropic Claude GitHub App and default OIDC exchange
-separately for GitHub authentication.
+For either branch, install the [Claude GitHub App](https://github.com/apps/claude)
+with access to your repository, then follow the [setup guide](docs/consumer-workflows.md)
+to install the three callers. Use its workflow paths and pin all three callers to
+the same reviewed full commit SHA from your chosen branch. Forward only the
+chosen branch's named secret; the status caller needs no secret. The app grants
+GitHub access, while the chosen secret authenticates Claude. Changing only the
+secret name on `main` workflow refs does not enable API-key authentication.
 
 Used by [Ballin](https://github.com/JBallin/ballin-scripts). See its
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)

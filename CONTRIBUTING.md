@@ -38,10 +38,6 @@ or access to work around a rejected run.
 
 ## API-key variant maintenance
 
-After changes merge to `main`, update the experimental `api-key` branch in an
-isolated checkout with a normal merge of `origin/main`. Inspect the minimal
-authentication and documentation delta, preserving OAuth-only `main` and the
-API-key-only variant. Never rebase or force-push published history; keep old
-API-key commits reachable for pinned consumers. Run
-`python3 -m unittest discover -s tests -v` and `git diff --check` before a normal
-push. Keep the variant labeled experimental and not live-API-tested.
+After changes merge to `main`, merge `main` into `api-key`. Preserve API-key-only
+authentication and run the local checks before pushing. Never rebase or force-push
+published history; keep old commits reachable for pinned consumers.
