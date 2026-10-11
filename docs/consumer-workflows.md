@@ -2,6 +2,40 @@
 
 *Use this guide to install and operate the three reusable review entrypoints in a consumer repository.*
 
+## First-review checklist
+
+1. Choose `main` (OAuth) or experimental `api-key` and meet the
+   [prerequisites](#prerequisites), including Claude GitHub App access. Obtain the
+   selected model credential using [Anthropic's authentication instructions](https://code.claude.com/docs/en/authentication)
+   (`claude setup-token` for OAuth, or a Claude Console API key), then
+   [save it as a repository Actions secret](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets#creating-secrets-for-a-repository)
+   under the branch's exact secret name below. Never commit the credential.
+2. Choose one reviewed, full immutable 40-character SHA from that
+   authentication-compatible branch for all three callers; consult the
+   [validation summary](validation.md) for evidence and limits. The `api-key`
+   branch is not live-API-tested; publication alone does not validate a pin.
+3. [Install the callers](#install-the-callers) as three separate files under
+   `.github/workflows/`: [automatic](#automatic-review), [manual](#manual-review),
+   and [stale status](#stale-presentation-refresh). Forward only the selected
+   model secret to the two review callers; the status caller needs none. Have a
+   human review and merge the installation to the consumer's default branch.
+4. For an approved first live trial, open a non-draft, same-repository PR that
+   does not modify workflows (or mark its draft ready) to trigger automatic
+   review. For an existing eligible PR, use the selected revision's
+   [manual command](#manual-review). Follow the
+   [installation guidance](review-guide.md#installation-and-incomplete-reviews)
+   if caller validation or another prerequisite prevents completion.
+5. Inspect the workflow run and the `Claude Review` Check on that exact head,
+   including captured head/base, runtime revision, and verified model completion.
+   Clean means verified completion without recorded findings; findings need
+   assessment, and incomplete is not approval. See the
+   [review-result guidance](review-guide.md#trust-and-review-results); green Actions
+   orchestration or a thumbs-up alone does not prove completion.
+6. After changing the patch, request a fresh review with the
+   [manual command](#manual-review). The [status caller](#stale-presentation-refresh)
+   refreshes existing presentation; it does not run Claude or review the new
+   patch. Assess changed-base coverage using the same review-result guidance.
+
 ## Prerequisites
 
 This runtime repository is public. Consumers can reference its reusable
