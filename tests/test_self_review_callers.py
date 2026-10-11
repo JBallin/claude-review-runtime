@@ -1,4 +1,4 @@
-"""Offline contracts for this repository's self-review callers."""
+"""Offline contracts for this repository's pinned self-review callers."""
 
 import json
 import os
@@ -10,7 +10,7 @@ from pathlib import Path
 
 import test_claude_review_workflows as w
 
-RUNTIME_REF = "310ae2f70ef3c4b16983cdaf45679f6cb60bf2b1"
+PIN = "310ae2f70ef3c4b16983cdaf45679f6cb60bf2b1"
 AUTOMATIC = w.WORKFLOWS / "self-review-automatic.yml"
 MANUAL = w.WORKFLOWS / "self-review-manual.yml"
 STATUS = w.WORKFLOWS / "self-review-status.yml"
@@ -31,7 +31,7 @@ class CallerBoundaryTests(unittest.TestCase):
                 text = path.read_text()
                 called = w.job(path, name)
                 self.assertEqual(w.scalar(called, "uses", 4),
-                                 f"JBallin/claude-review-runtime/.github/workflows/{entrypoint}@{RUNTIME_REF}")
+                                 f"JBallin/claude-review-runtime/.github/workflows/{entrypoint}@{PIN}")
                 self.assertIn("\npermissions: {}\n", text)
                 for forbidden in ("concurrency:", "secrets: inherit", "workflow_dispatch:",
                                   "pull_request_target:", "workflow_run:", "with:"):
