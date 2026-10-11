@@ -17,7 +17,7 @@ ACTION = ROOT / "actions" / "review-helper" / "action.yml"
 HELPER = ACTION.parent / "claude_review_check.py"
 WORKFLOWS = ROOT / ".github" / "workflows"
 ENTRYPOINTS = ("claude-review.yml", "claude.yml", "claude-review-status.yml")
-MODEL_AUTH = ("CLAUDE_CODE_OAUTH_TOKEN", "claude_code_oauth_token")
+MODEL_AUTH = ("CLAUDE_CODE_OAUTH_TOKEN", "claude_code_oauth_token", "OAuth")
 
 
 def preparation_script():
@@ -178,7 +178,7 @@ class ReusableBoundaryTests(unittest.TestCase):
                 self.assertNotIn("secrets: inherit", text)
 
     def test_model_authentication_is_exact_and_excluded_from_publishers(self):
-        secret, action_input = MODEL_AUTH
+        secret, action_input, _ = MODEL_AUTH
         other_secret, other_input = (
             ("ANTHROPIC_API_KEY", "anthropic_api_key") if secret == "CLAUDE_CODE_OAUTH_TOKEN"
             else ("CLAUDE_CODE_OAUTH_TOKEN", "claude_code_oauth_token"))
@@ -200,8 +200,7 @@ class ReusableBoundaryTests(unittest.TestCase):
                     self.assertNotIn(secret, "\n".join(w.job(path, publisher)))
 
     def test_model_auth_guard_rejects_missing_values_without_logging_values(self):
-        secret, _ = MODEL_AUTH
-        runtime = "OAuth" if secret == "CLAUDE_CODE_OAUTH_TOKEN" else "experimental api-key"
+        secret, _, runtime = MODEL_AUTH
         for path, job_name in ((w.AUTOMATIC, "review"), (w.MANUAL, "review")):
             named = w.steps(w.job(path, job_name))
             guard = named["Validate model authentication"]

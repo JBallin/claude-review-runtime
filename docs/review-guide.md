@@ -1,12 +1,14 @@
 # Review behavior and repository self-review
 
-*Use this guide to interpret review results, operate this repository's pinned callers, and handle installation or rollback.*
+*Use this guide to interpret review results, operate this repository's callers, and handle installation or rollback.*
 
-## Pinned callers
+## Repository callers
 
-The three self-review callers below pin reviewed runtime code. They leave the
-reusable entrypoints separate and keep publication code pinned even when a PR
-changes the runtime.
+This repository’s three self-review callers below explicitly reference `main`
+in this repository. Each run resolves its runtime to a concrete commit, so later
+merges do not change an in-progress review. Future runs use the merged runtime;
+a bad merge can therefore affect this repository’s own review tooling. Other
+repositories can keep reviewed SHA pins.
 Reviews cover the captured PR diff and record its head, base, merge base, and
 the executing runtime's repository, SHA, and workflow path.
 
@@ -28,7 +30,7 @@ surrounding whitespace, arguments, quotes, or other text. Matching is
 case-insensitive. The commenter must have an owner, member, or collaborator
 association; the action also checks actor/access eligibility. Ordinary issue
 comments and untrusted requests do not start model execution. The eligibility
-job has read-only PR access and performs no checkout before calling the pinned
+job has read-only PR access and performs no checkout before calling the
 runtime. The runtime resolves the current patch once for each accepted request.
 
 The command deliberately avoids a Claude mention. `@claude review` can invoke
@@ -90,14 +92,14 @@ still occur afterward, so the notice describes its linked historical snapshot.
 Notice publication is best-effort: an API failure may leave no notice, and an
 ambiguous POST is not retried blindly. Neither changes the authoritative result.
 
-The pinned runtime’s clean result also requires
+The runtime’s clean result also requires
 [confirmed finding publication](#finding-publication). Keep independent review
 requirements in place.
 
 ## Permissions and authentication
 
 This repository's installed self-review callers start with `permissions: {}`.
-They use the pinned OAuth runtime and forward only `CLAUDE_CODE_OAUTH_TOKEN`,
+They use the OAuth runtime from `main` and forward only `CLAUDE_CODE_OAUTH_TOKEN`,
 only to the two review calls. Consumers follow the branch-specific secret
 instructions in the [shared setup guide](consumer-workflows.md).
 
@@ -218,8 +220,8 @@ previous review evidence.
 ## Finding publication
 
 The publication contract below is implemented in merged runtime revision
-`91f5b76f00800e05ac41f408b427dd60c639d906` and is included in this repository’s
-pinned runtime. See the [validation summary](validation.md)
+[91f5b76](https://github.com/JBallin/claude-review-runtime/commit/91f5b76f00800e05ac41f408b427dd60c639d906)
+and is included in this repository’s runtime. See the [validation summary](validation.md)
 for the distinct live-tested revision.
 
 Those reusable review entrypoints publish inline findings immediately. Trusted
@@ -268,7 +270,7 @@ initial setup draft while authentication and independent review are outstanding.
 Any initial installation exception requires explicit owner approval, and the
 owner merges the setup.
 
-The pinned runtime reports sanitized captured-read coverage diagnostics during
+The runtime reports sanitized captured-read coverage diagnostics during
 verification when the reason is `verified` or `captured_inputs_not_read`,
 without an opt-in flag. Earlier failures may have no coverage counters. For each
 of the fixed `metadata` and `diff` labels, it reports read and successful-read
@@ -295,10 +297,10 @@ GitHub may group `Claude Review` under another workflow name, such as
 without implying a dependency. The cause and a reliable fix are unconfirmed; use
 the `Claude Review` Check for the result.
 
-## Update or roll back
+## Consumer updates and recovery
 
-Keep the automatic, manual, and status callers on one reviewed immutable runtime
-revision compatible with the consumer's authentication mode (`main` for OAuth
+For consumers using SHA pins, keep the automatic, manual, and status callers on
+one reviewed immutable runtime revision compatible with the authentication mode (`main` for OAuth
 or `api-key` for API-key authentication). Keep caller-contract tests and the
 manual invocation aligned with that revision's interface.
 

@@ -86,13 +86,14 @@ does not update their callers.
 
 ## What is deployed
 
-The installed OAuth runtime pins are in the
+This repository’s OAuth reviewers track `main` through the
 [automatic](../.github/workflows/self-review-automatic.yml),
 [manual](../.github/workflows/self-review-manual.yml), and
 [status](../.github/workflows/self-review-status.yml) callers.
-See the [review guide](review-guide.md) for their behavior and recovery safeguards.
-Caller adoption does not add live validation; the evidence below applies only to
-the revisions exercised.
+Each run records its concrete runtime revision. See the
+[review guide](review-guide.md) for behavior and recovery safeguards. Tracking
+`main` does not add live validation; the evidence below applies only to the
+revisions exercised.
 
 ## Historical candidate-review evidence
 
