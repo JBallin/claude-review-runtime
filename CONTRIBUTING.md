@@ -31,10 +31,6 @@ three consumer pins coherent, and preserve historical Checks, findings, notices,
 and unrelated reactions during recovery or rollback. Review the permission and
 authentication boundaries before changing workflow inputs or dependencies.
 
-GitHub authentication uses the Claude GitHub App's default token exchange.
-Do not add PAT, custom App credential, or GitHub-token overrides; new credentials
-or access grants require the repository owner's authorization.
-
 Local tests use simulated faults and make no model calls. Live exercises need a
 separately approved fixture matrix, model-run and time budget, concurrency and
 retry bounds, stop conditions, and restoration plan. Do not broaden credentials
