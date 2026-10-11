@@ -13,7 +13,7 @@ name: Claude Review
 on:
   workflow_call:
     secrets:
-      CLAUDE_CODE_OAUTH_TOKEN:
+      ANTHROPIC_API_KEY:
         required: true
 
 permissions:
@@ -206,10 +206,10 @@ jobs:
           path: ${{ runner.temp }}/pr-review
       - name: Validate model authentication
         env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
-            echo "::error::CLAUDE_CODE_OAUTH_TOKEN is required by the OAuth runtime."
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY is required by the experimental api-key runtime."
             exit 1
           fi
       - name: Review pull request
@@ -221,7 +221,7 @@ jobs:
           CLAUDE_CODE_DISABLE_BACKGROUND_TASKS: "1"
         with:
           classify_inline_comments: "false"
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: >-
             First use Read with file_path set to each exact absolute metadata
             and diff path below. Read every line of both files before reviewing;

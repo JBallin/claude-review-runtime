@@ -17,7 +17,7 @@ ACTION = ROOT / "actions" / "review-helper" / "action.yml"
 HELPER = ACTION.parent / "claude_review_check.py"
 WORKFLOWS = ROOT / ".github" / "workflows"
 ENTRYPOINTS = ("claude-review.yml", "claude.yml", "claude-review-status.yml")
-MODEL_AUTH = ("CLAUDE_CODE_OAUTH_TOKEN", "claude_code_oauth_token", "OAuth")
+MODEL_AUTH = ("ANTHROPIC_API_KEY", "anthropic_api_key", "experimental api-key")
 
 
 def preparation_script():
