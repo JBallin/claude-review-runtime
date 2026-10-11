@@ -87,13 +87,19 @@ does not update their callers.
 ## What is deployed
 
 This repository’s three self-review callers use reviewed runtime revision
-`250a7d6745285dcc7902b604aec9f62f5b204033`. Their manual gate accepts the exact,
+`310ae2f70ef3c4b16983cdaf45679f6cb60bf2b1`. Their manual gate accepts the exact,
 case-insensitive `/claude-review` command from trusted PR commenters. This pin
 includes the merged finding-publication contract and sanitized captured-read
 coverage diagnostics from [PR 16](https://github.com/JBallin/claude-review-runtime/pull/16),
 presentation ownership from [PR 11](https://github.com/JBallin/claude-review-runtime/pull/11),
 audited Check-history validation from [PR 18](https://github.com/JBallin/claude-review-runtime/pull/18),
 and direct-ref base freshness from [PR 20](https://github.com/JBallin/claude-review-runtime/pull/20).
+This adoption also includes compact status rendering and historical provenance
+from [PR 57](https://github.com/JBallin/claude-review-runtime/pull/57) and
+[PR 59](https://github.com/JBallin/claude-review-runtime/pull/59), lifecycle
+timestamps, base-advance presentation, and recovery changes. The manual runtime
+now allows 30 turns and both review entrypoints use Claude Code Action v1.0.241.
+This adoption adds no new live runtime validation.
 All three pins, caller tests, and deployment guidance are updated together;
 manual eligibility, events, permissions, and credentials are unchanged.
 

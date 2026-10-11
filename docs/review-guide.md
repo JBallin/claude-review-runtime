@@ -5,7 +5,7 @@
 ## Pinned callers
 
 The three self-review callers use reviewed runtime commit
-`250a7d6745285dcc7902b604aec9f62f5b204033`. They leave the reusable entrypoints
+`310ae2f70ef3c4b16983cdaf45679f6cb60bf2b1`. They leave the reusable entrypoints
 separate and keep publication code pinned even when a PR changes the runtime.
 Reviews cover the captured PR diff and record its head, base, merge base, and
 the executing runtime's repository, SHA, and workflow path.
@@ -197,7 +197,7 @@ affects only current PR presentation. Reaction and status publication are best-e
 unverifiable ownership can leave stale or missing reactions. Consult the current
 exact-head Check.
 
-The self-review callers pin `250a7d`, which includes the direct-ref guard from
+The self-review callers pin `310ae2f`, which includes the direct-ref guard from
 [PR 20](https://github.com/JBallin/claude-review-runtime/pull/20). Other consumers
 retain their own pins until a separate reviewed adoption changes them.
 
@@ -320,18 +320,15 @@ never rebase or force-push published history. Rollback does not establish new
 live-tested support.
 
 For this repository's installed OAuth self-review callers, the prior pin is
-`8dbcd6d786c9485670ffaaac55af4aa390c70d22`; this is not an API-key rollback target.
-Keep the
-exact `/claude-review` gate unchanged because both revisions use it.
+`250a7d6745285dcc7902b604aec9f62f5b204033`; this is not an API-key rollback target.
+Keep the exact `/claude-review` gate unchanged because both revisions use it.
 
-That installed OAuth rollback retains strict captured Read coverage, finding
-receipts,
-sanitized diagnostics, presentation ownership, trigger reconciliation, and the
-audited Check-history fixes. It removes the direct-ref freshness guard: the PR
-API can retain an old comparison-base SHA after the branch advances, allowing
-an outdated snapshot to be presented as current or admitted for manual review.
-Rollback is an emergency disposition, not equivalent correctness or release
-approval.
+That rollback retains captured Read coverage, finding receipts, sanitized
+diagnostics, presentation ownership, Check-history validation, and direct-ref
+base freshness. It removes the intervening presentation and recovery changes,
+including compact status rendering, lifecycle timestamps, and preservation of
+completed results when only the base advances. Rollback is an emergency
+disposition, not equivalent correctness or release approval.
 
 Before adoption or rollback activation, inspect active and queued reviews and
 let existing attempts settle; do not silently cancel or rerun mixed-version
