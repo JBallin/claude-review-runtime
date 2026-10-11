@@ -1,5 +1,10 @@
 # Validation and limitations
 
+The historical live results below exercised OAuth and do not validate the
+experimental API-key branch. That branch has not been live-API-tested; offline
+checks do not establish live authentication, model completion, or publication.
+See the [shared setup guide](consumer-workflows.md) for branch selection.
+
 ## Current offline evidence
 
 [PR 22](https://github.com/JBallin/claude-review-runtime/pull/22) added test-only

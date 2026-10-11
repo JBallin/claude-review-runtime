@@ -9,15 +9,20 @@ workflows by commit SHA, subject to their GitHub Actions policies. Publication
 does not validate a new consumer configuration; the tested boundaries are listed
 below and in the [validation summary](validation.md).
 
-Model authentication uses the consumer's existing Claude OAuth credential stored
-as the Actions secret `CLAUDE_CODE_OAUTH_TOKEN`. This runtime does not accept
-`ANTHROPIC_API_KEY`; API-key support is deferred (see the
-[authentication assessment](https://github.com/JBallin/claude-review-runtime/issues/3#issuecomment-5941743869)).
-This is the runtime's contract, not a limitation of Anthropic's action.
-GitHub authentication uses the Anthropic Claude GitHub App and the action's
-default OIDC token exchange. The App must have access to the consumer. No PAT,
-custom App credential, or GitHub token override is accepted by the runtime. Adding credentials or access grants
-requires the repository owner's authorization.
+Choose a runtime branch and its model authentication secret:
+
+| Branch | Actions secret |
+| --- | --- |
+| `main` | `CLAUDE_CODE_OAUTH_TOKEN` |
+| [`api-key`](https://github.com/JBallin/claude-review-runtime/tree/api-key) | `ANTHROPIC_API_KEY` |
+
+The `api-key` branch is experimental and not live-API-tested; it does not require
+OAuth. `main` does not accept API keys. Offline checks do not establish validated
+API-key support.
+
+Install the [Claude GitHub App](https://github.com/apps/claude) with access to the
+consumer repository. The app provides GitHub access separately from the model
+secret above. Custom GitHub authentication is unsupported by this runtime.
 
 The supported platform is GitHub.com with GitHub-hosted Ubuntu runners. The
 runtime-local helper action uses `$/actions/review-helper`, which requires runner
@@ -29,8 +34,21 @@ under the [MIT License](../LICENSE).
 ## Install the callers
 
 Install three separate workflow files in the consumer repository. Replace
-`<full-reviewed-runtime-sha>` with one reviewed 40-character commit SHA in all
-three files. Have the caller installation reviewed by a human and merged to
+`<full-reviewed-runtime-sha>` with one reviewed 40-character commit SHA from your
+chosen runtime branch in all three files. Changing only the secret name while
+keeping a `main` commit does not enable API-key authentication.
+
+The automatic and manual examples below use `main`'s OAuth secret. For `api-key`,
+use a reviewed commit from that branch and replace each review caller's `secrets`
+block with:
+
+```yaml
+    secrets:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+```
+
+Forward only the chosen branch's named secret, not both. The status caller needs
+no model secret. Have the caller installation reviewed by a human and merged to
 the consumer's default branch, then validate on a separate PR that does not
 modify the workflows. See [installation and incomplete reviews](review-guide.md#installation-and-incomplete-reviews)
 for default Anthropic App/OIDC validation limits and completion evidence.
@@ -125,7 +143,7 @@ jobs:
     uses: JBallin/claude-review-runtime/.github/workflows/claude-review-status.yml@<full-reviewed-runtime-sha>
 ```
 
-This entrypoint needs no OAuth secret, OIDC permission, or Check write permission.
+This entrypoint needs no model secret, OIDC permission, or Check write permission.
 It refreshes existing presentation after head changes and qualifying base
 retargeting edits; it does not create a review when none exists.
 

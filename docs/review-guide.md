@@ -102,10 +102,12 @@ requirements in place.
 
 ## Permissions and authentication
 
-All callers start with `permissions: {}`. Only the named OAuth secret is
-forwarded, and only to the two review calls.
+This repository's installed self-review callers start with `permissions: {}`.
+They use the pinned OAuth runtime and forward only `CLAUDE_CODE_OAUTH_TOKEN`,
+only to the two review calls. Consumers follow the branch-specific secret
+instructions in the [shared setup guide](consumer-workflows.md).
 
-| Job role | Workflow-token permissions | OAuth secret |
+| Installed self-review job role | Workflow-token permissions | Model secret |
 | --- | --- | --- |
 | Automatic or manual review call | `contents: read`, `pull-requests: write`, `checks: write`, `issues: write`, `id-token: write` | `CLAUDE_CODE_OAUTH_TOKEN` |
 | Manual eligibility | `pull-requests: read` | None |
@@ -245,9 +247,12 @@ credential, or permission is required.
 
 ## Installation and incomplete reviews
 
-Before live use, the owner must confirm the existing Anthropic App has access
-to this repository and make the existing OAuth credential available as the
-repository Actions secret `CLAUDE_CODE_OAUTH_TOKEN`. Secret-name metadata verifies
+Before live use, the owner must confirm the Claude GitHub App has access to the
+consumer repository and provide the selected branch's model secret. Follow the
+[shared setup guide](consumer-workflows.md) for authentication limits,
+branch-specific pins and secret forwarding. This repository's installed
+self-review callers continue to use OAuth.
+Secret-name metadata verifies
 presence, not credential validity or successful live App/OIDC execution. The
 caller setup does not install an App or configure credentials. New credentials
 or access grants require a separate decision.
@@ -303,14 +308,24 @@ the `Claude Review` Check for the result.
 ## Update or roll back
 
 Updating all three pins to a reviewed revision is a separate change. Review and
-merge that runtime revision first, and update the manual caller and invocation
+publish that runtime revision first. Choose a full commit SHA compatible with
+the consumer's authentication branch (`main` or `api-key`), and update the manual
+caller and invocation
 guidance to match its interface. Keep caller-contract tests in sync with the
 approved pin and interface. To roll back a pin update, restore all three
-references and corresponding tests and deployment guidance together. For this
-adoption, the prior pin is `8dbcd6d786c9485670ffaaac55af4aa390c70d22`; keep the
+references and corresponding tests and deployment guidance together, using a
+previous reviewed full SHA compatible with the consumer's authentication branch.
+For ongoing maintenance, keep published commits reachable through normal merges;
+never rebase or force-push published history. Rollback does not establish new
+live-tested support.
+
+For this repository's installed OAuth self-review callers, the prior pin is
+`8dbcd6d786c9485670ffaaac55af4aa390c70d22`; this is not an API-key rollback target.
+Keep the
 exact `/claude-review` gate unchanged because both revisions use it.
 
-That rollback retains strict captured Read coverage, finding receipts,
+That installed OAuth rollback retains strict captured Read coverage, finding
+receipts,
 sanitized diagnostics, presentation ownership, trigger reconciliation, and the
 audited Check-history fixes. It removes the direct-ref freshness guard: the PR
 API can retain an old comparison-base SHA after the branch advances, allowing
