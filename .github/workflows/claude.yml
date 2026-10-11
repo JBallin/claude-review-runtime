@@ -288,6 +288,14 @@ jobs:
         with:
           name: pr-review-snapshot
           path: ${{ runner.temp }}/pr-review
+      - name: Validate model authentication
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          if [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            echo "::error::CLAUDE_CODE_OAUTH_TOKEN is required by the OAuth runtime."
+            exit 1
+          fi
       - name: Review pull request
         id: review
         uses: anthropics/claude-code-action@cab360f6565aa35a51d6ce9e43f1f4287c0a32ea
