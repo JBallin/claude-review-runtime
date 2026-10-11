@@ -1,6 +1,6 @@
 # Review behavior and repository self-review
 
-*Use this guide to interpret review results, operate this repository's pinned callers, and handle installation or rollback.*
+*Use this guide to interpret review results, operate this repository's pinned callers, and handle installation and caller updates.*
 
 ## Pinned callers
 
@@ -217,12 +217,7 @@ previous review evidence.
 
 ## Finding publication
 
-The publication contract below is implemented in merged runtime revision
-[91f5b76](https://github.com/JBallin/claude-review-runtime/commit/91f5b76f00800e05ac41f408b427dd60c639d906)
-and is included in this repository’s pinned runtime. See the
-[validation summary](validation.md) for the distinct live-tested revision.
-
-Those reusable review entrypoints publish inline findings immediately. Trusted
+The reusable review entrypoints publish inline findings immediately. Trusted
 completion requires a valid receipt for every inline attempt and confirms each
 comment on the captured PR/head using the complete paginated comment list and pre-review
 snapshot. Failed or ambiguous publication produces an incomplete review, retains
@@ -295,15 +290,12 @@ GitHub may group `Claude Review` under another workflow name, such as
 without implying a dependency. The cause and a reliable fix are unconfirmed; use
 the `Claude Review` Check for the result.
 
-## Update or roll back
+## Updating callers
 
-Keep the automatic, manual, and status callers on one reviewed immutable runtime
-revision compatible with the authentication mode (`main` for OAuth or `api-key`
-for API-key authentication). Keep caller-contract tests and the
-manual invocation aligned with that revision's interface.
+Update the automatic, manual, and status callers and their contract tests together
+to one reviewed immutable runtime commit compatible with the selected
+authentication mode and documented manual command.
 
-Before activating an update or rollback, inspect active and queued reviews and
-let existing attempts settle; do not silently cancel or rerun mixed-version
-writers. Preserve Checks, findings, notices, and unrelated reactions. Any
-necessary cleanup or ambiguous recovery needs a separately scoped decision.
-Runtime publication does not update callers automatically.
+Let active and queued reviews finish before activating the update. Preserve
+Checks, findings, notices, and unrelated reactions. Publishing runtime changes
+does not automatically update callers.
