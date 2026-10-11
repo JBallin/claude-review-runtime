@@ -124,7 +124,7 @@ For the selected revision's publication behavior, see the
 ## Manual review
 
 Manual invocation depends on the selected runtime revision. See the review
-guide for [this repository's pinned command](review-guide.md#request-a-manual-review)
+guide for [this repository's manual command](review-guide.md#request-a-manual-review)
 before selecting a revision or changing callers.
 
 ```yaml
@@ -152,8 +152,9 @@ jobs:
 
 For the current reusable entrypoint, post `/claude-review` as the entire comment,
 without whitespace or arguments; matching is case-insensitive. This repository’s
-self-review callers use that same command with their reviewed runtime pin. Any additional manual
-caller gate must match the selected runtime revision.
+self-review callers use that same command and track `main`; the consumer
+examples above use reviewed SHA pins. Any additional manual caller gate must
+match the selected runtime revision.
 
 The runtime resolves the current patch once for each accepted manual request.
 Ordinary issue comments and untrusted requests do not start model execution.
