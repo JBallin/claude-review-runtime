@@ -10,7 +10,7 @@ from pathlib import Path
 
 import test_claude_review_workflows as w
 
-RUNTIME_REF = "main"
+RUNTIME_REF = "310ae2f70ef3c4b16983cdaf45679f6cb60bf2b1"
 AUTOMATIC = w.WORKFLOWS / "self-review-automatic.yml"
 MANUAL = w.WORKFLOWS / "self-review-manual.yml"
 STATUS = w.WORKFLOWS / "self-review-status.yml"
@@ -25,7 +25,7 @@ def permissions(lines, indent):
 
 
 class CallerBoundaryTests(unittest.TestCase):
-    def test_publication_uses_explicit_main_runtime_not_candidate_code(self):
+    def test_publication_uses_one_immutable_runtime_not_candidate_code(self):
         for path, name, entrypoint in CALLERS:
             with self.subTest(caller=path.name):
                 text = path.read_text()

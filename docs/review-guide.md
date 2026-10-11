@@ -4,11 +4,9 @@
 
 ## Repository callers
 
-This repository’s three self-review callers below explicitly reference `main`
-in this repository. Each run resolves its runtime to a concrete commit, so later
-merges do not change an in-progress review. Future runs use the merged runtime;
-a bad merge can therefore affect this repository’s own review tooling. Other
-repositories can keep reviewed SHA pins.
+The three self-review callers below pin reviewed runtime code. They leave the
+reusable entrypoints separate and keep publication code pinned even when a PR
+changes the runtime.
 Reviews cover the captured PR diff and record its head, base, merge base, and
 the executing runtime's repository, SHA, and workflow path.
 
@@ -99,7 +97,7 @@ requirements in place.
 ## Permissions and authentication
 
 This repository's installed self-review callers start with `permissions: {}`.
-They use the OAuth runtime from `main` and forward only `CLAUDE_CODE_OAUTH_TOKEN`,
+They use a pinned OAuth runtime and forward only `CLAUDE_CODE_OAUTH_TOKEN`,
 only to the two review calls. Consumers follow the branch-specific secret
 instructions in the [shared setup guide](consumer-workflows.md).
 
@@ -299,9 +297,9 @@ the `Claude Review` Check for the result.
 
 ## Consumer updates and recovery
 
-For consumers using SHA pins, keep the automatic, manual, and status callers on
-one reviewed immutable runtime revision compatible with the authentication mode (`main` for OAuth
-or `api-key` for API-key authentication). Keep caller-contract tests and the
+Keep the automatic, manual, and status callers on one reviewed immutable runtime
+revision compatible with the authentication mode (`main` for OAuth or `api-key`
+for API-key authentication). Keep caller-contract tests and the
 manual invocation aligned with that revision's interface.
 
 Before activating an update or rollback, inspect active and queued reviews and

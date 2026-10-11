@@ -152,9 +152,8 @@ jobs:
 
 For the current reusable entrypoint, post `/claude-review` as the entire comment,
 without whitespace or arguments; matching is case-insensitive. This repository’s
-self-review callers use that same command and track `main`; the consumer
-examples above use reviewed SHA pins. Any additional manual caller gate must
-match the selected runtime revision.
+self-review callers use that same command with a reviewed runtime pin. Any
+additional manual caller gate must match the selected runtime revision.
 
 The runtime resolves the current patch once for each accepted manual request.
 Ordinary issue comments and untrusted requests do not start model execution.

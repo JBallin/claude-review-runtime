@@ -26,7 +26,9 @@ behavior. Preserve captured patch identity, verified completion, sticky findings
 and trusted publication ownership. Regression tests should exercise the affected
 contract rather than infer clean completion from missing evidence.
 
-Runtime changes and consumer adoption are separate reviewed changes. Keep all
+Runtime changes and consumer adoption are separate reviewed changes. After a
+validated group of runtime changes, consider a separate PR to update this
+repository’s self-review pins. Keep all
 three consumer pins coherent, and preserve historical Checks, findings, notices,
 and unrelated reactions during recovery or rollback. Review the permission and
 authentication boundaries before changing workflow inputs or dependencies.
