@@ -1,12 +1,12 @@
 # Review behavior and repository self-review
 
-*Use this guide to interpret review results, operate this repository's pinned callers, and handle installation or rollback.*
+*Use this guide to interpret review results, operate this repository's pinned callers, and handle installation and caller updates.*
 
 ## Pinned callers
 
-The three self-review callers use reviewed runtime commit
-`250a7d6745285dcc7902b604aec9f62f5b204033`. They leave the reusable entrypoints
-separate and keep publication code pinned even when a PR changes the runtime.
+The three self-review callers below pin reviewed runtime code. They leave the
+reusable entrypoints separate and keep publication code pinned even when a PR
+changes the runtime.
 Reviews cover the captured PR diff and record its head, base, merge base, and
 the executing runtime's repository, SHA, and workflow path.
 
@@ -38,12 +38,6 @@ Provider-bot reactions on comments are preserved and are not this runtime's
 progress or completion signals. The caller installation shape stays the same,
 but a revision update must keep its manual gate and documented command consistent
 with that revision.
-
-The pinned runtime includes the trigger-comment reactions and presentation
-ownership merged in [PR 11](https://github.com/JBallin/claude-review-runtime/pull/11)
-and the fail-closed Check-history validation from
-[PR 18](https://github.com/JBallin/claude-review-runtime/pull/18). See the
-[validation summary](validation.md) for exact tested revisions and live limits.
 
 The exact-SHA `Claude Review` Check is authoritative. The stable workflow-owned
 status comment and opening-post reactions present progress, clean completion,
@@ -197,10 +191,6 @@ affects only current PR presentation. Reaction and status publication are best-e
 unverifiable ownership can leave stale or missing reactions. Consult the current
 exact-head Check.
 
-The self-review callers pin `250a7d`, which includes the direct-ref guard from
-[PR 20](https://github.com/JBallin/claude-review-runtime/pull/20). Other consumers
-retain their own pins until a separate reviewed adoption changes them.
-
 Completion requires every captured metadata and diff line to appear in successful
 Read responses. Claude can read additional ranges after a partial response;
 unread or truncated lines fail closed. Every inline-finding call must target the
@@ -227,12 +217,7 @@ previous review evidence.
 
 ## Finding publication
 
-The publication contract below is implemented in merged runtime revision
-`91f5b76f00800e05ac41f408b427dd60c639d906` and is included in this repository’s
-pinned runtime. See the [validation summary](validation.md)
-for the distinct live-tested revision.
-
-Those reusable review entrypoints publish inline findings immediately. Trusted
+The reusable review entrypoints publish inline findings immediately. Trusted
 completion requires a valid receipt for every inline attempt and confirms each
 comment on the captured PR/head using the complete paginated comment list and pre-review
 snapshot. Failed or ambiguous publication produces an incomplete review, retains
@@ -305,40 +290,12 @@ GitHub may group `Claude Review` under another workflow name, such as
 without implying a dependency. The cause and a reliable fix are unconfirmed; use
 the `Claude Review` Check for the result.
 
-## Update or roll back
+## Updating callers
 
-Updating all three pins to a reviewed revision is a separate change. Review and
-publish that runtime revision first. Choose a full commit SHA compatible with
-the consumer's authentication branch (`main` or `api-key`), and update the manual
-caller and invocation
-guidance to match its interface. Keep caller-contract tests in sync with the
-approved pin and interface. To roll back a pin update, restore all three
-references and corresponding tests and deployment guidance together, using a
-previous reviewed full SHA compatible with the consumer's authentication branch.
-For ongoing maintenance, keep published commits reachable through normal merges;
-never rebase or force-push published history. Rollback does not establish new
-live-tested support.
+Update the automatic, manual, and status callers and their contract tests together
+to one reviewed immutable runtime commit compatible with the selected
+authentication mode and documented manual command.
 
-For this repository's installed OAuth self-review callers, the prior pin is
-`8dbcd6d786c9485670ffaaac55af4aa390c70d22`; this is not an API-key rollback target.
-Keep the
-exact `/claude-review` gate unchanged because both revisions use it.
-
-That installed OAuth rollback retains strict captured Read coverage, finding
-receipts,
-sanitized diagnostics, presentation ownership, trigger reconciliation, and the
-audited Check-history fixes. It removes the direct-ref freshness guard: the PR
-API can retain an old comparison-base SHA after the branch advances, allowing
-an outdated snapshot to be presented as current or admitted for manual review.
-Rollback is an emergency disposition, not equivalent correctness or release
-approval.
-
-Before adoption or rollback activation, inspect active and queued reviews and
-let existing attempts settle; do not silently cancel or rerun mixed-version
-writers. Preserve Checks, findings, notices, and unrelated reactions. Any
-necessary cleanup or ambiguous recovery needs a separately scoped decision.
-Runtime publication does not update callers automatically.
-
-To undo the initial self-review setup, revert the three callers, their focused
-tests, and the associated documentation changes through a reviewed PR. Preserve
-prior review evidence.
+Let active and queued reviews finish before activating the update. Preserve
+Checks, findings, notices, and unrelated reactions. Publishing runtime changes
+does not automatically update callers.

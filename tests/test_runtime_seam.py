@@ -17,7 +17,7 @@ ACTION = ROOT / "actions" / "review-helper" / "action.yml"
 HELPER = ACTION.parent / "claude_review_check.py"
 WORKFLOWS = ROOT / ".github" / "workflows"
 ENTRYPOINTS = ("claude-review.yml", "claude.yml", "claude-review-status.yml")
-MODEL_AUTH = ("ANTHROPIC_API_KEY", "anthropic_api_key")
+MODEL_AUTH = ("ANTHROPIC_API_KEY", "anthropic_api_key", "experimental api-key")
 
 
 def preparation_script():
@@ -178,7 +178,7 @@ class ReusableBoundaryTests(unittest.TestCase):
                 self.assertNotIn("secrets: inherit", text)
 
     def test_model_authentication_is_exact_and_excluded_from_publishers(self):
-        secret, action_input = MODEL_AUTH
+        secret, action_input, _ = MODEL_AUTH
         other_secret, other_input = (
             ("ANTHROPIC_API_KEY", "anthropic_api_key") if secret == "CLAUDE_CODE_OAUTH_TOKEN"
             else ("CLAUDE_CODE_OAUTH_TOKEN", "claude_code_oauth_token"))
@@ -193,16 +193,14 @@ class ReusableBoundaryTests(unittest.TestCase):
                 self.assertIn('classify_inline_comments: "false"', action)
                 for override in ("github_token:", "use_oidc:", "app_id:", "app_private_key:"):
                     self.assertNotIn(override, action)
-                # API-key authentication also passes the secret to its local guard.
+                # Model authentication also passes the secret to its local guard.
                 self.assertEqual(text.count("${{ secrets." + secret + " }}"),
-                                 2 if secret == "ANTHROPIC_API_KEY" else 1)
+                                 2)
                 for publisher in ("start-check", "publish-status"):
                     self.assertNotIn(secret, "\n".join(w.job(path, publisher)))
 
-    def test_api_key_guard_rejects_missing_values_without_logging_values(self):
-        secret, _ = MODEL_AUTH
-        if secret != "ANTHROPIC_API_KEY":
-            self.skipTest("The OAuth branch has no API-key guard")
+    def test_model_auth_guard_rejects_missing_values_without_logging_values(self):
+        secret, _, runtime = MODEL_AUTH
         for path, job_name in ((w.AUTOMATIC, "review"), (w.MANUAL, "review")):
             named = w.steps(w.job(path, job_name))
             guard = named["Validate model authentication"]
@@ -211,14 +209,15 @@ class ReusableBoundaryTests(unittest.TestCase):
             self.assertIn("          " + secret + ": ${{ secrets." + secret + " }}", guard)
             for value in (None, "", "offline-placeholder", "$(echo injected) `echo injected`"):
                 with self.subTest(workflow=path.name, configured=bool(value)):
-                    env = {"PATH": os.environ["PATH"]}
+                    # Only shell builtins are needed; no authentication/network tooling.
+                    env = {"PATH": ""}
                     if value is not None:
                         env[secret] = value
-                    result = subprocess.run(["bash", "-eo", "pipefail", "-c", w.run_block(guard)],
+                    result = subprocess.run([shutil.which("bash"), "-eo", "pipefail", "-c", w.run_block(guard)],
                                             env=env, capture_output=True, text=True)
                     self.assertEqual(result.returncode, 0 if value else 1)
                     self.assertEqual(result.stdout, "" if value else (
-                        "::error::ANTHROPIC_API_KEY is required by the experimental api-key runtime.\n"))
+                        f"::error::{secret} is required by the {runtime} runtime.\n"))
                     self.assertEqual(result.stderr, "")
 
     def test_shared_setup_examples_and_installed_oauth_callers(self):
