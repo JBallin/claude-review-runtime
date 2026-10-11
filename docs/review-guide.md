@@ -4,9 +4,9 @@
 
 ## Pinned callers
 
-The three self-review callers use reviewed runtime commit
-`310ae2f70ef3c4b16983cdaf45679f6cb60bf2b1`. They leave the reusable entrypoints
-separate and keep publication code pinned even when a PR changes the runtime.
+The three self-review callers below pin reviewed runtime code. They leave the
+reusable entrypoints separate and keep publication code pinned even when a PR
+changes the runtime.
 Reviews cover the captured PR diff and record its head, base, merge base, and
 the executing runtime's repository, SHA, and workflow path.
 
@@ -38,12 +38,6 @@ Provider-bot reactions on comments are preserved and are not this runtime's
 progress or completion signals. The caller installation shape stays the same,
 but a revision update must keep its manual gate and documented command consistent
 with that revision.
-
-The pinned runtime includes the trigger-comment reactions and presentation
-ownership merged in [PR 11](https://github.com/JBallin/claude-review-runtime/pull/11)
-and the fail-closed Check-history validation from
-[PR 18](https://github.com/JBallin/claude-review-runtime/pull/18). See the
-[validation summary](validation.md) for exact tested revisions and live limits.
 
 The exact-SHA `Claude Review` Check is authoritative. The stable workflow-owned
 status comment and opening-post reactions present progress, clean completion,
@@ -197,10 +191,6 @@ affects only current PR presentation. Reaction and status publication are best-e
 unverifiable ownership can leave stale or missing reactions. Consult the current
 exact-head Check.
 
-The self-review callers pin `310ae2f`, which includes the direct-ref guard from
-[PR 20](https://github.com/JBallin/claude-review-runtime/pull/20). Other consumers
-retain their own pins until a separate reviewed adoption changes them.
-
 Completion requires every captured metadata and diff line to appear in successful
 Read responses. Claude can read additional ranges after a partial response;
 unread or truncated lines fail closed. Every inline-finding call must target the
@@ -307,35 +297,13 @@ the `Claude Review` Check for the result.
 
 ## Update or roll back
 
-Updating all three pins to a reviewed revision is a separate change. Review and
-publish that runtime revision first. Choose a full commit SHA compatible with
-the consumer's authentication branch (`main` or `api-key`), and update the manual
-caller and invocation
-guidance to match its interface. Keep caller-contract tests in sync with the
-approved pin and interface. To roll back a pin update, restore all three
-references and corresponding tests and deployment guidance together, using a
-previous reviewed full SHA compatible with the consumer's authentication branch.
-For ongoing maintenance, keep published commits reachable through normal merges;
-never rebase or force-push published history. Rollback does not establish new
-live-tested support.
+Keep the automatic, manual, and status callers on one reviewed immutable runtime
+revision compatible with the consumer's authentication mode (`main` for OAuth
+or `api-key` for API-key authentication). Keep caller-contract tests and the
+manual invocation aligned with that revision's interface.
 
-For this repository's installed OAuth self-review callers, the prior pin is
-`250a7d6745285dcc7902b604aec9f62f5b204033`; this is not an API-key rollback target.
-Keep the exact `/claude-review` gate unchanged because both revisions use it.
-
-That rollback retains captured Read coverage, finding receipts, sanitized
-diagnostics, presentation ownership, Check-history validation, and direct-ref
-base freshness. It removes the intervening presentation and recovery changes,
-including compact status rendering, lifecycle timestamps, and preservation of
-completed results when only the base advances. Rollback is an emergency
-disposition, not equivalent correctness or release approval.
-
-Before adoption or rollback activation, inspect active and queued reviews and
+Before activating an update or rollback, inspect active and queued reviews and
 let existing attempts settle; do not silently cancel or rerun mixed-version
 writers. Preserve Checks, findings, notices, and unrelated reactions. Any
 necessary cleanup or ambiguous recovery needs a separately scoped decision.
 Runtime publication does not update callers automatically.
-
-To undo the initial self-review setup, revert the three callers, their focused
-tests, and the associated documentation changes through a reviewed PR. Preserve
-prior review evidence.
