@@ -345,7 +345,8 @@ class ReadCoverageDiagnosticsTests(unittest.TestCase):
                 "#!/usr/bin/env python3\nimport os,sys,time\nfrom pathlib import Path\n"
                 "if sys.argv[1] == '-c':\n"
                 f" Path({str(marker)!r}).write_text(Path(os.environ['GITHUB_OUTPUT']).read_text())\n"
-                f" print({SECRET!r}, flush=True)\n print({SECRET!r}, file=sys.stderr, flush=True)\n"
+                " print('DIAGNOSTIC_OUTPUT_CANARY', flush=True)\n"
+                " print('DIAGNOSTIC_OUTPUT_CANARY', file=sys.stderr, flush=True)\n"
                 " time.sleep(60)\n"
                 f"else:\n os.execv({executable!r}, [{executable!r}] + sys.argv[1:])\n"
             )
@@ -368,4 +369,4 @@ class ReadCoverageDiagnosticsTests(unittest.TestCase):
                         self.assertEqual(harness.last_outputs, outputs)
                         self.assertEqual(dict(line.split("=", 1) for line in marker.read_text().splitlines()), outputs)
                         self.assertNotIn(PREFIX, harness.last_stdout)
-                        self.assertNotIn(SECRET, harness.last_stdout)
+                        self.assertNotIn("DIAGNOSTIC_OUTPUT_CANARY", harness.last_stdout)
