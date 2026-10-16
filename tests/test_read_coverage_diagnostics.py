@@ -5,6 +5,7 @@ from pathlib import Path
 import shlex
 import shutil
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -268,7 +269,103 @@ class ReadCoverageDiagnosticsTests(unittest.TestCase):
             wrapper.chmod(0o700)
             with mock.patch.dict(os.environ, {"PATH": tmp + os.pathsep + os.environ["PATH"]}):
                 for path in (workflows.MANUAL, workflows.AUTOMATIC):
-                    harness = workflows.CompletionVerifierTests()
-                    self.assertEqual(harness.verify(workflows.clean_stream(), path=path), ("true", "verified"))
-                    self.assertNotIn(PREFIX, harness.last_stdout)
-                    self.assertNotIn(SECRET, harness.last_stdout)
+                    for complete in (True, False):
+                        harness = workflows.CompletionVerifierTests()
+                        stream = workflows.clean_stream()
+                        if not complete:
+                            stream[4] = workflows.read_result("t2", workflows.DIFF_CONTENT, stop=1)
+                        expected = ("true", "verified") if complete else ("false", "captured_inputs_not_read")
+                        self.assertEqual(harness.verify(stream, path=path), expected)
+                        self.assertNotIn(PREFIX, harness.last_stdout)
+                        self.assertNotIn(SECRET, harness.last_stdout)
+
+    def test_large_complete_and_overlapping_reads_have_exact_diagnostics(self):
+        diff = "".join(f"+sanitized line {number}\n" for number in range(1, 10001))
+        reports = {}
+        for path in (workflows.MANUAL, workflows.AUTOMATIC):
+            with self.subTest(path=path.name, shape="complete"):
+                stream = workflows.clean_stream()
+                stream[4] = workflows.read_result("t2", diff)
+                stats = self.verify(stream, path=path, expected=("true", "verified"), diff=diff)["diff"]
+                self.assertEqual(stats["matched_line_count"], 10000)
+                self.assertEqual(stats["gap_ranges"], [])
+                self.assertEqual(stats["reads"][0]["returned_ranges"], [{"start": 1, "end": 10000}])
+                self.assertEqual(stats["reads"][0]["overlap_line_count"], 0)
+
+            with self.subTest(path=path.name, shape="overlap-and-gap"):
+                stream[4] = workflows.read_result("t2", diff, stop=8000)
+                stream[5:5] = [
+                    workflows.tool_use("overlap", "Read", file_path="/captured/diff.patch", offset=7001, limit=2000),
+                    workflows.read_result("overlap", diff, start=7001, stop=9000),
+                ]
+                stats = self.verify(stream, path=path, expected=("false", "captured_inputs_not_read"), diff=diff)["diff"]
+                self.assertEqual(stats["matched_line_count"], 9000)
+                self.assertEqual(stats["missing_line_count"], 1000)
+                self.assertEqual(stats["gap_ranges"], [{"start": 9001, "end": 10000}])
+                self.assertEqual(stats["reads"][1]["overlap_line_count"], 1000)
+                reports[path] = stats
+        self.assertEqual(reports[workflows.MANUAL], reports[workflows.AUTOMATIC])
+
+    def test_duplicate_and_changed_lines_preserve_range_and_exact_gap_semantics(self):
+        for path in (workflows.MANUAL, workflows.AUTOMATIC):
+            stream = workflows.clean_stream()
+            stream[4] = workflows.tool_result("t2", content="1→incorrect\n1→" + workflows.DIFF_CONTENT.splitlines()[0])
+            stream[5:5] = [
+                workflows.tool_use("repeat", "Read", file_path="/captured/diff.patch"),
+                workflows.tool_result("repeat", content="1→incorrect\n1→incorrect\n2→incorrect"),
+            ]
+            stats = self.verify(stream, path=path, expected=("false", "captured_inputs_not_read"))["diff"]
+            self.assertEqual(stats["matched_line_count"], 1)
+            self.assertEqual(stats["gap_ranges"], [{"start": 2, "end": 2}])
+            self.assertEqual(stats["reads"][1]["parsed_line_count"], 3)
+            self.assertEqual(stats["reads"][1]["returned_ranges"], [{"start": 1, "end": 2}])
+            self.assertEqual(stats["reads"][1]["overlap_line_count"], 1)
+
+    def test_diagnostic_membership_uses_keys_and_accumulates_prior_reads_once(self):
+        # Guard the scale regression structurally, without machine-dependent
+        # timing assertions. Array index membership or reparsing prior pages
+        # would restore the quadratic work even when small fixtures pass.
+        for path in (workflows.MANUAL, workflows.AUTOMATIC):
+            script = workflows.run_block(workflows.steps(workflows.job(path, "review"))[workflows.VERIFY_STEP])
+            diagnostics = script.split("if diagnostics=", 1)[1]
+            self.assertNotIn("| index(", diagnostics)
+            self.assertNotIn("parsed_numbers", diagnostics)
+            self.assertNotIn("range(0; $index)", diagnostics)
+            self.assertIn("$matched[($number | tostring)]", diagnostics)
+            self.assertIn("$prior[(tostring)]", diagnostics)
+            self.assertIn("reduce $reads[0:16][]", diagnostics)
+
+    def test_hung_diagnostics_are_killed_after_verdict_without_changing_outputs(self):
+        executable = shutil.which("jq")
+        self.assertIsNotNone(executable)
+        with tempfile.TemporaryDirectory() as tmp:
+            marker = Path(tmp) / "verdict-before-diagnostics"
+            wrapper = Path(tmp) / "jq"
+            wrapper.write_text(
+                "#!/usr/bin/env python3\nimport os,sys,time\nfrom pathlib import Path\n"
+                "if sys.argv[1] == '-c':\n"
+                f" Path({str(marker)!r}).write_text(Path(os.environ['GITHUB_OUTPUT']).read_text())\n"
+                f" print({SECRET!r}, flush=True)\n print({SECRET!r}, file=sys.stderr, flush=True)\n"
+                " time.sleep(60)\n"
+                f"else:\n os.execv({executable!r}, [{executable!r}] + sys.argv[1:])\n"
+            )
+            wrapper.chmod(0o700)
+            for path in (workflows.MANUAL, workflows.AUTOMATIC):
+                for complete in (True, False):
+                    with self.subTest(path=path.name, complete=complete):
+                        stream = workflows.clean_stream()
+                        if not complete:
+                            stream[4] = workflows.read_result("t2", workflows.DIFF_CONTENT, stop=1)
+                        harness = workflows.CompletionVerifierTests()
+                        expected = harness.verify(stream, path=path)
+                        outputs = harness.last_outputs
+                        with mock.patch.dict(os.environ, {"PATH": tmp + os.pathsep + os.environ["PATH"]}):
+                            started = time.monotonic()
+                            self.assertEqual(harness.verify(stream, path=path), expected)
+                        # A generous liveness ceiling catches a missing deadline,
+                        # not relative performance differences between machines.
+                        self.assertLess(time.monotonic() - started, 20)
+                        self.assertEqual(harness.last_outputs, outputs)
+                        self.assertEqual(dict(line.split("=", 1) for line in marker.read_text().splitlines()), outputs)
+                        self.assertNotIn(PREFIX, harness.last_stdout)
+                        self.assertNotIn(SECRET, harness.last_stdout)
