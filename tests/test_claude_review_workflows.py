@@ -1093,7 +1093,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 1)
                 self.assertEqual(self.methods(calls)[-1], "PATCH")
                 repaired = next(call for call in calls if call["method"] == "PATCH" and any("issues/comments/55" in arg for arg in call["args"]))
-                self.assertIn("❌ Claude Review incomplete", repaired["body"]["body"])
+                self.assertIn("### Claude Review\n", repaired["body"]["body"])
                 self.assertIn(HEAD, repaired["body"]["body"])
                 self.assertIn(f"**Current commit:** `{HEAD[:7]}`\n**Trigger:** {label}\n", repaired["body"]["body"])
                 self.assertNotIn("Authority:", repaired["body"]["body"])

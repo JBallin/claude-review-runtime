@@ -832,11 +832,10 @@ jobs:
             verify_presentation_owner || return 0
             observed_patch=$(verify_known_patch) || return 0
             [ "$observed_patch" = "$live_patch" ] || return 0
-            heading='❌ Claude Review incomplete'
+            heading='Claude Review'
             reason='Trusted review tooling was unavailable; the review could not be finalized reliably.'
             if [ "$current_patch" != true ]; then
               state=stale
-              heading='⚠️ Claude Review stale'
               message='The captured head or base was superseded; the current patch is not reviewed by this attempt.'
             elif [ "$1" = failure ]; then
               state=failure

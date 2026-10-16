@@ -1610,9 +1610,9 @@ class StatusCommentTests(ScriptTestCase):
             ([], [], "success", "**Result:** No findings.", {}),
             ([comment(9)], [], "action_required", "inline review threads", {}),
             ([], [check_run(41, "action_required")], "action_required", "inline review threads", {}),
-            ([], [], "failure", "❌ Claude Review incomplete", {"REVIEW_RESULT": "failure"}),
-            ([], [], "failure", "❌ Claude Review incomplete", {"ACTION_CONCLUSION": "failure"}),
-            ([], [], "failure", "❌ Claude Review incomplete", {"COMPLETION_VERIFIED": "false"}),
+            ([], [], "failure", "**Reason:** " + check.STATUS_REASONS["incomplete"], {"REVIEW_RESULT": "failure"}),
+            ([], [], "failure", "**Reason:** " + check.STATUS_REASONS["incomplete"], {"ACTION_CONCLUSION": "failure"}),
+            ([], [], "failure", "**Reason:** " + check.STATUS_REASONS["incomplete"], {"COMPLETION_VERIFIED": "false"}),
         ]
         for inline, prior, expected, phrase, override in cases:
             with self.subTest(expected=expected, prior=prior, override=override):
@@ -1851,7 +1851,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual(self.calls("POST")[-1]["body"], {"content": "eyes"})
         self.assert_pr_reactions_only()
-        self.assertIn("🔄 Claude Review Running", self.calls("POST")[-2]["body"]["body"])
+        self.assertIn("## Claude Review", self.calls("POST")[-2]["body"]["body"])
 
         self.log.unlink()
         result = self.start(
@@ -1879,7 +1879,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
                          [f"repos/{REPO}/issues/7/reactions/70"])
         self.assertEqual(self.calls("POST")[-1]["body"], {"content": "eyes"})
-        self.assertIn("🔄 Claude Review Running", self.calls("PATCH")[0]["body"]["body"])
+        self.assertIn("## Claude Review", self.calls("PATCH")[0]["body"]["body"])
         self.assert_pr_reactions_only()
 
         self.log.unlink()
@@ -2010,7 +2010,7 @@ class PRReactionTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout)
         body = self.calls("PATCH")[0]["body"]["body"]
-        self.assertIn("⚠️ Claude Review stale", body)
+        self.assertIn("## Claude Review", body)
         self.assertIn(f"**Current commit:** {check.commit_link(OTHER, REPO)} on `main` — not reviewed", body)
         self.assertIn("| ✅ **Completed**", body)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
@@ -2455,7 +2455,7 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual([call["path"] for call in self.calls("PATCH")],
                          [f"repos/{REPO}/issues/comments/55"])
-        self.assertIn("Claude Review stale", self.calls("PATCH")[0]["body"]["body"])
+        self.assertIn("## Claude Review", self.calls("PATCH")[0]["body"]["body"])
         self.assertFalse(self.calls("POST"))
         self.assertFalse(self.calls("DELETE"))
 

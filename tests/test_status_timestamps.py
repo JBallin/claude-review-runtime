@@ -40,8 +40,7 @@ class StatusTimestampTests(unittest.TestCase):
                     self.assertIn(" started " + check.relative_time(START), initial)
                     check.best_effort_status(HEAD, "in_progress", check_available=available)
                     visible = self.body().split("<details>")[0]
-                    running = "Running" if history else "**Running**"
-                    self.assertIn(running + " started " + check.relative_time(START), visible)
+                    self.assertIn("**Running** started " + check.relative_time(START), visible)
                     self.assertEqual(visible.count(check.relative_time(START)), 1)
                     self.assertNotIn("In progress", visible)
                     self.assertNotIn("in progress", visible)

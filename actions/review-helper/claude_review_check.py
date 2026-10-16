@@ -503,14 +503,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                         owner=None, owner_running=None, reason=None, completed_at=None,
                         completed_owner_verified=False):
     """Render trusted informational state without affecting Check authority."""
-    headings = {
-        "in_progress": "🔄 Claude Review Running",
-        "success": "✅ Claude Review passed",
-        "action_required": "⚠️ Claude Review found issues",
-        "failure": "❌ Claude Review incomplete",
-        "publication_incomplete": "❌ Claude Review incomplete",
-        "stale": "⚠️ Claude Review stale",
-    }
     messages = {
         "in_progress": "Claude is reviewing this commit.",
         "action_required": "Claude recorded findings. Assess them in the inline review threads.",
@@ -542,7 +534,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         and reason in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
     )
     if base_advanced:
-        headings["stale"] = headings[last_review[2]] + " — base advanced"
         messages["stale"] = (
             "Claude reviewed this unchanged commit with no findings." if last_review[2] == "success"
             else "Claude recorded findings on this unchanged commit. Assess them in the inline review threads."
@@ -551,10 +542,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     elif (state == "stale" and check_available and completed_owner_verified
           and last_review and last_review[:2] != (head_sha, base_ref)
           and not owner_running and reason == STATUS_REASONS["stale"]):
-        headings["stale"] = (
-            "Last Claude review: no findings" if last_review[2] == "success"
-            else "Last Claude review: findings"
-        )
         messages["stale"] = (
             "⚠️ This completed review doesn’t cover the current version." if last_review[2] == "success"
             else "⚠️ These recorded findings are from a review of a previous version."
@@ -590,17 +577,12 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         generation = last_review_details.get("generation")
         if isinstance(generation, str) and re.fullmatch(r"[0-9a-f]{64}", generation):
             lines.append(f"{STATUS_REVIEWED_GENERATION_PREFIX}{generation} -->")
-    heading = "Claude Review" if state in ("success", "action_required") or base_advanced or (
-        state == "stale" and completed_owner_verified and not owner_running
-        and reason == STATUS_REASONS["stale"]) else headings[state]
-    if state == "stale" and owner_running:
-        heading = headings["in_progress"]
     started = owner_start_time(owner)
     active = state == "in_progress" or (state == "stale" and owner_running)
     started_suffix = " started " + relative_time(started) if active and started else ""
+    lines += ["## Claude Review", ""]
     if active and last_review:
-        heading += started_suffix
-    lines += [f"## {heading}", ""]
+        lines += ["**Current attempt:** 🔄 **Running**" + started_suffix, ""]
     # Failure and running receipts remain ahead of historical completion.
     # Keep the fixed Reason line visible and parseable for terminal recovery.
     visible_reason = reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
