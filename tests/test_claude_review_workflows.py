@@ -1111,7 +1111,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 reason = "**Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably."
                 note = "**Note:** " + check.INCOMPLETE_NOTE
                 metadata = f"**Current commit:** `{HEAD[:7]}`  \n**Trigger:** {label}  \n"
-                self.assertIn(reason + "\n\n" + note + "\n\n" + metadata, details)
+                self.assertIn(reason + "\n" + note + "\n\n" + metadata, details)
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("Check", body)
 

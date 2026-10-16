@@ -164,6 +164,11 @@ class StatusPresentationTests(unittest.TestCase):
                     self.assertIn(fallback, visible)
                     self.assertNotIn('**Reason:**', visible)
 
+    def test_incomplete_note_uses_approved_conditional_wording(self):
+        self.assertEqual(check.INCOMPLETE_NOTE,
+                         "If this PR changes Claude’s review workflow, including Runtime pins, "
+                         "an incomplete review is expected.")
+
     def test_reason_note_and_metadata_order_tracks_incomplete_presentation(self):
         owner = self.start()
         histories = (None, (OTHER, 'release/old', 'success'), (OTHER, 'release/old', 'action_required'))
@@ -188,7 +193,7 @@ class StatusPresentationTests(unittest.TestCase):
                     self.assertEqual(body.count(note_line), 1)
                     self.assertLess(details.index(reason_line), details.index(note_line))
                     self.assertLess(details.index(note_line), details.index(metadata))
-                    self.assertIn(reason_line + '\n\n' + note_line + '\n\n' + metadata, details)
+                    self.assertIn(reason_line + '\n' + note_line + '\n\n' + metadata, details)
 
     def test_success_findings_running_and_coverage_only_stale_have_no_incomplete_note(self):
         owner = self.start()
