@@ -13,7 +13,13 @@ import test_claude_review_workflows as workflows
 
 PREFIX = "Claude review captured-input coverage: "
 FIELDS = {"read_count", "successful_read_count", "expected_line_count", "matched_line_count",
-          "missing_line_count", "unparsed_line_count", "content_shapes", "partial_view"}
+          "missing_line_count", "unparsed_line_count", "content_shapes", "partial_view",
+          "reads", "reads_truncated", "gap_range_count", "gap_ranges", "gap_ranges_truncated"}
+COUNT_FIELDS = {"read_count", "successful_read_count", "expected_line_count", "matched_line_count",
+                "missing_line_count", "unparsed_line_count", "gap_range_count"}
+READ_FIELDS = {"request_offset", "request_limit", "response_count", "successful",
+               "parsed_line_count", "overlap_line_count", "returned_range_count",
+               "returned_ranges", "returned_ranges_truncated"}
 SHAPES = {"string", "text_blocks", "mixed_blocks", "other"}
 SECRET = "PRIVATE_PAYLOAD_NEVER_PRINT_ME"
 
@@ -28,12 +34,35 @@ class ReadCoverageDiagnosticsTests(unittest.TestCase):
         self.assertEqual(set(report), {"metadata", "diff"})
         for stats in report.values():
             self.assertEqual(set(stats), FIELDS)
-            for key in FIELDS - {"content_shapes", "partial_view"}:
+            for key in COUNT_FIELDS:
                 self.assertIs(type(stats[key]), int)
                 self.assertGreaterEqual(stats[key], 0)
             self.assertIs(type(stats["partial_view"]), bool)
+            self.assertIs(type(stats["reads_truncated"]), bool)
+            self.assertIs(type(stats["gap_ranges_truncated"]), bool)
             self.assertIs(type(stats["content_shapes"]), list)
             self.assertTrue(set(stats["content_shapes"]) <= SHAPES)
+            self.assertLessEqual(len(stats["reads"]), 16)
+            self.assertLessEqual(len(stats["gap_ranges"]), 16)
+            for item in stats["reads"]:
+                self.assertEqual(set(item), READ_FIELDS)
+                for key in ("request_offset", "request_limit"):
+                    self.assertTrue(type(item[key]) is int or item[key] in (None, "invalid"))
+                    if type(item[key]) is int:
+                        self.assertGreaterEqual(item[key], 0)
+                        self.assertLessEqual(item[key], 1000000000)
+                for key in ("response_count", "parsed_line_count", "overlap_line_count", "returned_range_count"):
+                    self.assertIs(type(item[key]), int)
+                    self.assertGreaterEqual(item[key], 0)
+                self.assertIs(type(item["successful"]), bool)
+                self.assertIs(type(item["returned_ranges_truncated"]), bool)
+                self.assertLessEqual(len(item["returned_ranges"]), 16)
+                for returned in item["returned_ranges"]:
+                    self.assertEqual(set(returned), {"start", "end"})
+                    self.assertLessEqual(returned["start"], returned["end"])
+            for gap in stats["gap_ranges"]:
+                self.assertEqual(set(gap), {"start", "end"})
+                self.assertLessEqual(gap["start"], gap["end"])
         self.assertNotIn(SECRET, harness.last_stdout)
         self.assertNotIn("/", harness.last_stdout)
         self.assertFalse(any("coverage" in key for key in harness.last_outputs))
@@ -52,6 +81,13 @@ class ReadCoverageDiagnosticsTests(unittest.TestCase):
                     self.assertEqual(stats["unparsed_line_count"], 0)
                     self.assertEqual(stats["content_shapes"], ["string"])
                     self.assertFalse(stats["partial_view"])
+                    self.assertEqual(stats["reads"], [{
+                        "request_offset": None, "request_limit": None, "response_count": 1,
+                        "successful": True, "parsed_line_count": 2, "overlap_line_count": 0,
+                        "returned_range_count": 1, "returned_ranges": [{"start": 1, "end": 2}],
+                        "returned_ranges_truncated": False,
+                    }])
+                    self.assertEqual(stats["gap_ranges"], [])
 
     def test_missing_and_errored_reads_have_distinct_counts(self):
         for path in (workflows.MANUAL, workflows.AUTOMATIC):
@@ -68,6 +104,7 @@ class ReadCoverageDiagnosticsTests(unittest.TestCase):
                     self.assertEqual(stats["read_count"], 1 if kind == "error" else 0)
                     self.assertEqual(stats["successful_read_count"], 0)
                     self.assertEqual(stats["missing_line_count"], 2)
+                    self.assertEqual(stats["gap_ranges"], [{"start": 1, "end": 2}])
 
     def test_partial_pages_and_unknown_rendering_remain_rejected(self):
         for path in (workflows.MANUAL, workflows.AUTOMATIC):
@@ -90,6 +127,79 @@ class ReadCoverageDiagnosticsTests(unittest.TestCase):
                         self.assertEqual(stats["successful_read_count"], 2)
                         self.assertEqual(stats["missing_line_count"], 0)
                         self.assertEqual(stats["content_shapes"], ["string", "text_blocks"])
+                        self.assertEqual(stats["reads"][1]["request_offset"], 2)
+                        self.assertEqual(stats["reads"][1]["returned_ranges"], [{"start": 2, "end": 2}])
+                        self.assertEqual(stats["reads"][1]["overlap_line_count"], 0)
+
+    def test_historical_1793_line_shapes_expose_overlap_and_gaps_without_changing_verdict(self):
+        diff = "\n".join(f"+sanitized line {number}" for number in range(1, 1794)) + "\n"
+        for path in (workflows.MANUAL, workflows.AUTOMATIC):
+            with self.subTest(path=path.name, shape="repeated-prefix"):
+                stream = workflows.clean_stream()
+                stream[4] = workflows.read_result("t2", diff, stop=1496)
+                stream[5:5] = [
+                    workflows.tool_use("repeat", "Read", file_path="/captured/diff.patch", offset=1497, limit=297),
+                    workflows.read_result("repeat", diff, stop=1496),
+                ]
+                stats = self.verify(stream, path=path, expected=("false", "captured_inputs_not_read"), diff=diff)["diff"]
+                self.assertEqual((stats["matched_line_count"], stats["missing_line_count"]), (1496, 297))
+                self.assertEqual(stats["reads"][1]["request_offset"], 1497)
+                self.assertEqual(stats["reads"][1]["request_limit"], 297)
+                self.assertEqual(stats["reads"][1]["returned_ranges"], [{"start": 1, "end": 1496}])
+                self.assertEqual(stats["reads"][1]["overlap_line_count"], 1496)
+                self.assertEqual(stats["gap_ranges"], [{"start": 1497, "end": 1793}])
+
+            with self.subTest(path=path.name, shape="correct-continuation"):
+                stream[6] = workflows.read_result("repeat", diff, start=1497)
+                stats = self.verify(stream, path=path, expected=("true", "verified"), diff=diff)["diff"]
+                self.assertEqual(stats["reads"][1]["returned_ranges"], [{"start": 1497, "end": 1793}])
+                self.assertEqual(stats["reads"][1]["overlap_line_count"], 0)
+                self.assertEqual(stats["gap_ranges"], [])
+
+            with self.subTest(path=path.name, shape="three-reads"):
+                stream = workflows.clean_stream()
+                stream[4] = workflows.read_result("t2", diff, stop=700)
+                stream[5:5] = [
+                    workflows.tool_use("middle", "Read", file_path="/captured/diff.patch", offset=701, limit=796),
+                    workflows.read_result("middle", diff, start=701, stop=1496),
+                    workflows.tool_use("tail", "Read", file_path="/captured/diff.patch", offset=1497, limit=297),
+                    workflows.read_result("tail", diff, start=1497),
+                ]
+                stats = self.verify(stream, path=path, expected=("true", "verified"), diff=diff)["diff"]
+                self.assertEqual(stats["read_count"], 3)
+                self.assertEqual([item["returned_ranges"] for item in stats["reads"]], [
+                    [{"start": 1, "end": 700}], [{"start": 701, "end": 1496}],
+                    [{"start": 1497, "end": 1793}],
+                ])
+                self.assertEqual(stats["gap_ranges"], [])
+
+    def test_diagnostic_lists_and_request_values_are_bounded_and_sanitized(self):
+        diff = "\n".join(f"+line {number}" for number in range(1, 66)) + "\n"
+        stream = workflows.clean_stream()
+        rendered = "\n".join(f"{number:6d}→+line {number}" for number in range(1, 66, 2))
+        stream[3]["message"]["content"][0]["input"].update(offset=SECRET, limit=10 ** 12)
+        stream[4] = workflows.tool_result("t2", content=rendered)
+        for path in (workflows.MANUAL, workflows.AUTOMATIC):
+            with self.subTest(path=path.name, shape="bounded-ranges"):
+                stats = self.verify(stream, path=path, expected=("false", "captured_inputs_not_read"), diff=diff)["diff"]
+                self.assertEqual(stats["gap_range_count"], 32)
+                self.assertEqual(len(stats["gap_ranges"]), 16)
+                self.assertTrue(stats["gap_ranges_truncated"])
+                self.assertEqual(stats["reads"][0]["returned_range_count"], 33)
+                self.assertEqual(len(stats["reads"][0]["returned_ranges"]), 16)
+                self.assertTrue(stats["reads"][0]["returned_ranges_truncated"])
+        for number in range(16):
+            use_id = f"extra-{number}"
+            stream[5:5] = [workflows.tool_use(use_id, "Read", file_path="/captured/diff.patch"),
+                           workflows.read_result(use_id, diff)]
+        for path in (workflows.MANUAL, workflows.AUTOMATIC):
+            with self.subTest(path=path.name):
+                stats = self.verify(stream, path=path, expected=("true", "verified"), diff=diff)["diff"]
+                self.assertEqual(stats["read_count"], 17)
+                self.assertEqual(len(stats["reads"]), 16)
+                self.assertTrue(stats["reads_truncated"])
+                self.assertEqual(stats["reads"][0]["request_offset"], "invalid")
+                self.assertEqual(stats["reads"][0]["request_limit"], "invalid")
 
     def test_content_shape_enums_never_emit_payload_or_unknown_values(self):
         for path in (workflows.MANUAL, workflows.AUTOMATIC):

@@ -654,6 +654,14 @@ class JobStructureTests(unittest.TestCase):
                 self.assertNotIn("gh api", review)
                 self.assertIn("name: pr-review-snapshot", review)
 
+    def test_review_prompt_uses_the_captured_diff_line_count_as_its_completion_target(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                prompt = folded(steps(job(path, "review"))["Review pull request"], "prompt", 10)
+                self.assertIn("metadata diff_line_count is the exact numbered line total", prompt)
+                self.assertIn("cover 1 through that total without gaps", prompt)
+                self.assertNotIn("increase", prompt)
+
     def test_status_publication_is_only_in_trusted_jobs(self):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
@@ -1435,6 +1443,33 @@ class CompletionVerifierTests(unittest.TestCase):
                 self.assertEqual(self.verify(stream, path=path, diff=diff), ("true", "verified"))
                 stream[8]["message"]["content"][0]["is_error"] = True
                 self.assertRejected(stream, "captured_inputs_not_read", path=path, diff=diff)
+
+    def test_observed_1793_line_pagination_shapes_preserve_fail_closed_coverage(self):
+        diff = "\n".join(f"+sanitized line {number}" for number in range(1, 1794)) + "\n"
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name, shape="repeated-prefix"):
+                stream = clean_stream()
+                stream[4] = read_result("t2", diff, stop=1496)
+                stream[5:5] = [
+                    tool_use("repeat", "Read", file_path="/captured/diff.patch", offset=1497, limit=297),
+                    read_result("repeat", diff, stop=1496),
+                ]
+                self.assertRejected(stream, "captured_inputs_not_read", path=path, diff=diff)
+
+            with self.subTest(workflow=path.name, shape="correct-continuation"):
+                stream[6] = read_result("repeat", diff, start=1497)
+                self.assertEqual(self.verify(stream, path=path, diff=diff), ("true", "verified"))
+
+            with self.subTest(workflow=path.name, shape="three-reads"):
+                stream = clean_stream()
+                stream[4] = read_result("t2", diff, stop=700)
+                stream[5:5] = [
+                    tool_use("middle", "Read", file_path="/captured/diff.patch", offset=701, limit=796),
+                    read_result("middle", diff, start=701, stop=1496),
+                    tool_use("tail", "Read", file_path="/captured/diff.patch", offset=1497, limit=297),
+                    read_result("tail", diff, start=1497),
+                ]
+                self.assertEqual(self.verify(stream, path=path, diff=diff), ("true", "verified"))
 
     def test_supported_read_rendering_preserves_payload_and_empty_file_evidence(self):
         empty_notice = "<system-reminder>Warning: the file exists but the contents are empty.</system-reminder>"
