@@ -732,6 +732,7 @@ jobs:
             [ "$observed_patch" = "$live_patch" ] || return 0
             heading='Claude Review'
             reason='Trusted review tooling was unavailable; the review could not be finalized reliably.'
+            note='Changes to Claude’s review workflow, including Runtime pins, result in an incomplete review.'
             if [ "$current_patch" != true ]; then
               state=stale
               message='The captured head or base was superseded; the current patch is not reviewed by this attempt.'
@@ -880,8 +881,10 @@ jobs:
                 captured_line="$captured_line"$'\n'"$historical_lines"
               fi
             fi
-            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n**Current commit:** `%s`%s%s\n\n%s\n\n**Reason:** %s\n\n[%s](%s)' \
-              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "${display_head:0:7}" "$trigger_line" "$captured_line" "$message" "$reason" "$attempt_label" "$DETAILS_URL")
+            metadata="**Current commit:** \`${display_head:0:7}\`$trigger_line$captured_line"
+            metadata=${metadata//$'\n'/$'  \n'}
+            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n**Reason:** %s\n\n**Note:** %s\n\n%s\n\n[%s](%s)\n\n</details>' \
+              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "$message" "$reason" "$note" "$metadata" "$attempt_label" "$DETAILS_URL")
             body=$(jq -n --arg body "$rendered" '{body: $body}')
             verify_presentation_owner || return 0
             observed_patch=$(verify_known_patch) || return 0

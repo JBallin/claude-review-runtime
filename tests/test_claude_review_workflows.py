@@ -1093,11 +1093,19 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 1)
                 self.assertEqual(self.methods(calls)[-1], "PATCH")
                 repaired = next(call for call in calls if call["method"] == "PATCH" and any("issues/comments/55" in arg for arg in call["args"]))
-                self.assertIn("### Claude Review\n", repaired["body"]["body"])
-                self.assertIn(HEAD, repaired["body"]["body"])
-                self.assertIn(f"**Current commit:** `{HEAD[:7]}`\n**Trigger:** {label}\n", repaired["body"]["body"])
-                self.assertNotIn("Authority:", repaired["body"]["body"])
-                self.assertNotIn("Check", repaired["body"]["body"])
+                body = repaired["body"]["body"]
+                visible, details = body.split("<details>", 1)
+                self.assertIn("### Claude Review\n", visible)
+                self.assertIn(HEAD, body)
+                self.assertNotIn("**Reason:**", visible)
+                self.assertIn("<summary>ℹ️ Details</summary>\n\n<br/>\n\n", details)
+                self.assertEqual(body.count("<br/>"), 1)
+                reason = "**Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably."
+                note = "**Note:** " + check.INCOMPLETE_NOTE
+                metadata = f"**Current commit:** `{HEAD[:7]}`  \n**Trigger:** {label}  \n"
+                self.assertIn(reason + "\n\n" + note + "\n\n" + metadata, details)
+                self.assertNotIn("Authority:", body)
+                self.assertNotIn("Check", body)
 
     def test_fallback_records_an_encoded_base_ref(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
@@ -1232,6 +1240,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertEqual(check.status_head({"body": repaired}), "b" * 40)
                         self.assertIn(f"**Captured commit:** `{HEAD}`", repaired)
                         self.assertIn("**Reason:**", repaired)
+                        self.assertIn("**Note:** " + check.INCOMPLETE_NOTE, repaired)
+                        self.assertNotIn("**Reason:**", repaired.split("<details>", 1)[0])
                     else:
                         self.assertEqual(len(patches), 1)
                     self.assertEqual(calls[0]["body"]["conclusion"], "failure")

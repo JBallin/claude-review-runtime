@@ -44,9 +44,11 @@ status comment and opening-post reactions present progress, clean completion,
 findings, failure, and stale state. One shared status comment shows the latest
 accepted attempt, including its captured head/base and workflow run. Checks and
 workflow runs retain earlier attempts. Incomplete and cancelled reviews include
-a reason; a comment API or permission failure is reported in the Check/run when
-publication is possible. Accepted manual requests also receive runtime
-reactions on their top-level or inline trigger comment: 👀 while running and 👍
+a reason inside Details. An incomplete presentation also includes the general
+workflow-change note; it is context about a known validation limitation, not a
+diagnosis of that attempt. A comment API or permission failure is reported in
+the Check/run when publication is possible. Accepted manual requests also receive
+runtime reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
 publication. The 👍 means the latest completed review was clean. It can remain
 after the head or base changes; it does not establish review coverage of the
