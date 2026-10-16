@@ -1636,6 +1636,11 @@ class StatusCommentTests(ScriptTestCase):
                 self.assertEqual(self.calls("PATCH")[0]["body"]["conclusion"], expected)
                 body = self.calls("PATCH")[-1]["body"]["body"]
                 self.assertIn(phrase, body)
+                if expected == "failure":
+                    self.assertNotIn("**Reason:**", body.split("<details>", 1)[0])
+                    self.assertIn("**Note:** " + check.INCOMPLETE_NOTE, body)
+                else:
+                    self.assertNotIn("**Note:**", body)
                 self.assertIn(HEAD, body)
                 self.assertIn(f"**Current commit:** {check.commit_link(HEAD, REPO)}", body)
                 self.assertIn("| Status | Commit | Review trigger |", body)
@@ -1662,6 +1667,7 @@ class StatusCommentTests(ScriptTestCase):
                 status = {"body": body}
                 self.assertEqual(check.status_state(status), "publication_incomplete")
                 self.assertIn("**Reason:** " + check.STATUS_REASONS["check_publication_failed"], body)
+                self.assertIn("**Note:** " + check.INCOMPLETE_NOTE, body)
                 self.assertNotIn(check.STATUS_REASONS["incomplete"], body)
                 self.assertFalse(check.status_owner_running(status))
                 self.assertEqual(check.status_owner(status), presentation_owner())

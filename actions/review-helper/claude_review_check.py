@@ -52,6 +52,7 @@ STATUS_REASONS = {
     "base_advanced": "The target branch advanced; integration with the current baseline has not been reviewed.",
     "completion_metadata_unverified": "The stored presentation metadata cannot establish a completed result for this attempt.",
 }
+INCOMPLETE_NOTE = "Changes to Claude’s review workflow, including Runtime pins, result in an incomplete review."
 PRESENTATION_SECONDS = 120
 PRESENTATION_DEADLINE = None
 COMPLETION_PREFIX = "<!-- claude-review-runtime:manual-clean-completion:"
@@ -579,21 +580,25 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             lines.append(f"{STATUS_REVIEWED_GENERATION_PREFIX}{generation} -->")
     started = owner_start_time(owner)
     active = state == "in_progress" or (state == "stale" and owner_running)
+    incomplete = state in ("failure", "publication_incomplete") or (
+        state == "stale" and reason
+        and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
+    )
     started_suffix = " started " + relative_time(started) if active and started else ""
     lines += ["## Claude Review", ""]
     if active and last_review:
         lines += ["**Current attempt:** 🔄 **Running**" + started_suffix, ""]
+    elif incomplete and last_review:
+        lines += ["**Current attempt:** ❌ **Incomplete**", ""]
     # Failure and running receipts remain ahead of historical completion.
-    # Keep the fixed Reason line visible and parseable for terminal recovery.
-    visible_reason = reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
-    if visible_reason:
-        lines += [f"**Reason:** {reason}", ""]
+    # Keep the current attempt explicit when the table contains older history.
+    specific_reason = reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
     if state == "stale" and owner_running:
         lines += [f"Claude is reviewing captured commit {commit_link(owner['head'] if owner else head_sha, owner['repo'] if owner else None)}. "
                   "Review coverage of the current head and baseline is not established.", ""]
     adverse = state in ("in_progress", "failure", "publication_incomplete")
     if adverse and not ((state == "in_progress" and check_available)
-                        or (state == "failure" and visible_reason)):
+                        or (state == "failure" and specific_reason)):
         lines += [messages[state], ""]
     if last_review:
         row_status = "✅ **Completed**" if last_review[2] == "success" else "⚠️ **Findings**"
@@ -639,6 +644,10 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     lines += ["", "<details>", "<summary>ℹ️ Details</summary>", "", "<br/>", ""]
     if state == "success":
         lines += ["**Result:** No findings.", ""]
+    if reason:
+        lines += [f"**Reason:** {reason}", ""]
+        if incomplete:
+            lines += [f"**Note:** {INCOMPLETE_NOTE}", ""]
     metadata = [
         f"**Current commit:** {commit_link(head_sha, repo)}" +
         (f" on {inline_code(base_ref)} — " +
@@ -661,8 +670,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         metadata += [f"**Reviewed baseline:** {commit_link(last_review_details['base_sha'], repo)} "
                   f"on {inline_code(last_review[1])}"]
     lines += ["  \n".join(metadata), ""]
-    if reason in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]):
-        lines += [f"**Reason:** {reason}", ""]
     if historical:
         if attempt_url and attempt_url != reviewed_url:
             lines += [f"[Attempt workflow run]({attempt_url})", ""]
