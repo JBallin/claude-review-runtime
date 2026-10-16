@@ -268,7 +268,7 @@ class DetailsProvenanceTests(unittest.TestCase):
     setUp = StatusPresentationTests.setUp
     start = StatusPresentationTests.start
     visible = StatusPresentationTests.visible
-    def test_linked_snapshot_and_separate_detail_paragraphs(self):
+    def test_linked_snapshot_and_compact_metadata(self):
         owner = self.start()
         body = check.status_comment_body(HEAD, 'main', 'success', owner=owner,
                                         trigger_label='Manual request',
@@ -276,13 +276,40 @@ class DetailsProvenanceTests(unittest.TestCase):
         url = f"https://github.com/owner/repo/commit/{HEAD}"
         self.assertIn(f'| [`{HEAD[:7]}`]({url}) |', self.visible(body))
         details = body.split('<details>')[1].split('</details>')[0]
-        self.assertIn(f'**Current commit:** [`{HEAD[:7]}`]({url})\n\n**Started:**', details)
+        self.assertIn(f'**Current commit:** [`{HEAD[:7]}`]({url})  \n**Started:**', details)
         self.assertIn(f'**Captured baseline:** [`{owner["base"][:7]}`]'
                       f'(https://github.com/owner/repo/commit/{owner["base"]}) on `main`', details)
-        fields = [line for line in details.splitlines() if line.startswith('**')]
-        for field in fields:
-            self.assertIn(field + '\n\n', details)
+        self.assertIn('**Result:** No findings.\n\n**Current commit:**', details)
+        self.assertIn(' on `main`\n\n[Workflow run]', details)
         self.assertEqual(check.status_state({'body': body}), 'success')
+
+    def test_metadata_is_one_hard_broken_group_across_states(self):
+        owner = self.start(PRESENTATION_START=1791316369000000000)
+        for state in ('in_progress', 'success', 'action_required', 'failure', 'publication_incomplete', 'stale'):
+            for history in (None, (OTHER, 'release/old', 'success'), (OTHER, 'release/old', 'action_required')):
+                for attempt_owner in (None, owner):
+                    with self.subTest(state=state, history=history, owner=attempt_owner):
+                        body = check.status_comment_body(HEAD, 'main', state, owner=attempt_owner,
+                            owner_running=state in ('in_progress', 'stale'), last_review=history,
+                            last_review_details={'base_sha': 'c' * 40,
+                                'run_url': 'https://github.com/owner/repo/actions/runs/4'},
+                            base_sha='e' * 40, reason=check.STATUS_REASONS['stale'] if state == 'stale' else None)
+                        details = body.split('<details>')[1].split('</details>')[0]
+                        self.assertTrue(details.startswith('\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n'))
+                        fields = [line.rstrip() for line in details.splitlines()
+                                  if line.startswith('**') and not line.startswith(('**Result:**', '**Reason:**'))]
+                        self.assertTrue(fields[0].startswith('**Current commit:**'))
+                        self.assertIn('  \n'.join(fields) + '\n\n', details)
+                        if state == 'success':
+                            self.assertIn('**Result:** No findings.\n\n**Current commit:**', details)
+                        else:
+                            self.assertNotIn('**Result:**', details)
+                        if state == 'stale':
+                            self.assertIn('\n\n**Reason:** ' + check.STATUS_REASONS['stale'] + '\n\n', details)
+                        self.assertNotIn('  \n[', details)
+                        self.assertIn('\n\n[', details)
+                        self.assertEqual(body.count('<br/>'), 1)
+                        self.assertEqual([line for line in body.splitlines() if line.startswith('#')], ['## Claude Review'])
 
     def test_new_attempt_preserves_distinct_historical_provenance(self):
         owner = self.start(GITHUB_RUN_ID=6)

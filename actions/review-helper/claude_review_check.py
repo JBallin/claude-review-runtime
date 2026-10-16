@@ -639,28 +639,28 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     lines += ["", "<details>", "<summary>ℹ️ Details</summary>", "", "<br/>", ""]
     if state == "success":
         lines += ["**Result:** No findings.", ""]
-    lines += [
+    metadata = [
         f"**Current commit:** {commit_link(head_sha, repo)}" +
         (f" on {inline_code(base_ref)} — " +
          ("reviewed clean" if last_review[2] == "success" else "reviewed with findings")
          if base_advanced else f" on {inline_code(base_ref)} — not reviewed" if state == "stale" else ""),
-        "",
     ]
     if started:
         label = "Attempt started" if separate_attempt else "Started"
-        lines += [f"**{label}:** {relative_time(started)}", ""]
+        metadata += [f"**{label}:** {relative_time(started)}"]
     if owner:
         if state == "stale" or separate_attempt:
             label = "Attempt commit" if separate_attempt else "Captured commit"
-            lines += [f"**{label}:** {commit_link(owner['head'], repo)}", ""]
+            metadata += [f"**{label}:** {commit_link(owner['head'], repo)}"]
         label = "Attempt baseline" if separate_attempt else "Captured baseline"
-        lines += [f"**{label}:** {commit_link(owner['base'], repo)} on {inline_code(owner['base_ref'])}", ""]
+        metadata += [f"**{label}:** {commit_link(owner['base'], repo)} on {inline_code(owner['base_ref'])}"]
     if state == "stale" and base_sha:
-        lines += [f"**Current baseline:** {commit_link(base_sha, repo)} — " +
-                  ("integration not reviewed" if base_advanced else "not reviewed"), ""]
+        metadata += [f"**Current baseline:** {commit_link(base_sha, repo)} — " +
+                  ("integration not reviewed" if base_advanced else "not reviewed")]
     if historical and last_review_details.get("base_sha"):
-        lines += [f"**Reviewed baseline:** {commit_link(last_review_details['base_sha'], repo)} "
-                  f"on {inline_code(last_review[1])}", ""]
+        metadata += [f"**Reviewed baseline:** {commit_link(last_review_details['base_sha'], repo)} "
+                  f"on {inline_code(last_review[1])}"]
+    lines += ["  \n".join(metadata), ""]
     if reason in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]):
         lines += [f"**Reason:** {reason}", ""]
     if historical:
