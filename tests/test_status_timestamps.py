@@ -26,6 +26,89 @@ class StatusTimestampTests(unittest.TestCase):
     def body(self):
         return self.api.status["body"]
 
+    def test_running_start_is_visible_with_and_without_history(self):
+        for history in (None, "success", "action_required"):
+            for available in (True, False):
+                with self.subTest(history=history, available=available):
+                    self.api.status = None
+                    os.environ["GITHUB_RUN_ID"] = "5"
+                    if history:
+                        self.start(PRESENTATION_START=START_NS - 120 * 10**9)
+                        self.finish(history)
+                    owner = self.start(PRESENTATION_START=START_NS, GITHUB_RUN_ID=6)
+                    initial = self.body().split("<details>")[0]
+                    self.assertIn(" started " + check.relative_time(START), initial)
+                    check.best_effort_status(HEAD, "in_progress", check_available=available)
+                    visible = self.body().split("<details>")[0]
+                    self.assertIn("**Running** started " + check.relative_time(START), visible)
+                    self.assertEqual(visible.count(check.relative_time(START)), 1)
+                    self.assertNotIn("In progress", visible)
+                    self.assertNotIn("in progress", visible)
+                    self.assertEqual(check.status_state(self.api.status), "in_progress")
+                    self.assertEqual(check.status_owner(self.api.status), owner)
+                    if history:
+                        self.assertLess(visible.index(check.relative_time(START)),
+                                        visible.index("**Last completed review**"))
+                        self.assertIn(check.relative_time(DONE), visible)
+                        self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", history))
+                    if not available:
+                        self.assertIn("authoritative Check publication is unavailable", visible)
+
+    def test_running_refreshes_reuse_persisted_start(self):
+        for history in (None, "success", "action_required"):
+            with self.subTest(history=history):
+                self.api.status = None
+                self.api.pr["head"]["sha"] = HEAD
+                os.environ["GITHUB_RUN_ID"] = "5"
+                if history:
+                    self.start(PRESENTATION_START=START_NS - 120 * 10**9)
+                    self.finish(history)
+                owner = self.start(PRESENTATION_START=START_NS, GITHUB_RUN_ID=6)
+                # A refresh's environment must never supply a new start time.
+                os.environ["PRESENTATION_START"] = str(START_NS + 3600 * 10**9)
+                check.best_effort_status(HEAD, "in_progress")
+                self.api.pr["head"]["sha"] = OTHER
+                for _ in range(2):
+                    check.best_effort_status(OTHER, "stale")
+                    visible = self.body().split("<details>")[0]
+                    self.assertIn(" started " + check.relative_time(START), visible)
+                    self.assertEqual(check.status_owner(self.api.status), owner)
+                    self.assertTrue(check.status_owner_running(self.api.status))
+                    self.assertEqual(check.status_state(self.api.status), "stale")
+
+    def test_retry_uses_new_start_for_same_run_or_new_run(self):
+        for retry in ({"GITHUB_RUN_ATTEMPT": 2}, {"GITHUB_RUN_ID": 6}):
+            with self.subTest(retry=retry):
+                self.api.status = None
+                os.environ.update(GITHUB_RUN_ID="5", GITHUB_RUN_ATTEMPT="1")
+                first = self.start(PRESENTATION_START=START_NS)
+                self.finish("failure")
+                second = self.start(PRESENTATION_START=START_NS + 60 * 10**9, **retry)
+                visible = self.body().split("<details>")[0]
+                self.assertIn("**Running** started " + check.relative_time("2026-10-06T19:53:49Z"), visible)
+                self.assertNotIn(check.relative_time(START), self.body())
+                self.assertNotEqual(first["generation"], second["generation"])
+
+    def test_missing_or_unusable_start_keeps_running_without_time(self):
+        for value in (None, "bad", True, 0, -1, 10**40):
+            for history in (None, (OTHER, "main", "success")):
+                for state in ("in_progress", "stale"):
+                    with self.subTest(value=value, history=history, state=state):
+                        owner = presentation_owner(started=START_NS)
+                        if value is None:
+                            del owner["started"]
+                        else:
+                            owner["started"] = value
+                        body = check.status_comment_body(HEAD, "main", state, owner=owner,
+                            owner_running=True, last_review=history)
+                        visible = body.split("<details>")[0]
+                        self.assertIn("Running", visible)
+                        self.assertNotIn("<relative-time", body)
+                        self.assertNotIn(" started ", visible)
+        body = check.status_comment_body(HEAD, "main", "in_progress")
+        self.assertIn("**Running**", body)
+        self.assertNotIn("<relative-time", body)
+
     def test_start_and_completed_result_have_captured_times(self):
         for state in ("success", "action_required"):
             with self.subTest(state=state):
