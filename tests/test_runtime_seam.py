@@ -124,7 +124,8 @@ class CapturedInputTests(unittest.TestCase):
                                 "from pathlib import Path\n"
                                 "with open(os.environ['GH_LOG'], 'a') as log:\n"
                                 " log.write(json.dumps(sys.argv[1:]) + '\\n')\n"
-                                "print(os.environ['MERGE_BASE'] if '--jq' in sys.argv else 'diff content')\n")
+                                "if '--jq' in sys.argv:\n print(os.environ['MERGE_BASE'])\n"
+                                "else:\n sys.stdout.write(os.environ['DIFF_CONTENT'])\n")
                 stub.chmod(0o755)
                 log = root / "gh.log"
                 output = root / "output"
@@ -132,6 +133,7 @@ class CapturedInputTests(unittest.TestCase):
                     "PATH": f"{root}{os.pathsep}{os.environ['PATH']}",
                     "RUNNER_TEMP": str(root), "GITHUB_OUTPUT": str(output),
                     "GH_LOG": str(log), "MERGE_BASE": merge_base,
+                    "DIFF_CONTENT": "first diff line\nsecond diff line",
                     "REPO": "example/consumer", "PR_NUMBER": "7", "PR_TITLE": hostile,
                     "PR_BODY": hostile, "TRIGGER_COMMENT": hostile, "BASE_REF": "main",
                     "HEAD_SHA": head, "BASE_SHA": base,
@@ -145,6 +147,7 @@ class CapturedInputTests(unittest.TestCase):
                 captured = json.loads((review / filename).read_text())
                 self.assertEqual((captured["number"], captured["title"], captured["body"]), (7, hostile, hostile))
                 self.assertEqual((captured["head_sha"], captured["base_sha"]), (head, base))
+                self.assertEqual(captured["diff_line_count"], 2)
                 self.assertEqual((captured["runtime_repository"], captured["runtime_sha"], captured["runtime_workflow_path"]),
                                  ("example/review-runtime", runtime_sha, f".github/workflows/{workflow}"))
                 if workflow == "claude.yml":
