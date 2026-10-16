@@ -73,13 +73,13 @@ class StatusPresentationTests(unittest.TestCase):
                     check.best_effort_status(OTHER, 'stale')
                     self.assertEqual(check.terminal_status_reason(self.api.status, check.status_owner(self.api.status)), reason)
                 else:
-                    self.assertIn('## 🔄 Claude Review in progress', visible)
+                    self.assertIn('## 🔄 Claude Review Running', visible)
                     self.assertIn(f'Claude is reviewing captured commit {check.commit_link(HEAD)}.', visible)
                     self.assertIn('Review coverage of the current head and baseline is not established.', visible)
-                    self.assertLess(visible.index('in progress'), visible.index('**Last completed review**'))
+                    self.assertLess(visible.index('Running'), visible.index('**Last completed review**'))
                     self.assertEqual(check.status_state(self.api.status), 'stale')
                     self.assertTrue(check.status_owner_running(self.api.status))
-                    self.assertEqual(visible.count('in progress'), 1)
+                    self.assertEqual(visible.count('Running'), 1)
                     self.assertEqual(visible.count('coverage'), 1)
 
     def test_running_copy_is_compact_but_unavailable_check_warning_remains(self):
@@ -89,7 +89,7 @@ class StatusPresentationTests(unittest.TestCase):
                     body = check.status_comment_body(HEAD, 'main', 'in_progress',
                         last_review=history, check_available=available)
                     visible = self.visible(body)
-                    self.assertIn('## 🔄 Claude Review in progress', visible)
+                    self.assertIn('## 🔄 Claude Review Running', visible)
                     self.assertNotIn('Claude is reviewing this commit.', visible)
                     if available:
                         self.assertNotIn('Claude is reviewing this commit', visible)
@@ -99,7 +99,7 @@ class StatusPresentationTests(unittest.TestCase):
                         self.assertIn('**Last completed review**', visible)
                         self.assertIn('| ✅ **Completed** |', visible)
                     else:
-                        self.assertIn('| 🔄 **In progress** |', visible)
+                        self.assertIn('| 🔄 **Running** |', visible)
 
     def test_failure_reason_replaces_repetition_but_missing_reason_keeps_fallback(self):
         owner = self.start()
@@ -124,11 +124,12 @@ class StatusPresentationTests(unittest.TestCase):
         self.api.pr['head']['sha'] = OTHER
         check.best_effort_status(OTHER, 'stale')
         visible = self.visible(self.api.status['body'])
-        self.assertIn('## 🔄 Claude Review in progress', visible)
+        self.assertIn('## 🔄 Claude Review Running', visible)
         self.assertIn(f'captured commit {check.commit_link(HEAD)}', visible)
         self.assertIn('current head and baseline is not established', visible)
         self.assertNotIn('**Last completed review**', visible)
-        self.assertIn(f'| 🔄 **In progress** | {check.commit_link(HEAD)} | Not recorded |', visible)
+        started = check.relative_time(check.owner_start_time(check.status_owner(self.api.status)))
+        self.assertIn(f'| 🔄 **Running** started {started} | {check.commit_link(HEAD)} | Not recorded |', visible)
         self.assertNotIn('Not reviewed', visible)
         self.assertEqual(visible.count('coverage'), 1)
         self.assertEqual(check.status_state(self.api.status), 'stale')
@@ -152,7 +153,7 @@ class StatusPresentationTests(unittest.TestCase):
                 self.assertIn('inline review threads', visible)
 
     def test_uncompleted_status_labels_are_bold(self):
-        for state, label in (('in_progress', '🔄 **In progress**'),
+        for state, label in (('in_progress', '🔄 **Running**'),
                              ('failure', '❌ **Incomplete**'),
                              ('publication_incomplete', '❌ **Incomplete**'),
                              ('stale', '**Not reviewed**')):
@@ -173,7 +174,8 @@ class StatusPresentationTests(unittest.TestCase):
                     last_review=(HEAD, 'main', 'success') if state == 'stale' else None,
                     last_review_details={'run_url': reviewed_url})
                 self.assertNotIn('workflow run', self.visible(body).lower())
-                self.assertIn('<summary>ℹ️ Details</summary>', body)
+                self.assertIn('<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n', body)
+                self.assertEqual(body.count('<br/>'), 1)
                 details = body.split('<details>')[1].split('</details>')[0]
                 label = 'Attempt workflow run' if state == 'stale' else 'Workflow run'
                 self.assertIn(f'[{label}]({attempt_url})', details)

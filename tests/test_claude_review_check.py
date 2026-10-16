@@ -1431,7 +1431,7 @@ class StatusCommentTests(ScriptTestCase):
                 body = self.calls("POST")[-1]["body"]["body"]
                 self.assertIn(HEAD, body)
                 self.assertEqual(check.status_base_ref({"body": body}), "main")
-                self.assertIn("in progress", body)
+                self.assertIn("Running", body)
                 self.assertIn(f"**Current commit:** {check.commit_link(HEAD, REPO)}", body)
                 self.assertIn(f"| {check.commit_link(HEAD, REPO)} | " + ("Not recorded" if label == "Manual request" else label) + " |", body)
                 self.assertNotIn("Authority:", body)
@@ -1851,7 +1851,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual(self.calls("POST")[-1]["body"], {"content": "eyes"})
         self.assert_pr_reactions_only()
-        self.assertIn("🔄 Claude Review in progress", self.calls("POST")[-2]["body"]["body"])
+        self.assertIn("🔄 Claude Review Running", self.calls("POST")[-2]["body"]["body"])
 
         self.log.unlink()
         result = self.start(
@@ -1879,7 +1879,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
                          [f"repos/{REPO}/issues/7/reactions/70"])
         self.assertEqual(self.calls("POST")[-1]["body"], {"content": "eyes"})
-        self.assertIn("🔄 Claude Review in progress", self.calls("PATCH")[0]["body"]["body"])
+        self.assertIn("🔄 Claude Review Running", self.calls("PATCH")[0]["body"]["body"])
         self.assert_pr_reactions_only()
 
         self.log.unlink()

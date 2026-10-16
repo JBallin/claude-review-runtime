@@ -52,6 +52,9 @@ publication. The 👍 means the latest completed review was clean. It can remain
 after the head or base changes; it does not establish review coverage of the
 current version. The status comment identifies the reviewed commit, preserves
 its completion time when available, and shows the current coverage caveat.
+The running status shows a live relative start time when available, measured
+from trusted start-job preparation rather than confirmed model execution.
+Refreshes preserve it; a new attempt uses its own start time.
 Successful and findings Check summaries display their recorded completion time.
 Automatic reviews react only to the opening post. Running eyes can
 appear while Check publication is unavailable; they indicate an active attempt,
