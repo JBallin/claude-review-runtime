@@ -52,7 +52,7 @@ STATUS_REASONS = {
     "base_advanced": "The target branch advanced; integration with the current baseline has not been reviewed.",
     "completion_metadata_unverified": "The stored presentation metadata cannot establish a completed result for this attempt.",
 }
-INCOMPLETE_NOTE = "Changes to Claude’s review workflow, including Runtime pins, result in an incomplete review."
+INCOMPLETE_NOTE = "If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected."
 PRESENTATION_SECONDS = 120
 PRESENTATION_DEADLINE = None
 COMPLETION_PREFIX = "<!-- claude-review-runtime:manual-clean-completion:"
@@ -645,9 +645,10 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if state == "success":
         lines += ["**Result:** No findings.", ""]
     if reason:
-        lines += [f"**Reason:** {reason}", ""]
+        lines += [f"**Reason:** {reason}"]
         if incomplete:
-            lines += [f"**Note:** {INCOMPLETE_NOTE}", ""]
+            lines += [f"**Note:** {INCOMPLETE_NOTE}"]
+        lines += [""]
     metadata = [
         f"**Current commit:** {commit_link(head_sha, repo)}" +
         (f" on {inline_code(base_ref)} — " +
