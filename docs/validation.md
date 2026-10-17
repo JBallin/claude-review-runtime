@@ -98,9 +98,7 @@ Prior notices remain historical information after findings or a failed rerun;
 consult the current Check and status. Findings remain sticky for the same PR,
 head, and merge base through trusted Check evidence.
 
-After the head changes, the status caller refreshes stale presentation; request
-a new review for the new diff. An existing historical thumbs-up can remain, but
-it does not establish coverage of the current version. See the
-[review contract](review-guide.md#trust-and-review-results) for base changes and
-presentation ownership. These behaviors describe the contract, not additional
-live tests.
+Offline regressions cover captured-baseline manual reviews, completion signals,
+authority checks, and recovery. They do not establish live provider behavior or
+integration with the current target baseline. See the
+[review contract](review-guide.md#trust-and-review-results) for authoritative behavior.

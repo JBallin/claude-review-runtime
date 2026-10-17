@@ -140,11 +140,10 @@ jobs:
         uses: $/actions/review-helper
         with:
           command: create
-      - name: Verify manual base freshness
-        # A PR's comparison base can lag the actual branch tip. Reject that
-        # snapshot before model execution instead of silently choosing a new
-        # comparison base. Admission is required even when fork Check tooling
-        # would otherwise be best-effort.
+      - name: Validate manual patch authority
+        # Validate the captured head/ref against direct branch authority without
+        # replacing the captured comparison base when the target tip differs.
+        # Admission is required even when fork Check tooling is best-effort.
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
           GH_TOKEN: ${{ github.token }}
@@ -329,8 +328,8 @@ jobs:
             this is the only comment captured; no other PR comments are
             fetched or visible) and the diff at
             ${{ runner.temp }}/pr-review/diff.patch, which covers
-            exactly base_sha to head_sha from that same file. Read the
-            repository as needed for context. Flag significant bugs and
+            the captured compare/base_sha...head_sha patch from that same file.
+            Read the repository as needed for context. Flag significant bugs and
             correctness issues introduced by the diff only; ignore
             nitpicks and pre-existing issues. For each issue found, post an
             inline comment with mcp__github_inline_comment__create_inline_comment
@@ -1093,9 +1092,9 @@ jobs:
             exit 1
           fi
           summary=$(printf '**Reviewed commit:** `%s`\n\nThe review outcome could not be published because the review tooling was unavailable; treat this commit as not reviewed.\n\n[Workflow run](%s)' "$HEAD_SHA" "$DETAILS_URL")
-          evidence=$(jq -n --arg head "$HEAD_SHA" --arg pr "$PR_NUMBER" --arg base "$BASE_SHA" --arg merge_base "$MERGE_BASE_SHA" \
+          evidence=$(jq -n --arg head "$HEAD_SHA" --arg pr "$PR_NUMBER" --arg base "$BASE_SHA" --arg base_ref "$BASE_REF" --arg merge_base "$MERGE_BASE_SHA" \
             --arg runtime_repository "$RUNTIME_REPOSITORY" --arg runtime_sha "$RUNTIME_SHA" --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" \
-            '{reviewed_sha: $head, pr_number: ($pr | tonumber? // null), base_sha: $base, merge_base_sha: $merge_base, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}')
+            '{reviewed_sha: $head, pr_number: ($pr | tonumber? // null), base_sha: $base, base_ref: $base_ref, merge_base_sha: $merge_base, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}')
           output=$(jq -n --arg summary "$summary" --arg evidence "$evidence" \
             '{title: "Review outcome could not be published", summary: $summary, text: ("```json\n" + $evidence + "\n```")}')
           if [ -n "$CHECK_RUN_ID" ]; then

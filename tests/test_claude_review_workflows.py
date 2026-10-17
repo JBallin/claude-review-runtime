@@ -469,7 +469,7 @@ class JobStructureTests(unittest.TestCase):
                 "Resolve PR under review",
                 "Capture presentation start",
                 "Check review tooling",
-                "Verify manual base freshness",
+                "Validate manual patch authority",
                 "Start Claude Review check",
                 "Capture PR review snapshot",
             ],
@@ -483,7 +483,7 @@ class JobStructureTests(unittest.TestCase):
 
     def test_fork_evidence_failures_cannot_skip_the_manual_review(self):
         named = steps(job(MANUAL, "start-check"))
-        required = ["Resolve PR under review", "Verify manual base freshness", "Capture PR review snapshot", "Upload review snapshot"]
+        required = ["Resolve PR under review", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
         evidence_only = [
             "Check review tooling",
             "Start Claude Review check",
@@ -937,7 +937,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 evidence = json.loads(text.removeprefix("```json\n").removesuffix("\n```"))
                 self.assertEqual(evidence, {
                     "reviewed_sha": HEAD, "pr_number": 7,
-                    "base_sha": "d" * 40, "merge_base_sha": "c" * 40,
+                    "base_sha": "d" * 40, "base_ref": BASE_REF, "merge_base_sha": "c" * 40,
                     "runtime_repository": "example/review-runtime",
                     "runtime_sha": "f" * 40,
                     "runtime_workflow_path": ".github/workflows/claude-review.yml",

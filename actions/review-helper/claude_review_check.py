@@ -9,7 +9,7 @@ Subcommands (configured through environment variables set by the workflow):
   snapshot  record Claude's review-comment IDs on HEAD_SHA before the review
   finalize  map the review outcome to a conclusion and complete the check run
   stale     refresh an existing status comment for a new PR head
-  admit-manual  reject a manual snapshot whose PR base projection is outdated
+  admit-manual  validate a manual snapshot without replacing its captured baseline
 """
 
 import argparse
@@ -49,9 +49,11 @@ STATUS_REASONS = {
     "check_publication_failed": "The authoritative Check result could not be published.",
     "tooling_unavailable": "Trusted review tooling was unavailable; the review could not be finalized reliably.",
     "stale": "The captured head or base was superseded; the current patch is not reviewed by this attempt.",
-    "base_advanced": "The target branch advanced; integration with the current baseline has not been reviewed.",
+    "base_advanced": "The target baseline differs; integration with the current baseline has not been reviewed.",
     "completion_metadata_unverified": "The stored presentation metadata cannot establish a completed result for this attempt.",
 }
+LEGACY_BASE_ADVANCED_REASON = "The target branch advanced; integration with the current baseline has not been reviewed."
+CAPTURED_PATCH_SCOPE = "This review covers the captured patch only; integration with other target baselines is not covered."
 INCOMPLETE_NOTE = "If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected."
 PRESENTATION_SECONDS = 120
 PRESENTATION_DEADLINE = None
@@ -88,9 +90,9 @@ WORST_CASE = {
     "create": (1 + 2 * (ATTEMPTS - 1), 1),
     "snapshot": (ATTEMPTS, 1),
     "finalize": (5 * ATTEMPTS, 5),
-    # Paginated dedup discovery and the live snapshot read may retry; the
-    # completion POST is attempted once because a lost response is ambiguous.
-    "completion": (4 * ATTEMPTS + 1, 4),
+    # Dedup discovery, two owner listings, and three live identity reads may
+    # retry. The completion POST is attempted once; a lost response is ambiguous.
+    "completion": (6 * ATTEMPTS + 1, 6),
     "admit-manual": (3 * ATTEMPTS, 3),
 }
 
@@ -630,6 +632,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines += ["", messages[state]]
     if base_advanced:
         lines += ["", "⚠️ Integration with the current baseline has not been reviewed."]
+    if last_review and owner and owner["kind"] != "automatic":
+        lines += ["", CAPTURED_PATCH_SCOPE]
     if state == "stale" and last_review and last_review[2] == "action_required":
         lines += ["", "Recorded findings remain in the inline review threads."]
     attempt_url = (env("DETAILS_URL") if not owner else
@@ -896,7 +900,7 @@ def owned_status(comment):
 
 def stale_status_reason(reason):
     stale_reason = STATUS_REASONS["stale"]
-    if reason == STATUS_REASONS["base_advanced"]:
+    if reason in (STATUS_REASONS["base_advanced"], LEGACY_BASE_ADVANCED_REASON):
         return stale_reason
     if reason and (reason == stale_reason or reason.startswith(stale_reason + " ")):
         return reason
@@ -912,6 +916,8 @@ def terminal_status_reason(comment, owner):
     reasons = re.findall(r"^\*\*Reason:\*\* (.+)$", body, re.MULTILINE)
     if phases != ["terminal"] or len(reasons) != 1:
         return None
+    if reasons[0] == LEGACY_BASE_ADVANCED_REASON:
+        return STATUS_REASONS["base_advanced"]
     allowed = set(STATUS_REASONS.values()) | {
         f"{STATUS_REASONS['stale']} {text}" for key, text in STATUS_REASONS.items() if key != "stale"
     }
@@ -1012,12 +1018,14 @@ def direct_base_tip(repo, base_ref):
     return ref["object"]["sha"]
 
 
-def live_pr_identity(repo, pr_number, *, include_base_sha=False, require_projection_match=False):
+def live_pr_identity(repo, pr_number, *, include_base_sha=False, require_projection_match=False,
+                     allow_projection_change=False):
     before = live_pr_projection(repo, pr_number)
     head_sha, base_ref, _ = before
     if include_base_sha:
         base_sha = direct_base_tip(repo, base_ref)
-        if live_pr_projection(repo, pr_number) != before:
+        after = live_pr_projection(repo, pr_number)
+        if (after[:2] != before[:2] if allow_projection_change else after != before):
             raise ValueError("the PR changed while resolving its base branch tip")
         if require_projection_match and before[2] != base_sha:
             raise ValueError("the PR comparison base and direct branch tip disagree")
@@ -1032,14 +1040,15 @@ def cmd_admit_manual():
     try:
         repo, number = env("REPO"), env("PR_NUMBER")
         captured = (env("HEAD_SHA"), env("BASE_REF"), env("BASE_SHA"))
+        if (not number.isdigit() or int(number) <= 0 or not captured[1] or len(captured[1]) > 255
+                or any(not re.fullmatch(r"[0-9a-f]{40}", sha) for sha in (captured[0], captured[2]))):
+            raise ValueError("the captured manual identity is invalid")
         projected = live_pr_projection(repo, number)
-        if projected != captured:
+        if projected[:2] != captured[:2]:
             raise ValueError("the PR no longer matches the captured manual snapshot")
-        tip = direct_base_tip(repo, projected[1])
-        if tip != captured[2]:
-            raise ValueError("the PR comparison base differs from the current base branch tip")
-        if live_pr_projection(repo, number) != projected:
-            raise ValueError("the PR changed during manual freshness admission")
+        direct_base_tip(repo, projected[1])
+        if live_pr_projection(repo, number)[:2] != projected[:2]:
+            raise ValueError("the PR changed during manual admission")
         return 0
     except (GhError, ValueError, KeyError, TypeError) as error:
         print(f"::error::Cannot admit manual review: {error}")
@@ -1099,12 +1108,16 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 return "unavailable"
         existing = find_status_comment(repo, pr_number)
         prior = status_owner(existing)
+        def live_identity(*, require_projection_match=False):
+            return live_pr_identity(repo, pr_number, include_base_sha=True,
+                                    require_projection_match=require_projection_match,
+                                    allow_projection_change=owner["kind"] != "automatic")
         if stale:
             if not prior or (prior["repo"], str(prior["pr"])) != (repo, pr_number):
                 raise ValueError("stale refresh has no verified owner")
             owner = prior
             expected_patch = (head_sha, base_ref)
-            live = live_pr_identity(repo, pr_number, include_base_sha=True)
+            live = live_identity()
             if live[:2] != expected_patch:
                 return
             if ((status_head(existing), status_base_ref(existing)) == expected_patch
@@ -1152,9 +1165,17 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 reason = STATUS_REASONS["incomplete"]
         elif state == "publication_incomplete":
             reason = STATUS_REASONS["check_publication_failed"]
-        projection_must_match = not stale
-        current = lambda: live_pr_identity(repo, pr_number, include_base_sha=True,
-                                          require_projection_match=projection_must_match) == expected_patch
+        manual = owner["kind"] != "automatic"
+        # Only a trusted terminal verdict may create a manual completion signal.
+        # Refresh has no execution result and keeps its no-recreate semantics.
+        manual_clean_finalize = manual and not stale and not acquire and state == "success" and check_available
+        def follow_movement(live):
+            return acquire or prior == owner and (
+                status_owner_running(existing)
+                or manual and live[:2] == (owner["head"], owner["base_ref"])
+            )
+        projection_must_match = not stale and not manual
+        current = lambda: live_identity(require_projection_match=projection_must_match) == expected_patch
         last_review = last_completed_review(existing) if existing else None
         last_review_details = last_completed_review_details(existing)
         completed_owner_verified = (
@@ -1181,9 +1202,9 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 stored_time = last_review_details.get("completed_at")
                 if not check_completed_at or stored_time is None:
                     completed_at = stored_time
-        live = live_pr_identity(repo, pr_number, include_base_sha=True)
+        live = live_identity()
         if (live != expected_patch and not stale
-                and (acquire or (prior == owner and status_owner_running(existing)))):
+                and follow_movement(live)):
             # The Check and owner retain their captured patch. Only the visible
             # current identity follows movement; it must never imply approval.
             # The newer-owner gate above still prevents old starts/finalizers
@@ -1192,7 +1213,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 last_review = (head_sha, base_ref, state)
                 last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL"),
                                        "completed_at": completed_at, "generation": owner["generation"],
-                                       "trigger": review_trigger(env("TRIGGER_LABEL"), owner)}
+                                       "trigger": review_trigger(trigger_label, owner)}
             state = "stale"
             reason = stale_status_reason(reason)
             head_sha, base_ref = live[:2]
@@ -1220,22 +1241,22 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 write_output("presentation_outcome", "suppressed_presentation_changed")
             print("::notice::Claude Review presentation suppressed: presentation changed before status publication.")
             return
-        publication_patch = live_pr_identity(repo, pr_number, include_base_sha=True)
+        publication_patch = live_identity()
         if publication_patch == expected_patch and projection_must_match and not current():
             raise ValueError("captured patch authority changed before status publication")
         if publication_patch != expected_patch:
-            if not stale and (acquire or (prior == owner and status_owner_running(existing))):
+            if not stale and follow_movement(publication_patch):
                 if state in ("success", "action_required") and check_available:
                     last_review = (owner["head"], owner["base_ref"], state)
                     last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL"),
                                            "completed_at": completed_at, "generation": owner["generation"],
-                                           "trigger": review_trigger(env("TRIGGER_LABEL"), owner)}
+                                           "trigger": review_trigger(trigger_label, owner)}
                 state = "stale"
                 reason = stale_status_reason(reason)
                 head_sha, base_ref = publication_patch[:2]
                 expected_patch = publication_patch
                 projection_must_match = False
-                if not current():
+                if (live_identity()[:2] != expected_patch[:2] if manual else not current()):
                     raise ValueError("PR identity kept changing before status publication")
             else:
                 if acquire:
@@ -1272,10 +1293,18 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             write_output("presentation_owner", json.dumps(owner, separators=(",", ":")))
             write_output("presentation_outcome", "acquired")
         write_output("status_comment_id", confirmed["id"])
+        manual_clean_finalize = (
+            manual_clean_finalize and published and completed_review_for_owner(confirmed, owner)
+            and last_completed_review(confirmed) == (owner["head"], owner["base_ref"], "success")
+        )
+        def signal_current():
+            if manual_clean_finalize:
+                return live_identity()[:2] == (owner["head"], owner["base_ref"])
+            return current()
         def guard(require_patch=True):
-            return (status_publication_identity(find_status_comment(repo, pr_number)) ==
-                    status_publication_identity(confirmed)
-                    and (not require_patch or current()))
+            return ((not require_patch or signal_current())
+                    and status_publication_identity(find_status_comment(repo, pr_number)) ==
+                    status_publication_identity(confirmed))
         desired = desired_pr_reaction(state, check_available) if published else None
         if published and state == "stale":
             if status_owner_running(confirmed):
@@ -1296,11 +1325,19 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 # A refresh may retain a clean historical signal, but cannot
                 # recreate one cleared by a later unsuccessful publication.
                 create = not (stale and desired == "+1")
-                if opening:
+                if manual_clean_finalize:
+                    # A changed head/ref blocks new completion signals, but
+                    # the still-owned attempt must also clear its progress.
+                    require_patch = signal_current()
+                    if guard(require_patch=require_patch):
+                        reconcile_reactions(path, desired,
+                                            lambda: guard(require_patch=require_patch),
+                                            create=create and require_patch)
+                elif opening:
                     if guard():
                         reconcile_reactions(path, desired, lambda: guard(), create=create)
                 elif guard(require_patch=False):
-                    trigger_desired = desired if current() else None
+                    trigger_desired = desired if signal_current() else None
                     reconcile_reactions(path, trigger_desired,
                                         lambda: guard(require_patch=trigger_desired is not None), create=create)
             except Exception as error:
@@ -1324,11 +1361,16 @@ def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_
     return f"{COMPLETION_PREFIX}{encoded} -->"
 
 
-def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url):
+def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url, *, observed_base_sha=None):
+    qualification = CAPTURED_PATCH_SCOPE + " This is not merge approval."
+    if observed_base_sha and observed_base_sha != base_sha:
+        qualification += (f"\n\n⚠️ Target {inline_code(base_ref)} was observed at {commit_link(observed_base_sha, repo)}; "
+                          "integration with that baseline was not reviewed.")
     return (
         f"{marker}\n"
         "🎉 Claude review completed with no findings on "
         f"[`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}).\n\n"
+        f"{qualification}\n\n"
         "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
         f"Compared against {inline_code(base_ref)} at "
         f"[`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) · "
@@ -1363,14 +1405,28 @@ def best_effort_manual_completion(head_sha):
             for page in parse_pages(raw) for comment in page
         ):
             return
+        owner = validate_owner(json.loads(env("PRESENTATION_OWNER")))
+        if (owner["kind"] == "automatic" or
+                (owner["repo"], str(owner["pr"]), owner["head"], owner["base_ref"], owner["base"],
+                 str(owner["run"]), str(owner["attempt"])) !=
+                (repo, pr_number, head_sha, base_ref, base_sha, env("GITHUB_RUN_ID"), env("GITHUB_RUN_ATTEMPT"))
+                or details_url != f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{repo}/actions/runs/{owner['run']}"):
+            raise ValueError("the completion owner differs from the executing manual attempt")
+        existing = find_status_comment(repo, pr_number)
+        if (not completed_review_for_owner(existing, owner)
+                or last_completed_review(existing) != (head_sha, base_ref, "success")):
+            raise ValueError("the persisted owner does not establish this clean completion")
         # Read after discovery, immediately before POST. GitHub cannot make
         # this read/write atomic, so the notice describes the captured history
         # and never claims that it covers the PR's current patch.
-        if live_pr_identity(repo, pr_number, include_base_sha=True,
-                            require_projection_match=True) != (head_sha, base_ref, base_sha):
+        live = live_pr_identity(repo, pr_number, include_base_sha=True, allow_projection_change=True)
+        if live[:2] != (head_sha, base_ref):
             print("::notice::Skipping manual completion notice for a superseded review snapshot.")
             return
-        body = completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url)
+        if status_publication_identity(find_status_comment(repo, pr_number)) != status_publication_identity(existing):
+            raise ValueError("presentation changed before manual completion publication")
+        body = completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url,
+                                       observed_base_sha=live[2])
         # Never retry an ambiguous POST. A subsequent clean rerun can discover
         # a notice that was created despite a failed response.
         gh_api(["--method", "POST", path, "--input", "-"], {"body": body})
@@ -1387,6 +1443,9 @@ def summary_lines(head_sha, sentence, *, completed_at=None):
         "",
         sentence,
     ]
+    if env("BASE_REF") and re.fullmatch(r"[0-9a-f]{40}", env("BASE_SHA")):
+        lines += ["", f"**Captured baseline:** {inline_code(env('BASE_REF'))} at `{env('BASE_SHA')}`",
+                  CAPTURED_PATCH_SCOPE]
     if completed := valid_review_timestamp(completed_at):
         lines += ["", f"**Completed:** {relative_time(completed)}"]
     if env("DETAILS_URL"):
@@ -1405,6 +1464,7 @@ def review_identity(head_sha):
         "reviewed_sha": head_sha,
         "pr_number": int(pr_number) if pr_number.isdigit() else pr_number or None,
         "base_sha": env("BASE_SHA") or None,
+        "base_ref": env("BASE_REF") or None,
         "merge_base_sha": env("MERGE_BASE_SHA") or None,
         "runtime_repository": env("RUNTIME_REPOSITORY") or None,
         "runtime_sha": env("RUNTIME_SHA") or None,

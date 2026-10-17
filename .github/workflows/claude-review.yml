@@ -990,9 +990,9 @@ jobs:
             exit 1
           fi
           summary=$(printf '**Reviewed commit:** `%s`\n\nThe review outcome could not be published because the review tooling was unavailable; treat this commit as not reviewed.\n\n[Workflow run](%s)' "$HEAD_SHA" "$DETAILS_URL")
-          evidence=$(jq -n --arg head "$HEAD_SHA" --arg pr "$PR_NUMBER" --arg base "$BASE_SHA" --arg merge_base "$MERGE_BASE_SHA" \
+          evidence=$(jq -n --arg head "$HEAD_SHA" --arg pr "$PR_NUMBER" --arg base "$BASE_SHA" --arg base_ref "$BASE_REF" --arg merge_base "$MERGE_BASE_SHA" \
             --arg runtime_repository "$RUNTIME_REPOSITORY" --arg runtime_sha "$RUNTIME_SHA" --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" \
-            '{reviewed_sha: $head, pr_number: ($pr | tonumber? // null), base_sha: $base, merge_base_sha: $merge_base, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}')
+            '{reviewed_sha: $head, pr_number: ($pr | tonumber? // null), base_sha: $base, base_ref: $base_ref, merge_base_sha: $merge_base, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}')
           output=$(jq -n --arg summary "$summary" --arg evidence "$evidence" \
             '{title: "Review outcome could not be published", summary: $summary, text: ("```json\n" + $evidence + "\n```")}')
           if [ -n "$CHECK_RUN_ID" ]; then
