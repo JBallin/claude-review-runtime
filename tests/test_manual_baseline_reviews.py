@@ -139,13 +139,14 @@ class ManualBaselineTests(unittest.TestCase):
                     self.assertIn("Findings", self.api.status["body"])
                     self.assertNotIn("reviewed clean", self.api.status["body"])
 
-    def test_current_baseline_notice_still_qualifies_immutable_patch_coverage(self):
+    def test_matching_baseline_notice_links_immutable_patch_without_generic_qualification(self):
         self.start()
         self.finish()
         self.notice()
         self.assertEqual(check.status_state(self.api.status), "success")
         self.assertEqual(len(self.api.notices), 1)
-        self.assertIn("integration", self.api.notices[0]["body"].lower())
+        self.assertNotIn("integration", self.api.notices[0]["body"].lower())
+        self.assertNotIn("merge approval", self.api.notices[0]["body"].lower())
         self.assertIn(BASE_TIP, self.api.notices[0]["body"])
 
     def test_status_refresh_cannot_recreate_removed_clean_signals(self):

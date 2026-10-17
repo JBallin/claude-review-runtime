@@ -28,8 +28,8 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn(f"{gallery.SOURCE_REPOSITORY}/commit/{REVISION}", body)
         self.assertNotIn("Pending —", body)
         self.assertIn("**Not yet inspected.**", body)
-        self.assertEqual(len(gallery.gallery_samples()), 13)
-        for letter in "ABCDEFGHIJ":
+        self.assertEqual(len(gallery.gallery_samples()), 22)
+        for letter in "ABCDEFGHIJKLM":
             self.assertIn(f"### {letter} — ", body)
         # Keep conservative byte headroom below GitHub's 65,536-character limit.
         self.assertLess(len(body.encode("utf-8")), 60_000)
@@ -39,7 +39,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 11)
+        self.assertEqual(status.call_count, 20)
         self.assertEqual(completion.call_count, 2)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
@@ -74,10 +74,10 @@ class PresentationGalleryTests(unittest.TestCase):
                     body = gallery.strip_operational_markers(raw)
                     receipt = "<!--\n**Reason:** " + gallery.check.STATUS_REASONS["base_advanced"] + "\n-->"
                     self.assertIn(receipt, body)
-                    self.assertIn("**Observed target tip:**", body)
+                    self.assertIn("**Current target commit:**", body)
                     self.assertIn("| Reviewed commit |", body)
                     self.assertEqual(body.count(
-                        "⚠️ The target tip differs from the reviewed baseline; integration with that tip has not been reviewed."
+                        "⚠️ The target branch has changed since this review. Integration with its current version hasn’t been reviewed."
                     ), 1)
             elif title.startswith("E —"):
                 self.assertIn("| Attempt commit |", raw)
@@ -85,15 +85,56 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn("Claude Review: No findings. 🎉", raw)
                 self.assertIn("**Reviewed commit:**", raw)
                 self.assertNotIn("integration with that tip", raw)
-                self.assertIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
-                self.assertIn("This is not merge approval.", raw)
+                self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
+                self.assertNotIn("This is not merge approval.", raw)
             elif title.startswith("G —"):
                 self.assertIn("Claude Review: No findings. 🎉", raw)
                 self.assertIn(gallery.check.TARGET_TIP_WARNING, raw.split("<details>")[0])
-                self.assertIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
-                self.assertIn("This is not merge approval.", raw)
+                self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
+                self.assertNotIn("This is not merge approval.", raw)
                 self.assertIn("**Reviewed against:** " + gallery.check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), raw)
-                self.assertIn("**Observed target tip:** " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO), raw)
+                self.assertIn("**Current target commit:** " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO), raw)
+
+    def test_publication_failures_and_unavailable_check_variants_use_current_attempt(self):
+        samples = dict(gallery.gallery_samples())
+        groups = {letter: [(t, b) for t, b in samples.items() if t.startswith(letter + " —")]
+                  for letter in ("K", "L", "M")}
+        for letter, cases in groups.items():
+            self.assertEqual(len(cases), 3)
+            for title, body in cases:
+                with self.subTest(title=title):
+                    visible, details = body.split("<details>", 1)
+                    self.assertIn("| Attempt commit |", visible)
+                    self.assertIn("| " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO)
+                                  + " | Draft marked ready |", visible)
+                    self.assertNotIn("✅ **Completed**", visible)
+                    self.assertNotIn("⚠️ **Findings**", visible)
+                    self.assertIn("🔄 **Running**" if letter == "M" else "❌ **Incomplete**", visible)
+                    if letter == "K":
+                        self.assertIn("The authoritative Check result could not be published.", visible)
+                    else:
+                        self.assertIn("authoritative Check publication is unavailable", visible)
+                    if "no completed history" in title:
+                        self.assertNotIn("**Previous completed review**", details)
+                    else:
+                        self.assertIn("**Current attempt**", details)
+                        self.assertIn("\n\n**Previous completed review**  \n", details)
+                        self.assertIn("**Result:** " + ("Findings." if "previous findings" in title else "No findings."), details)
+                        self.assertEqual(gallery.check.last_completed_review({"body": body}),
+                                         (gallery.fixtures.HEAD, "main", "action_required" if "previous findings" in title else "success"))
+
+    def test_compact_metadata_keeps_links_on_consecutive_rendered_lines(self):
+        for title, body in gallery.gallery_samples():
+            if title.startswith(("A —", "B —", "C —", "F —", "G —", "J —")):
+                with self.subTest(title=title):
+                    details = body.split("<details>")[1]
+                    self.assertNotIn("\n\n[", details)
+                    self.assertIn("  \n[", details)
+                    if title.startswith(("A —", "B —")):
+                        self.assertIn("**Result:** No findings.  \n**Reviewed against:**", details)
+                    if title.startswith(("F —", "G —")):
+                        self.assertNotIn("captured patch only", body)
+                        self.assertNotIn("merge approval", body)
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):
         original = os.environ.copy()

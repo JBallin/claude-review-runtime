@@ -85,10 +85,10 @@ def gallery_samples():
         }
         samples = [
             ("A — Clean completion, matching baseline", status("success")),
-            ("B — Clean completion, differing observed target tip", status(
+            ("B — Clean completion, changed target branch", status(
                 "stale", last_review=history("success"), base_sha=fixtures.OTHER,
                 **stale_options)),
-            ("C — Findings, differing observed target tip", status(
+            ("C — Findings, changed target branch", status(
                 "stale", last_review=history("action_required"), base_sha=fixtures.OTHER,
                 **stale_options)),
             ("D — PR commit changed after clean completion", status(
@@ -119,12 +119,26 @@ def gallery_samples():
             for result, label in (("success", "clean"), ("action_required", "findings")):
                 options = {"reason": check.STATUS_REASONS["incomplete"]} if state == "failure" else {}
                 samples.append((f"{sample} — {description}: {label}", status(
-                    state, head=fixtures.OTHER, owner=newer_owner,
+                    state, head=fixtures.OTHER, owner=newer_owner, trigger_label="Draft marked ready",
                     last_review=history(result), last_review_details=details, **options)))
         for result, label in (("success", "clean"), ("action_required", "findings")):
             samples.append((f"J — Retargeted provenance: {label}", status(
                 "stale", base_ref="release", last_review=history(result),
                 base_sha=fixtures.BASE_TIP, **stale_options)))
+        for sample, state, available, description in (
+                ("K", "publication_incomplete", True, "Authoritative Check publication incomplete"),
+                ("L", "publication_incomplete", False, "Completion with unavailable Check publication"),
+                ("M", "in_progress", False, "Running with unavailable Check publication")):
+            for result, label in ((None, "no completed history"),
+                                  ("success", "previous clean review"),
+                                  ("action_required", "previous findings")):
+                options = ({"reason": check.STATUS_REASONS["check_publication_failed"]}
+                           if state == "publication_incomplete" else {})
+                samples.append((f"{sample} — {description}: {label}", status(
+                    state, head=fixtures.OTHER, owner=newer_owner,
+                    trigger_label="Draft marked ready", check_available=available,
+                    last_review=history(result) if result else None,
+                    last_review_details=details if result else None, **options)))
         return samples
 
 

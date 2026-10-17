@@ -34,23 +34,34 @@ class StatusPresentationTests(unittest.TestCase):
     def test_current_running_attempt_stays_separate_from_history(self):
         for owner in (None, self.start(PRESENTATION_START=1791316369000000000)):
             for state in ('in_progress', 'stale'):
-                for result, label in (('success', '✅ **Completed**'), ('action_required', '⚠️ **Findings**')):
+                for result in ('success', 'action_required'):
                     with self.subTest(owner=owner, state=state, result=result):
                         body = check.status_comment_body(HEAD, 'main', state, owner=owner,
                             owner_running=True, last_review=(OTHER, 'main', result),
                             last_review_details={'completed_at': '2026-10-06T19:00:00Z'})
-                        visible = self.visible(body)
-                        current = '**Current attempt:** 🔄 **Running**'
+                        visible, details = body.split('<details>', 1)
+                        self.assertIn('| 🔄 **Running**', visible)
+                        self.assertIn(f'| {check.commit_link(HEAD)} |', visible)
+                        self.assertNotIn(check.commit_link(OTHER), visible)
+                        self.assertNotIn('Completed', visible)
+                        self.assertIn('**Previous completed review**', details)
+                        self.assertIn(check.commit_link(OTHER), details)
+                        self.assertIn(check.relative_time('2026-10-06T19:00:00Z'), details)
                         if owner:
-                            current += ' started ' + check.relative_time('2026-10-06T19:52:49Z')
-                        self.assertIn(current + '\n\n', visible)
-                        self.assertLess(visible.index(current), visible.index('**Last completed review**'))
-                        self.assertIn('| ' + label + ' ' + check.relative_time('2026-10-06T19:00:00Z')
-                                      + f' | {check.commit_link(OTHER)} | Not recorded |', visible)
-                        if not owner:
+                            self.assertIn(' started ' + check.relative_time('2026-10-06T19:52:49Z'), visible)
+                        else:
                             self.assertNotIn(' started ', visible)
                         if state == 'stale':
                             self.assertIn('Review coverage of the current head and baseline is not established.', visible)
+
+    def test_refresh_cannot_borrow_another_generations_trigger(self):
+        owner = self.start(TRIGGER_LABEL='Draft marked ready')
+        body = check.status_comment_body(HEAD, 'main', 'stale', owner=owner,
+            owner_running=True, trigger_label='PR opened for review',
+            last_review=(OTHER, 'main', 'success'),
+            last_review_details={'generation': 'f' * 64, 'trigger': 'Draft marked ready'})
+        self.assertIn('| Not recorded |', self.visible(body))
+        self.assertIn('**Review trigger:** Draft marked ready', body.split('<details>')[1])
 
     def test_changed_head_leads_with_history_and_visible_coverage(self):
         for result in ('success', 'action_required'):
@@ -101,8 +112,9 @@ class StatusPresentationTests(unittest.TestCase):
                 body = self.api.status['body']
                 visible = self.visible(body)
                 latest = ('Claude is reviewing captured commit' if state == 'in_progress'
-                          else '**Current attempt:** ❌ **Incomplete**')
-                self.assertLess(visible.index(latest), visible.index('| Status |'))
+                          else '| ❌ **Incomplete**')
+                self.assertIn(latest, visible)
+                self.assertNotIn('✅ **Completed**', visible)
                 self.assertNotIn('Claude Review passed', visible)
                 self.assertNotIn('## Last Claude review:', visible)
                 if state != 'in_progress':
@@ -117,7 +129,7 @@ class StatusPresentationTests(unittest.TestCase):
                     self.assertIn('## Claude Review', visible)
                     self.assertIn(f'Claude is reviewing captured commit {check.commit_link(HEAD)}.', visible)
                     self.assertIn('Review coverage of the current head and baseline is not established.', visible)
-                    self.assertLess(visible.index('Running'), visible.index('**Last completed review**'))
+                    self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
                     self.assertEqual(check.status_state(self.api.status), 'stale')
                     self.assertTrue(check.status_owner_running(self.api.status))
                     self.assertEqual(visible.count('Running'), 1)
@@ -137,8 +149,8 @@ class StatusPresentationTests(unittest.TestCase):
                     else:
                         self.assertIn('authoritative Check publication is unavailable.', visible)
                     if history:
-                        self.assertIn('**Last completed review**', visible)
-                        self.assertIn('| ✅ **Completed** |', visible)
+                        self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
+                        self.assertNotIn('✅ **Completed**', visible)
                     else:
                         self.assertIn('| 🔄 **Running** |', visible)
 
@@ -151,9 +163,9 @@ class StatusPresentationTests(unittest.TestCase):
                 visible = self.visible(body)
                 fallback = 'This review did not complete reliably; this commit is not approved by it.'
                 self.assertIn('## Claude Review', visible)
-                self.assertIn('**Last completed review**', visible)
+                self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
                 if reason == check.STATUS_REASONS['incomplete']:
-                    self.assertIn('**Current attempt:** ❌ **Incomplete**', visible)
+                    self.assertIn('| ❌ **Incomplete**', visible)
                     self.assertNotIn('**Reason:**', visible)
                     details = body.split('<details>', 1)[1]
                     self.assertIn('**Reason:** ' + reason, details)
@@ -182,13 +194,13 @@ class StatusPresentationTests(unittest.TestCase):
                     self.assertNotIn('**Reason:**', visible)
                     self.assertNotIn('**Note:**', visible)
                     if history:
-                        self.assertLess(visible.index('**Current attempt:** ❌ **Incomplete**'),
-                                        visible.index('**Last completed review**'))
+                        self.assertIn('| ❌ **Incomplete**', visible)
+                        self.assertIn('**Previous completed review**', details)
                     else:
                         self.assertIn('❌ **Incomplete**', visible)
                     reason_line = '**Reason:** ' + reason
                     note_line = '**Note:** ' + check.INCOMPLETE_NOTE
-                    metadata = '**PR commit:**' if history else '**Started:**'
+                    metadata = '**Current attempt**' if history else '**Started:**'
                     self.assertEqual(body.count(reason_line), 1)
                     self.assertEqual(body.count(note_line), 1)
                     self.assertLess(details.index(reason_line), details.index(note_line))
@@ -331,66 +343,56 @@ class DetailsProvenanceTests(unittest.TestCase):
         self.assertNotIn('**Started:**', details)
         self.assertIn(f'**Reviewed against:** [`{owner["base"][:7]}`]'
                       f'(https://github.com/owner/repo/commit/{owner["base"]}) on `main`', details)
-        self.assertIn('**Result:** No findings.\n\n**Reviewed against:**', details)
-        self.assertIn(' on `main`\n\n[Reviewed workflow run]', details)
+        self.assertIn('**Result:** No findings.  \n**Reviewed against:**', details)
+        self.assertIn(' on `main`  \n[Reviewed workflow run]', details)
         self.assertEqual(check.status_state({'body': body}), 'success')
 
     def test_metadata_is_one_hard_broken_group_across_states(self):
         owner = self.start(PRESENTATION_START=1791316369000000000)
         for state in ('in_progress', 'success', 'action_required', 'failure', 'publication_incomplete', 'stale'):
             for history in (None, (OTHER, 'release/old', 'success'), (OTHER, 'release/old', 'action_required')):
-                for attempt_owner in (None, owner):
-                    with self.subTest(state=state, history=history, owner=attempt_owner):
-                        body = check.status_comment_body(HEAD, 'main', state, owner=attempt_owner,
-                            owner_running=state in ('in_progress', 'stale'), last_review=history,
-                            last_review_details={'base_sha': 'c' * 40,
-                                'run_url': 'https://github.com/owner/repo/actions/runs/4'},
-                            base_sha='e' * 40, reason=check.STATUS_REASONS['stale'] if state == 'stale' else None)
-                        details = body.split('<details>')[1].split('</details>')[0]
-                        self.assertTrue(details.startswith('\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n'))
-                        fields = [line.rstrip() for line in details.splitlines()
-                                  if line.startswith('**') and not line.startswith(
-                                      ('**Result:**', '**Reason:**', '**Note:**'))]
-                        if fields:
-                            self.assertIn('  \n'.join(fields) + '\n\n', details)
-                        self.assertNotIn('**Current commit:**', details)
-                        if state == 'success':
-                            self.assertIn('**Result:** No findings.', details)
-                        else:
-                            self.assertNotIn('**Result:**', details)
-                        if state == 'stale':
-                            self.assertIn('\n\n**Reason:** ' + check.STATUS_REASONS['stale'] + '\n\n', details)
-                        self.assertNotIn('  \n[', details)
-                        self.assertIn('\n\n[', details)
-                        self.assertEqual(body.count('<br/>'), 1)
-                        self.assertEqual([line for line in body.splitlines() if line.startswith('#')], ['## Claude Review'])
+                body = check.status_comment_body(HEAD, 'main', state, owner=owner,
+                    owner_running=state in ('in_progress', 'stale'), last_review=history,
+                    last_review_details={'base_sha': 'c' * 40, 'run_url': 'https://github.com/owner/repo/actions/runs/4'},
+                    base_sha='e' * 40, reason=check.STATUS_REASONS['stale'] if state == 'stale' else None)
+                details = body.split('<details>')[1].split('</details>')[0]
+                self.assertTrue(details.startswith('\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n'))
+                self.assertEqual(body.count('<br/>'), 1)
+                self.assertNotIn('\n\n[', details)
+                self.assertIn('  \n[', details)
+                blocks = [block for block in details.split('\n\n')
+                          if '**Current attempt**' in block or '**Previous completed review**' in block]
+                if history and state not in ('success', 'action_required'):
+                    self.assertEqual(len(blocks), 2)
+                    self.assertTrue(blocks[0].startswith('**Current attempt**  \n'))
+                    self.assertTrue(blocks[1].startswith('**Previous completed review**  \n'))
+                    self.assertIn(blocks[0] + '\n\n' + blocks[1], details)
+                for block in blocks:
+                    for line in block.splitlines()[:-1]:
+                        self.assertTrue(line.endswith('  '), line)
 
     def test_new_attempt_preserves_distinct_historical_provenance(self):
         owner = self.start(GITHUB_RUN_ID=6)
-        attempt_url = 'https://github.com/owner/repo/actions/runs/6'
-        reviewed_url = 'https://github.com/owner/repo/actions/runs/4'
         for state in ('in_progress', 'failure', 'publication_incomplete', 'stale'):
             for result in ('success', 'action_required'):
-                with self.subTest(state=state, result=result):
-                    body = check.status_comment_body(HEAD, 'main', state, owner=owner,
-                        owner_running=state == 'in_progress',
-                        last_review=(OTHER, 'release/old', result),
-                        last_review_details={'base_sha': 'c' * 40, 'run_url': reviewed_url,
-                                             'completed_at': '2026-10-07T13:09:19Z',
-                                             'trigger': 'Draft marked ready'})
-                    visible, details = body.split('<details>', 1)
-                    self.assertIn(f'| [`{OTHER[:7]}`](https://github.com/owner/repo/commit/{OTHER}) |', visible)
-                    self.assertNotIn('workflow run', visible.lower())
-                    self.assertEqual('**Attempt started:**' in details, state != 'in_progress')
-                    self.assertIn(f'**PR commit:** [`{HEAD[:7]}`](https://github.com/owner/repo/commit/{HEAD})', details)
-                    self.assertIn('**Attempt baseline:**', details)
-                    self.assertIn('**Reviewed against:** [`ccccccc`](https://github.com/owner/repo/commit/'
-                                  + 'c' * 40 + ') on `release/old`', details)
-                    self.assertIn(f'[Attempt workflow run]({attempt_url})', details)
-                    self.assertIn(f'[Reviewed workflow run]({reviewed_url})', details)
-                    self.assertEqual(body.count(attempt_url), 1)
-                    self.assertEqual(body.count(reviewed_url), 1)
-                    self.assertEqual(check.status_state({'body': body}), state)
+                body = check.status_comment_body(HEAD, 'main', state, owner=owner,
+                    owner_running=state in ('in_progress', 'stale'),
+                    last_review=(OTHER, 'release/old', result),
+                    last_review_details={'base_sha': 'c' * 40, 'run_url': 'https://github.com/owner/repo/actions/runs/4',
+                                         'completed_at': '2026-10-07T13:09:19Z', 'trigger': 'Draft marked ready'})
+                visible, details = body.split('<details>', 1)
+                self.assertIn(f'| {check.commit_link(HEAD)} |', visible)
+                self.assertNotIn(check.commit_link(OTHER), visible)
+                current, previous = details.split('**Previous completed review**')
+                self.assertIn('**Current attempt**', current)
+                self.assertIn('**Attempt baseline:**', current)
+                self.assertIn('[Attempt workflow run](https://github.com/owner/repo/actions/runs/6)', current)
+                self.assertIn('**Reviewed commit:** ' + check.commit_link(OTHER), previous)
+                self.assertIn('**Review trigger:** Draft marked ready', previous)
+                self.assertIn('**Reviewed against:** ' + check.commit_link('c' * 40) + ' on `release/old`', previous)
+                self.assertIn('[Reviewed workflow run](https://github.com/owner/repo/actions/runs/4)', previous)
+                self.assertEqual('**Attempt started:**' in current, state not in ('in_progress', 'stale'))
+                self.assertEqual(check.status_state({'body': body}), state)
 
     def test_shared_reviewed_run_is_not_duplicated(self):
         owner = self.start()
@@ -410,7 +412,8 @@ class DetailsProvenanceTests(unittest.TestCase):
         self.assertIn('[Attempt workflow run](https://github.com/owner/repo/actions/runs/5)', body)
         self.assertNotIn('[Reviewed workflow run]', body)
         self.assertNotIn('**Reviewed against:**', body)
-        self.assertIn('| Not recorded |', self.visible(body))
+        self.assertNotIn('**Completed:**', body)
+        self.assertNotIn('**Review trigger:**', body)
 
     def test_rerun_generations_share_link_but_keep_attempt_fields_distinct(self):
         owner = self.start()
@@ -426,4 +429,10 @@ class DetailsProvenanceTests(unittest.TestCase):
                 self.assertNotIn('**Attempt baseline:**', body)
                 self.assertIn('**Reviewed against:**', body)
                 self.assertIn(f'[Attempt and reviewed workflow run]({url})', body)
+                if state != 'stale':
+                    current, previous = body.split('**Previous completed review**')
+                    self.assertIn(f'[Attempt and reviewed workflow run]({url})', current)
+                    if state == 'in_progress':
+                        self.assertIn(f'**Current attempt**  \n[Attempt and reviewed workflow run]({url})', current)
+                    self.assertNotIn(url, previous)
                 self.assertEqual(body.count(url), 1)

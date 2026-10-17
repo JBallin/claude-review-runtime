@@ -47,9 +47,8 @@ class StatusTimestampTests(unittest.TestCase):
                     self.assertEqual(check.status_state(self.api.status), "in_progress")
                     self.assertEqual(check.status_owner(self.api.status), owner)
                     if history:
-                        self.assertLess(visible.index(check.relative_time(START)),
-                                        visible.index("**Last completed review**"))
-                        self.assertIn(check.relative_time(DONE), visible)
+                        self.assertNotIn(check.relative_time(DONE), visible)
+                        self.assertIn(check.relative_time(DONE), self.body().split("<details>")[1])
                         self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", history))
                     if not available:
                         self.assertIn("authoritative Check publication is unavailable", visible)

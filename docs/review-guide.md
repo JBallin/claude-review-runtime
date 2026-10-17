@@ -167,15 +167,18 @@ The status presents one row with Status, Commit, and Review trigger.
 For a verified clean or findings result, Status shows its persisted completion time
 and Commit identifies the reviewed SHA. The current-version or integration caveat
 appears below the row; newer running, failed, or incomplete attempts remain prominent
-above historical results. Technical details, including the accepted attempt's start
-time, are collapsed. GitHub renders recorded times as relative times.
+in the main table. Previous completed-review evidence moves inside Details,
+separate from the current attempt’s metadata. Workflow links are grouped with
+their corresponding attempt or review. Technical details are collapsed. GitHub
+renders recorded times as relative times.
 Stale status retains the last completed review's time; historical results without
 a recorded completion time remain undated. These timestamps describe lifecycle
 events, not a heartbeat or proof that a runner is still active. Failed, cancelled,
 and incomplete attempts do not receive a review completion timestamp.
 
-Review trigger retains the original accepted event that produced the completed
-result: PR opened for review, Draft marked ready, or Manual request. Status refreshes
+Review trigger identifies the accepted event for the attempt or completed
+result shown in the main table: PR opened for review, Draft marked ready, or
+Manual request. Status refreshes
 and repeated completion cannot replace or backfill that event. Legacy records without
 trusted original-event metadata show Not recorded; automatic ownership alone cannot
 distinguish opening a PR from marking a draft ready. Emergency fallback preserves
@@ -192,7 +195,9 @@ shared status stale and clears progress reactions. Older attempts cannot replace
 a newer owner's status. When a trustworthy completed result belongs to that
 same owner and the head and target ref are unchanged, the comment keeps the
 completed result prominent and identifies the reviewed baseline separately from
-the differing observed target tip, whose integration has not been reviewed.
+the current target commit observed at the last refresh, whose integration has
+not been reviewed. The target branch may have advanced, rewound, or been rewritten;
+this label does not establish live freshness or forward ancestry.
 Findings remain findings; changed heads or target refs,
 incomplete attempts, and missing or ambiguous completion provenance retain the
 stale presentation. Undated completed results remain undated. The machine

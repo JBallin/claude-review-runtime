@@ -2281,9 +2281,8 @@ class ManualCompletionTests(ScriptTestCase):
             f"{marker}\n"
             "Claude Review: No findings. 🎉\n\n"
             f"**Reviewed commit:** [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})\n\n"
-            f"{check.CAPTURED_PATCH_SCOPE} This is not merge approval.\n\n"
             "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
-            f"**Reviewed against:** [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`\n\n"
+            f"**Reviewed against:** [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`  \n"
             "[Review run](https://github.com/owner/repo/actions/runs/5)\n\n</details>"
         ))
         visible, details = body.split("<details>", 1)
@@ -2417,8 +2416,8 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertIn(f"/commit/{BASE_TIP}", body)
         self.assertIn(f"/commit/{OTHER}", body)
         self.assertIn(check.TARGET_TIP_WARNING, body)
-        self.assertIn("**Observed target tip:** " + check.commit_link(OTHER, REPO), body)
-        self.assertIn(check.CAPTURED_PATCH_SCOPE, body)
+        self.assertIn("**Current target commit:** " + check.commit_link(OTHER, REPO), body)
+        self.assertNotIn(check.CAPTURED_PATCH_SCOPE, body)
 
     def test_projection_difference_alone_allows_captured_patch_notice(self):
         result = self.run_manual(self.clean_rules(live=live_head(HEAD, base_sha=OTHER)))
@@ -2426,7 +2425,7 @@ class ManualCompletionTests(ScriptTestCase):
         body = self.calls("POST")[0]["body"]["body"]
         self.assertIn(f"/commit/{BASE_TIP}", body)
         self.assertNotIn(f"/commit/{OTHER}", body)
-        self.assertIn(check.CAPTURED_PATCH_SCOPE, body)
+        self.assertNotIn(check.CAPTURED_PATCH_SCOPE, body)
 
     def test_notice_requires_the_exact_executing_manual_attempt(self):
         cases = [
