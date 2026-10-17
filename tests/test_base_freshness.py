@@ -12,7 +12,7 @@ from test_claude_review_check import (
 class ManualAdmissionTests(ScriptTestCase):
     def run_admission(self, rules=None, **extra):
         from test_claude_review_workflows import MANUAL, job, steps, run_block
-        script = run_block(steps(job(MANUAL, "start-check"))["Verify manual base freshness"])
+        script = run_block(steps(job(MANUAL, "start-check"))["Validate manual patch authority"])
         return self.run_script(["admit-manual"], rules or [pr_head_rule(live_head(HEAD))],
                                step_script=script, REVIEW_HELPER=str(SCRIPT), **extra)
 
@@ -23,14 +23,33 @@ class ManualAdmissionTests(ScriptTestCase):
             f"repos/{REPO}/pulls/7", f"repos/{REPO}/git/ref/heads/main", f"repos/{REPO}/pulls/7"])
         self.assertEqual(self.calls("POST") + self.calls("PATCH"), [])
 
-    def test_actual_step_rejects_old_projection_before_model_job(self):
-        result = self.run_admission([pr_head_rule(live_head(HEAD)), base_tip_rule("main", OTHER)])
-        self.assertEqual(result.returncode, 1, result.stdout)
-        self.assertIn("comparison base differs", result.stdout)
-        self.assertFalse(self.calls("POST") + self.calls("PATCH"))
+    def test_actual_step_accepts_differing_tip_and_projection_without_recapture(self):
+        for projection in (BASE_TIP, OTHER, "e" * 40):
+            with self.subTest(projection=projection):
+                self.log.unlink(missing_ok=True)
+                result = self.run_admission([pr_head_rule(live_head(HEAD, base_sha=projection)),
+                                             base_tip_rule("main", OTHER)])
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertEqual(len(self.calls()), 3)
+                self.assertFalse(self.calls("POST") + self.calls("PATCH"))
+
+    def test_projection_catchup_during_lookup_does_not_replace_captured_base(self):
+        result = self.run_admission([pr_head_rule(live_head(HEAD), live_head(HEAD, base_sha=OTHER)),
+                                     base_tip_rule("main", OTHER)])
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(len(self.calls()), 3)
+
+    def test_malformed_captured_identity_rejects_without_authority_reads(self):
+        for field, value in (("HEAD_SHA", "short"), ("BASE_SHA", ""), ("BASE_SHA", OTHER.upper()),
+                             ("BASE_REF", ""), ("PR_NUMBER", "0")):
+            with self.subTest(field=field, value=value):
+                self.log.unlink(missing_ok=True)
+                result = self.run_admission(**{field: value})
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertEqual(self.calls(), [])
 
     def test_head_or_base_retarget_during_lookup_rejects(self):
-        for after in (live_head(OTHER), live_head(HEAD, "release"), live_head(HEAD, base_sha=OTHER)):
+        for after in (live_head(OTHER), live_head(HEAD, "release")):
             with self.subTest(after=after):
                 self.log.unlink(missing_ok=True)
                 result = self.run_admission([pr_head_rule(live_head(HEAD), after)])
@@ -82,7 +101,7 @@ class ManualAdmissionTests(ScriptTestCase):
 
     def test_missing_admission_tooling_is_not_bypassed_for_forks(self):
         from test_claude_review_workflows import MANUAL, job, steps, run_block
-        script = run_block(steps(job(MANUAL, "start-check"))["Verify manual base freshness"])
+        script = run_block(steps(job(MANUAL, "start-check"))["Validate manual patch authority"])
         result = self.run_script(["admit-manual"], [], step_script=script, REVIEW_HELPER="", IS_FORK="true")
         self.assertEqual(result.returncode, 1)
         self.assertEqual(self.calls(), [])

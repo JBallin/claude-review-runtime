@@ -132,15 +132,19 @@ class OwnershipTests(unittest.TestCase):
                 if trigger:
                     self.assertEqual(self.owned(trigger), [])
 
-    def test_base_tip_movement_does_not_reclaim_or_change_terminal_history(self):
+    def test_manual_base_tip_replay_preserves_history_and_qualifies_baseline(self):
         path = self.target("issue_comment")
-        self.start()
+        self.start(DETAILS_URL="https://github.com/owner/repo/actions/runs/5")
         self.finish()
         previous = copy.deepcopy(self.api.status)
         self.api.base_tip = OTHER
         self.api.calls.clear()
         self.finish()
-        self.assertEqual(self.api.status, previous)
+        self.assertEqual(check.status_owner(self.api.status), check.status_owner(previous))
+        self.assertEqual(check.last_completed_review_details(self.api.status),
+                         check.last_completed_review_details(previous))
+        self.assertEqual(check.status_state(self.api.status), "stale")
+        self.assertIn(check.STATUS_REASONS["base_advanced"], self.api.status["body"])
         self.assertEqual(self.owned(path), ["+1"])
         self.start(GITHUB_RUN_ID="6", PRESENTATION_START="3")
         self.assertEqual(check.status_state(self.api.status), "stale")

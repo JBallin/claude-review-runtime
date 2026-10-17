@@ -131,7 +131,9 @@ class PublicationFinalizerTests(unittest.TestCase):
         case = c.ManualCompletionTests()
         case.setUp()
         try:
-            rules = case.clean_rules()
+            owner = (c.presentation_owner("issue_comment", 42) if manual_enabled == "true"
+                     else c.presentation_owner())
+            rules = case.clean_rules(owner=owner)
             rules[1] = c.comments_rule(comment_response if comment_response is not None else c.ok(c.pages([])))
             if patch_responses is not None:
                 rules[2] = c.patch_rule(*patch_responses)
@@ -139,7 +141,8 @@ class PublicationFinalizerTests(unittest.TestCase):
             result = case.run_script(["finalize"], rules,
                 CHECK_RUN_ID="99", REVIEW_RESULT="success", ACTION_CONCLUSION="success",
                 BEFORE_IDS_FILE=str(case.before), MANUAL_COMPLETION_ENABLED=manual_enabled,
-                FINDING_PUBLICATION=receipts, DETAILS_URL="https://github.com/owner/repo/actions/runs/1",
+                FINDING_PUBLICATION=receipts, DETAILS_URL="https://github.com/owner/repo/actions/runs/5",
+                PRESENTATION_OWNER=json.dumps(owner),
                 **extra)
             body = next(call['body'] for call in case.calls('PATCH') if '/check-runs/' in call['path'])
             return result, body, case.calls()
