@@ -2283,7 +2283,7 @@ class ManualCompletionTests(ScriptTestCase):
             "🎉 Claude review completed with no findings on "
             f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).\n\n"
             f"{check.CAPTURED_PATCH_SCOPE} This is not merge approval.\n\n"
-            "<details>\n<summary>ℹ️ Details</summary>\n\n"
+            "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
             f"Compared against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) · "
             "[Review run](https://github.com/owner/repo/actions/runs/5)\n\n</details>"
         ))
