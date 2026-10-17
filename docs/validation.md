@@ -98,24 +98,7 @@ Prior notices remain historical information after findings or a failed rerun;
 consult the current Check and status. Findings remain sticky for the same PR,
 head, and merge base through trusted Check evidence.
 
-A manual review may use its immutable captured comparison baseline when the
-validated target branch tip differs, including when the PR API still projects
-an older comparison base. It does not rebase the patch or claim integration
-with the differing target. Verified clean manual finalization may publish a
-qualified completion notice and new 👍 after successful authoritative Check
-publication. These record captured-patch completion without findings, not merge
-approval or coverage of later target changes. Unavailable or malformed authority,
-changed head/ref, a newer owner, or incomplete evidence blocks new clean signals.
-The completed result remains prominent with a baseline caveat while the machine
-freshness state is stale. No ancestry relationship between valid same-ref tips
-is required.
-
-After the head changes, the status caller refreshes stale presentation; request
-a new review for the new diff. An existing historical thumbs-up can remain, but
-it does not establish coverage of the current version. See the
-[review contract](review-guide.md#trust-and-review-results) for base changes and
-presentation ownership. These behaviors describe the contract, not additional
-live tests. Base-push events are not watched, and API reads and publication writes
-are not atomic. Offline fixtures cannot establish integration with a newer target
-or live provider behavior. Captured target-ref evidence is additive; legacy
-records and historical notice identities require no migration.
+Offline regressions cover captured-baseline manual reviews, completion signals,
+authority checks, and recovery. They do not establish live provider behavior or
+integration with the current target baseline. See the
+[review contract](review-guide.md#trust-and-review-results) for authoritative behavior.
