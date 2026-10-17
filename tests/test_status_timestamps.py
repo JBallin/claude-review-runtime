@@ -113,7 +113,7 @@ class StatusTimestampTests(unittest.TestCase):
         for state in ("success", "action_required"):
             with self.subTest(state=state):
                 self.start(PRESENTATION_START=START_NS)
-                self.assertIn("**Started:** " + check.relative_time(START), self.body())
+                self.assertIn("**Running** started " + check.relative_time(START), self.body())
                 self.assertNotIn(check.STATUS_REVIEWED_COMPLETED_PREFIX, self.body())
                 self.finish(state)
                 self.assertIn(check.relative_time(DONE), self.body())

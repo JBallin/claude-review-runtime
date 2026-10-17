@@ -69,9 +69,9 @@ class HistoricalReactionTests(unittest.TestCase):
                                 self.assertEqual(check.last_completed_review_details(self.api.status)["completed_at"], DONE)
                                 self.assertEqual(check.status_state(self.api.status), "stale")
                                 visible = self.api.status["body"].split("<details>")[0]
-                                self.assertIn("| Status | Commit | Review trigger |", visible)
+                                self.assertIn("| Status | Reviewed commit | Review trigger |", visible)
                                 self.assertIn(check.relative_time(DONE), visible)
-                                self.assertIn("Integration with the current baseline has not been reviewed."
+                                self.assertIn(check.TARGET_TIP_WARNING
                                               if field == "base" else "⚠️ This completed review doesn’t cover the current version."
                                               if result == "success" else "⚠️ These recorded findings are from a review of a previous version.", visible)
                             self.assertFalse(any("/check-runs" in path for _, path, _ in self.writes()))

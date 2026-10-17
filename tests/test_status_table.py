@@ -7,7 +7,7 @@ from test_claude_review_check import check, HEAD, OTHER
 import test_presentation_ownership as ownership
 
 DONE = "2026-10-07T13:09:19Z"
-HEADER = "| Status | Commit | Review trigger |"
+HEADER = "| Status | Reviewed commit | Review trigger |"
 
 
 class StatusTableTests(unittest.TestCase):
@@ -69,7 +69,7 @@ class StatusTableTests(unittest.TestCase):
                             self.assertTrue(self.row().endswith(f"| {check.commit_link(HEAD)} | {label} |"))
                             self.assertIn(check.relative_time(DONE), self.row())
                             self.assertEqual(check.last_completed_review_details(self.api.status)["trigger"], label)
-                            caveat = ("Integration with the current baseline has not been reviewed."
+                            caveat = (check.TARGET_TIP_WARNING
                                       if movement == "base" else "⚠️ This completed review doesn’t cover the current version."
                                       if result == "success" else "⚠️ These recorded findings are from a review of a previous version.")
                             self.assertGreater(self.visible().index(caveat), self.visible().index(HEADER))

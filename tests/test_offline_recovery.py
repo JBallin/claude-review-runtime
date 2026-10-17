@@ -528,10 +528,11 @@ class OfflineRecoveryTests(unittest.TestCase):
                         })
                         body = state["status"]["body"]
                         self.assertIn(check.relative_time(completed["completed_at"]), body)
-                        label = "reviewed clean" if conclusion == "success" else "reviewed with findings"
-                        self.assertIn(f"**Current commit:** {check.commit_link(HEAD, REPO)} on `main` — {label}", body)
-                        self.assertIn(f"**Current baseline:** {check.commit_link(OTHER, REPO)} — integration not reviewed", body)
-                        self.assertIn(f"**Reviewed baseline:** {check.commit_link(BASE_TIP, REPO)}", body)
+                        self.assertIn(f"| {check.commit_link(HEAD, REPO)} |", body)
+                        self.assertNotIn("**PR commit:**", body)
+                        self.assertEqual(body.count(check.TARGET_TIP_WARNING), 1)
+                        self.assertIn(f"**Observed target tip:** {check.commit_link(OTHER, REPO)} on `main`", body)
+                        self.assertIn(f"**Reviewed against:** {check.commit_link(BASE_TIP, REPO)}", body)
                         self.assertIn(f"[Reviewed workflow run]({self.env['DETAILS_URL']})", body)
                         self.assertIn("## Claude Review", body)
                         self.assertIn(check.STATUS_REASONS["base_advanced"], body)
@@ -556,7 +557,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                             "completed_at": completed["completed_at"], "generation": owner["generation"],
                         })
                         self.assertIn(check.relative_time(completed["completed_at"]), refreshed["body"])
-                        self.assertIn(f"**Current baseline:** {check.commit_link(MERGE_BASE, REPO)} — integration not reviewed", refreshed["body"])
+                        self.assertIn(f"**Observed target tip:** {check.commit_link(MERGE_BASE, REPO)} on `main`", refreshed["body"])
                         self.assertIn("## Claude Review", refreshed["body"])
                         self.assertNotIn("runs/6)", refreshed["body"])
 

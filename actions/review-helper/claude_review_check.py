@@ -53,6 +53,7 @@ STATUS_REASONS = {
     "completion_metadata_unverified": "The stored presentation metadata cannot establish a completed result for this attempt.",
 }
 INCOMPLETE_NOTE = "If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected."
+TARGET_TIP_WARNING = "⚠️ The target tip differs from the reviewed baseline; integration with that tip has not been reviewed."
 PRESENTATION_SECONDS = 120
 PRESENTATION_DEADLINE = None
 COMPLETION_PREFIX = "<!-- claude-review-runtime:manual-clean-completion:"
@@ -506,7 +507,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     """Render trusted informational state without affecting Check authority."""
     messages = {
         "in_progress": "Claude is reviewing this commit.",
-        "action_required": "Claude recorded findings. Assess them in the inline review threads.",
+        "action_required": "Assess the recorded findings in the inline review threads.",
         "failure": "This review did not complete reliably; this commit is not approved by it.",
         "publication_incomplete": "The authoritative Check result could not be published. Treat this commit as not reviewed.",
         "stale": "Current head and base coverage is not established by this attempt.",
@@ -534,15 +535,15 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         and base_sha != owner["base"]
         and reason in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
     )
+    superseded_review = (
+        state == "stale" and check_available and completed_owner_verified
+        and last_review and last_review[:2] != (head_sha, base_ref)
+        and not owner_running and reason == STATUS_REASONS["stale"]
+    )
     if base_advanced:
-        messages["stale"] = (
-            "Claude reviewed this unchanged commit with no findings." if last_review[2] == "success"
-            else "Claude recorded findings on this unchanged commit. Assess them in the inline review threads."
-        )
+        messages["stale"] = ""
         reason = STATUS_REASONS["base_advanced"]
-    elif (state == "stale" and check_available and completed_owner_verified
-          and last_review and last_review[:2] != (head_sha, base_ref)
-          and not owner_running and reason == STATUS_REASONS["stale"]):
+    elif superseded_review:
         messages["stale"] = (
             "⚠️ This completed review doesn’t cover the current version." if last_review[2] == "success"
             else "⚠️ These recorded findings are from a review of a previous version."
@@ -624,14 +625,15 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         row_trigger = review_trigger(trigger_label, owner) if state != "stale" else None
         row_trigger = row_trigger or "Not recorded"
     repo = owner["repo"] if owner else env("REPO")
-    lines += ["| Status | Commit | Review trigger |", "| --- | --- | --- |",
+    commit_label = "Reviewed commit" if last_review else "Attempt commit" if owner else "PR commit"
+    lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
-    if state != "success" and not adverse and not (state == "stale" and owner_running):
+    if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
         lines += ["", messages[state]]
-    if base_advanced:
-        lines += ["", "⚠️ Integration with the current baseline has not been reviewed."]
     if state == "stale" and last_review and last_review[2] == "action_required":
-        lines += ["", "Recorded findings remain in the inline review threads."]
+        lines += ["", messages["action_required"]]
+    if base_advanced:
+        lines += ["", TARGET_TIP_WARNING]
     attempt_url = (env("DETAILS_URL") if not owner else
                    f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
     historical = last_review is not None and state not in ("success", "action_required")
@@ -642,35 +644,49 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             and last_review_details["generation"] != owner["generation"])
     )
     lines += ["", "<details>", "<summary>ℹ️ Details</summary>", "", "<br/>", ""]
-    if state == "success":
+    if state == "success" or (base_advanced and last_review[2] == "success"):
         lines += ["**Result:** No findings.", ""]
     if reason:
+        # Existing parsers recover this exact receipt from the raw Markdown.
+        # The visible warning already supplies its reader-facing explanation.
+        if base_advanced or superseded_review:
+            lines += ["<!--"]
         lines += [f"**Reason:** {reason}"]
+        if base_advanced or superseded_review:
+            lines += ["-->"]
         if incomplete:
             lines += [f"**Note:** {INCOMPLETE_NOTE}"]
         lines += [""]
-    metadata = [
-        f"**Current commit:** {commit_link(head_sha, repo)}" +
-        (f" on {inline_code(base_ref)} — " +
-         ("reviewed clean" if last_review[2] == "success" else "reviewed with findings")
-         if base_advanced else f" on {inline_code(base_ref)} — not reviewed" if state == "stale" else ""),
-    ]
-    if started:
+    metadata = []
+    row_ref = last_review[1] if last_review else owner["base_ref"] if owner else base_ref
+    if (head_sha, base_ref) != (row_commit, row_ref):
+        metadata += [f"**PR commit:** {commit_link(head_sha, repo)} on {inline_code(base_ref)}" +
+                     (" — not reviewed" if state == "stale" else "")]
+    elif not last_review and not owner:
+        metadata += [f"**PR target:** {inline_code(base_ref)}" +
+                     (" — not reviewed" if state == "stale" else "")]
+    if started and not active and (incomplete or separate_attempt):
         label = "Attempt started" if separate_attempt else "Started"
         metadata += [f"**{label}:** {relative_time(started)}"]
+    reviewed_baseline = (last_review_details.get("base_sha"), last_review[1]) if last_review else None
+    displayed_baselines = set()
     if owner:
-        if state == "stale" or separate_attempt:
-            label = "Attempt commit" if separate_attempt else "Captured commit"
-            metadata += [f"**{label}:** {commit_link(owner['head'], repo)}"]
-        label = "Attempt baseline" if separate_attempt else "Captured baseline"
-        metadata += [f"**{label}:** {commit_link(owner['base'], repo)} on {inline_code(owner['base_ref'])}"]
-    if state == "stale" and base_sha:
-        metadata += [f"**Current baseline:** {commit_link(base_sha, repo)} — " +
-                  ("integration not reviewed" if base_advanced else "not reviewed")]
-    if historical and last_review_details.get("base_sha"):
-        metadata += [f"**Reviewed baseline:** {commit_link(last_review_details['base_sha'], repo)} "
+        if owner["head"] not in (head_sha, row_commit):
+            metadata += [f"**Attempt commit:** {commit_link(owner['head'], repo)}"]
+        attempt_baseline = (owner["base"], owner["base_ref"])
+        if attempt_baseline != reviewed_baseline:
+            metadata += [f"**Attempt baseline:** {commit_link(owner['base'], repo)} on {inline_code(owner['base_ref'])}"]
+            displayed_baselines.add(attempt_baseline)
+    if last_review and last_review_details.get("base_sha"):
+        metadata += [f"**Reviewed against:** {commit_link(last_review_details['base_sha'], repo)} "
                   f"on {inline_code(last_review[1])}"]
-    lines += ["  \n".join(metadata), ""]
+        displayed_baselines.add(reviewed_baseline)
+    elif last_review:
+        metadata += [f"**Reviewed target:** {inline_code(last_review[1])}"]
+    if state == "stale" and base_sha and (base_sha, base_ref) not in displayed_baselines:
+        metadata += [f"**Observed target tip:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
+    if metadata:
+        lines += ["  \n".join(metadata), ""]
     if historical:
         if attempt_url and attempt_url != reviewed_url:
             lines += [f"[Attempt workflow run]({attempt_url})", ""]
@@ -678,9 +694,9 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             label = "Attempt and reviewed workflow run" if separate_attempt and attempt_url == reviewed_url else "Reviewed workflow run"
             lines += [f"[{label}]({reviewed_url})", ""]
     elif attempt_url:
-        label = "Attempt workflow run" if owner and state == "stale" else "Workflow run"
+        label = "Reviewed workflow run" if last_review else "Attempt workflow run"
         lines += [f"[{label}]({attempt_url})", ""]
-    lines += ["", "</details>"]
+    lines += ["</details>"]
     return "\n".join(lines)
 
 
@@ -1327,12 +1343,11 @@ def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_
 def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url):
     return (
         f"{marker}\n"
-        "🎉 Claude review completed with no findings on "
-        f"[`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}).\n\n"
+        "Claude Review: No findings. 🎉\n\n"
+        f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha})\n\n"
         "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
-        f"Compared against {inline_code(base_ref)} at "
-        f"[`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) · "
-        f"[Review run]({details_url})\n\n</details>"
+        f"**Reviewed against:** [`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) "
+        f"on {inline_code(base_ref)}\n\n[Review run]({details_url})\n\n</details>"
     )
 
 

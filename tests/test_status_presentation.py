@@ -188,7 +188,7 @@ class StatusPresentationTests(unittest.TestCase):
                         self.assertIn('❌ **Incomplete**', visible)
                     reason_line = '**Reason:** ' + reason
                     note_line = '**Note:** ' + check.INCOMPLETE_NOTE
-                    metadata = f'**Current commit:** {check.commit_link(HEAD)}'
+                    metadata = '**PR commit:**' if history else '**Started:**'
                     self.assertEqual(body.count(reason_line), 1)
                     self.assertEqual(body.count(note_line), 1)
                     self.assertLess(details.index(reason_line), details.index(note_line))
@@ -228,7 +228,7 @@ class StatusPresentationTests(unittest.TestCase):
                                             completed_at='2026-10-07T13:09:19Z')
             visible = self.visible(body)
             self.assertIn('## Claude Review', visible)
-            self.assertIn('| Status | Commit | Review trigger |', visible)
+            self.assertIn('| Status | Reviewed commit | Review trigger |', visible)
             self.assertIn(f'| {label} ' + check.relative_time('2026-10-07T13:09:19Z'), visible)
             self.assertNotIn('| Review |', visible)
             self.assertNotIn('<br>', visible)
@@ -264,7 +264,7 @@ class StatusPresentationTests(unittest.TestCase):
                 self.assertIn('<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n', body)
                 self.assertEqual(body.count('<br/>'), 1)
                 details = body.split('<details>')[1].split('</details>')[0]
-                label = 'Attempt workflow run' if state == 'stale' else 'Workflow run'
+                label = 'Reviewed workflow run' if state in ('success', 'action_required') else 'Attempt workflow run'
                 self.assertIn(f'[{label}]({attempt_url})', details)
                 if state == 'stale':
                     self.assertIn(f'[Reviewed workflow run]({reviewed_url})', details)
@@ -289,7 +289,7 @@ class StatusPresentationTests(unittest.TestCase):
         check.best_effort_status(HEAD, 'stale')
         visible = self.visible(self.api.status['body'])
         self.assertIn('## Claude Review', visible)
-        self.assertIn('Integration with the current baseline has not been reviewed.', visible)
+        self.assertIn(check.TARGET_TIP_WARNING, visible)
         self.assertIn(check.relative_time('2026-10-07T13:09:19Z'), visible)
 
     def test_current_completion_visible_and_legacy_time_absent(self):
@@ -326,11 +326,13 @@ class DetailsProvenanceTests(unittest.TestCase):
         url = f"https://github.com/owner/repo/commit/{HEAD}"
         self.assertIn(f'| [`{HEAD[:7]}`]({url}) |', self.visible(body))
         details = body.split('<details>')[1].split('</details>')[0]
-        self.assertIn(f'**Current commit:** [`{HEAD[:7]}`]({url})  \n**Started:**', details)
-        self.assertIn(f'**Captured baseline:** [`{owner["base"][:7]}`]'
+        self.assertNotIn('**Current commit:**', details)
+        self.assertNotIn('**PR commit:**', details)
+        self.assertNotIn('**Started:**', details)
+        self.assertIn(f'**Reviewed against:** [`{owner["base"][:7]}`]'
                       f'(https://github.com/owner/repo/commit/{owner["base"]}) on `main`', details)
-        self.assertIn('**Result:** No findings.\n\n**Current commit:**', details)
-        self.assertIn(' on `main`\n\n[Workflow run]', details)
+        self.assertIn('**Result:** No findings.\n\n**Reviewed against:**', details)
+        self.assertIn(' on `main`\n\n[Reviewed workflow run]', details)
         self.assertEqual(check.status_state({'body': body}), 'success')
 
     def test_metadata_is_one_hard_broken_group_across_states(self):
@@ -349,10 +351,11 @@ class DetailsProvenanceTests(unittest.TestCase):
                         fields = [line.rstrip() for line in details.splitlines()
                                   if line.startswith('**') and not line.startswith(
                                       ('**Result:**', '**Reason:**', '**Note:**'))]
-                        self.assertTrue(fields[0].startswith('**Current commit:**'))
-                        self.assertIn('  \n'.join(fields) + '\n\n', details)
+                        if fields:
+                            self.assertIn('  \n'.join(fields) + '\n\n', details)
+                        self.assertNotIn('**Current commit:**', details)
                         if state == 'success':
-                            self.assertIn('**Result:** No findings.\n\n**Current commit:**', details)
+                            self.assertIn('**Result:** No findings.', details)
                         else:
                             self.assertNotIn('**Result:**', details)
                         if state == 'stale':
@@ -378,10 +381,10 @@ class DetailsProvenanceTests(unittest.TestCase):
                     visible, details = body.split('<details>', 1)
                     self.assertIn(f'| [`{OTHER[:7]}`](https://github.com/owner/repo/commit/{OTHER}) |', visible)
                     self.assertNotIn('workflow run', visible.lower())
-                    self.assertIn('**Attempt started:**', details)
-                    self.assertIn(f'**Attempt commit:** [`{HEAD[:7]}`](https://github.com/owner/repo/commit/{HEAD})', details)
+                    self.assertEqual('**Attempt started:**' in details, state != 'in_progress')
+                    self.assertIn(f'**PR commit:** [`{HEAD[:7]}`](https://github.com/owner/repo/commit/{HEAD})', details)
                     self.assertIn('**Attempt baseline:**', details)
-                    self.assertIn('**Reviewed baseline:** [`ccccccc`](https://github.com/owner/repo/commit/'
+                    self.assertIn('**Reviewed against:** [`ccccccc`](https://github.com/owner/repo/commit/'
                                   + 'c' * 40 + ') on `release/old`', details)
                     self.assertIn(f'[Attempt workflow run]({attempt_url})', details)
                     self.assertIn(f'[Reviewed workflow run]({reviewed_url})', details)
@@ -406,7 +409,7 @@ class DetailsProvenanceTests(unittest.TestCase):
                                        last_review=(OTHER, 'release/old', 'success'))
         self.assertIn('[Attempt workflow run](https://github.com/owner/repo/actions/runs/5)', body)
         self.assertNotIn('[Reviewed workflow run]', body)
-        self.assertNotIn('**Reviewed baseline:**', body)
+        self.assertNotIn('**Reviewed against:**', body)
         self.assertIn('| Not recorded |', self.visible(body))
 
     def test_rerun_generations_share_link_but_keep_attempt_fields_distinct(self):
@@ -418,9 +421,9 @@ class DetailsProvenanceTests(unittest.TestCase):
                     last_review=(HEAD, 'main', 'success'),
                     last_review_details={'base_sha': owner['base'], 'run_url': url,
                                          'generation': 'f' * 64})
-                self.assertIn('**Attempt started:**', body)
-                self.assertIn('**Attempt commit:**', body)
-                self.assertIn('**Attempt baseline:**', body)
-                self.assertIn('**Reviewed baseline:**', body)
+                self.assertEqual('**Attempt started:**' in body, state != 'in_progress')
+                self.assertNotIn('**Attempt commit:**', body)
+                self.assertNotIn('**Attempt baseline:**', body)
+                self.assertIn('**Reviewed against:**', body)
                 self.assertIn(f'[Attempt and reviewed workflow run]({url})', body)
                 self.assertEqual(body.count(url), 1)

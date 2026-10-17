@@ -1432,7 +1432,7 @@ class StatusCommentTests(ScriptTestCase):
                 self.assertIn(HEAD, body)
                 self.assertEqual(check.status_base_ref({"body": body}), "main")
                 self.assertIn("Running", body)
-                self.assertIn(f"**Current commit:** {check.commit_link(HEAD, REPO)}", body)
+                self.assertIn(f"| {check.commit_link(HEAD, REPO)} |", body)
                 self.assertIn(f"| {check.commit_link(HEAD, REPO)} | " + ("Not recorded" if label == "Manual request" else label) + " |", body)
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("@claude", body)
@@ -1642,8 +1642,7 @@ class StatusCommentTests(ScriptTestCase):
                 else:
                     self.assertNotIn("**Note:**", body)
                 self.assertIn(HEAD, body)
-                self.assertIn(f"**Current commit:** {check.commit_link(HEAD, REPO)}", body)
-                self.assertIn("| Status | Commit | Review trigger |", body)
+                self.assertIn("| Status | " + ("Reviewed commit" if check.last_completed_review({"body": body}) else "Attempt commit") + " | Review trigger |", body)
                 self.assertIn(f"| {check.commit_link(HEAD, REPO)} |", body)
                 self.assertNotIn("unresolved", body)
 
@@ -1819,7 +1818,7 @@ class StatusCommentTests(ScriptTestCase):
             stale = check.status_comment_body(OTHER, "main", "stale", trigger_label=label,
                                               last_review=(HEAD, "main", "success"))
             self.assertNotIn("**Trigger:**", stale)
-            self.assertIn(f"**Current commit:** {check.commit_link(OTHER)} on `main` — not reviewed", stale)
+            self.assertIn(f"**PR commit:** {check.commit_link(OTHER)} on `main` — not reviewed", stale)
             self.assertIn("| ✅ **Completed**", stale)
             self.assertIn(f"| {check.commit_link(HEAD)} | Not recorded |", stale)
 
@@ -1828,7 +1827,7 @@ class StatusCommentTests(ScriptTestCase):
         self.assertIn("base-ref:release%2F2026", body)
         self.assertEqual(check.status_base_ref({"body": body}), "release/2026")
         stale = check.status_comment_body(OTHER, "release`candidate", "stale")
-        self.assertIn("on `` release`candidate `` — not reviewed", stale)
+        self.assertIn("**PR target:** `` release`candidate `` — not reviewed", stale)
 
 
 class PRReactionTests(ScriptTestCase):
@@ -2017,7 +2016,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         body = self.calls("PATCH")[0]["body"]["body"]
         self.assertIn("## Claude Review", body)
-        self.assertIn(f"**Current commit:** {check.commit_link(OTHER, REPO)} on `main` — not reviewed", body)
+        self.assertIn(f"**PR commit:** {check.commit_link(OTHER, REPO)} on `main` — not reviewed", body)
         self.assertIn("| ✅ **Completed**", body)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
@@ -2040,7 +2039,7 @@ class PRReactionTests(ScriptTestCase):
                 self.assertEqual(result.returncode, 0, result.stdout)
                 body = self.calls("PATCH")[0]["body"]["body"]
                 self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
-                self.assertIn(f"**Current commit:** {check.commit_link(current_head, REPO)} on `{current_base}` — not reviewed", body)
+                self.assertIn(f"**PR commit:** {check.commit_link(current_head, REPO)} on `{current_base}` — not reviewed", body)
                 prior = {**prior, "body": body}
 
     def test_findings_and_failure_remove_workflow_pr_reactions(self):
@@ -2221,7 +2220,7 @@ class PRReactionTests(ScriptTestCase):
             with self.subTest(state=state):
                 rendered = check.status_comment_body(HEAD, "main", state)
                 self.assertEqual(check.last_completed_review({"body": rendered})[2], result)
-                self.assertIn(f"**Current commit:** `{HEAD[:7]}`", rendered)
+                self.assertIn(f"| `{HEAD[:7]}` |", rendered)
                 self.assertIn(HEAD, rendered)  # Full SHA remains in hidden identity.
 
 
@@ -2261,10 +2260,10 @@ class ManualCompletionTests(ScriptTestCase):
         marker = check.completion_marker(REPO, "7", HEAD, "main", BASE_TIP, MERGE_BASE)
         self.assertEqual(body, (
             f"{marker}\n"
-            "🎉 Claude review completed with no findings on "
-            f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).\n\n"
+            "Claude Review: No findings. 🎉\n\n"
+            f"**Reviewed commit:** [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})\n\n"
             "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
-            f"Compared against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) · "
+            f"**Reviewed against:** [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`\n\n"
             "[Review run](https://github.com/owner/repo/actions/runs/1)\n\n</details>"
         ))
         visible, details = body.split("<details>", 1)
@@ -2275,7 +2274,7 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertIn(f"/commit/{BASE_TIP}", details)
         for identity in (HEAD, BASE_TIP, MERGE_BASE):
             self.assertIn(identity, body)
-        self.assertIn("🎉 Claude review completed with no findings", body)
+        self.assertIn("Claude Review: No findings. 🎉", body)
         self.assertNotIn("current", body.lower())
         self.assertNotIn("approved", body.lower())
         self.assertNotIn("@claude", body)
@@ -2487,8 +2486,8 @@ class ManualCompletionTests(ScriptTestCase):
                 marker = check.completion_marker(REPO, "7", HEAD, base_ref, OTHER, MERGE_BASE)
                 visible, details = body.split("<details>", 1)
                 self.assertIn(marker, visible)
-                self.assertIn("🎉 Claude review completed with no findings", visible)
-                self.assertIn(f"Compared against {rendered_ref} at [`bbbbbbb`](https://github.com/{REPO}/commit/{OTHER})", details)
+                self.assertIn("Claude Review: No findings. 🎉", visible)
+                self.assertIn(f"**Reviewed against:** [`bbbbbbb`](https://github.com/{REPO}/commit/{OTHER}) on {rendered_ref}", details)
                 self.assertIn("[Review run](https://github.com/owner/repo/actions/runs/1)", details)
                 self.assertTrue(body.endswith("</details>"))
                 self.assertNotIn(f"/commit/{MERGE_BASE}", body)
