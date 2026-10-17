@@ -178,9 +178,9 @@ base ref, or base tip moves during a still-owned review, finalization marks the
 shared status stale and clears progress reactions. Older attempts cannot replace
 a newer owner's status. When a trustworthy completed result belongs to that
 same owner and the head and target ref are unchanged, the comment keeps the
-completed result prominent and notes that the base advanced. It identifies the
-reviewed baseline separately from the current baseline, whose integration has
-not been reviewed. Findings remain findings; changed heads or target refs,
+completed result prominent and identifies the reviewed baseline separately from
+the differing observed target tip, whose integration has not been reviewed.
+Findings remain findings; changed heads or target refs,
 incomplete attempts, and missing or ambiguous completion provenance retain the
 stale presentation. Undated completed results remain undated. The machine
 freshness state remains stale, reactions do not gain approval, and the captured
