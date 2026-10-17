@@ -18,7 +18,7 @@ import unittest
 from unittest import mock
 
 from test_claude_review_check import (
-    check, HEAD, OTHER, BASE_TIP, MERGE_BASE, REPO, check_run, comment,
+    check, HEAD, OTHER, NEWER, BASE_TIP, MERGE_BASE, REPO, check_run, comment,
     evidence_of, reaction, presentation_owner,
 )
 from test_presentation_ownership import PresentationAPI
@@ -100,6 +100,8 @@ def worker(path, command):
                 return 0
         return 1
     with mock.patch.object(check, "gh_api", side_effect=api.call):
+        if command == "admit":
+            return check.cmd_admit_manual()
         if command == "start":
             check.best_effort_status(os.environ["HEAD_SHA"], "in_progress", acquire=True)
             api.save()
@@ -348,6 +350,101 @@ class OfflineRecoveryTests(unittest.TestCase):
                          completed["completed_at"])
         self.assertIn("**Completed:** " + check.relative_time(completed["completed_at"]), completed["output"]["summary"])
 
+    def test_manual_differing_baseline_survives_restart_and_separates_refresh_from_recovery(self):
+        for kind in ("issue_comment", "pull_request_review_comment"):
+            with self.subTest(kind=kind):
+                self.setUp()
+                self.surface(kind)
+                self.env.update(MANUAL_COMPLETION_ENABLED="true", TEST_COMPLETION_TIME="2026-10-07T13:09:19Z")
+                pr = self.state()["pr"]
+                pr["base"]["sha"] = MERGE_BASE  # Neither captured B nor direct target authority.
+                self.update(pr=pr, base_tip=OTHER)
+                self.run_worker("admit")
+                self.assertFalse([call for call in self.state()["calls"] if call[0] != "GET"])
+                self.run_worker("start")
+                owner = check.status_owner(self.state()["status"])
+                self.assertEqual((owner["head"], owner["base"], owner["base_ref"]), (HEAD, BASE_TIP, "main"))
+                self.assertTrue(check.status_owner_running(self.state()["status"]))
+                self.update(cut=["PATCH", f"repos/{REPO}/check-runs/99"])
+                self.run_worker("finish", 73)
+                # The replacement process sees another valid target/projection,
+                # but recovers the published captured-patch completion event.
+                pr["base"]["sha"] = OTHER
+                self.update(pr=pr, base_tip=NEWER)
+                self.env["TEST_COMPLETION_TIME"] = "2026-10-07T14:09:19Z"
+                self.run_worker("finish")
+                state = self.state()
+                completed = state["checks"][0]
+                self.assertEqual(completed["conclusion"], "success")
+                self.assertEqual(completed["completed_at"], "2026-10-07T13:09:19Z")
+                evidence = evidence_of(completed)
+                self.assertEqual((evidence["reviewed_sha"], evidence["base_sha"], evidence["base_ref"],
+                                  evidence["merge_base_sha"]), (HEAD, BASE_TIP, "main", MERGE_BASE))
+                self.assertIn("captured patch", completed["output"]["summary"])
+                self.assertEqual(check.status_state(state["status"]), "stale")
+                self.assertFalse(check.status_owner_running(state["status"]))
+                self.assertEqual(check.status_owner(state["status"]), owner)
+                details = check.last_completed_review_details(state["status"])
+                self.assertEqual(details["completed_at"], completed["completed_at"])
+                self.assertEqual(details["base_sha"], BASE_TIP)
+                self.assertIn("integration not reviewed", state["status"]["body"])
+                self.assertEqual(len(state["comment_pages"]), 1)
+                notice = state["comment_pages"][0]["body"]
+                self.assertIn(BASE_TIP, notice)
+                self.assertIn(NEWER, notice)
+                self.assertIn("integration", notice)
+                namespace = "issues" if kind == "issue_comment" else "pulls"
+                paths = (f"repos/{REPO}/issues/7/reactions", f"repos/{REPO}/{namespace}/comments/42/reactions")
+                for path in paths:
+                    self.assertEqual([item["content"] for item in state["reactions"][path]
+                                      if item["user"]["login"] == check.STATUS_AUTHOR], ["+1"])
+                # Removing bot reactions is durable external state. A fresh
+                # status-only worker may not recreate them from old evidence.
+                reactions = {path: [item for item in items if item["user"]["login"] != check.STATUS_AUTHOR]
+                             for path, items in state["reactions"].items()}
+                self.update(reactions=reactions)
+                self.run_worker("stale")
+                self.assertEqual(self.state()["reactions"], reactions)
+                self.assertEqual(check.last_completed_review_details(self.state()["status"]), details)
+                # A verified same-owner finalizer can recover them, retaining
+                # the accepted event time and existing notice identity.
+                self.run_worker("finish")
+                recovered = self.state()
+                self.assertEqual(recovered["checks"][0]["completed_at"], completed["completed_at"])
+                self.assertEqual(check.last_completed_review_details(recovered["status"]), details)
+                self.assertEqual(len(recovered["comment_pages"]), 1)
+                for path in paths:
+                    self.assertEqual([item["content"] for item in recovered["reactions"][path]
+                                      if item["user"]["login"] == check.STATUS_AUTHOR], ["+1"])
+
+    def test_manual_differing_baseline_notice_commit_restart_deduplicates_lost_response(self):
+        for kind in ("issue_comment", "pull_request_review_comment"):
+            with self.subTest(kind=kind):
+                self.setUp()
+                self.surface(kind)
+                self.env.update(MANUAL_COMPLETION_ENABLED="true", TEST_COMPLETION_TIME="2026-10-07T13:09:19Z")
+                pr = self.state()["pr"]
+                pr["base"]["sha"] = MERGE_BASE
+                self.update(pr=pr, base_tip=OTHER)
+                self.run_worker("admit")
+                self.run_worker("start")
+                self.update(cut=["POST", f"repos/{REPO}/issues/7/comments"])
+                self.run_worker("finish", 73)
+                committed = self.state()
+                self.assertEqual(len(committed["comment_pages"]), 1)
+                self.assertIn("integration", committed["comment_pages"][0]["body"])
+                self.assertEqual(check.status_state(committed["status"]), "stale")
+                self.env["TEST_COMPLETION_TIME"] = "2026-10-07T14:09:19Z"
+                self.update(base_tip=NEWER)
+                self.run_worker("finish")
+                recovered = self.state()
+                self.assertEqual(recovered["comment_pages"], committed["comment_pages"])
+                self.assertEqual(recovered["checks"][0]["completed_at"], committed["checks"][0]["completed_at"])
+                notice_posts = [call for call in recovered["calls"] if call[0] == "POST"
+                                and call[1].endswith("/issues/7/comments")
+                                and check.STATUS_MARKER not in call[2]["body"]]
+                self.assertEqual(len(notice_posts), 1)
+
     def assert_lost_receipt_recovery(self, receipt):
         self.update(findings=[comment(12)])
         self.env["FINDING_PUBLICATION"] = receipt
@@ -468,10 +565,18 @@ class OfflineRecoveryTests(unittest.TestCase):
                                       evidence["merge_base_sha"]), (HEAD, BASE_TIP, MERGE_BASE))
                     self.assertEqual(check.status_owner(state["status"]), owner)
                     self.assertEqual(check.status_state(state["status"]), "stale")
-                    self.assertEqual(state["comment_pages"], [])
+                    if field == "base" and kind != "automatic":
+                        self.assertEqual(len(state["comment_pages"]), 1)
+                        self.assertIn("integration", state["comment_pages"][0]["body"])
+                    else:
+                        self.assertEqual(state["comment_pages"], [])
                     for items in state["reactions"].values():
-                        self.assertEqual([item["content"] for item in items if item["user"]["login"] == check.STATUS_AUTHOR
-                                          and item["content"] in ("eyes", "+1")], ["+1"])
+                        owned = [item["content"] for item in items if item["user"]["login"] == check.STATUS_AUTHOR
+                                 and item["content"] in ("eyes", "+1")]
+                        if field == "head" and kind != "automatic":
+                            self.assertEqual(owned, [])
+                        else:
+                            self.assertEqual(owned, ["+1"])
                     self.assertIn(reaction(701, "heart", login="unrelated-user"),
                                   state["reactions"][f"repos/{REPO}/issues/7/reactions"])
 
@@ -538,7 +643,13 @@ class OfflineRecoveryTests(unittest.TestCase):
                         self.assertNotIn("runs/4)", body)
                         self.assertEqual(state["checks"][0], old_check)
                         self.assertEqual(state["findings"], findings)
-                        self.assertEqual(state["comment_pages"], [unrelated])  # No clean completion notice.
+                        if conclusion == "success" and kind != "automatic":
+                            self.assertEqual(state["comment_pages"][0], unrelated)
+                            self.assertEqual(len(state["comment_pages"]), 2)
+                            self.assertIn("integration", state["comment_pages"][1]["body"])
+                            self.assertIn(BASE_TIP, state["comment_pages"][1]["body"])
+                        else:
+                            self.assertEqual(state["comment_pages"], [unrelated])
                         for items in state["reactions"].values():
                             self.assertEqual([item["content"] for item in items if item["user"]["login"] == check.STATUS_AUTHOR
                                               and item["content"] in ("eyes", "+1")],

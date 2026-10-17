@@ -59,7 +59,8 @@ class HistoricalReactionTests(unittest.TestCase):
                             os.environ["BASE_REF"] = self.api.pr["base"]["ref"]
                             for _ in range(2):
                                 self.refresh()
-                                expected = ["+1"] if result == "success" else []
+                                superseded_manual = kind != "automatic" and during and field in ("head", "ref")
+                                expected = ["+1"] if result == "success" and not superseded_manual else []
                                 self.assertEqual(self.owned(self.opening), expected)
                                 if trigger:
                                     self.assertEqual(self.owned(trigger), expected)

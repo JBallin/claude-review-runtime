@@ -50,9 +50,10 @@ diagnosis of that attempt. A comment API or permission failure is reported in
 the Check/run when publication is possible. Accepted manual requests also receive
 runtime reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
-publication. The 👍 means the latest completed review was clean. It can remain
-after the head or base changes; it does not establish review coverage of the
-current version. The status comment identifies the reviewed commit, preserves
+publication. For a manual review, 👍 means the captured patch review completed
+without findings; it establishes neither integration coverage nor merge approval.
+It can remain after the head or base changes; it does not establish review
+coverage of the current version. The status comment identifies the reviewed commit, preserves
 its completion time when available, and shows the current coverage caveat.
 The running status shows a live relative start time when available, measured
 from trusted start-job preparation rather than confirmed model execution.
@@ -66,19 +67,23 @@ Ambiguous completion evidence also removes 👍; an older clean result never
 restores it over a newer running, findings, or incomplete attempt.
 Stale refreshes retain an existing historical 👍 but do not recreate a removed one.
 
-Runtime revisions containing the direct-ref freshness guard distinguish the
-PR API's comparison-base SHA from the actual base branch tip. Before a manual
-review starts, the captured PR head/base must still match the live PR, and its
-comparison base must equal the directly resolved branch tip. Missing, malformed,
-inconsistent, or outdated authority rejects that request before model execution;
-the guard is required even for a manual fork request. It does not silently
-replace the captured base or change the reviewed diff. Automatic reviews retain
-the triggering event's immutable head/base and historical Check identity.
+Manual admission distinguishes the captured comparison base from the directly
+resolved target branch tip. It validates repository/ref authority and unchanged
+head and target ref across PR reads surrounding the direct-ref lookup. Valid
+comparison-base projections and target tips may differ from the captured base;
+missing, malformed, foreign, ambiguous, or inconsistent authority still rejects
+the request, including a manual fork request. Admission does not require an
+ancestry relationship between valid tips on the same ref. The reviewed patch
+remains the captured `compare/base...head` payload, with its captured merge base
+and runtime provenance; admission never replaces that baseline or synthesizes a
+merge. Automatic reviews retain the triggering event's immutable head/base and
+historical Check identity.
 
 After a verified clean manual review and successful Check publication, trusted
-finalization adds a completion notice identifying its captured head, base commit,
-and workflow run. Automatic reviews update the shared status comment without
-adding a separate completion notice.
+finalization may add 👍 and a completion notice even when the validated target
+tip differs from the captured baseline. The notice identifies its captured head,
+base commit, and workflow run, and qualifies integration coverage. Automatic
+reviews update the shared status comment without adding a separate completion notice.
 Reserve this runtime's namespaced comment markers for its trusted publication jobs.
 
 Completion notices are historical information, not review authority or merge
@@ -86,12 +91,20 @@ approval. There is at most one notice per PR/head/base-commit/base-ref/merge-bas
 identity. Repeating the command still reviews the patch and refreshes Check/status
 state, but a clean rerun of the same identity adds no notice. Recorded findings or
 a failed rerun leave prior notices unchanged; consult the current Check and status.
-A base change creates a different notice identity even when the head is unchanged.
+A newly captured comparison base or target ref creates a different notice
+identity even when the head is unchanged; observing a different target tip alone
+does not.
 
 No success notice is posted for recorded findings, failure, unverified completion,
-or an unavailable Check. Publication checks the live head and base immediately
-before posting and skips known superseded snapshots. A concurrent PR change can
-still occur afterward, so the notice describes its linked historical snapshot.
+or an unavailable Check. Publication verifies the executing attempt and persisted
+clean owner, then rechecks ownership and validated live head/ref immediately
+before posting or adding new clean reactions. Changed head/ref or a newer owner
+blocks these signals. A valid target-tip difference alone does not. Notices and
+Check summaries describe the captured baseline and exclude other target
+baselines from coverage. A notice also identifies the target tip observed at
+publication when it differs from the captured baseline.
+A concurrent PR change can still occur afterward, so the notice describes its
+linked historical snapshot.
 Notice publication is best-effort: an API failure may leave no notice, and an
 ambiguous POST is not retried blindly. Neither changes the authoritative result.
 
@@ -178,15 +191,18 @@ base ref, or base tip moves during a still-owned review, finalization marks the
 shared status stale and clears progress reactions. Older attempts cannot replace
 a newer owner's status. When a trustworthy completed result belongs to that
 same owner and the head and target ref are unchanged, the comment keeps the
-completed result prominent and notes that the base advanced. It identifies the
-reviewed baseline separately from the current baseline, whose integration has
-not been reviewed. Findings remain findings; changed heads or target refs,
+completed result prominent and notes that the target baseline differs. It
+identifies the reviewed baseline separately from the current baseline, whose
+integration has not been reviewed. Findings remain findings; changed heads or target refs,
 incomplete attempts, and missing or ambiguous completion provenance retain the
 stale presentation. Undated completed results remain undated. The machine
-freshness state remains stale, reactions do not gain approval, and the captured
-Check retains its original authority. Freshness checks read the exact encoded branch
-ref directly and validate its ref name, commit type, and full SHA, with PR
-identity reads around that lookup. A status refresh can observe this movement
+freshness state remains stale and the captured Check retains its original
+authority. Trusted verified clean manual finalization may still add 👍, qualified
+as captured-patch completion; automatic clean-signal behavior is unchanged.
+Status-only refresh can retain a historical 👍 but cannot recreate a removed one.
+Freshness checks read the exact encoded branch ref directly and validate its
+ref name, commit type, and full SHA, with PR identity reads around that lookup.
+A status refresh can observe this movement
 even if the PR API still reports the old comparison base. This is not a watcher
 for base-branch pushes, and separate API reads and writes are not atomic:
 movement after the last read remains possible. Unavailable branch authority
@@ -203,9 +219,11 @@ captured head SHA, and errored responses reject completion even if the model
 reports success.
 
 Findings remain sticky for the same PR, head, and merge base through trusted
-Check evidence. Findings attributed only to another diff do not carry across a
-base retarget; unknown attribution fails closed. Check evidence retains bounded
-ID samples and diagnostic counts/hashes, plus durable same-diff finding presence.
+Check evidence. Captured target-ref evidence is additive; legacy Check records
+without it remain readable and require no migration. Findings attributed only to
+another diff do not carry across a base retarget; unknown attribution fails closed.
+Check evidence retains bounded ID samples and diagnostic counts/hashes, plus
+durable same-diff finding presence.
 Hashes cannot establish individual ID membership: rediscovered IDs omitted from
 the samples fail closed if no other trusted record attributes them. Raw model
 transcripts are not uploaded as artifacts. Dependency actions are pinned, but
