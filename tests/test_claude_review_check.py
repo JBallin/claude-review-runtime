@@ -2263,7 +2263,7 @@ class ManualCompletionTests(ScriptTestCase):
             f"{marker}\n"
             "🎉 Claude review completed with no findings on "
             f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD}).\n\n"
-            "<details>\n<summary>ℹ️ Details</summary>\n\n"
+            "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
             f"Compared against `main` at [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) · "
             "[Review run](https://github.com/owner/repo/actions/runs/1)\n\n</details>"
         ))
