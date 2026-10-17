@@ -1643,7 +1643,7 @@ class StatusCommentTests(ScriptTestCase):
                 else:
                     self.assertNotIn("**Note:**", body)
                 self.assertIn(HEAD, body)
-                self.assertIn("| Status | " + ("Reviewed commit" if check.last_completed_review({"body": body}) else "Attempt commit") + " | Review trigger |", body)
+                self.assertIn("| Status | " + ("Reviewed commit" if expected in ("success", "action_required") else "Attempt commit") + " | Review trigger |", body)
                 self.assertIn(f"| {check.commit_link(HEAD, REPO)} |", body)
                 self.assertNotIn("unresolved", body)
 
@@ -2018,7 +2018,10 @@ class PRReactionTests(ScriptTestCase):
         body = self.calls("PATCH")[0]["body"]["body"]
         self.assertIn("## Claude Review", body)
         self.assertIn(f"**PR commit:** {check.commit_link(OTHER, REPO)} on `main` — not reviewed", body)
-        self.assertIn("| ✅ **Completed**", body)
+        visible, details = body.split("<details>", 1)
+        self.assertIn("| ❌ **Incomplete**", visible)
+        self.assertIn("**Previous completed review**", details)
+        self.assertIn("**Result:** No findings.", details)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
                          [f"repos/{REPO}/issues/7/reactions/70"])
@@ -2174,7 +2177,10 @@ class PRReactionTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0)
         body = self.calls("PATCH")[0]["body"]["body"]
-        self.assertIn("| ⚠️ **Findings**", body)
+        visible, details = body.split("<details>", 1)
+        self.assertIn("| ❌ **Incomplete**", visible)
+        self.assertIn("**Previous completed review**", details)
+        self.assertIn("**Result:** Findings.", details)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "action_required"))
 
     def test_stale_without_owner_does_not_clear_pr_reactions(self):

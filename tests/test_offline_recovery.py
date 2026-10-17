@@ -392,7 +392,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                 notice = state["comment_pages"][0]["body"]
                 self.assertIn(BASE_TIP, notice)
                 self.assertIn(NEWER, notice)
-                self.assertIn("integration", notice)
+                self.assertIn(check.TARGET_TIP_WARNING, notice)
                 namespace = "issues" if kind == "issue_comment" else "pulls"
                 paths = (f"repos/{REPO}/issues/7/reactions", f"repos/{REPO}/{namespace}/comments/42/reactions")
                 for path in paths:
@@ -432,7 +432,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                 self.run_worker("finish", 73)
                 committed = self.state()
                 self.assertEqual(len(committed["comment_pages"]), 1)
-                self.assertIn("integration", committed["comment_pages"][0]["body"])
+                self.assertIn(check.TARGET_TIP_WARNING, committed["comment_pages"][0]["body"])
                 self.assertEqual(check.status_state(committed["status"]), "stale")
                 self.env["TEST_COMPLETION_TIME"] = "2026-10-07T14:09:19Z"
                 self.update(base_tip=NEWER)
@@ -567,7 +567,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                     self.assertEqual(check.status_state(state["status"]), "stale")
                     if field == "base" and kind != "automatic":
                         self.assertEqual(len(state["comment_pages"]), 1)
-                        self.assertIn("integration", state["comment_pages"][0]["body"])
+                        self.assertIn(check.TARGET_TIP_WARNING, state["comment_pages"][0]["body"])
                     else:
                         self.assertEqual(state["comment_pages"], [])
                     for items in state["reactions"].values():
@@ -647,7 +647,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                         if conclusion == "success" and kind != "automatic":
                             self.assertEqual(state["comment_pages"][0], unrelated)
                             self.assertEqual(len(state["comment_pages"]), 2)
-                            self.assertIn("integration", state["comment_pages"][1]["body"])
+                            self.assertIn(check.TARGET_TIP_WARNING, state["comment_pages"][1]["body"])
                             self.assertIn(BASE_TIP, state["comment_pages"][1]["body"])
                         else:
                             self.assertEqual(state["comment_pages"], [unrelated])
