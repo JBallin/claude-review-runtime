@@ -546,10 +546,17 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         messages["stale"] = ""
         reason = STATUS_REASONS["base_advanced"]
     elif superseded_review:
-        messages["stale"] = (
-            "⚠️ This completed review doesn’t cover the current version." if last_review[2] == "success"
-            else "⚠️ These recorded findings are from a review of a previous version."
-        )
+        if last_review[0] != head_sha:
+            warning_repo = owner["repo"] if owner else env("REPO")
+            messages["stale"] = (
+                f"⚠️ This review covers commit {commit_link(last_review[0], warning_repo)}. "
+                f"The current PR commit {commit_link(head_sha, warning_repo)} has not been reviewed by it."
+            )
+        else:
+            messages["stale"] = (
+                f"⚠️ This review was against {inline_code(last_review[1])}. "
+                f"It does not cover the PR’s current target {inline_code(base_ref)}."
+            )
     lines = [
         STATUS_MARKER,
         f"{STATUS_HEAD_PREFIX}{head_sha} -->",
@@ -1379,9 +1386,11 @@ def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_
 
 def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url, *, observed_base_sha=None):
     qualification = CAPTURED_PATCH_SCOPE + " This is not merge approval."
+    observed_tip = ""
     if observed_base_sha and observed_base_sha != base_sha:
-        qualification += (f"\n\n⚠️ Target {inline_code(base_ref)} was observed at {commit_link(observed_base_sha, repo)}; "
-                          "integration with that baseline was not reviewed.")
+        qualification += f"\n\n{TARGET_TIP_WARNING}"
+        observed_tip = (f"  \n**Observed target tip:** {commit_link(observed_base_sha, repo)} "
+                        f"on {inline_code(base_ref)}")
     return (
         f"{marker}\n"
         "Claude Review: No findings. 🎉\n\n"
@@ -1389,7 +1398,7 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
         f"{qualification}\n\n"
         "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
         f"**Reviewed against:** [`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) "
-        f"on {inline_code(base_ref)}\n\n[Review run]({details_url})\n\n</details>"
+        f"on {inline_code(base_ref)}{observed_tip}\n\n[Review run]({details_url})\n\n</details>"
     )
 
 

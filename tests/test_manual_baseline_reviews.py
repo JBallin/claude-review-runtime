@@ -83,7 +83,7 @@ class ManualBaselineTests(unittest.TestCase):
         self.assertEqual(details["completed_at"], DONE)
         self.assertIn(check.commit_link(BASE_TIP), self.api.status["body"])
         self.assertIn(check.commit_link(self.api.base_tip), self.api.status["body"])
-        self.assertIn("integration not reviewed", self.api.status["body"])
+        self.assertIn(check.TARGET_TIP_WARNING, self.api.status["body"])
         self.assertNotIn("Last completed review", self.api.status["body"])
 
     def test_clean_manual_completion_with_tip_and_projection_already_different(self):

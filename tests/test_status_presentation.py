@@ -70,8 +70,8 @@ class StatusPresentationTests(unittest.TestCase):
                 expected = 'Claude Review'
                 heading = next(line for line in visible.splitlines() if line.startswith('## '))
                 self.assertEqual(heading, '## ' + expected)
-                self.assertIn('⚠️ This completed review doesn’t cover the current version.' if result == 'success'
-                              else '⚠️ These recorded findings are from a review of a previous version.', visible)
+                self.assertIn(f'⚠️ This review covers commit {check.commit_link(HEAD)}. '
+                              f'The current PR commit {check.commit_link(OTHER)} has not been reviewed by it.', visible)
                 self.assertNotIn('**Last completed review**', visible)
                 self.assertNotIn('Claude Review stale', visible)
                 self.assertNotIn('coverage', visible)

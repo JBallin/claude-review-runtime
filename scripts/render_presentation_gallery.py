@@ -26,7 +26,6 @@ HEADING = "SAMPLE ONLY — visual QA gallery, not actual review results"
 SOURCE_REPOSITORY = "https://github.com/JBallin/claude-review-runtime"
 COMPLETED_AT = "2026-10-07T13:09:19Z"
 STARTED = 1791378000000000000  # 2026-10-07T13:00:00Z
-PENDING_G = "Pending — requires the separate manual captured-patch review changes"
 OPERATIONAL_MARKER = re.compile(r"<!-- claude-review-runtime:[^\r\n]*? -->\n?")
 
 
@@ -54,7 +53,7 @@ def strip_operational_markers(body):
 
 
 def gallery_samples():
-    """Return labeled raw helper output (or an explicit pending entry)."""
+    """Return labeled raw helper output for every supported gallery state."""
     with fixture_environment():
         owner = fixtures.presentation_owner(started=STARTED)
         details = {
@@ -101,8 +100,14 @@ def gallery_samples():
                 fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
                 check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                         fixtures.BASE_TIP, fixtures.MERGE_BASE),
-                "https://github.com/owner/repo/actions/runs/5")),
-            ("G — Compact clean completion, differing baseline", None),
+                "https://github.com/owner/repo/actions/runs/5",
+                observed_base_sha=fixtures.BASE_TIP)),
+            ("G — Compact clean completion, differing baseline", check.completion_comment_body(
+                fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
+                check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
+                                        fixtures.BASE_TIP, fixtures.MERGE_BASE),
+                "https://github.com/owner/repo/actions/runs/5",
+                observed_base_sha=fixtures.OTHER)),
         ]
         newer_owner = fixtures.presentation_owner(
             head=fixtures.OTHER, base=fixtures.NEWER, run=6,
@@ -139,7 +144,7 @@ def render_gallery(revision):
         f"**Source revision:** [{revision}]({SOURCE_REPOSITORY}/commit/{revision})",
     ])]
     for title, body in gallery_samples():
-        sample_body = PENDING_G if body is None else strip_operational_markers(body)
+        sample_body = strip_operational_markers(body)
         sections.append(f"### {title}\n\n{sample_body}")
     sections.append("\n\n".join([
         "## Visual-QA observations",

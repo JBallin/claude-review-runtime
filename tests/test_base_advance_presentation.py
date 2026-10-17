@@ -104,7 +104,7 @@ class BaseAdvancePresentationTests(unittest.TestCase):
                 check.best_effort_status(self.api.pr["head"]["sha"], "stale")
                 body = self.api.status["body"]
                 self.assertIn("## Claude Review", body)
-                self.assertIn("⚠️ This completed review doesn’t cover the current version.", body)
+                self.assertIn("The current PR commit" if changed_head else "current target `release`", body)
                 self.assertNotIn(" — base advanced", body)
                 self.assertNotIn(check.TARGET_TIP_WARNING, body)
                 self.assertIn(" — not reviewed", body)

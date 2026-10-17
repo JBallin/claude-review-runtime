@@ -387,7 +387,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                 details = check.last_completed_review_details(state["status"])
                 self.assertEqual(details["completed_at"], completed["completed_at"])
                 self.assertEqual(details["base_sha"], BASE_TIP)
-                self.assertIn("integration not reviewed", state["status"]["body"])
+                self.assertIn(check.TARGET_TIP_WARNING, state["status"]["body"])
                 self.assertEqual(len(state["comment_pages"]), 1)
                 notice = state["comment_pages"][0]["body"]
                 self.assertIn(BASE_TIP, notice)

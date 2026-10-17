@@ -26,7 +26,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(body, gallery.render_gallery(REVISION))
         self.assertTrue(body.startswith("# " + gallery.HEADING + "\n"))
         self.assertIn(f"{gallery.SOURCE_REPOSITORY}/commit/{REVISION}", body)
-        self.assertIn(gallery.PENDING_G, body)
+        self.assertNotIn("Pending —", body)
         self.assertIn("**Not yet inspected.**", body)
         self.assertEqual(len(gallery.gallery_samples()), 13)
         for letter in "ABCDEFGHIJ":
@@ -40,15 +40,14 @@ class PresentationGalleryTests(unittest.TestCase):
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
         self.assertEqual(status.call_count, 11)
-        self.assertEqual(completion.call_count, 1)
+        self.assertEqual(completion.call_count, 2)
+        self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
+                         [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
         body = gallery.render_gallery(REVISION)
         for title, raw in samples:
             with self.subTest(title=title):
-                if raw is None:
-                    self.assertIn(f"### {title}\n\n{gallery.PENDING_G}", body)
-                else:
-                    self.assertIn(gallery.strip_operational_markers(raw), body)
-                    self.assertTrue("claude-review-runtime:" in raw)
+                self.assertIn(gallery.strip_operational_markers(raw), body)
+                self.assertTrue("claude-review-runtime:" in raw)
 
     def test_gallery_cannot_be_treated_as_an_owned_record_even_for_bot_author(self):
         body = gallery.render_gallery(REVISION)
@@ -86,6 +85,15 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn("Claude Review: No findings. 🎉", raw)
                 self.assertIn("**Reviewed commit:**", raw)
                 self.assertNotIn("integration with that tip", raw)
+                self.assertIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
+                self.assertIn("This is not merge approval.", raw)
+            elif title.startswith("G —"):
+                self.assertIn("Claude Review: No findings. 🎉", raw)
+                self.assertIn(gallery.check.TARGET_TIP_WARNING, raw.split("<details>")[0])
+                self.assertIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
+                self.assertIn("This is not merge approval.", raw)
+                self.assertIn("**Reviewed against:** " + gallery.check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), raw)
+                self.assertIn("**Observed target tip:** " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO), raw)
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):
         original = os.environ.copy()

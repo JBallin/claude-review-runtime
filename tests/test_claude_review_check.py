@@ -2416,7 +2416,8 @@ class ManualCompletionTests(ScriptTestCase):
         body = self.calls("POST")[0]["body"]["body"]
         self.assertIn(f"/commit/{BASE_TIP}", body)
         self.assertIn(f"/commit/{OTHER}", body)
-        self.assertIn("integration with that baseline was not reviewed", body)
+        self.assertIn(check.TARGET_TIP_WARNING, body)
+        self.assertIn("**Observed target tip:** " + check.commit_link(OTHER, REPO), body)
         self.assertIn(check.CAPTURED_PATCH_SCOPE, body)
 
     def test_projection_difference_alone_allows_captured_patch_notice(self):
