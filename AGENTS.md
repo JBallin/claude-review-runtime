@@ -7,7 +7,17 @@ verified completion, sticky findings, and trusted publication ownership. For
 presentation changes, keep operational markers and parser compatibility intact;
 review eligibility, reactions, and Check authority must retain their contracts.
 
-Use Python 3 and run the standard-library regression suite from the repository root:
+Use Python 3. For code, configuration, workflow, or test changes, run targeted
+local checks and regression tests for the affected contracts before publication
+or review. For documentation-only changes, check the affected documentation,
+links, and whitespace without automatically repeating the full local suite.
+
+CI runs the full standard-library regression suite and whitespace checks in
+[the validation workflow](.github/workflows/ci.yml); it remains the full-suite
+gate before merge. Run the full suite locally when cross-cutting risk warrants
+it, needed evidence is unavailable from CI, diagnosis requires it, or an explicit
+instruction requires it. Run these commands from the repository root when
+performing full local validation:
 
 ```sh
 python3 -B -m unittest discover -s tests -v
