@@ -286,14 +286,23 @@ initial setup draft while authentication and independent review are outstanding.
 Any initial installation exception requires explicit owner approval, and the
 owner merges the setup.
 
-The pinned runtime reports sanitized captured-read coverage diagnostics during
+Captured-read diagnostics depend on the executing Runtime revision recorded in
+the Check and workflow run. This repository's installed
+[automatic](../.github/workflows/self-review-automatic.yml) and
+[manual](../.github/workflows/self-review-manual.yml) self-review callers pin
+`310ae2f`, which reports aggregate read and successful-read counts,
+expected/matched/missing/unparsed line counts, content-shape labels, and a
+partial-view boolean. Runtime
+[`d85a8b2`](https://github.com/JBallin/claude-review-runtime/commit/d85a8b21653d2d3703829f9b49fce447acd57415)
+added bounded per-Read requested offsets and limits, returned ranges and overlaps,
+plus missing ranges and truncation flags. Those details are unavailable from the
+installed `310ae2f` callers; caller adoption is separate from this guidance.
+
+Both revisions report sanitized captured-read coverage diagnostics during
 verification when the reason is `verified` or `captured_inputs_not_read`,
-without an opt-in flag. Earlier failures may have no coverage counters. For each
-of the fixed `metadata` and `diff` labels, it reports read and successful-read
-counts, expected/matched/missing/unparsed line counts, fixed content-shape labels,
-and a partial-view boolean. It also reports bounded per-Read requested offsets
-and limits, returned ranges and overlaps, plus missing ranges and truncation
-flags. No file contents, paths, transcripts, or raw errors are exported.
+without an opt-in flag. Earlier failures may have no coverage counters. The
+fixed input labels are `metadata` and `diff`. No file contents,
+paths, transcripts, or raw errors are exported.
 Diagnostics are best-effort and do not change acceptance: missing captured lines
 still fail completion. A partial page can be followed by complete reads; consult
 coverage and the authoritative Check together.
@@ -310,9 +319,12 @@ to bypass a rejection.
 
 ### Incomplete captured-input reads
 
-For `captured_inputs_not_read`, inspect the reported gaps and failed Reads
-alongside the recorded completion and configured limits. A per-Read size limit
-does not establish total-context exhaustion. During model execution, recovery
+For `captured_inputs_not_read`, check the executing revision first. With
+`d85a8b2`'s diagnostics, inspect the reported gaps and unsuccessful Reads alongside
+the recorded completion and configured limits. With `310ae2f`, aggregate counts
+show incomplete coverage but cannot locate the gaps or failed requests. A
+per-Read size limit does not establish total-context exhaustion. During model
+execution, recovery
 requires continuing with `offset` at the first unread line and a smaller `limit`
 if a page fails, until successful responses cover every line through the captured
 `diff_line_count`. A fresh approved review is not guaranteed to complete that
@@ -320,7 +332,9 @@ pagination; verify its own captured identities, coverage, and authoritative Chec
 
 For example, [Ballin #580's manual attempt](https://github.com/JBallin/ballin-scripts/actions/runs/39157080846/job/117762535478)
 used Runtime `d85a8b2`, Claude Code 2.1.289, Agent SDK 0.3.289, and
-`claude-sonnet-5-5`. Its [captured diff](https://github.com/JBallin/ballin-scripts/actions/runs/39157080846/artifacts/12147129072)
+`claude-sonnet-5-5`. The [durable sanitized evidence record](evidence/ballin-580-pagination.md)
+preserves the inspected snapshot's size, digest, identities, and reported coverage
+without retaining its contents or transcript. The diff
 was 298,487 bytes and 4,727 lines. A whole-file Read and
 a 1,200-line request failed; four successful 600-line pages covered 1–2,400,
 leaving 2,401–4,727 unread. The SDK reported normal success after 13 of 30 allowed
