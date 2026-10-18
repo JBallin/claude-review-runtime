@@ -77,14 +77,14 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertIn("**Current target commit:**", body)
                     self.assertIn("| Reviewed commit |", body)
                     self.assertEqual(body.count(
-                        "⚠️ The target branch has changed since this review. Integration with its current version hasn’t been reviewed."
+                        "⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed."
                     ), 1)
             elif title.startswith("E —"):
                 self.assertIn("| Attempt commit |", raw)
             elif title.startswith("F —"):
                 self.assertIn("Claude Review: No findings. 🎉", raw)
                 self.assertIn("**Reviewed commit:**", raw)
-                self.assertNotIn("integration with that tip", raw)
+                self.assertNotIn(gallery.check.TARGET_TIP_WARNING, raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
             elif title.startswith("G —"):

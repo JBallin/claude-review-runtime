@@ -107,7 +107,12 @@ class ManualBaselineTests(unittest.TestCase):
                 self.assertIn(BASE_TIP, body)
                 self.assertIn(HEAD, body)
                 self.assertIn(MERGE_BASE, body)
-                self.assertIn("integration", body.lower())
+                self.assertEqual(self.api.base_tip, OTHER)
+                warning = ("⚠️ The target branch differs from the reviewed baseline. "
+                           "Integration with its current version hasn’t been reviewed.")
+                for rendered in (self.api.status["body"], body):
+                    self.assertIn(warning, rendered.split("<details>")[0])
+                    self.assertNotIn("has changed since this review", rendered)
                 self.assertNotIn("approved", body.lower())
 
     def test_projection_catching_up_during_direct_lookup_preserves_captured_patch(self):
