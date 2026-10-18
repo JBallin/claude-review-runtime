@@ -324,10 +324,10 @@ For `captured_inputs_not_read`, check the executing revision first. With
 the recorded completion and configured limits. With `310ae2f`, aggregate counts
 show incomplete coverage but cannot locate the gaps or failed requests. A
 per-Read size limit does not establish total-context exhaustion. During model
-execution, recovery
-requires continuing with `offset` at the first unread line and a smaller `limit`
-if a page fails, until successful responses cover every line through the captured
-`diff_line_count`. A fresh approved review is not guaranteed to complete that
+execution, recovery requires continuing with `offset` at the first unread line
+and a smaller `limit` if a page fails, until every captured diff line is covered;
+`d85a8b2` records that total in `metadata.diff_line_count`.
+A fresh approved review is not guaranteed to complete that
 pagination; verify its own captured identities, coverage, and authoritative Check.
 
 For example, [Ballin #580's manual attempt](https://github.com/JBallin/ballin-scripts/actions/runs/39157080846/job/117762535478)
