@@ -5,6 +5,18 @@ branch, which has not been live-API-tested. Offline checks do not establish live
 authentication, model completion, or publication. See the
 [shared setup guide](consumer-workflows.md) for branch selection.
 
+Choose validation from the effective upstream changes and gaps in available
+evidence. Assess changes involving authentication, permissions, tool restrictions,
+publication, or recovery for material risk; they do not automatically require a
+separate review-lab trial. Propose a trial when offline checks and ordinary
+verified adoption would leave material risk inadequately covered. Routine
+compatible dependency updates may use required offline checks, independent
+review, and verification of the actual Runtime revision executed by the next
+normal review. Preserve fail-closed completion and publication gates and state
+unverified behavior explicitly: a pin bump or a review using an older Runtime is
+not candidate adoption evidence. Any live lab trial must follow the existing
+[approval and bounded-run requirements](../CONTRIBUTING.md#change-scope).
+
 ## Offline evidence
 
 [Publication regressions](https://github.com/JBallin/claude-review-runtime/pull/7),
