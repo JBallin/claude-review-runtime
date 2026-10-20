@@ -286,27 +286,6 @@ initial setup draft while authentication and independent review are outstanding.
 Any initial installation exception requires explicit owner approval, and the
 owner merges the setup.
 
-Captured-read diagnostics depend on the executing Runtime revision recorded in
-the Check and workflow run. This repository's installed
-[automatic](../.github/workflows/self-review-automatic.yml) and
-[manual](../.github/workflows/self-review-manual.yml) self-review callers pin
-`310ae2f`, which reports aggregate read and successful-read counts,
-expected/matched/missing/unparsed line counts, content-shape labels, and a
-partial-view boolean. Runtime
-[`d85a8b2`](https://github.com/JBallin/claude-review-runtime/commit/d85a8b21653d2d3703829f9b49fce447acd57415)
-added bounded per-Read requested offsets and limits, returned ranges and overlaps,
-plus missing ranges and truncation flags. Those details are unavailable from the
-installed `310ae2f` callers; caller adoption is separate from this guidance.
-
-Both revisions report sanitized captured-read coverage diagnostics during
-verification when the reason is `verified` or `captured_inputs_not_read`,
-without an opt-in flag. Earlier failures may have no coverage counters. The
-fixed input labels are `metadata` and `diff`. No file contents,
-paths, transcripts, or raw errors are exported.
-Diagnostics are best-effort and do not change acceptance: missing captured lines
-still fail completion. A partial page can be followed by complete reads; consult
-coverage and the authoritative Check together.
-
 After the human-reviewed caller installation is merged, validate with an approved
 live run on a separate PR that does not modify the workflows. Inspect actual
 model completion, captured identities, runtime provenance, and posted findings.
@@ -319,49 +298,24 @@ to bypass a rejection.
 
 ### Incomplete captured-input reads
 
-For `captured_inputs_not_read`, check the executing revision first. With
-`d85a8b2`'s diagnostics, inspect the reported gaps and unsuccessful Reads alongside
-the recorded completion and configured limits. With `310ae2f`, aggregate counts
-show incomplete coverage but cannot locate the gaps or failed requests. A
-per-Read size limit does not establish total-context exhaustion. During model
-execution, recovery requires continuing with `offset` at the first unread line
-and a smaller `limit` if a page fails, until every captured diff line is covered;
-`d85a8b2` records that total in `metadata.diff_line_count`.
-A fresh approved review is not guaranteed to complete that
-pagination; verify its own captured identities, coverage, and authoritative Check.
-If retries remain incomplete, consider a separately run independent Claude review
-(for example, a local Opus review), rather than another workflow retry. Verify its
-input coverage and exact revision, record the results, and obtain explicit
-acceptance under the applicable review policy. This does not make the failed
-automated Check pass or bypass branch protection.
+`captured_inputs_not_read` means the execution record did not verify complete
+coverage of the captured metadata and diff. It does not establish why coverage is
+incomplete. Inspect the exact-head Check and workflow diagnostics; successful
+model execution or a green workflow is not sufficient.
 
-For example, [Ballin #580's manual attempt](https://github.com/JBallin/ballin-scripts/actions/runs/39157080846/job/117762535478)
-used Runtime `d85a8b2`, Claude Code 2.1.289, Agent SDK 0.3.289, and
-`claude-sonnet-5-5`. The [durable sanitized evidence record](evidence/ballin-580-pagination.md)
-preserves the inspected snapshot's size, digest, identities, and reported coverage
-without retaining its contents or transcript. The diff
-was 298,487 bytes and 4,727 lines. A whole-file Read and
-a 1,200-line request failed; four successful 600-line pages covered 1–2,400,
-leaving 2,401–4,727 unread. The SDK reported normal success after 13 of 30 allowed
-turns and about 50 seconds, with zero permission denials; the job's timeout was
-20 minutes. The [exact-head Check](https://github.com/JBallin/ballin-scripts/runs/117762457169)
-correctly rejected completion. These observations support early normal completion
-with incomplete pagination, but do not explain why reading stopped. Tool errors,
-the final assistant message, actual token consumption, and a model-level stop
-reason were unavailable in the retained logs and artifacts.
+Diagnostic availability depends on the executing Runtime revision recorded in the
+Check. Older revisions may report aggregate coverage; newer diagnostic revisions
+provide per-Read and missing-range details. These sanitized diagnostics do not
+expose input contents or transcripts or relax completion requirements. See the
+[preserved investigation](https://github.com/JBallin/claude-review-runtime/pull/75#issuecomment-6302262123)
+for examples and diagnostic limits.
 
-Anthropic's [large-file guidance](https://code.claude.com/docs/en/tools-reference#large-files)
-documents a 256 KB whole-file ceiling and per-call token limits. The captured
-file exceeded that size ceiling, consistent with its initial failure; the exact
-error and the cause of the 1,200-line failure remain unknown. The documented
-`allow_large` option requires 2.1.296 or later, beyond the version used here.
-[Issue #14876](https://github.com/anthropics/claude-code/issues/14876) reports a
-25,000-token Read limit on 2.0.74; it does not prove this attempt's cause. The
-[preceding automatic attempt](https://github.com/JBallin/ballin-scripts/actions/runs/39156658058)
-reached line 2,499 with different page sizes, so neither 2,400 lines nor 600 lines
-per page is an established ceiling. Incomplete pagination does not establish that
-all large diffs fail. Preserve full captured-input coverage and publication
-safeguards when diagnosing or recovering a review.
+Recovery must preserve full-input coverage and publication safeguards. A fresh
+approved workflow attempt is not guaranteed to succeed. If retries remain
+incomplete, consider a separately run independent Claude review, such as local
+Opus. Verify its input coverage and exact revision, record the results, and obtain
+explicit acceptance under the applicable review policy. This does not make the
+failed automated Check pass or bypass branch protection.
 
 ### Unexpected Check grouping
 
