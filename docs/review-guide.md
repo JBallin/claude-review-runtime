@@ -329,6 +329,7 @@ and a smaller `limit` if a page fails, until every captured diff line is covered
 `d85a8b2` records that total in `metadata.diff_line_count`.
 A fresh approved review is not guaranteed to complete that
 pagination; verify its own captured identities, coverage, and authoritative Check.
+If retries remain incomplete, consider a separate manual review.
 
 For example, [Ballin #580's manual attempt](https://github.com/JBallin/ballin-scripts/actions/runs/39157080846/job/117762535478)
 used Runtime `d85a8b2`, Claude Code 2.1.289, Agent SDK 0.3.289, and
