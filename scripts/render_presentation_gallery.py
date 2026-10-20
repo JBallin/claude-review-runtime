@@ -139,6 +139,31 @@ def gallery_samples():
                     trigger_label="Draft marked ready", check_available=available,
                     last_review=history(result) if result else None,
                     last_review_details=details if result else None, **options)))
+        shared_owner = fixtures.presentation_owner(
+            head=fixtures.OTHER, base=fixtures.BASE_TIP, run=5,
+            started=STARTED + 600_000_000_000,
+        )
+        for letter, state in (("N", "in_progress"), ("O", "failure")):
+            samples.append((f"{letter} — Shared workflow run, matching historical baseline: {state}", status(
+                state, head=fixtures.OTHER, owner=shared_owner,
+                last_review=history("success"), last_review_details=details,
+                **({"reason": check.STATUS_REASONS["incomplete"]} if state == "failure" else {}))))
+        os.environ["DETAILS_URL"] = "https://github.com/owner/repo/actions/runs/6"
+        samples.append(("P — Legacy completed history without recorded attempt metadata", status(
+            "stale", owner=None, last_review=history("success"),
+            last_review_details={"run_url": details["run_url"]}, owner_running=False)))
+        os.environ["DETAILS_URL"] = ""
+        samples.append(("Q — Legacy completed review without workflow links", status(
+            "stale", owner=None, head=fixtures.OTHER, last_review=history("success"),
+            last_review_details={"base_sha": fixtures.BASE_TIP}, owner_running=False,
+            completed_owner_verified=True, reason=check.STATUS_REASONS["stale"])))
+        os.environ["DETAILS_URL"] = details["run_url"]
+        for moved in ("head", "base", "ref"):
+            samples.append((f"R — Stale running attempt without completed history: changed {moved}", status(
+                "stale", head=fixtures.OTHER if moved == "head" else fixtures.HEAD,
+                base_ref="release" if moved == "ref" else "main",
+                base_sha=fixtures.OTHER if moved == "base" else fixtures.BASE_TIP,
+                owner_running=True, reason=check.STATUS_REASONS["stale"])))
         return samples
 
 

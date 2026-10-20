@@ -51,6 +51,12 @@ rendered from those helpers. Hidden legacy Reason receipts remain for rendering
 checks.
 Generation makes no network calls or persistent changes.
 
+When emergency workflow presentation changes, also capture synthetic output from
+both workflows through `ToolingFallbackScriptTests.run_fallback` (stubbed GitHub
+calls and temporary fixtures). Append matching outputs as labeled QA adjuncts
+to the same gallery, removing operational markers. This harness is separate
+from the side-effect-free gallery command; do not duplicate fallback templates.
+
 After publication is authorized, verify the clean generating checkout matches
 the published PR head and the gallery's full source revision. Publish it as one
 top-level PR comment through the GitHub API/CLI, retain its ID and direct link,

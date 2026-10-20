@@ -28,8 +28,8 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn(f"{gallery.SOURCE_REPOSITORY}/commit/{REVISION}", body)
         self.assertNotIn("Pending —", body)
         self.assertIn("**Not yet inspected.**", body)
-        self.assertEqual(len(gallery.gallery_samples()), 22)
-        for letter in "ABCDEFGHIJKLM":
+        self.assertEqual(len(gallery.gallery_samples()), 29)
+        for letter in "ABCDEFGHIJKLMNOPQR":
             self.assertIn(f"### {letter} — ", body)
         # Keep conservative byte headroom below GitHub's 65,536-character limit.
         self.assertLess(len(body.encode("utf-8")), 60_000)
@@ -39,7 +39,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 20)
+        self.assertEqual(status.call_count, 27)
         self.assertEqual(completion.call_count, 2)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
@@ -117,7 +117,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     if "no completed history" in title:
                         self.assertNotIn("**Previous completed review**", details)
                     else:
-                        self.assertIn("**[Current attempt](https://github.com/owner/repo/actions/runs/6)**", details)
+                        self.assertIn("**Current attempt**", details)
                         self.assertIn("\n\n**Previous completed review**  \n", details)
                         self.assertIn("**Result:** " + ("Findings." if "previous findings" in title else "No findings."), details)
                         self.assertEqual(gallery.check.last_completed_review({"body": body}),
@@ -143,22 +143,51 @@ class PresentationGalleryTests(unittest.TestCase):
             with self.subTest(title=title):
                 details = body.split("<details>")[1]
                 self.assertNotIn("workflow run]", details)
+                self.assertNotIn("[Current attempt]", details)
+                self.assertNotIn("[Previous completed review]", details)
                 self.assertNotIn("[Review run]", details)
+                if title.startswith(("N —", "O —", "P —", "Q —", "R —")):
+                    continue
                 if "**Previous completed review**" in details:
                     current, previous = details.split("**Previous completed review**")
-                    self.assertIn(f"**[Current attempt]({attempt})**", current)
+                    self.assertIn("**Current attempt**", current)
+                    self.assertIn(f"**[Attempt]({attempt}) baseline:**", current)
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
                     self.assertNotIn(reviewed, current)
                     self.assertNotIn(attempt, previous)
                 elif title.startswith(("E —", "K —", "L —")):
                     url = reviewed if title.startswith("E —") else attempt
-                    self.assertIn(f"**[Started]({url}):**", details)
+                    self.assertIn(f"**[Attempt]({url}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
                 elif title.startswith("M —"):
-                    self.assertIn(f"**[Attempt baseline]({attempt}):**", details)
+                    self.assertIn(f"**[Attempt]({attempt}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
                 else:
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", details)
+
+    def test_edge_samples_keep_plain_headings_and_exact_run_association(self):
+        run = "https://github.com/owner/repo/actions/runs/5"
+        for title, body in gallery.gallery_samples():
+            self.assertNotIn("[Current attempt]", body)
+            self.assertNotIn("[Previous completed review]", body)
+            with self.subTest(title=title):
+                if title.startswith(("N —", "O —")):
+                    current, previous = body.split("**Previous completed review**")
+                    self.assertIn("**Current attempt**", current)
+                    anchor = "Running" if title.startswith("N —") else "Attempt"
+                    self.assertIn(f"[{anchor}]({run})", current)
+                    self.assertIn(f"**[Reviewed]({run}) against:**", previous)
+                    self.assertNotIn("**Attempt baseline:**", current)
+                elif title.startswith("P —"):
+                    self.assertIn("**[Attempt](https://github.com/owner/repo/actions/runs/6) status:** Not recorded", body)
+                    self.assertIn(f"**[Reviewed]({run}) target:**", body)
+                elif title.startswith("Q —"):
+                    self.assertNotIn("/actions/runs/", body)
+                    self.assertIn("**Reviewed against:**", body)
+                elif title.startswith("R —"):
+                    self.assertIn(f"**[Attempt]({run}) baseline:** " + gallery.check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), body)
+                    self.assertEqual(gallery.check.status_state({"body": body}), "stale")
+                    self.assertEqual(gallery.check.status_owner({"body": body})["head"], gallery.fixtures.HEAD)
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):
         original = os.environ.copy()

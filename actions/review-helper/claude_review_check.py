@@ -707,15 +707,24 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                 break
     attempt_link = attempt_url if not last_review or history_in_details or separate_attempt else None
     if attempt_link:
-        for label in ("Current attempt", "Attempt started", "Started", "Attempt baseline"):
-            prefix = f"**{label}"
+        for label in ("Attempt baseline", "Attempt started", "Started", "Attempt commit"):
+            prefix = f"**{label}:**"
             index = next((i for i, field in enumerate(metadata) if field.startswith(prefix)), None)
             if index is not None:
-                metadata[index] = metadata[index].replace(label, f"[{label}]({attempt_link})", 1)
+                word = label.split()[0]
+                metadata[index] = metadata[index].replace(word, f"[{word}]({attempt_link})", 1)
                 break
         else:
-            # Legacy records may have no attempt timing or baseline to link.
-            metadata.insert(0, f"**[Current attempt]({attempt_link})**")
+            if not show_review:
+                # Shared-baseline active attempts already show timing/status in
+                # the table; link that status without adding duplicate metadata.
+                label = "Running" if active else "Incomplete" if incomplete else "Not reviewed"
+                linked_status = row_status.replace(f"**{label}**", f"**[{label}]({attempt_link})**", 1)
+                lines = [line.replace(f"| {row_status} |", f"| {linked_status} |", 1) for line in lines]
+            else:
+                # Legacy history may retain a different attempt URL but no
+                # trusted attempt timing or baseline. Do not invent either.
+                metadata.insert(0, f"**[Attempt]({attempt_link}) status:** Not recorded")
     if metadata:
         lines += ["  \n".join(metadata), ""]
     if previous:
