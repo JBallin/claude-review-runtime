@@ -42,7 +42,7 @@ progress and may become stale after a patch change. Request a fresh manual revie
 when the diff changes. The [review guide](docs/review-guide.md) explains commands,
 clean-completion notices, failures, trust boundaries, and rollback.
 
-## Validation and status
+## Validation
 
 The [validation summary](docs/validation.md) distinguishes tested revisions from
 the deployed callers and remaining gaps.

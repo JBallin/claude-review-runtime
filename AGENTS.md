@@ -81,6 +81,12 @@ not complete visual QA. Agent browser inspection needs scoped UI authorization;
 report any blocked browser access or sizing check precisely instead of
 claiming visual QA passed.
 
+Include representative desktop and narrow screenshots of changed rendered views
+in the task handoff, identifying the source revision and scenarios shown.
+Screenshots supplement inspection; an image is not required for every example.
+If capture is blocked, report the precise limitation instead of claiming
+screenshots were supplied.
+
 ## Scope and runtime adoption
 
 Regression tests should exercise the affected contract rather than infer clean
