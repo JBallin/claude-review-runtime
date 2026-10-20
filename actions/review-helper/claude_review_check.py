@@ -725,6 +725,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                 # Legacy history may retain a different attempt URL but no
                 # trusted attempt timing or baseline. Do not invent either.
                 metadata.insert(0, f"**[Attempt]({attempt_link}) status:** Not recorded")
+    if metadata == ["**Current attempt**"]:
+        metadata = []
     if metadata:
         lines += ["  \n".join(metadata), ""]
     if previous:

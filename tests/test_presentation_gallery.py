@@ -173,7 +173,7 @@ class PresentationGalleryTests(unittest.TestCase):
             with self.subTest(title=title):
                 if title.startswith(("N —", "O —")):
                     current, previous = body.split("**Previous completed review**")
-                    self.assertIn("**Current attempt**", current)
+                    self.assertEqual("**Current attempt**" in current, title.startswith("O —"))
                     anchor = "Running" if title.startswith("N —") else "Attempt"
                     self.assertIn(f"[{anchor}]({run})", current)
                     self.assertIn(f"**[Reviewed]({run}) against:**", previous)
