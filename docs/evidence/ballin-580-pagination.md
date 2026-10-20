@@ -1,10 +1,10 @@
 # Ballin #580 incomplete-pagination evidence
 
-This sanitized, derived record preserves observations inspected on October 18–19,
-2026 (Pacific). It describes historical manual attempts and their observed retry
-outcomes, not new model experiments or proof of a general recovery. It contains
-no captured diff text, PR body, transcript, raw tool errors, credentials, or local
-evidence paths.
+This sanitized, derived record preserves observations inspected on October 18–20,
+2026 (Pacific). It describes historical automatic and manually requested workflow
+attempts and their observed retry outcomes, not new model experiments or proof of
+a general recovery. It contains no captured diff text, PR body, transcript, raw
+tool errors, credentials, or local evidence paths.
 
 ## Sources and captured identity
 

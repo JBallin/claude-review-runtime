@@ -329,7 +329,11 @@ and a smaller `limit` if a page fails, until every captured diff line is covered
 `d85a8b2` records that total in `metadata.diff_line_count`.
 A fresh approved review is not guaranteed to complete that
 pagination; verify its own captured identities, coverage, and authoritative Check.
-If retries remain incomplete, consider a separate manual review.
+If retries remain incomplete, consider a separately run independent Claude review
+(for example, a local Opus review), rather than another workflow retry. Verify its
+input coverage and exact revision, record the results, and obtain explicit
+acceptance under the applicable review policy. This does not make the failed
+automated Check pass or bypass branch protection.
 
 For example, [Ballin #580's manual attempt](https://github.com/JBallin/ballin-scripts/actions/runs/39157080846/job/117762535478)
 used Runtime `d85a8b2`, Claude Code 2.1.289, Agent SDK 0.3.289, and
