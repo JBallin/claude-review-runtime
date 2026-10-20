@@ -28,7 +28,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn(f"{gallery.SOURCE_REPOSITORY}/commit/{REVISION}", body)
         self.assertNotIn("Pending —", body)
         self.assertIn("**Not yet inspected.**", body)
-        self.assertEqual(len(gallery.gallery_samples()), 29)
+        self.assertEqual(len(gallery.gallery_samples()), 30)
         for letter in "ABCDEFGHIJKLMNOPQR":
             self.assertIn(f"### {letter} — ", body)
         # Keep conservative byte headroom below GitHub's 65,536-character limit.
@@ -39,7 +39,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 27)
+        self.assertEqual(status.call_count, 28)
         self.assertEqual(completion.call_count, 2)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
@@ -48,6 +48,37 @@ class PresentationGalleryTests(unittest.TestCase):
             with self.subTest(title=title):
                 self.assertIn(gallery.strip_operational_markers(raw), body)
                 self.assertTrue("claude-review-runtime:" in raw)
+
+    def test_current_findings_completion_has_current_commit_run_and_evidence(self):
+        check = gallery.check
+        with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
+            samples = gallery.gallery_samples()
+        title, raw = samples[1]
+        self.assertEqual(title, gallery.FINDINGS_SAMPLE)
+        call = status.call_args_list[1]
+        self.assertEqual(call.args, (gallery.fixtures.HEAD, "main", "action_required"))
+        self.assertNotIn("last_review", call.kwargs)
+        visible, details = raw.split("<details>", 1)
+        self.assertIn("⚠️ **Findings**", visible)
+        self.assertIn("| Reviewed commit |", visible)
+        self.assertIn(check.commit_link(gallery.fixtures.HEAD, gallery.fixtures.REPO), visible)
+        self.assertIn("PR opened for review", visible)
+        self.assertIn(gallery.COMPLETED_AT, visible)
+        self.assertIn("Assess the recorded findings in the inline review threads.", visible)
+        self.assertNotIn("No findings", raw)
+        self.assertNotIn("Previous completed review", raw)
+        self.assertEqual(check.status_state({"body": raw}), "action_required")
+        self.assertEqual(check.last_completed_review({"body": raw}),
+                         (gallery.fixtures.HEAD, "main", "action_required"))
+        self.assertEqual(check.status_owner({"body": raw})["run"], 5)
+        self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** "
+                      + check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), details)
+        body = gallery.render_gallery(REVISION)
+        self.assertIn(gallery.strip_operational_markers(raw), body)
+        self.assertIn("Synthetic inline finding context (separate from the status comment)", body)
+        self.assertIn(gallery.SYNTHETIC_FINDING, body)
+        self.assertIn("src/cache.py:42", gallery.SYNTHETIC_FINDING)
+        self.assertIn("[P2]", gallery.SYNTHETIC_FINDING)
 
     def test_gallery_cannot_be_treated_as_an_owned_record_even_for_bot_author(self):
         body = gallery.render_gallery(REVISION)

@@ -24,6 +24,13 @@ check = fixtures.check
 
 HEADING = "SAMPLE ONLY — visual QA gallery, not actual review results"
 SOURCE_REPOSITORY = "https://github.com/JBallin/claude-review-runtime"
+FINDINGS_SAMPLE = "A2 — Current findings completion, matching baseline"
+SYNTHETIC_FINDING = (
+    "`src/cache.py:42` — **[P2] Invalidate cached entries after deletion.** "
+    "Deleting an item removes it from storage but leaves its cached value intact, "
+    "so subsequent reads can return the deleted item until the cache expires. "
+    "Invalidate the cache entry after a successful deletion."
+)
 COMPLETED_AT = "2026-10-07T13:09:19Z"
 STARTED = 1791378000000000000  # 2026-10-07T13:00:00Z
 OPERATIONAL_MARKER = re.compile(r"<!-- claude-review-runtime:[^\r\n]*? -->\n?")
@@ -85,6 +92,7 @@ def gallery_samples():
         }
         samples = [
             ("A — Clean completion, matching baseline", status("success")),
+            (FINDINGS_SAMPLE, status("action_required")),
             ("B — Clean completion, changed target branch", status(
                 "stale", last_review=history("success"), base_sha=fixtures.OTHER,
                 **stale_options)),
@@ -185,6 +193,10 @@ def render_gallery(revision):
     for title, body in gallery_samples():
         sample_body = strip_operational_markers(body)
         sections.append(f"### {title}\n\n{sample_body}")
+        if title == FINDINGS_SAMPLE:
+            # Findings live in inline threads, outside the status renderer.
+            sections[-1] += ("\n\n**Synthetic inline finding context (separate from the status comment):**\n\n"
+                             + SYNTHETIC_FINDING)
     sections.append("\n\n".join([
         "## Visual-QA observations",
         "**Not yet inspected.** Inspect this revision at desktop (about 1280 px) and "
