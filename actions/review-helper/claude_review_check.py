@@ -631,7 +631,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
     if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
         lines += ["", messages[state]]
-    if last_review and owner and owner["kind"] != "automatic":
+    manual_scope = last_review and owner and owner["kind"] != "automatic"
+    if manual_scope and not current_attempt:
         lines += ["", CAPTURED_PATCH_SCOPE]
     if state == "stale" and show_review and last_review[2] == "action_required":
         lines += ["", messages["action_required"]]
@@ -730,6 +731,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if metadata:
         lines += ["  \n".join(metadata), ""]
     if previous:
+        if manual_scope:
+            previous += [CAPTURED_PATCH_SCOPE]
         lines += ["  \n".join(previous), ""]
     lines += ["</details>"]
     return "\n".join(lines)
@@ -1414,7 +1417,7 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     observed_tip = ""
     if observed_base_sha and observed_base_sha != base_sha:
         warning = f"{TARGET_TIP_WARNING}\n\n"
-        observed_tip = (f"  \n**Current target commit:** {commit_link(observed_base_sha, repo)} "
+        observed_tip = (f"  \n**Observed target commit:** {commit_link(observed_base_sha, repo)} "
                         f"on {inline_code(base_ref)}")
     return (
         f"{marker}\n"

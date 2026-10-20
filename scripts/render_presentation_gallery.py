@@ -60,7 +60,7 @@ def strip_operational_markers(body):
 
 
 def gallery_samples():
-    """Return labeled raw helper output for every supported gallery state."""
+    """Return labeled raw helper output for representative supported states."""
     with fixture_environment():
         owner = fixtures.presentation_owner(started=STARTED)
         details = {
@@ -147,6 +147,18 @@ def gallery_samples():
                     trigger_label="Draft marked ready", check_available=available,
                     last_review=history(result) if result else None,
                     last_review_details=details if result else None, **options)))
+        manual_owner = fixtures.presentation_owner(
+            kind="issue_comment", target=11, head=fixtures.OTHER, base=fixtures.NEWER,
+            run=6, started=STARTED + 600_000_000_000,
+        )
+        for letter, state, result in (("H", "in_progress", "success"),
+                                      ("I", "failure", "action_required"),
+                                      ("K", "publication_incomplete", "success")):
+            samples.append((f"{letter} — Manual current attempt with previous completed review: {state}", status(
+                state, head=fixtures.OTHER, owner=manual_owner, trigger_label="Manual request",
+                last_review=history(result), last_review_details=details,
+                **({"reason": check.STATUS_REASONS["check_publication_failed"] if state == "publication_incomplete"
+                    else check.STATUS_REASONS["incomplete"]} if state != "in_progress" else {}))))
         shared_owner = fixtures.presentation_owner(
             head=fixtures.OTHER, base=fixtures.BASE_TIP, run=5,
             started=STARTED + 600_000_000_000,

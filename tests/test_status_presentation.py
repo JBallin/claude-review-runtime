@@ -54,6 +54,35 @@ class StatusPresentationTests(unittest.TestCase):
                         if state == 'stale':
                             self.assertIn('Review coverage of the current head and baseline is not established.', visible)
 
+    def test_manual_scope_follows_completed_history_not_unfinished_attempt(self):
+        from test_claude_review_check import presentation_owner, BASE_TIP, NEWER
+        owner = presentation_owner(kind="issue_comment", target=11, head=HEAD, base=NEWER, run=6)
+        history = {'base_sha': BASE_TIP, 'run_url': 'https://github.com/owner/repo/actions/runs/5'}
+        for state in ('in_progress', 'failure', 'publication_incomplete', 'stale'):
+            for result in ('success', 'action_required'):
+                for has_history in (True, False):
+                    with self.subTest(state=state, result=result, history=has_history):
+                        body = check.status_comment_body(HEAD, 'main', state, owner=owner,
+                            owner_running=state == 'stale',
+                            last_review=(OTHER, 'main', result) if has_history else None,
+                            last_review_details=history if has_history else None)
+                        visible, details = body.split('<details>', 1)
+                        self.assertNotIn(check.CAPTURED_PATCH_SCOPE, visible)
+                        self.assertNotIn('✅ **Completed**', visible)
+                        self.assertEqual(check.status_state({'body': body}), state)
+                        self.assertEqual(check.status_owner({'body': body}), owner)
+                        if has_history:
+                            current, previous = details.split('**Previous completed review**')
+                            self.assertNotIn(check.CAPTURED_PATCH_SCOPE, current)
+                            self.assertEqual(previous.count(check.CAPTURED_PATCH_SCOPE), 1)
+                            self.assertIn(check.commit_link(OTHER), previous)
+                            self.assertIn('[Reviewed](https://github.com/owner/repo/actions/runs/5)', previous)
+                            self.assertIn('[Attempt](https://github.com/owner/repo/actions/runs/6)', current)
+                            self.assertEqual(check.last_completed_review({'body': body}), (OTHER, 'main', result))
+                        else:
+                            self.assertNotIn(check.CAPTURED_PATCH_SCOPE, body)
+                            self.assertIsNone(check.last_completed_review({'body': body}))
+
     def test_refresh_cannot_borrow_another_generations_trigger(self):
         owner = self.start(TRIGGER_LABEL='Draft marked ready')
         body = check.status_comment_body(HEAD, 'main', 'stale', owner=owner,
@@ -200,7 +229,6 @@ class StatusPresentationTests(unittest.TestCase):
                         self.assertIn('❌ **Incomplete**', visible)
                     reason_line = '**Reason:** ' + reason
                     note_line = '**Note:** ' + check.INCOMPLETE_NOTE
-                    url = 'https://github.com/owner/repo/actions/runs/5'
                     metadata = '**Current attempt**' if history else '**Started:**'
                     self.assertEqual(body.count(reason_line), 1)
                     self.assertEqual(body.count(note_line), 1)
@@ -388,7 +416,6 @@ class DetailsProvenanceTests(unittest.TestCase):
                 self.assertNotIn(check.commit_link(OTHER), visible)
                 current, previous = details.split('**Previous completed review**')
                 self.assertIn('**Current attempt**', current)
-                self.assertIn('**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:**', current)
                 self.assertIn('**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:**', current)
                 self.assertIn('**Reviewed commit:** ' + check.commit_link(OTHER), previous)
                 self.assertIn('**Review trigger:** Draft marked ready', previous)

@@ -28,7 +28,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn(f"{gallery.SOURCE_REPOSITORY}/commit/{REVISION}", body)
         self.assertNotIn("Pending —", body)
         self.assertIn("**Not yet inspected.**", body)
-        self.assertEqual(len(gallery.gallery_samples()), 30)
+        self.assertEqual(len(gallery.gallery_samples()), 33)
         for letter in "ABCDEFGHIJKLMNOPQR":
             self.assertIn(f"### {letter} — ", body)
         # Keep conservative byte headroom below GitHub's 65,536-character limit.
@@ -39,7 +39,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 28)
+        self.assertEqual(status.call_count, 31)
         self.assertEqual(completion.call_count, 2)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
@@ -116,6 +116,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn("Claude Review: No findings. 🎉", raw)
                 self.assertIn("**Reviewed commit:**", raw)
                 self.assertNotIn(gallery.check.TARGET_TIP_WARNING, raw)
+                self.assertNotIn("target commit:**", raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
             elif title.startswith("G —"):
@@ -124,20 +125,21 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
                 self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** " + gallery.check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), raw)
-                self.assertIn("**Current target commit:** " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO), raw)
+                self.assertIn("**Observed target commit:** " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO), raw)
+                self.assertNotIn("**Current target commit:**", raw)
 
     def test_publication_failures_and_unavailable_check_variants_use_current_attempt(self):
         samples = dict(gallery.gallery_samples())
         groups = {letter: [(t, b) for t, b in samples.items() if t.startswith(letter + " —")]
                   for letter in ("K", "L", "M")}
         for letter, cases in groups.items():
-            self.assertEqual(len(cases), 3)
+            self.assertEqual(len(cases), 4 if letter == "K" else 3)
             for title, body in cases:
                 with self.subTest(title=title):
                     visible, details = body.split("<details>", 1)
                     self.assertIn("| Attempt commit |", visible)
                     self.assertIn("| " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO)
-                                  + " | Draft marked ready |", visible)
+                                  + (" | Manual request |" if "Manual current attempt" in title else " | Draft marked ready |"), visible)
                     self.assertNotIn("✅ **Completed**", visible)
                     self.assertNotIn("⚠️ **Findings**", visible)
                     self.assertIn("🔄 **Running**" if letter == "M" else "❌ **Incomplete**", visible)
@@ -153,6 +155,18 @@ class PresentationGalleryTests(unittest.TestCase):
                         self.assertIn("**Result:** " + ("Findings." if "previous findings" in title else "No findings."), details)
                         self.assertEqual(gallery.check.last_completed_review({"body": body}),
                                          (gallery.fixtures.HEAD, "main", "action_required" if "previous findings" in title else "success"))
+
+    def test_manual_history_samples_attach_scope_only_to_previous_review(self):
+        cases = [(title, body) for title, body in gallery.gallery_samples()
+                 if "Manual current attempt" in title]
+        self.assertEqual(len(cases), 3)
+        for title, body in cases:
+            with self.subTest(title=title):
+                current, previous = body.split("**Previous completed review**")
+                self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, current)
+                self.assertEqual(previous.count(gallery.check.CAPTURED_PATCH_SCOPE), 1)
+                self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", previous)
+                self.assertIn("**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:**", current)
 
     def test_compact_metadata_keeps_links_on_consecutive_rendered_lines(self):
         for title, body in gallery.gallery_samples():

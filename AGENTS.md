@@ -46,7 +46,7 @@ python3 -B scripts/render_presentation_gallery.py --source-revision "$(git rev-p
 ```
 
 It writes Markdown to stdout using the actual presentation helpers and test
-fixtures. Operational review markers are omitted; all supported states are
+fixtures. Operational review markers are omitted; representative supported states are
 rendered from those helpers. Hidden legacy Reason receipts remain for rendering
 checks.
 Generation makes no network calls or persistent changes.

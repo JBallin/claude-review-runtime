@@ -82,7 +82,9 @@ historical Check identity.
 After a verified clean manual review and successful Check publication, trusted
 finalization may add 👍 and a completion notice even when the validated target
 tip differs from the captured baseline. The notice identifies its captured head,
-base commit, and workflow run, and qualifies integration coverage. Automatic
+base commit, and workflow run. When the observed target differs from the reviewed
+baseline, the notice also warns that integration with that target has not been
+reviewed. Matching-baseline notices omit that warning. Automatic
 reviews update the shared status comment without adding a separate completion notice.
 Reserve this runtime's namespaced comment markers for its trusted publication jobs.
 
@@ -100,9 +102,10 @@ or an unavailable Check. Publication verifies the executing attempt and persiste
 clean owner, then rechecks ownership and validated live head/ref immediately
 before posting or adding new clean reactions. Changed head/ref or a newer owner
 blocks these signals. A valid target-tip difference alone does not. Notices and
-Check summaries describe the captured baseline and exclude other target
-baselines from coverage. A notice also identifies the target tip observed at
-publication when it differs from the captured baseline.
+Check summaries describe the captured baseline. A notice uses “Reviewed against”
+for that baseline and “Observed target commit” for the target snapshot at
+publication when it differs from the reviewed baseline; only that differing-target
+notice includes the integration warning.
 A concurrent PR change can still occur afterward, so the notice describes its
 linked historical snapshot.
 Notice publication is best-effort: an API failure may leave no notice, and an

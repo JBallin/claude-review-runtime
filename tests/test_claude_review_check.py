@@ -2422,7 +2422,7 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertIn(f"/commit/{BASE_TIP}", body)
         self.assertIn(f"/commit/{OTHER}", body)
         self.assertIn(check.TARGET_TIP_WARNING, body)
-        self.assertIn("**Current target commit:** " + check.commit_link(OTHER, REPO), body)
+        self.assertIn("**Observed target commit:** " + check.commit_link(OTHER, REPO), body)
         self.assertNotIn(check.CAPTURED_PATCH_SCOPE, body)
 
     def test_projection_difference_alone_allows_captured_patch_notice(self):
