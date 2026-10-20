@@ -287,3 +287,56 @@ Raw Read errors, final assistant text, actual token consumption, and a model-lev
 stop reason remain unavailable in the inspected sanitized log/Check. This is an
 additional failure observation, not a demonstrated fix or safe chunk size. No
 retry was initiated to obtain this record.
+
+## Runtime #73 recurrence, inspected October 20, 2026 (Pacific)
+
+The [initial automatic attempt](https://github.com/JBallin/claude-review-runtime/actions/runs/39488343486/job/118854815381)
+and [one existing manual retry](https://github.com/JBallin/claude-review-runtime/actions/runs/39488961044/job/118856998202)
+reviewed Runtime PR #73 head `4fb7f1e6384b5f7540e345bd08990a406febe1c4`
+against base and merge base `caa4a120dfebf9b84004455e6be07d73fb0402a9`.
+Both Check receipts and referenced workflows identify executed Runtime
+`310ae2f70ef3c4b16983cdaf45679f6cb60bf2b1`: the automatic entrypoint was
+`.github/workflows/claude-review.yml`, and the retry used `.github/workflows/claude.yml`.
+Installation/init logs report the same action SHA, Claude Code 2.1.289, Agent SDK
+0.3.289, and `claude-sonnet-5-5` recorded above.
+
+| Attempt / authoritative Check | Metadata matched / expected | Diff matched / expected | Missing diff lines | Diff Reads / successful | SDK turns | SDK duration (ms) |
+| --- | --- | --- | --- | --- | --- | --- |
+| [Initial, 118854600307](https://github.com/JBallin/claude-review-runtime/runs/118854600307) | 10 / 10 | 1,694 / 2,058 | 364 | 2 / 2 | 5 | 36,962 |
+| [Retry, 118856792540](https://github.com/JBallin/claude-review-runtime/runs/118856792540) | 12 / 12 | 1,694 / 2,058 | 364 | 2 / 2 | 5 | 20,366 |
+
+Both SDK results reported `subtype: success`, `is_error: false`, and zero
+permission denials. Both authoritative Checks nevertheless failed with
+`completion_verified: false` and `captured_inputs_not_read`. The manual retry
+explicitly configured 30 turns. The automatic workflow and its logged SDK options
+did not specify a turn limit, so the retry's 30-turn setting cannot be attributed
+to both attempts. Both jobs had 20-minute timeouts and completed normally.
+
+The two snapshots measured **134,424 bytes / 2,058 captured diff lines**, with
+identical SHA-256:
+
+```text
+28a7c42ae986c366e47c0375710ba5b87b73ca25998e5bf5665e948c8b7b9879
+```
+
+The line total includes diff headers and context; it is not a changed-line count.
+Snapshots were inspected in memory. Their historical provenance artifacts were
+12293249972 (expiry `2026-10-21T20:01:22Z`) and 12294752626
+(expiry `2026-10-21T20:05:46Z`), respectively. Their inventories contained captured
+inputs and pre-review comment evidence, not the execution transcript.
+
+At `310ae2f`, diagnostics expose aggregate counts, content shapes, and
+`partial_view`, but not per-Read offsets, limits, returned ranges, or exact gaps.
+Both summaries reported zero unparsed lines, string-shaped content, and
+`partial_view: false`; these flags do not establish full coverage. Equal missing
+counts do not establish equal missing ranges. The retained material cannot
+distinguish omission, truncation, or a verification mismatch, or establish the
+exact Read/stop cause. The snapshot was below the documented 256 KB whole-file
+ceiling; neither its substantial size nor that measurement proves another limit
+or context exhaustion caused the result.
+
+This recurrence illustrates the diagnostic visibility missing from the installed
+revision, not a demonstrated fix in `d85a8b2`. The retry also failed, so it provides
+no recovery guarantee. Source/gallery inspection and other CI/review passes on
+#73 do not satisfy its failed Claude full-read gate. No waiver, merge, new retry,
+or safeguard change follows from recording these existing attempts.
