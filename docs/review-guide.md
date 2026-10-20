@@ -294,16 +294,6 @@ initial setup draft while authentication and independent review are outstanding.
 Any initial installation exception requires explicit owner approval, and the
 owner merges the setup.
 
-The pinned runtime reports sanitized captured-read coverage diagnostics during
-verification when the reason is `verified` or `captured_inputs_not_read`,
-without an opt-in flag. Earlier failures may have no coverage counters. For each
-of the fixed `metadata` and `diff` labels, it reports read and successful-read
-counts, expected/matched/missing/unparsed line counts, fixed content-shape labels,
-and a partial-view boolean. No file contents, paths, transcripts, or raw errors
-are exported. Diagnostics are best-effort and do not change acceptance: missing
-captured lines still fail completion. A partial page can be followed by complete
-reads; consult coverage and the authoritative Check together.
-
 After the human-reviewed caller installation is merged, validate with an approved
 live run on a separate PR that does not modify the workflows. Inspect actual
 model completion, captured identities, runtime provenance, and posted findings.
@@ -313,6 +303,27 @@ runner preparation can prevent
 model execution or publication. Resolve the reported prerequisite before
 requesting another approved review; do not switch credentials or expand access
 to bypass a rejection.
+
+### Incomplete captured-input reads
+
+`captured_inputs_not_read` means the execution record did not verify complete
+coverage of the captured metadata and diff. It does not establish why coverage is
+incomplete. Inspect the exact-head Check and workflow diagnostics; successful
+model execution or a green workflow is not sufficient.
+
+Diagnostic availability depends on the executing Runtime revision recorded in the
+Check. Older revisions may report aggregate coverage; newer diagnostic revisions
+provide per-Read and missing-range details. These sanitized diagnostics do not
+expose input contents or transcripts or relax completion requirements. See the
+[preserved investigation](https://github.com/JBallin/claude-review-runtime/pull/75#issuecomment-6302262123)
+for examples and diagnostic limits.
+
+Recovery must preserve full-input coverage and publication safeguards. A fresh
+approved workflow attempt is not guaranteed to succeed. If retries remain
+incomplete, consider a separately run independent Claude review, such as local
+Opus. Verify its input coverage and exact revision, record the results, and obtain
+explicit acceptance under the applicable review policy. This does not make the
+failed automated Check pass or bypass branch protection.
 
 ### Unexpected Check grouping
 
