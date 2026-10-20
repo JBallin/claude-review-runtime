@@ -51,6 +51,12 @@ rendered from those helpers. Hidden legacy Reason receipts remain for rendering
 checks.
 Generation makes no network calls or persistent changes.
 
+When a change adds or materially alters a rendered state, add or update
+representative scenarios in the gallery generator and visually inspect the
+resulting output. Cover genuinely distinct behavior, including relevant
+conditional, error and fallback states, rather than every possible combination
+or a new example for every issue.
+
 When emergency workflow presentation changes, also capture synthetic output from
 both workflows through `ToolingFallbackScriptTests.run_fallback` (stubbed GitHub
 calls and temporary fixtures). Append matching outputs as labeled QA adjuncts
