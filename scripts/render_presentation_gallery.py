@@ -183,7 +183,12 @@ def gallery_samples():
                 "stale", head=fixtures.OTHER if moved == "head" else fixtures.HEAD,
                 base_ref="release" if moved == "ref" else "main",
                 base_sha=fixtures.OTHER if moved == "base" else fixtures.BASE_TIP,
-                owner_running=True, reason=check.STATUS_REASONS["stale"])))
+                owner_running=True, attempt_trigger="Draft marked ready",
+                reason=check.STATUS_REASONS["stale"])))
+        samples.append(("R — Stale manual attempt with distinct completed-review trigger", status(
+            "stale", head=fixtures.OTHER, owner=manual_owner, owner_running=True,
+            attempt_trigger="Manual request", last_review=history("success"),
+            last_review_details=details, reason=check.STATUS_REASONS["stale"])))
         return samples
 
 

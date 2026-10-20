@@ -28,7 +28,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn(f"{gallery.SOURCE_REPOSITORY}/commit/{REVISION}", body)
         self.assertNotIn("Pending —", body)
         self.assertIn("**Not yet inspected.**", body)
-        self.assertEqual(len(gallery.gallery_samples()), 33)
+        self.assertEqual(len(gallery.gallery_samples()), 34)
         for letter in "ABCDEFGHIJKLMNOPQR":
             self.assertIn(f"### {letter} — ", body)
         # Keep conservative byte headroom below GitHub's 65,536-character limit.
@@ -39,7 +39,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 31)
+        self.assertEqual(status.call_count, 32)
         self.assertEqual(completion.call_count, 2)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
@@ -229,10 +229,22 @@ class PresentationGalleryTests(unittest.TestCase):
                 elif title.startswith("Q —"):
                     self.assertNotIn("/actions/runs/", body)
                     self.assertIn("**Reviewed against:**", body)
-                elif title.startswith("R —"):
+                elif title.startswith("R — Stale running"):
                     self.assertIn(f"**[Attempt]({run}) baseline:** " + gallery.check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), body)
                     self.assertEqual(gallery.check.status_state({"body": body}), "stale")
                     self.assertEqual(gallery.check.status_owner({"body": body})["head"], gallery.fixtures.HEAD)
+
+    def test_stale_samples_use_bound_accepted_attempt_triggers(self):
+        for title, body in gallery.gallery_samples():
+            if not title.startswith("R —"):
+                continue
+            record = {"body":body,"user":{"login":gallery.check.STATUS_AUTHOR,"type":"Bot"}}
+            owner = gallery.check.status_owner(record)
+            label = "Manual request" if "manual" in title else "Draft marked ready"
+            self.assertEqual(gallery.check.status_attempt_trigger(record, owner), label)
+            self.assertIn("| " + label + " |", body.split("<details>")[0])
+            if "manual" in title:
+                self.assertIn("**Review trigger:** PR opened for review", body)
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):
         original = os.environ.copy()

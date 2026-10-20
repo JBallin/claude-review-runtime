@@ -1,6 +1,5 @@
 # Contributing
 
-This is an experimental runtime with no commitment to ongoing support.
 Start with the [consumer guide](docs/consumer-workflows.md),
 [review contract](docs/review-guide.md), and
 [validation boundaries](docs/validation.md).

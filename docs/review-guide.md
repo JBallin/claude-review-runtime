@@ -181,11 +181,12 @@ and incomplete attempts do not receive a review completion timestamp.
 
 Review trigger identifies the accepted event for the attempt or completed
 result shown in the main table: PR opened for review, Draft marked ready, or
-Manual request. Status refreshes
+Manual request. A current-attempt receipt binds that event to its exact owner
+and generation, separately from completed-review history. Status refreshes
 and repeated completion cannot replace or backfill that event. Legacy records without
 trusted original-event metadata show Not recorded; automatic ownership alone cannot
 distinguish opening a PR from marking a draft ready. Emergency fallback preserves
-these historical markers for subsequent helper rendering.
+verified current-attempt and historical markers for subsequent helper rendering.
 
 Terminal reactions on older trigger comments remain historical snapshot
 information when the patch changes or another comment requests a review. A new

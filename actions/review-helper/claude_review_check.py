@@ -37,6 +37,8 @@ STATUS_REVIEWED_BASE_SHA_PREFIX = "<!-- claude-review-runtime:claude-review-last
 STATUS_REVIEWED_GENERATION_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-generation:"
 STATUS_REVIEWED_COMPLETED_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-completed-at:"
 STATUS_REVIEWED_RUN_URL_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-run-url:"
+_TRIGGER_FROM_LABEL = object()
+ATTEMPT_TRIGGER_PREFIX = "<!-- claude-review-runtime:attempt-trigger:"
 STATUS_REVIEWED_TRIGGER_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-trigger:"
 REVIEW_TRIGGERS = {"PR opened for review", "Draft marked ready", "Manual request"}
 STATUS_AUTHOR = "github-actions[bot]"
@@ -502,10 +504,33 @@ def review_trigger(label, owner):
     return label if automatic == (owner["kind"] == "automatic") else None
 
 
+def attempt_trigger_marker(owner, label):
+    receipt = quote(json.dumps([owner["generation"], label], separators=(",", ":")), safe="")
+    return f"{ATTEMPT_TRIGGER_PREFIX}{receipt} -->"
+
+
+def status_attempt_trigger(comment, owner):
+    """Recover only a canonical receipt from the trusted exact attempt owner."""
+    if not comment or not owner or not owned_status(comment) or status_owner(comment) != owner:
+        return None
+    body = comment.get("body") or ""
+    values = re.findall(re.escape(ATTEMPT_TRIGGER_PREFIX) + r"(.*?) -->", body)
+    if body.count(ATTEMPT_TRIGGER_PREFIX) != 1 or len(values) != 1:
+        return None
+    try:
+        generation, label = json.loads(unquote(values[0]))
+        if (generation == owner["generation"] and review_trigger(label, owner)
+                and attempt_trigger_marker(owner, label) == ATTEMPT_TRIGGER_PREFIX + values[0] + " -->"):
+            return label
+    except (ValueError, TypeError):
+        pass
+    return None
+
+
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
                         last_review_details=None, base_sha=None, trigger_label=None,
                         owner=None, owner_running=None, reason=None, completed_at=None,
-                        completed_owner_verified=False):
+                        completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL):
     """Render trusted informational state without affecting Check authority."""
     messages = {
         "in_progress": "Claude is reviewing this commit.",
@@ -563,8 +588,15 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         f"{STATUS_BASE_REF_PREFIX}{quote(base_ref, safe='')} -->",
         f"{STATUS_STATE_PREFIX}{state} -->",
     ]
+    if attempt_trigger is _TRIGGER_FROM_LABEL:
+        attempt_trigger = review_trigger(trigger_label, owner) if state != "stale" else None
+    else:
+        # Explicit None preserves missing persisted evidence on reconciliation.
+        attempt_trigger = review_trigger(attempt_trigger, owner)
     if owner:
         lines.append(owner_marker(owner))
+        if attempt_trigger:
+            lines.append(attempt_trigger_marker(owner, attempt_trigger))
         running = state == "in_progress" if owner_running is None else owner_running
         lines.append(f"{OWNER_PHASE_PREFIX}{'running' if running else 'terminal'} -->")
     if last_review:
@@ -620,11 +652,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         row_status = "🔄 **Running**" if active else "❌ **Incomplete**" if incomplete else "**Not reviewed**"
         row_status += started_suffix
         row_commit = owner["head"] if owner else head_sha
-        # A refresh event cannot establish the accepted attempt’s original trigger.
-        row_trigger = review_trigger(trigger_label, owner) if state != "stale" else None
-        if owner and last_review_details.get("generation") == owner["generation"]:
-            row_trigger = review_trigger(last_review_details.get("trigger"), owner)
-        row_trigger = row_trigger or "Not recorded"
+        # Refresh labels and completed-history triggers cannot identify this attempt.
+        row_trigger = attempt_trigger or "Not recorded"
     repo = owner["repo"] if owner else env("REPO")
     commit_label = "Reviewed commit" if show_review else "Attempt commit" if owner else "PR commit"
     lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
@@ -1232,7 +1261,9 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             state in ("success", "action_required") and check_available
             or stale and completed_review_for_owner(existing, owner)
         )
-        trigger_label = env("TRIGGER_LABEL")
+        attempt_trigger = (review_trigger(env("TRIGGER_LABEL"), owner) if acquire
+                           else status_attempt_trigger(existing, owner))
+        trigger_label = attempt_trigger
         if (stale and not completed_owner_verified and not status_owner_running(existing)
                 and last_review_details.get("generation") == owner["generation"]
                 and reason == STATUS_REASONS["stale"]):
@@ -1319,7 +1350,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             trigger_label=trigger_label, owner=owner,
             owner_running=status_owner_running(existing) if stale else acquiring_running if state == "stale" else None,
             reason=reason, completed_at=completed_at,
-            completed_owner_verified=completed_owner_verified)}
+            completed_owner_verified=completed_owner_verified, attempt_trigger=attempt_trigger)}
         published = False
         try:
             if existing:

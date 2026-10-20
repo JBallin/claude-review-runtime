@@ -868,9 +868,30 @@ jobs:
             if [ -n "$reviewed_markers" ]; then
               reviewed_markers="$reviewed_markers"$'\n'
             fi
-            trigger_line=
-            if [ -n "$TRIGGER_LABEL" ]; then
-              trigger_line=$'\n'"**Trigger:** $TRIGGER_LABEL"
+            attempt_metadata=$(printf '%s' "$comment" | python3 -c '
+          import json, re, sys
+          from urllib.parse import quote, unquote
+          owner = json.loads(sys.argv[1])
+          body = json.load(sys.stdin).get("body") or ""
+          prefix = "<!-- claude-review-runtime:attempt-trigger:"
+          values = re.findall(re.escape(prefix) + r"(.*?) -->", body)
+          marker, label = "", "Not recorded"
+          try:
+              if body.count(prefix) == 1 and len(values) == 1:
+                  generation, candidate = json.loads(unquote(values[0]))
+                  allowed = ("PR opened for review", "Draft marked ready") if owner["kind"] == "automatic" else ("Manual request",)
+                  canonical = quote(json.dumps([generation, candidate], separators=(",", ":")), safe="")
+                  if generation == owner["generation"] and candidate in allowed and canonical == values[0]:
+                      marker, label = prefix + canonical + " -->", candidate
+          except (ValueError, TypeError):
+              pass
+          print(json.dumps({"marker": marker, "label": label}))
+          ' "$PRESENTATION_OWNER") || return 0
+            attempt_marker=$(printf '%s' "$attempt_metadata" | jq -r '.marker')
+            accepted_trigger=$(printf '%s' "$attempt_metadata" | jq -r '.label')
+            trigger_line=$'\n'"**Trigger:** $accepted_trigger"
+            if [ -n "$attempt_marker" ]; then
+              reviewed_markers="$attempt_marker"$'\n'"$reviewed_markers"
             fi
             historical_lines=
             if [ "$state" = stale ]; then

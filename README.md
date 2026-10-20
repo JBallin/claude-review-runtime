@@ -44,7 +44,6 @@ clean-completion notices, failures, trust boundaries, and rollback.
 
 ## Validation and status
 
-This is an experimental runtime with no commitment to ongoing support.
 The [validation summary](docs/validation.md) distinguishes tested revisions from
 the deployed callers and remaining gaps.
 The pinned callers include confirmed finding publication and sanitized Read
