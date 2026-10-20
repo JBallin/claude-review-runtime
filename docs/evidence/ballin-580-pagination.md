@@ -245,3 +245,45 @@ observations establish no universally safe chunk size. Better diagnostics expose
 what is missing but do not demonstrate a pagination fix. A successful retry does
 not erase a failure or guarantee another attempt's result. No further retry,
 Runtime implementation, or model/budget change is established by this evidence.
+
+## Single skipped line: head 184ee30, inspected October 19, 2026 (Pacific)
+
+[Run 39348195967, Respond job 118386051423](https://github.com/JBallin/ballin-scripts/actions/runs/39348195967/job/118386051423)
+captured head `184ee30a25e8c2a26584938799bce8c0919a2d11` against base and merge
+base `381465216f5b8c1af25965fe6420fb98a0138005`.
+[Check 118385904356](https://github.com/JBallin/ballin-scripts/runs/118385904356)
+and the run's `referenced_workflows` both identify Runtime
+`d85a8b21653d2d3703829f9b49fce447acd57415`, `.github/workflows/claude.yml`.
+Installation/init logs report the same action SHA, Claude Code 2.1.289, Agent SDK
+0.3.289, and `claude-sonnet-5-5` recorded above.
+
+Metadata coverage was **13/13**. Diff coverage was **5,283/5,284**, with one gap:
+**4,746–4,746**. The sanitized per-Read projections were:
+
+| Diff Read | Offset | Limit | Successful response | Returned lines |
+| --- | --- | --- | --- | --- |
+| 1 | — | — | No | None |
+| 2 | 1 | 1,200 | No | None |
+| 3 | 1 | 1,000 | Yes | 1–1,000 |
+| 4 | 1,001 | 900 | Yes | 1,001–1,900 |
+| 5 | 1,901 | 700 | Yes | 1,901–2,600 |
+| 6 | 2,597 | 700 | Yes | 2,597–3,296 |
+| 7 | 3,296 | 700 | Yes | 3,296–3,995 |
+| 8 | 3,996 | 750 | Yes | 3,996–4,745 |
+| 9 | 4,747 | 540 | Yes | 4,747–5,284 |
+
+Seven successful Reads returned 5,288 numbered lines with five overlaps, covering
+5,283 unique lines. The summary reported zero unparsed lines, string-shaped
+content, `partial_view: false`, and no diagnostic truncation. Unlike the earlier
+large unread ranges, this sequence skipped exactly one line between the last two
+Reads even though the tail was returned.
+
+The SDK reported `subtype: success`, `is_error: false`, **21/30 turns**,
+**170,190 ms** (about 170.2 seconds), and zero permission denials. The Check failed
+with `completion_verified: false` and `captured_inputs_not_read`, preserving the
+requirement to cover every captured line. The reported ranges establish the
+single skipped line; they do not explain why the model selected the next offset.
+Raw Read errors, final assistant text, actual token consumption, and a model-level
+stop reason remain unavailable in the inspected sanitized log/Check. This is an
+additional failure observation, not a demonstrated fix or safe chunk size. No
+retry was initiated to obtain this record.
