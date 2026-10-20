@@ -92,7 +92,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn(gallery.check.TARGET_TIP_WARNING, raw.split("<details>")[0])
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
-                self.assertIn("**Reviewed against:** " + gallery.check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), raw)
+                self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** " + gallery.check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), raw)
                 self.assertIn("**Current target commit:** " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO), raw)
 
     def test_publication_failures_and_unavailable_check_variants_use_current_attempt(self):
@@ -117,7 +117,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     if "no completed history" in title:
                         self.assertNotIn("**Previous completed review**", details)
                     else:
-                        self.assertIn("**Current attempt**", details)
+                        self.assertIn("**[Current attempt](https://github.com/owner/repo/actions/runs/6)**", details)
                         self.assertIn("\n\n**Previous completed review**  \n", details)
                         self.assertIn("**Result:** " + ("Findings." if "previous findings" in title else "No findings."), details)
                         self.assertEqual(gallery.check.last_completed_review({"body": body}),
@@ -129,12 +129,36 @@ class PresentationGalleryTests(unittest.TestCase):
                 with self.subTest(title=title):
                     details = body.split("<details>")[1]
                     self.assertNotIn("\n\n[", details)
-                    self.assertIn("  \n[", details)
+                    self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", details)
                     if title.startswith(("A —", "B —")):
-                        self.assertIn("**Result:** No findings.  \n**Reviewed against:**", details)
+                        self.assertIn("**Result:** No findings.  \n**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", details)
                     if title.startswith(("F —", "G —")):
                         self.assertNotIn("captured patch only", body)
                         self.assertNotIn("merge approval", body)
+
+    def test_run_links_are_embedded_in_the_correct_sample_context(self):
+        reviewed = "https://github.com/owner/repo/actions/runs/5"
+        attempt = "https://github.com/owner/repo/actions/runs/6"
+        for title, body in gallery.gallery_samples():
+            with self.subTest(title=title):
+                details = body.split("<details>")[1]
+                self.assertNotIn("workflow run]", details)
+                self.assertNotIn("[Review run]", details)
+                if "**Previous completed review**" in details:
+                    current, previous = details.split("**Previous completed review**")
+                    self.assertIn(f"**[Current attempt]({attempt})**", current)
+                    self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
+                    self.assertNotIn(reviewed, current)
+                    self.assertNotIn(attempt, previous)
+                elif title.startswith(("E —", "K —", "L —")):
+                    url = reviewed if title.startswith("E —") else attempt
+                    self.assertIn(f"**[Started]({url}):**", details)
+                    self.assertNotIn("[Reviewed]", details)
+                elif title.startswith("M —"):
+                    self.assertIn(f"**[Attempt baseline]({attempt}):**", details)
+                    self.assertNotIn("[Reviewed]", details)
+                else:
+                    self.assertIn(f"**[Reviewed]({reviewed}) against:**", details)
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):
         original = os.environ.copy()

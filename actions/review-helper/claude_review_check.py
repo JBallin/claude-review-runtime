@@ -699,16 +699,23 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         review_metadata += [f"**Reviewed target:** {inline_code(last_review[1])}"]
     if state == "stale" and base_sha and (base_sha, base_ref) not in displayed_baselines:
         metadata += [f"**Current target commit:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
-    if historical:
-        if attempt_url and attempt_url != reviewed_url:
-            metadata += [f"[Attempt workflow run]({attempt_url})"]
-        if reviewed_url:
-            label = "Attempt and reviewed workflow run" if separate_attempt and attempt_url == reviewed_url else "Reviewed workflow run"
-            link_metadata = metadata if history_in_details and attempt_url == reviewed_url else review_metadata
-            link_metadata += [f"[{label}]({reviewed_url})"]
-    elif attempt_url:
-        label = "Reviewed workflow run" if last_review else "Attempt workflow run"
-        metadata += [f"[{label}]({attempt_url})"]
+    review_url = reviewed_url if historical else attempt_url if last_review else None
+    if review_url:
+        for index, field in enumerate(review_metadata):
+            if field.startswith("**Reviewed against:**") or field.startswith("**Reviewed target:**"):
+                review_metadata[index] = field.replace("**Reviewed ", f"**[Reviewed]({review_url}) ", 1)
+                break
+    attempt_link = attempt_url if not last_review or history_in_details or separate_attempt else None
+    if attempt_link:
+        for label in ("Current attempt", "Attempt started", "Started", "Attempt baseline"):
+            prefix = f"**{label}"
+            index = next((i for i, field in enumerate(metadata) if field.startswith(prefix)), None)
+            if index is not None:
+                metadata[index] = metadata[index].replace(label, f"[{label}]({attempt_link})", 1)
+                break
+        else:
+            # Legacy records may have no attempt timing or baseline to link.
+            metadata.insert(0, f"**[Current attempt]({attempt_link})**")
     if metadata:
         lines += ["  \n".join(metadata), ""]
     if previous:
@@ -1391,6 +1398,7 @@ def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_
 
 
 def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url, *, observed_base_sha=None):
+    reviewed = f"[Reviewed]({details_url})" if details_url else "Reviewed"
     warning = ""
     observed_tip = ""
     if observed_base_sha and observed_base_sha != base_sha:
@@ -1403,8 +1411,8 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
         f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha})\n\n"
         f"{warning}"
         "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
-        f"**Reviewed against:** [`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) "
-        f"on {inline_code(base_ref)}{observed_tip}  \n[Review run]({details_url})\n\n</details>"
+        f"**{reviewed} against:** [`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) "
+        f"on {inline_code(base_ref)}{observed_tip}\n\n</details>"
     )
 
 

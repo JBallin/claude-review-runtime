@@ -203,8 +203,8 @@ class OwnershipTests(unittest.TestCase):
         check.cmd_stale()
         self.assertEqual(check.last_completed_review_details(self.api.status), {"base_sha": BASE_TIP, "run_url": old_url,
                                                                             "generation": old["generation"]})
-        self.assertIn(f"**Reviewed against:** {check.commit_link(BASE_TIP)}", self.api.status["body"])
-        self.assertIn(f"[Reviewed workflow run]({old_url})", self.api.status["body"])
+        self.assertIn(f"**[Reviewed]({old_url}) against:** {check.commit_link(BASE_TIP)}", self.api.status["body"])
+        self.assertNotIn("[Reviewed workflow run]", self.api.status["body"])
 
     def test_legacy_review_does_not_inherit_current_base_or_run_metadata(self):
         with mock.patch.dict(os.environ, BASE_SHA="", DETAILS_URL=""):
@@ -888,7 +888,7 @@ class OwnershipTests(unittest.TestCase):
         self.api.pr["head"]["sha"] = OTHER
         with mock.patch.dict(os.environ, HEAD_SHA=OTHER, DETAILS_URL="https://github.com/owner/repo/actions/runs/99"):
             check.cmd_stale()
-        self.assertIn(f"[Attempt workflow run](https://github.com/{REPO}/actions/runs/5)", self.api.status["body"])
+        self.assertIn(f"**[Attempt baseline](https://github.com/{REPO}/actions/runs/5):**", self.api.status["body"])
         self.assertNotIn("/actions/runs/99", self.api.status["body"])
 
 

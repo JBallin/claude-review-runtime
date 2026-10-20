@@ -2288,8 +2288,8 @@ class ManualCompletionTests(ScriptTestCase):
             "Claude Review: No findings. 🎉\n\n"
             f"**Reviewed commit:** [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})\n\n"
             "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
-            f"**Reviewed against:** [`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`  \n"
-            "[Review run](https://github.com/owner/repo/actions/runs/5)\n\n</details>"
+            f"**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** "
+            f"[`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`\n\n</details>"
         ))
         visible, details = body.split("<details>", 1)
         self.assertIn(f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})", visible)
@@ -2604,8 +2604,8 @@ class ManualCompletionTests(ScriptTestCase):
                 visible, details = body.split("<details>", 1)
                 self.assertIn(marker, visible)
                 self.assertIn("Claude Review: No findings. 🎉", visible)
-                self.assertIn(f"**Reviewed against:** [`bbbbbbb`](https://github.com/{REPO}/commit/{OTHER}) on {rendered_ref}", details)
-                self.assertIn("[Review run](https://github.com/owner/repo/actions/runs/5)", details)
+                self.assertIn(f"**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`bbbbbbb`](https://github.com/{REPO}/commit/{OTHER}) on {rendered_ref}", details)
+                self.assertNotIn("[Review run]", details)
                 self.assertTrue(body.endswith("</details>"))
                 self.assertNotIn(f"/commit/{MERGE_BASE}", body)
 
