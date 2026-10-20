@@ -100,6 +100,9 @@ or access to work around a rejected run.
 
 ## API-key variant maintenance
 
+This procedure applies to periodic or explicitly requested variant maintenance,
+not to every PR.
+
 After changes merge to `main`, merge `main` into `api-key`. Preserve API-key-only
 authentication and run the local checks. Routine merges of already-approved
 `main` changes can use a normal push without another PR. Substantive changes,

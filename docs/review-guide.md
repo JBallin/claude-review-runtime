@@ -104,8 +104,7 @@ before posting or adding new clean reactions. Changed head/ref or a newer owner
 blocks these signals. A valid target-tip difference alone does not. Notices and
 Check summaries describe the captured baseline. A notice uses “Reviewed against”
 for that baseline and “Observed target commit” for the target snapshot at
-publication when it differs from the reviewed baseline; only that differing-target
-notice includes the integration warning.
+publication when it differs from the reviewed baseline.
 A concurrent PR change can still occur afterward, so the notice describes its
 linked historical snapshot.
 Notice publication is best-effort: an API failure may leave no notice, and an
@@ -166,9 +165,10 @@ unverifiable owner evidence suppresses presentation writes. A start can establis
 ownership on a legacy status; finalization cannot. Duplicate starts do not reset
 a completed result or reclaim presentation from a newer request.
 
-The status presents one row with Status, Commit, and Review trigger.
+The status presents one row with Status, a context-sensitive commit column
+(Reviewed commit, Attempt commit, or PR commit), and Review trigger.
 For a verified clean or findings result, Status shows its persisted completion time
-and Commit identifies the reviewed SHA. The current-version or integration caveat
+and Reviewed commit identifies the reviewed SHA. The current-version or integration caveat
 appears below the row; newer running, failed, or incomplete attempts remain prominent
 in the main table. Previous completed-review evidence moves inside Details,
 separate from the current attempt’s metadata. Workflow links are grouped with
