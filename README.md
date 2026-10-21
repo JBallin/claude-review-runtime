@@ -42,6 +42,9 @@ progress and may become stale after a patch change. Request a fresh manual revie
 when the diff changes. The [review guide](docs/review-guide.md) explains commands,
 clean-completion notices, failures, trust boundaries, and rollback.
 
+The review format and flow were inspired by
+[OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
+
 ## Validation
 
 The [validation summary](docs/validation.md) distinguishes tested revisions from
