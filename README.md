@@ -1,30 +1,27 @@
 # Claude Review Runtime
 
-*Reusable GitHub Actions workflows for precise, actionable Claude pull-request reviews*
+*Reusable GitHub Actions for Claude pull-request reviews and status reporting*
 
 ![Claude Review Runtime — AI-powered pull-request reviews](docs/assets/readme-hero.jpg)
 
 Built on [Anthropic’s Claude Code Action](https://github.com/anthropics/claude-code-action),
-Runtime makes review scope and status inspectable: it records the reviewed head
-and base commits and distinguishes current results from stale or incomplete
-review evidence.
+Claude Review Runtime helps you see which commits Claude reviewed, whether the
+review completed, and whether the results are still current.
 
 ## Usage
 
-Use a Claude account token or an Anthropic API key for model authentication.
-Follow the [consumer setup guide](docs/consumer-workflows.md#first-review-checklist)
-to install the workflows for your chosen authentication mode.
+Supports both Claude account tokens and Anthropic API keys; follow the
+[consumer setup guide](docs/consumer-workflows.md#first-review-checklist) to get started.
 
-Reviews run automatically when an eligible non-draft PR is opened or a draft is
-marked ready for review. Authorized users can also post `/claude-review` as a PR
-comment to request an on-demand review, including another pass after changes.
+Reviews run automatically when a PR becomes ready for review. Authorized users
+can also comment `/claude-review` on a PR to request an on-demand review.
 
-Findings appear inline. A standing review-status comment is updated as the
-review progresses, with 👀 and 👍 reactions on the PR and accepted manual requests
-signaling progress and verified clean completion. A verified-clean manual review
-may also post a separate completion notice. The review format and flow were
-inspired by [OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
-See the [review guide](docs/review-guide.md).
+A standing status comment is updated as automatic and manual reviews progress.
+Eyes and thumbs-up reactions appear on the PR and on manual review request
+comments. Manual reviews can also post a completion comment on success.
+The review format and flow were inspired by
+[OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
+See the [review guide](docs/review-guide.md) for more details.
 
 ## Examples and Alternatives
 
@@ -32,5 +29,5 @@ For a working example, see Ballin’s
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
 and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 
-You can also use [Anthropic’s Claude Code Action](https://github.com/anthropics/claude-code-action)
-directly or [DataDog’s code-review-action](https://github.com/DataDog/code-review-action).
+You can also use [Claude Code Action](https://github.com/anthropics/claude-code-action)
+directly or [Datadog’s code review action](https://github.com/DataDog/code-review-action).
