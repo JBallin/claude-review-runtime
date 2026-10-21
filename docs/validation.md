@@ -1,104 +1,61 @@
 # Validation and limitations
 
-Live evidence exercised OAuth. It does not validate the experimental API-key
-branch, which has not been live-API-tested. Offline checks do not establish live
-authentication, model completion, or publication. See the
-[shared setup guide](consumer-workflows.md) for branch selection.
+## Configurations
 
-## Offline evidence
+Live consumer reviews have exercised GitHub.com, hosted Ubuntu runners, and
+Claude OAuth with default Anthropic App/OIDC authentication, including automatic
+and manual reviews. The experimental API-key branch has not been live-tested.
+Live finding publication has been exercised in a bounded private,
+same-personal-owner configuration. See the [consumer guide](consumer-workflows.md)
+for setup and branch selection.
 
-[Publication regressions](https://github.com/JBallin/claude-review-runtime/pull/7),
-[restoration and recovery tests](https://github.com/JBallin/claude-review-runtime/pull/22),
-and the [integrated audit report](https://github.com/JBallin/claude-review-runtime/blob/8dbcd6d786c9485670ffaaac55af4aa390c70d22/docs/audit-issue-12.md)
-record source review and offline validation. These results are not live trials
-of the adopted runtime.
+Other owners, GitHub Enterprise Server, and broader public-consumer failure
+scenarios remain unvalidated. The automatic entrypoint excludes forks; the
+manual entrypoint has limited fork handling, while this repository's callers
+exclude them. These code paths do not establish validated fork support.
+
+## Choosing validation
+
+For compatible dependency updates, use required offline checks, independent
+review, and verified adoption in a normal review. Propose a separate live
+validation run only for material gaps, under the
+[existing approval requirements](../AGENTS.md#scope-and-runtime-adoption).
+Preserve fail-closed safeguards and state unverified behavior. Changing pins
+alone does not establish live authentication, model completion, or publication.
+
+## Coverage limits
 
 Deterministic tests use separate helper processes and persisted synthetic API
-state to exercise restored patch identities, process restarts, competing writers,
-history outages, and lost or partial receipts. Missing or ambiguous evidence
-stays non-clean, historical findings remain sticky, and an obsolete writer cannot
-replace a newer accepted owner's presentation in the tested schedules.
+state to exercise patch restoration, process restarts, competing writers,
+history outages, and lost or partial receipts. They check that missing or
+ambiguous evidence stays non-clean, recorded findings remain sticky, and obsolete
+writers cannot replace a newer owner's presentation in the tested schedules.
 
-The [recovery evidence](https://github.com/JBallin/claude-review-runtime/issues/13#issuecomment-5988261454)
-distinguishes controlled provider interruption from ordinary Actions cancellation.
-Synthetic finding-receipt cases do not execute or interrupt the finding publisher;
-the expired API deadline test does not validate lifecycle deadline setup or reset.
-Finite schedules do not establish atomicity between separate API reads and writes,
-actual runner cancellation or queue delivery, artifact transport, real service
-outages, or sustained concurrent load. Broader live testing requires its own
-approved fixture matrix, budget, retry limits, and restoration plan.
+Synthetic recovery tests do not establish behavior under real service outages,
+actual runner cancellation or queue delivery, artifact transport, or sustained
+concurrent load. Controlled provider interruption is distinct from ordinary
+Actions cancellation. Synthetic finding-receipt tests do not execute or interrupt
+the finding publisher, and the expired API deadline test does not validate
+lifecycle deadline setup or reset.
 
-The audit retains limits on internally consistent historical listings and the
-API's 1,000-check-suite boundary; it does not prove atomic history completeness.
-Source security assessment does not establish exhaustive security coverage or
-validate live authentication and deployment configurations.
+Separate API reads and writes are not atomic: ownership checks reduce races
+without eliminating them. Internally consistent history listings do not prove
+completeness, and the Check lookup is limited to the most recent 1,000 check
+suites. Source security review and finite test schedules do not establish
+exhaustive security coverage or validate live deployment configurations.
 
-## Live evidence and installed callers
+## Interpreting a review
 
-The [publication trial evidence](https://github.com/JBallin/claude-review-runtime/pull/7)
-supports invocation, completion, and finding publication in a bounded private,
-same-personal-owner configuration. It does not measure exhaustive reviewer quality.
-Candidate-patch reviews, including the
-[ownership review](https://github.com/JBallin/claude-review-runtime/runs/110927696406)
-and [audit review](https://github.com/JBallin/claude-review-runtime/runs/110967387622),
-verified review completion of those patches; they did not execute the candidates'
-ownership behavior or establish adversarial/stress coverage.
+Use the authoritative Check and captured review identity to assess the result.
+A successful Check confirms verified completion without recorded findings for
+that captured patch; it is not exhaustive assurance that no defect exists.
+Completion notices are best-effort historical information, not review authority
+or merge approval. See the [review contract](review-guide.md#trust-and-review-results)
+for finding retention, publication safeguards, and result interpretation.
 
-The installed OAuth runtime pins are in the
-[automatic](../.github/workflows/self-review-automatic.yml),
-[manual](../.github/workflows/self-review-manual.yml), and
-[status](../.github/workflows/self-review-status.yml) callers.
-See the [review guide](review-guide.md) for behavior and update precautions.
-Caller adoption does not add live validation; evidence applies only to the
-revisions and configurations exercised.
-
-## Remaining boundaries
-
-Confirmed consumer reviews used GitHub.com, hosted Ubuntu runners, and Claude
-OAuth with default Anthropic App/OIDC authentication.
-[Verified public-consumer evidence](https://github.com/JBallin/claude-review-runtime/issues/29#issuecomment-5974625017)
-covers one manual review using the
-[installed caller](https://github.com/JBallin/ballin-scripts/blob/729264f35ce52d5605a0b2681b762c85bbe4346e/.github/workflows/claude.yml).
-It does not validate automatic triggers or failure paths. Broader public-consumer
-coverage, other owners, fork behavior, and GitHub Enterprise Server remain
-unvalidated. The automatic entrypoint excludes forks; the manual entrypoint has
-limited fork handling, while this repository's caller gate excludes them. These
-code paths are not a claim of validated fork support.
-
-Workflow access, runtime-action resolution, and runner preparation can fail
-before the trusted helper starts, preventing it from publishing a Check.
-App/OIDC validation can instead skip model execution while the Actions workflow
-succeeds; the review remains incomplete and cannot establish clean completion.
-
-[Issue 9](https://github.com/JBallin/claude-review-runtime/issues/9) tracks a
-specific trusted diagnostic for that provider condition, with the proposed
-caller-visible output in
-[upstream PR 1879](https://github.com/anthropics/claude-code-action/pull/1879).
-A supported upstream revision, reviewed immutable dependency adoption, and tested
-runtime Check/status handling are still required. Until then, unknown causes
-retain the generic incomplete, non-clean result. Missing execution alone cannot
-identify a workflow-validation block, and no merge exception follows.
-
-An observed default-branch validation rejection published a failed Check after
-the trusted start job had created it. Inspect the workflow run and captured
-runtime identity as well as the Check. Follow the review guide's owner-exception
-guidance for initial installation; a skipped model run does not satisfy required
-review. Clean completion confirms the runtime's execution and publication
-contracts, not the absence of every possible defect. Keep independent review
-requirements in place.
-
-## Interpreting results
-
-An accepted `/claude-review` request captures one patch. A completed review with
-confirmed inline findings produces an action-required Check and retains those
-findings. A clean completed review produces a successful Check and a historical
-completion notice; a clean rerun of the same patch identity adds no duplicate
-notice. Unconfirmed publication produces an incomplete review and no clean notice.
-Prior notices remain historical information after findings or a failed rerun;
-consult the current Check and status. Findings remain sticky for the same PR,
-head, and merge base through trusted Check evidence.
-
-Offline regressions cover captured-baseline manual reviews, completion signals,
-authority checks, and recovery. They do not establish live provider behavior or
-integration with the current target baseline. See the
-[review contract](review-guide.md#trust-and-review-results) for authoritative behavior.
+Workflow access, runtime-action resolution, or runner preparation can fail
+before trusted tooling starts, leaving no Check. App/OIDC workflow validation
+can also skip model execution while Actions succeeds. Missing execution alone
+does not identify the cause, and a skipped or incomplete run does not satisfy
+required review. Use the [incomplete-review guidance](review-guide.md#installation-and-incomplete-reviews)
+to investigate; keep independent review and merge requirements in place.
