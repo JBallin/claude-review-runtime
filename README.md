@@ -1,6 +1,6 @@
 # Claude Review Runtime
 
-*Reusable GitHub Actions for Claude pull-request reviews and status reporting*
+*Reusable GitHub Actions for Claude pull-request reviews with status reporting*
 
 ![Claude Review Runtime — AI-powered pull-request reviews](docs/assets/readme-hero.jpg)
 
