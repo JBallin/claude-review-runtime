@@ -1,29 +1,39 @@
 # Claude Review Runtime
 
-Reusable GitHub Actions workflows for precise, actionable Claude pull-request reviews
+*Reusable GitHub Actions workflows for precise, actionable Claude pull-request reviews*
 
 ![Claude Review Runtime — AI-powered pull-request reviews](docs/assets/readme-hero.jpg)
 
 Built on [Anthropic’s Claude Code Action](https://github.com/anthropics/claude-code-action),
-the runtime focuses reviews on significant bugs introduced by the diff and posts
-findings inline, tied to the reviewed file and line.
+this project packages a focused Claude review workflow for your repositories.
+Reviews concentrate on significant bugs and correctness issues introduced by the
+change, with precision and actionability as design goals. Reusable workflows
+provide a consistent way to request reviews and follow their progress across
+repositories without maintaining separate review logic in each project.
 
 ## Getting Started
 
-Follow the [consumer setup guide](docs/consumer-workflows.md#first-review-checklist)
-to get started with a Claude account token or Anthropic API key.
+The [consumer setup guide](docs/consumer-workflows.md#first-review-checklist)
+covers installation with a Claude account token or Anthropic API key and Claude
+GitHub App access to your repository. The runtime targets GitHub.com with
+GitHub-hosted Ubuntu runners; the guide explains the prerequisites and validation
+limits for your chosen authentication mode.
 
-## Read the Result
+Once installed, reviews run automatically when an eligible non-draft PR is
+opened or marked ready for review. To review an existing PR or request another
+pass after changes, post `/claude-review` as a PR comment. Automatic reviews
+exclude fork PRs and Dependabot-triggered runs; manual requests require a trusted
+commenter.
 
-Findings appear as inline PR comments. The review-status comment shows progress
-and results; see the [review guide](docs/review-guide.md) for interpreting them
-and requesting another review.
+Findings appear inline on the reviewed file and line. A shared review-status
+comment shows progress and results for the latest accepted attempt. The
+[review guide](docs/review-guide.md) explains how to interpret results, check
+coverage after changes, and recover incomplete reviews.
 
-## Examples
-
-Used by [Ballin](https://github.com/JBallin/ballin-scripts). See its
+Used by [Ballin](https://github.com/JBallin/ballin-scripts). Its
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
-and [pull requests](https://github.com/JBallin/ballin-scripts/pulls) for real reviews.
+and [pull requests](https://github.com/JBallin/ballin-scripts/pulls) show the setup
+and review experience in practice.
 
 ## Background and Alternatives
 
