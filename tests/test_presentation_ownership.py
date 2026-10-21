@@ -203,8 +203,8 @@ class OwnershipTests(unittest.TestCase):
         check.cmd_stale()
         self.assertEqual(check.last_completed_review_details(self.api.status), {"base_sha": BASE_TIP, "run_url": old_url,
                                                                             "generation": old["generation"]})
-        self.assertIn(f"**Reviewed baseline:** {check.commit_link(BASE_TIP)}", self.api.status["body"])
-        self.assertIn(f"[Reviewed workflow run]({old_url})", self.api.status["body"])
+        self.assertIn(f"**[Reviewed]({old_url}) against:** {check.commit_link(BASE_TIP)}", self.api.status["body"])
+        self.assertNotIn("[Reviewed workflow run]", self.api.status["body"])
 
     def test_legacy_review_does_not_inherit_current_base_or_run_metadata(self):
         with mock.patch.dict(os.environ, BASE_SHA="", DETAILS_URL=""):
@@ -218,7 +218,7 @@ class OwnershipTests(unittest.TestCase):
         check.cmd_stale()
         self.assertEqual(check.last_completed_review(self.api.status), (OTHER, "release", "success"))
         self.assertEqual(check.last_completed_review_details(self.api.status), {})
-        self.assertNotIn("**Reviewed baseline:**", self.api.status["body"])
+        self.assertNotIn("**Reviewed against:**", self.api.status["body"])
         self.assertNotIn("[Reviewed workflow run]", self.api.status["body"])
 
     def test_direct_tip_advancement_ignores_stale_pr_projection(self):
@@ -750,7 +750,7 @@ class OwnershipTests(unittest.TestCase):
                 self.assertEqual(check.status_state(self.api.status), "stale")
                 self.assertEqual((owner["head"], owner["base"], owner["base_ref"]), (HEAD, BASE_TIP, "main"))
                 self.assertIn("superseded", self.api.status["body"])
-                self.assertIn(f"**Captured baseline:** {check.commit_link(BASE_TIP)}", self.api.status["body"])
+                self.assertIn(f"**[Attempt](https://github.com/{REPO}/actions/runs/5) baseline:** {check.commit_link(BASE_TIP)}", self.api.status["body"])
                 self.assertIn("/actions/runs/5", self.api.status["body"])
                 self.assertEqual(self.owned(self.opening), ["eyes"])
                 self.start()  # Retry does not recreate/reset the existing stale owner.
@@ -888,7 +888,7 @@ class OwnershipTests(unittest.TestCase):
         self.api.pr["head"]["sha"] = OTHER
         with mock.patch.dict(os.environ, HEAD_SHA=OTHER, DETAILS_URL="https://github.com/owner/repo/actions/runs/99"):
             check.cmd_stale()
-        self.assertIn(f"[Attempt workflow run](https://github.com/{REPO}/actions/runs/5)", self.api.status["body"])
+        self.assertIn(f"**[Attempt](https://github.com/{REPO}/actions/runs/5) baseline:**", self.api.status["body"])
         self.assertNotIn("/actions/runs/99", self.api.status["body"])
 
 
@@ -1098,10 +1098,11 @@ class EmergencyOwnershipTests(unittest.TestCase):
         reviewed_url = f"https://github.com/{workflow_repo}/actions/runs/9"
         for workflow in (AUTOMATIC, MANUAL):
             for result_state in ("success", "action_required"):
-                for metadata in ("complete", "legacy", "invalid_optional", "invalid_required", "duplicate_required"):
+                for metadata in ("complete", "run_only", "legacy", "invalid_optional", "invalid_required", "duplicate_required"):
                     with self.subTest(workflow=workflow.name, result=result_state, metadata=metadata):
                         owner = presentation_owner(repo=workflow_repo)
-                        details = {"base_sha": reviewed_base, "run_url": reviewed_url} if metadata == "complete" else {}
+                        details = ({"base_sha": reviewed_base, "run_url": reviewed_url} if metadata == "complete"
+                                   else {"run_url": reviewed_url} if metadata == "run_only" else {})
                         body = check.status_comment_body(HEAD,"main","in_progress",owner=owner,
                             last_review=(reviewed_head,"release/old",result_state),last_review_details=details)
                         if metadata == "invalid_optional":
@@ -1128,16 +1129,31 @@ class EmergencyOwnershipTests(unittest.TestCase):
                             self.assertNotIn("[Reviewed workflow run]",repaired)
                         else:
                             label = "clean" if result_state == "success" else "findings"
-                            self.assertIn(f"**Last reviewed (historical):** `{reviewed_head[:7]}` on `release/old`",repaired)
+                            word = f"[reviewed]({reviewed_url})" if metadata == "run_only" else "reviewed"
+                            self.assertIn(f"**Last {word} (historical):** `{reviewed_head[:7]}` on `release/old`",repaired)
                             self.assertIn(label,repaired)
-                            self.assertEqual("**Reviewed baseline:**" in repaired,metadata == "complete")
-                            self.assertEqual("[Reviewed workflow run]" in repaired,metadata == "complete")
+                            self.assertEqual(f"**[Reviewed]({reviewed_url}) baseline:**" in repaired,metadata == "complete")
+                            self.assertEqual(reviewed_url in repaired,metadata in ("complete", "run_only"))
                             if metadata == "complete":
-                                self.assertIn(f"**Reviewed baseline:** `{reviewed_base[:7]}`",repaired)
-                                self.assertIn(f"[Reviewed workflow run]({reviewed_url})",repaired)
-                        self.assertIn("[Attempt workflow run](https://example.invalid/run)",repaired)
+                                self.assertIn(f"**[Reviewed]({reviewed_url}) baseline:** `{reviewed_base[:7]}`",repaired)
+                                self.assertNotIn("[Reviewed workflow run]",repaired)
+                        self.assertIn("**[Captured](https://example.invalid/run) baseline:**",repaired)
+                        self.assertNotIn("workflow run]", repaired)
                         self.assertNotIn("javascript:",repaired)
                         self.assertFalse(any(c["method"] == "POST" for c in calls))
+
+    def test_emergency_missing_attempt_link_preserves_plain_captured_metadata(self):
+        from test_claude_review_workflows import ToolingFallbackScriptTests, AUTOMATIC, MANUAL
+        for workflow in (AUTOMATIC, MANUAL):
+            run, calls = ToolingFallbackScriptTests().run_fallback(workflow,
+                PR_NUMBER="7", STATUS_COMMENT_ID="55", DETAILS_URL="")
+            self.assertEqual(run.returncode, 1, run.stderr)
+            body = next(c["body"]["body"] for c in calls if c["method"] == "PATCH"
+                        and any("issues/comments/55" in a for a in c["args"]))
+            self.assertIn("**Captured baseline:** `" + BASE_TIP + "`", body)
+            self.assertNotIn("[Captured]", body)
+            self.assertNotIn("]()", body)
+            self.assertIsNotNone(check.status_owner({"body": body}))
 
     def test_emergency_partial_rerun_cannot_claim_ownership(self):
         result, calls = self.fallback(PR_NUMBER="7", STATUS_COMMENT_ID="55", GITHUB_RUN_ATTEMPT="2")

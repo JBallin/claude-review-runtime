@@ -82,7 +82,9 @@ historical Check identity.
 After a verified clean manual review and successful Check publication, trusted
 finalization may add 👍 and a completion notice even when the validated target
 tip differs from the captured baseline. The notice identifies its captured head,
-base commit, and workflow run, and qualifies integration coverage. Automatic
+base commit, and workflow run. When the observed target differs from the reviewed
+baseline, the notice also warns that integration with that target has not been
+reviewed. Matching-baseline notices omit that warning. Automatic
 reviews update the shared status comment without adding a separate completion notice.
 Reserve this runtime's namespaced comment markers for its trusted publication jobs.
 
@@ -100,9 +102,9 @@ or an unavailable Check. Publication verifies the executing attempt and persiste
 clean owner, then rechecks ownership and validated live head/ref immediately
 before posting or adding new clean reactions. Changed head/ref or a newer owner
 blocks these signals. A valid target-tip difference alone does not. Notices and
-Check summaries describe the captured baseline and exclude other target
-baselines from coverage. A notice also identifies the target tip observed at
-publication when it differs from the captured baseline.
+Check summaries describe the captured baseline. A notice uses “Reviewed against”
+for that baseline and “Observed target commit” for the target snapshot at
+publication when it differs from the reviewed baseline.
 A concurrent PR change can still occur afterward, so the notice describes its
 linked historical snapshot.
 Notice publication is best-effort: an API failure may leave no notice, and an
@@ -163,23 +165,28 @@ unverifiable owner evidence suppresses presentation writes. A start can establis
 ownership on a legacy status; finalization cannot. Duplicate starts do not reset
 a completed result or reclaim presentation from a newer request.
 
-The status presents one row with Status, Commit, and Review trigger.
+The status presents one row with Status, a context-sensitive commit column
+(Reviewed commit, Attempt commit, or PR commit), and Review trigger.
 For a verified clean or findings result, Status shows its persisted completion time
-and Commit identifies the reviewed SHA. The current-version or integration caveat
+and Reviewed commit identifies the reviewed SHA. The current-version or integration caveat
 appears below the row; newer running, failed, or incomplete attempts remain prominent
-above historical results. Technical details, including the accepted attempt's start
-time, are collapsed. GitHub renders recorded times as relative times.
+in the main table. Previous completed-review evidence moves inside Details,
+separate from the current attempt’s metadata. Workflow links are grouped with
+their corresponding attempt or review. Technical details are collapsed. GitHub
+renders recorded times as relative times.
 Stale status retains the last completed review's time; historical results without
 a recorded completion time remain undated. These timestamps describe lifecycle
 events, not a heartbeat or proof that a runner is still active. Failed, cancelled,
 and incomplete attempts do not receive a review completion timestamp.
 
-Review trigger retains the original accepted event that produced the completed
-result: PR opened for review, Draft marked ready, or Manual request. Status refreshes
+Review trigger identifies the accepted event for the attempt or completed
+result shown in the main table: PR opened for review, Draft marked ready, or
+Manual request. A current-attempt receipt binds that event to its exact owner
+and generation, separately from completed-review history. Status refreshes
 and repeated completion cannot replace or backfill that event. Legacy records without
 trusted original-event metadata show Not recorded; automatic ownership alone cannot
 distinguish opening a PR from marking a draft ready. Emergency fallback preserves
-these historical markers for subsequent helper rendering.
+verified current-attempt and historical markers for subsequent helper rendering.
 
 Terminal reactions on older trigger comments remain historical snapshot
 information when the patch changes or another comment requests a review. A new
@@ -191,9 +198,11 @@ base ref, or base tip moves during a still-owned review, finalization marks the
 shared status stale and clears progress reactions. Older attempts cannot replace
 a newer owner's status. When a trustworthy completed result belongs to that
 same owner and the head and target ref are unchanged, the comment keeps the
-completed result prominent and notes that the target baseline differs. It
-identifies the reviewed baseline separately from the current baseline, whose
-integration has not been reviewed. Findings remain findings; changed heads or target refs,
+completed result prominent and identifies the reviewed baseline separately from
+the current target commit observed at the last refresh, whose integration has
+not been reviewed. The target branch may have advanced, rewound, or been rewritten;
+this label does not establish live freshness or forward ancestry.
+Findings remain findings; changed heads or target refs,
 incomplete attempts, and missing or ambiguous completion provenance retain the
 stale presentation. Undated completed results remain undated. The machine
 freshness state remains stale and the captured Check retains its original
@@ -286,16 +295,6 @@ initial setup draft while authentication and independent review are outstanding.
 Any initial installation exception requires explicit owner approval, and the
 owner merges the setup.
 
-The pinned runtime reports sanitized captured-read coverage diagnostics during
-verification when the reason is `verified` or `captured_inputs_not_read`,
-without an opt-in flag. Earlier failures may have no coverage counters. For each
-of the fixed `metadata` and `diff` labels, it reports read and successful-read
-counts, expected/matched/missing/unparsed line counts, fixed content-shape labels,
-and a partial-view boolean. No file contents, paths, transcripts, or raw errors
-are exported. Diagnostics are best-effort and do not change acceptance: missing
-captured lines still fail completion. A partial page can be followed by complete
-reads; consult coverage and the authoritative Check together.
-
 After the human-reviewed caller installation is merged, validate with an approved
 live run on a separate PR that does not modify the workflows. Inspect actual
 model completion, captured identities, runtime provenance, and posted findings.
@@ -305,6 +304,27 @@ runner preparation can prevent
 model execution or publication. Resolve the reported prerequisite before
 requesting another approved review; do not switch credentials or expand access
 to bypass a rejection.
+
+### Incomplete captured-input reads
+
+`captured_inputs_not_read` means the execution record did not verify complete
+coverage of the captured metadata and diff. It does not establish why coverage is
+incomplete. Inspect the exact-head Check and workflow diagnostics; successful
+model execution or a green workflow is not sufficient.
+
+Diagnostic availability depends on the executing Runtime revision recorded in the
+Check. Older revisions may report aggregate coverage; newer diagnostic revisions
+provide per-Read and missing-range details. These sanitized diagnostics do not
+expose input contents or transcripts or relax completion requirements. See the
+[preserved investigation](https://github.com/JBallin/claude-review-runtime/pull/75#issuecomment-6302262123)
+for examples and diagnostic limits.
+
+Recovery must preserve full-input coverage and publication safeguards. A fresh
+approved workflow attempt is not guaranteed to succeed. If retries remain
+incomplete, consider a separately run independent Claude review, such as local
+Opus. Verify its input coverage and exact revision, record the results, and obtain
+explicit acceptance under the applicable review policy. This does not make the
+failed automated Check pass or bypass branch protection.
 
 ### Unexpected Check grouping
 
