@@ -83,7 +83,7 @@ class ManualBaselineTests(unittest.TestCase):
         self.assertEqual(details["completed_at"], DONE)
         self.assertIn(check.commit_link(BASE_TIP), self.api.status["body"])
         self.assertIn(check.commit_link(self.api.base_tip), self.api.status["body"])
-        self.assertIn("integration not reviewed", self.api.status["body"])
+        self.assertIn(check.TARGET_TIP_WARNING, self.api.status["body"])
         self.assertNotIn("Last completed review", self.api.status["body"])
 
     def test_clean_manual_completion_with_tip_and_projection_already_different(self):
@@ -107,7 +107,12 @@ class ManualBaselineTests(unittest.TestCase):
                 self.assertIn(BASE_TIP, body)
                 self.assertIn(HEAD, body)
                 self.assertIn(MERGE_BASE, body)
-                self.assertIn("integration", body.lower())
+                self.assertEqual(self.api.base_tip, OTHER)
+                warning = ("⚠️ The target branch differs from the reviewed baseline. "
+                           "Integration with its current version hasn’t been reviewed.")
+                for rendered in (self.api.status["body"], body):
+                    self.assertIn(warning, rendered.split("<details>")[0])
+                    self.assertNotIn("has changed since this review", rendered)
                 self.assertNotIn("approved", body.lower())
 
     def test_projection_catching_up_during_direct_lookup_preserves_captured_patch(self):
@@ -139,13 +144,14 @@ class ManualBaselineTests(unittest.TestCase):
                     self.assertIn("Findings", self.api.status["body"])
                     self.assertNotIn("reviewed clean", self.api.status["body"])
 
-    def test_current_baseline_notice_still_qualifies_immutable_patch_coverage(self):
+    def test_matching_baseline_notice_links_immutable_patch_without_generic_qualification(self):
         self.start()
         self.finish()
         self.notice()
         self.assertEqual(check.status_state(self.api.status), "success")
         self.assertEqual(len(self.api.notices), 1)
-        self.assertIn("integration", self.api.notices[0]["body"].lower())
+        self.assertNotIn("integration", self.api.notices[0]["body"].lower())
+        self.assertNotIn("merge approval", self.api.notices[0]["body"].lower())
         self.assertIn(BASE_TIP, self.api.notices[0]["body"])
 
     def test_status_refresh_cannot_recreate_removed_clean_signals(self):

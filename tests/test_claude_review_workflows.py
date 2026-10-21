@@ -1110,7 +1110,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertEqual(body.count("<br/>"), 1)
                 reason = "**Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably."
                 note = "**Note:** " + check.INCOMPLETE_NOTE
-                metadata = f"**Current commit:** `{HEAD[:7]}`  \n**Trigger:** {label}  \n"
+                metadata = f"**Current commit:** `{HEAD[:7]}`  \n**Trigger:** Not recorded  \n"
                 self.assertIn(reason + "\n" + note + "\n\n" + metadata, details)
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("Check", body)
@@ -1270,7 +1270,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         self.assertIn("could not be published", repaired["body"]["body"])
         self.assertNotIn("Authority:", repaired["body"]["body"])
         self.assertIn("authoritative Check result could not be published", repaired["body"]["body"])
-        self.assertIn("**Trigger:** PR opened for review", repaired["body"]["body"])
+        self.assertIn("**Trigger:** Not recorded", repaired["body"]["body"])
 
     def test_fallback_worst_case_fits_its_step_timeout(self):
         for path in (AUTOMATIC, MANUAL):

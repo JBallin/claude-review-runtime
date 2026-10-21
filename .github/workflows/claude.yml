@@ -969,14 +969,33 @@ jobs:
             if [ -n "$reviewed_markers" ]; then
               reviewed_markers="$reviewed_markers"$'\n'
             fi
-            trigger_line=
-            if [ -n "$TRIGGER_LABEL" ]; then
-              trigger_line=$'\n'"**Trigger:** $TRIGGER_LABEL"
+            attempt_metadata=$(printf '%s' "$comment" | python3 -c '
+          import json, re, sys
+          from urllib.parse import quote, unquote
+          owner = json.loads(sys.argv[1])
+          body = json.load(sys.stdin).get("body") or ""
+          prefix = "<!-- claude-review-runtime:attempt-trigger:"
+          values = re.findall(re.escape(prefix) + r"(.*?) -->", body)
+          marker, label = "", "Not recorded"
+          try:
+              if body.count(prefix) == 1 and len(values) == 1:
+                  generation, candidate = json.loads(unquote(values[0]))
+                  allowed = ("PR opened for review", "Draft marked ready") if owner["kind"] == "automatic" else ("Manual request",)
+                  canonical = quote(json.dumps([generation, candidate], separators=(",", ":")), safe="")
+                  if generation == owner["generation"] and candidate in allowed and canonical == values[0]:
+                      marker, label = prefix + canonical + " -->", candidate
+          except (ValueError, TypeError):
+              pass
+          print(json.dumps({"marker": marker, "label": label}))
+          ' "$PRESENTATION_OWNER") || return 0
+            attempt_marker=$(printf '%s' "$attempt_metadata" | jq -r '.marker')
+            accepted_trigger=$(printf '%s' "$attempt_metadata" | jq -r '.label')
+            trigger_line=$'\n'"**Trigger:** $accepted_trigger"
+            if [ -n "$attempt_marker" ]; then
+              reviewed_markers="$attempt_marker"$'\n'"$reviewed_markers"
             fi
             historical_lines=
-            attempt_label='Workflow run'
             if [ "$state" = stale ]; then
-              attempt_label='Attempt workflow run'
               # Historical metadata is informational: validate each field and
               # never fill missing values from the current attempt.
               historical_lines=$(printf '%s' "$reviewed_markers" | python3 -c '
@@ -1003,7 +1022,13 @@ jobs:
               padding = " " if chr(96) in ref else ""
               code_ref = ticks + padding + ref + padding + ticks
               label = "✅ clean" if result == "success" else "⚠️ findings"
-              print("**Last reviewed (historical):** " + chr(96) + head[:7] + chr(96) + " on " + code_ref + " — " + label)
+              base = field("base-sha", r"[0-9a-f]{40}")
+              url = decoded(field("run-url", r"[A-Za-z0-9_.~%\-]+"))
+              expected = sys.argv[2].rstrip("/") + "/" + sys.argv[1] + "/actions/runs/"
+              if not (url and re.fullmatch(re.escape(expected) + r"[1-9][0-9]*", url)):
+                  url = None
+              reviewed = "[reviewed](" + url + ")" if url and not base else "reviewed"
+              print("**Last " + reviewed + " (historical):** " + chr(96) + head[:7] + chr(96) + " on " + code_ref + " — " + label)
               completed = field("completed-at", r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
               if completed:
                   try:
@@ -1012,17 +1037,17 @@ jobs:
                       completed = None
               if completed:
                   print("**Last review completed:** <relative-time datetime=" + chr(34) + completed + chr(34) + ">" + completed + "</relative-time>")
-              base = field("base-sha", r"[0-9a-f]{40}")
               if base:
-                  print("**Reviewed baseline:** " + chr(96) + base[:7] + chr(96))
-              url = decoded(field("run-url", r"[A-Za-z0-9_.~%\-]+"))
-              expected = sys.argv[2].rstrip("/") + "/" + sys.argv[1] + "/actions/runs/"
-              if url and re.fullmatch(re.escape(expected) + r"[1-9][0-9]*", url):
-                  print("[Reviewed workflow run](" + url + ")")
+                  reviewed = "[Reviewed](" + url + ")" if url else "Reviewed"
+                  print("**" + reviewed + " baseline:** " + chr(96) + base[:7] + chr(96))
           ' "$REPO" "${GITHUB_SERVER_URL:-https://github.com}") || return 0
             fi
             reviewed_markers="$owner_marker"$'\n''<!-- claude-review-runtime:presentation-owner-phase:terminal -->'$'\n'"$reviewed_markers"
-            captured_line=$'\n'"**Captured commit:** \`$HEAD_SHA\`"$'\n'"**Captured baseline:** \`$BASE_SHA\`"
+            captured_baseline_label='Captured baseline'
+            if [ -n "$DETAILS_URL" ]; then
+              captured_baseline_label="[Captured]($DETAILS_URL) baseline"
+            fi
+            captured_line=$'\n'"**Captured commit:** \`$HEAD_SHA\`"$'\n'"**$captured_baseline_label:** \`$BASE_SHA\`"
             started_line=$(printf '%s' "$PRESENTATION_OWNER" | python3 -c '
           import json, sys
           from datetime import datetime, timezone
@@ -1046,8 +1071,8 @@ jobs:
             fi
             metadata="**Current commit:** \`${display_head:0:7}\`$trigger_line$captured_line"
             metadata=${metadata//$'\n'/$'  \n'}
-            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n**Reason:** %s\n**Note:** %s\n\n%s\n\n[%s](%s)\n\n</details>' \
-              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "$message" "$reason" "$note" "$metadata" "$attempt_label" "$DETAILS_URL")
+            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n**Reason:** %s\n**Note:** %s\n\n%s\n\n</details>' \
+              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "$message" "$reason" "$note" "$metadata")
             body=$(jq -n --arg body "$rendered" '{body: $body}')
             verify_presentation_owner || return 0
             observed_patch=$(verify_known_patch) || return 0

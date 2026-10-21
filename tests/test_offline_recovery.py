@@ -387,12 +387,12 @@ class OfflineRecoveryTests(unittest.TestCase):
                 details = check.last_completed_review_details(state["status"])
                 self.assertEqual(details["completed_at"], completed["completed_at"])
                 self.assertEqual(details["base_sha"], BASE_TIP)
-                self.assertIn("integration not reviewed", state["status"]["body"])
+                self.assertIn(check.TARGET_TIP_WARNING, state["status"]["body"])
                 self.assertEqual(len(state["comment_pages"]), 1)
                 notice = state["comment_pages"][0]["body"]
                 self.assertIn(BASE_TIP, notice)
                 self.assertIn(NEWER, notice)
-                self.assertIn("integration", notice)
+                self.assertIn(check.TARGET_TIP_WARNING, notice)
                 namespace = "issues" if kind == "issue_comment" else "pulls"
                 paths = (f"repos/{REPO}/issues/7/reactions", f"repos/{REPO}/{namespace}/comments/42/reactions")
                 for path in paths:
@@ -432,7 +432,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                 self.run_worker("finish", 73)
                 committed = self.state()
                 self.assertEqual(len(committed["comment_pages"]), 1)
-                self.assertIn("integration", committed["comment_pages"][0]["body"])
+                self.assertIn(check.TARGET_TIP_WARNING, committed["comment_pages"][0]["body"])
                 self.assertEqual(check.status_state(committed["status"]), "stale")
                 self.env["TEST_COMPLETION_TIME"] = "2026-10-07T14:09:19Z"
                 self.update(base_tip=NEWER)
@@ -567,7 +567,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                     self.assertEqual(check.status_state(state["status"]), "stale")
                     if field == "base" and kind != "automatic":
                         self.assertEqual(len(state["comment_pages"]), 1)
-                        self.assertIn("integration", state["comment_pages"][0]["body"])
+                        self.assertIn(check.TARGET_TIP_WARNING, state["comment_pages"][0]["body"])
                     else:
                         self.assertEqual(state["comment_pages"], [])
                     for items in state["reactions"].values():
@@ -633,11 +633,12 @@ class OfflineRecoveryTests(unittest.TestCase):
                         })
                         body = state["status"]["body"]
                         self.assertIn(check.relative_time(completed["completed_at"]), body)
-                        label = "reviewed clean" if conclusion == "success" else "reviewed with findings"
-                        self.assertIn(f"**Current commit:** {check.commit_link(HEAD, REPO)} on `main` — {label}", body)
-                        self.assertIn(f"**Current baseline:** {check.commit_link(OTHER, REPO)} — integration not reviewed", body)
-                        self.assertIn(f"**Reviewed baseline:** {check.commit_link(BASE_TIP, REPO)}", body)
-                        self.assertIn(f"[Reviewed workflow run]({self.env['DETAILS_URL']})", body)
+                        self.assertIn(f"| {check.commit_link(HEAD, REPO)} |", body)
+                        self.assertNotIn("**PR commit:**", body)
+                        self.assertEqual(body.count(check.TARGET_TIP_WARNING), 1)
+                        self.assertIn(f"**Current target commit:** {check.commit_link(OTHER, REPO)} on `main`", body)
+                        self.assertIn(f"**[Reviewed]({self.env['DETAILS_URL']}) against:** {check.commit_link(BASE_TIP, REPO)}", body)
+                        self.assertNotIn("[Reviewed workflow run]", body)
                         self.assertIn("## Claude Review", body)
                         self.assertIn(check.STATUS_REASONS["base_advanced"], body)
                         self.assertNotIn("runs/4)", body)
@@ -646,7 +647,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                         if conclusion == "success" and kind != "automatic":
                             self.assertEqual(state["comment_pages"][0], unrelated)
                             self.assertEqual(len(state["comment_pages"]), 2)
-                            self.assertIn("integration", state["comment_pages"][1]["body"])
+                            self.assertIn(check.TARGET_TIP_WARNING, state["comment_pages"][1]["body"])
                             self.assertIn(BASE_TIP, state["comment_pages"][1]["body"])
                         else:
                             self.assertEqual(state["comment_pages"], [unrelated])
@@ -667,7 +668,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                             "completed_at": completed["completed_at"], "generation": owner["generation"],
                         })
                         self.assertIn(check.relative_time(completed["completed_at"]), refreshed["body"])
-                        self.assertIn(f"**Current baseline:** {check.commit_link(MERGE_BASE, REPO)} — integration not reviewed", refreshed["body"])
+                        self.assertIn(f"**Current target commit:** {check.commit_link(MERGE_BASE, REPO)} on `main`", refreshed["body"])
                         self.assertIn("## Claude Review", refreshed["body"])
                         self.assertNotIn("runs/6)", refreshed["body"])
 
