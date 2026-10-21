@@ -29,5 +29,5 @@ For a working example, see Ballin’s
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
 and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 
-You can also use [Claude Code Action](https://github.com/anthropics/claude-code-action)
+Alternatives include using [Claude Code Action](https://github.com/anthropics/claude-code-action)
 directly or [Datadog’s code review action](https://github.com/DataDog/code-review-action).
