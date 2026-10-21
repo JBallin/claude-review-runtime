@@ -53,7 +53,9 @@ Choose a runtime branch and its model authentication secret:
 
 The `api-key` branch is experimental and not live-API-tested; it does not require
 OAuth. `main` does not accept API keys. Offline checks do not establish validated
-API-key support.
+API-key support. See the
+[branch comparison](https://github.com/JBallin/claude-review-runtime/compare/main...api-key)
+for source differences.
 
 Install the [Claude GitHub App](https://github.com/apps/claude) with access to the
 consumer repository. The app provides GitHub access separately from the model

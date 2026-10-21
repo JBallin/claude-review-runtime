@@ -4,56 +4,53 @@
 
 Reusable GitHub Actions workflows for Claude pull-request reviews, built on
 [Anthropic’s Claude Code Action](https://github.com/anthropics/claude-code-action).
-The runtime captures the patch being reviewed, verifies model completion, and
-uses separate trusted jobs to publish the Check and review status. These checks
-help distinguish a completed review from a successful workflow that skipped it;
-they do not establish exhaustive review quality or merge approval.
-
-[Anthropic’s action](https://github.com/anthropics/claude-code-action) is a
-general-purpose integration for reviews and other PR/issue tasks.
-[DataDog’s code-review-action](https://github.com/DataDog/code-review-action)
-is another reusable review option. Both are credible alternatives to evaluate
-against your setup and trust requirements. This runtime focuses on captured-patch
-identity, explicit completion checks, and controlled status publication; the
-bounded experiments do not establish universal quality or security superiority.
+The runtime captures the patch, checks that Claude read the full captured input
+and completed the review, and uses trusted jobs to publish the result. This helps
+distinguish a completed review from a successful workflow that skipped it.
+A completed review is not exhaustive assurance or merge approval.
 
 ## Set up a consumer
 
-Choose one of two branches:
+Start with the [consumer setup guide](docs/consumer-workflows.md#first-review-checklist):
 
-- `main` uses `CLAUDE_CODE_OAUTH_TOKEN`.
-- The experimental [`api-key` branch](https://github.com/JBallin/claude-review-runtime/tree/api-key)
-  uses `ANTHROPIC_API_KEY` instead and does not require OAuth (not live-API-tested).
+1. Choose `main` with `CLAUDE_CODE_OAUTH_TOKEN`, or the experimental
+   [`api-key` branch](https://github.com/JBallin/claude-review-runtime/tree/api-key)
+   with `ANTHROPIC_API_KEY` (not live-API-tested). Both require Claude GitHub App
+   access to the consumer repository.
+2. Install the automatic review, manual review, and status workflows, pinned to
+   one reviewed immutable commit from the selected branch.
+3. Have the installation reviewed and merged, then verify a first approved live
+   review on a separate PR that does not change workflows.
 
-For either branch, follow the [setup guide](docs/consumer-workflows.md) for
-installation, branch-specific commit pins, and secret forwarding.
-See the [branch comparison](https://github.com/JBallin/claude-review-runtime/compare/main...api-key)
-for the current differences.
-
-Used by [Ballin](https://github.com/JBallin/ballin-scripts). See its
-[workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
-and [pull requests](https://github.com/JBallin/ballin-scripts/pulls) for examples in action.
+The guide includes credentials, permissions, workflow examples, and installation
+failure recovery. The exercised platform is GitHub.com with hosted Ubuntu
+runners; see [validation and limitations](docs/validation.md) before adoption.
 
 ## Read the result
 
-Use the exact-head `Claude Review` Check together with the workflow run. Inline
-comments contain findings; the status comment and top-level PR reactions show
-progress and may become stale after a patch change. Request a fresh manual review
-when the diff changes. The [review guide](docs/review-guide.md) explains commands,
-clean-completion notices, failures, trust boundaries, and rollback.
+Inspect the `Claude Review` Check on the reviewed head together with the workflow
+run. A clean result requires verified completion without recorded findings;
+inline comments contain findings to assess. A skipped or incomplete run does not
+satisfy review requirements.
 
+The status comment and PR reactions show progress and historical results. They
+can become stale after a patch change. Request a fresh manual review when the
+diff changes, and assess whether a changed base invalidates previous evidence.
+The [review guide](docs/review-guide.md) explains commands, captured-patch
+coverage, trust boundaries, and recovery. Keep independent review and merge
+requirements in place.
+
+## Background and alternatives
+
+Used by [Ballin](https://github.com/JBallin/ballin-scripts); its
+[workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
+and [pull requests](https://github.com/JBallin/ballin-scripts/pulls) provide examples.
 The review format and flow were inspired by
 [OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
 
-## Validation
-
-The [validation summary](docs/validation.md) covers exercised configurations,
-validation choices, and coverage limits.
-The pinned callers include confirmed finding publication and sanitized Read
-coverage diagnostics. A verified Check establishes those runtime contracts; keep
-independent review requirements in place.
-
-Offline evidence includes bounded restoration and recovery regressions.
-Source availability does not establish broad public-consumer or other-owner
-support.
-Consumers retain their own pins until a separate reviewed adoption updates them.
+[Anthropic’s action](https://github.com/anthropics/claude-code-action) supports
+reviews and other PR/issue tasks;
+[DataDog’s code-review-action](https://github.com/DataDog/code-review-action)
+is another reusable review option. Evaluate them against your setup and trust
+requirements. This runtime’s bounded validation does not establish universal
+review quality or security superiority.
