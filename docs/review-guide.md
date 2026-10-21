@@ -1,6 +1,12 @@
 # Review behavior and repository self-review
 
-*Use this guide to interpret review results, operate this repository's pinned callers, and handle installation and caller updates.*
+*Use this guide to interpret review results and recover incomplete reviews.
+For installation, start with the [consumer setup guide](consumer-workflows.md).*
+
+The result and trust contracts below describe the runtime source in this
+revision. A consumer runs the commit pinned in its callers, which can differ
+from the source revision being read. Check the executing runtime identity in the
+Check and workflow run when interpreting behavior or diagnostics.
 
 ## Pinned callers
 
@@ -38,6 +44,8 @@ Provider-bot reactions on comments are preserved and are not this runtime's
 progress or completion signals. The caller installation shape stays the same,
 but a revision update must keep its manual gate and documented command consistent
 with that revision.
+
+## Read the result
 
 The exact-SHA `Claude Review` Check is authoritative. The stable workflow-owned
 status comment and opening-post reactions present progress, clean completion,
@@ -342,3 +350,13 @@ authentication mode and documented manual command.
 Let active and queued reviews finish before activating the update. Preserve
 Checks, findings, notices, and unrelated reactions. Publishing runtime changes
 does not automatically update callers.
+
+### Roll back a caller update
+
+If an adopted runtime revision causes problems, select a previously reviewed
+commit compatible with the consumer's authentication mode and manual command.
+Use the same three-caller update procedure above, including its contract tests
+and active/queued-review precautions. Preserve historical Checks, findings,
+notices, and unrelated reactions; restoring pins does not erase findings or
+establish a new review result. Verify the executing runtime revision on the next
+approved review.

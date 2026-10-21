@@ -1,59 +1,33 @@
 # Claude Review Runtime
 
+*Reusable GitHub Actions for Claude pull-request reviews with status reporting*
+
 ![Claude Review Runtime — AI-powered pull-request reviews](docs/assets/readme-hero.jpg)
 
-Reusable GitHub Actions workflows for Claude pull-request reviews, built on
-[Anthropic’s Claude Code Action](https://github.com/anthropics/claude-code-action).
-The runtime captures the patch being reviewed, verifies model completion, and
-uses separate trusted jobs to publish the Check and review status. These checks
-help distinguish a completed review from a successful workflow that skipped it;
-they do not establish exhaustive review quality or merge approval.
+Built on [Anthropic’s Claude Code Action](https://github.com/anthropics/claude-code-action),
+Claude Review Runtime helps you see which commits Claude reviewed, whether the
+review completed, and whether the results are still current.
 
-[Anthropic’s action](https://github.com/anthropics/claude-code-action) is a
-general-purpose integration for reviews and other PR/issue tasks.
-[DataDog’s code-review-action](https://github.com/DataDog/code-review-action)
-is another reusable review option. Both are credible alternatives to evaluate
-against your setup and trust requirements. This runtime focuses on captured-patch
-identity, explicit completion checks, and controlled status publication; the
-bounded experiments do not establish universal quality or security superiority.
+## Usage
 
-## Set up a consumer
+Supports both Claude account tokens and Anthropic API keys; follow the
+[consumer setup guide](docs/consumer-workflows.md#first-review-checklist) to get started.
 
-Choose one of two branches:
+Reviews run automatically when a PR becomes ready for review. Authorized users
+can also comment `/claude-review` on a PR to request an on-demand review.
 
-- `main` uses `CLAUDE_CODE_OAUTH_TOKEN`.
-- The experimental [`api-key` branch](https://github.com/JBallin/claude-review-runtime/tree/api-key)
-  uses `ANTHROPIC_API_KEY` instead and does not require OAuth (not live-API-tested).
-
-For either branch, follow the [setup guide](docs/consumer-workflows.md) for
-installation, branch-specific commit pins, and secret forwarding.
-See the [branch comparison](https://github.com/JBallin/claude-review-runtime/compare/main...api-key)
-for the current differences.
-
-Used by [Ballin](https://github.com/JBallin/ballin-scripts). See its
-[workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
-and [pull requests](https://github.com/JBallin/ballin-scripts/pulls) for examples in action.
-
-## Read the result
-
-Use the exact-head `Claude Review` Check together with the workflow run. Inline
-comments contain findings; the status comment and top-level PR reactions show
-progress and may become stale after a patch change. Request a fresh manual review
-when the diff changes. The [review guide](docs/review-guide.md) explains commands,
-clean-completion notices, failures, trust boundaries, and rollback.
-
+A standing status comment is updated as automatic and manual reviews progress.
+👀 and 👍 reactions appear on the PR and on manual review request
+comments. Manual reviews post a completion comment on success.
 The review format and flow were inspired by
 [OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
+See the [review guide](docs/review-guide.md) for more details.
 
-## Validation
+## Examples and Alternatives
 
-The [validation summary](docs/validation.md) covers exercised configurations,
-validation choices, and coverage limits.
-The pinned callers include confirmed finding publication and sanitized Read
-coverage diagnostics. A verified Check establishes those runtime contracts; keep
-independent review requirements in place.
+For a working example, see Ballin’s
+[workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
+and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 
-Offline evidence includes bounded restoration and recovery regressions.
-Source availability does not establish broad public-consumer or other-owner
-support.
-Consumers retain their own pins until a separate reviewed adoption updates them.
+Alternatives include using [Claude Code Action](https://github.com/anthropics/claude-code-action)
+directly or [Datadog’s code review action](https://github.com/DataDog/code-review-action).

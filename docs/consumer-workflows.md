@@ -4,7 +4,7 @@
 
 ## First-review checklist
 
-1. Choose `main` (OAuth) or experimental `api-key` and meet the
+1. Choose `main` (OAuth) or `api-key` and meet the
    [prerequisites](#prerequisites), including Claude GitHub App access. Obtain the
    selected model credential using [Anthropic's authentication instructions](https://code.claude.com/docs/en/authentication)
    (`claude setup-token` for OAuth, or a Claude Console API key), then
@@ -37,6 +37,31 @@
    refreshes existing presentation; it does not run Claude or review the new
    patch. Assess changed-base coverage using the same review-result guidance.
 
+## Required reviews and status checks
+
+Keep completed Claude review and explicit disposition of each finding as
+requirements of your review policy. A successful Actions job alone does not
+prove Claude completed the review: inspect the authoritative `Claude Review`
+Check and its captured patch identity. A completed `action_required` Check
+records findings; assess each one and record whether it was fixed, invalid, or
+explicitly declined by the responsible maintainer. Disposition does not rewrite
+the Check or erase recorded findings. Material patch changes need fresh review.
+
+Requiring a finding-free `Claude Review` Check on every current head is a
+stricter branch-protection choice. It can block a review whose findings have
+legitimate dispositions, or evidence carried forward under a policy that allows
+verified integration-only updates. Such carry-forward requires confirming that
+the effective reviewed patch is unchanged and the base changes neither introduce
+material interactions nor invalidate the review. Record the reviewed revisions
+and that assessment; a new commit, a small diff, or a docs-only change does not
+automatically qualify. The runtime does not perform this policy assessment or
+transfer an old Check to the new head.
+
+Missing, incomplete, or stale Claude review evidence is not satisfied by another
+reviewer's approval or a green Actions job. Verify coverage and obtain a fresh
+Claude review when required. See the [review-result contract](review-guide.md#trust-and-review-results)
+for captured-patch authority, finding retention, and stale presentation.
+
 ## Prerequisites
 
 This runtime repository is public. Consumers can reference its reusable
@@ -51,9 +76,11 @@ Choose a runtime branch and its model authentication secret:
 | `main` | `CLAUDE_CODE_OAUTH_TOKEN` |
 | [`api-key`](https://github.com/JBallin/claude-review-runtime/tree/api-key) | `ANTHROPIC_API_KEY` |
 
-The `api-key` branch is experimental and not live-API-tested; it does not require
-OAuth. `main` does not accept API keys. Offline checks do not establish validated
-API-key support.
+The `api-key` branch has not been live-API-tested; it does not require OAuth.
+`main` does not accept API keys. Offline checks do not establish validated API-key
+support. See the
+[branch comparison](https://github.com/JBallin/claude-review-runtime/compare/main...api-key)
+for source differences.
 
 Install the [Claude GitHub App](https://github.com/apps/claude) with access to the
 consumer repository. The app provides GitHub access separately from the model
