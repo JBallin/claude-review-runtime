@@ -40,16 +40,16 @@ class StatusTimestampTests(unittest.TestCase):
                     self.assertIn(" started " + check.relative_time(START), initial)
                     check.best_effort_status(HEAD, "in_progress", check_available=available)
                     visible = self.body().split("<details>")[0]
-                    self.assertIn("**Running** started " + check.relative_time(START), visible)
+                    running = "**[Running](https://github.com/owner/repo/actions/runs/6)**" if history else "**Running**"
+                    self.assertIn(running + " started " + check.relative_time(START), visible)
                     self.assertEqual(visible.count(check.relative_time(START)), 1)
                     self.assertNotIn("In progress", visible)
                     self.assertNotIn("in progress", visible)
                     self.assertEqual(check.status_state(self.api.status), "in_progress")
                     self.assertEqual(check.status_owner(self.api.status), owner)
                     if history:
-                        self.assertLess(visible.index(check.relative_time(START)),
-                                        visible.index("**Last completed review**"))
-                        self.assertIn(check.relative_time(DONE), visible)
+                        self.assertNotIn(check.relative_time(DONE), visible)
+                        self.assertIn(check.relative_time(DONE), self.body().split("<details>")[1])
                         self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", history))
                     if not available:
                         self.assertIn("authoritative Check publication is unavailable", visible)
@@ -113,7 +113,7 @@ class StatusTimestampTests(unittest.TestCase):
         for state in ("success", "action_required"):
             with self.subTest(state=state):
                 self.start(PRESENTATION_START=START_NS)
-                self.assertIn("**Started:** " + check.relative_time(START), self.body())
+                self.assertIn("**Running** started " + check.relative_time(START), self.body())
                 self.assertNotIn(check.STATUS_REVIEWED_COMPLETED_PREFIX, self.body())
                 self.finish(state)
                 self.assertIn(check.relative_time(DONE), self.body())

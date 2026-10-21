@@ -45,9 +45,8 @@ clean-completion notices, failures, trust boundaries, and rollback.
 The review flow, inline findings, and reaction-based progress signals were inspired by
 [OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
 
-## Validation and status
+## Validation
 
-This is an experimental runtime with no commitment to ongoing support.
 The [validation summary](docs/validation.md) distinguishes tested revisions from
 the deployed callers and remaining gaps.
 The pinned callers include confirmed finding publication and sanitized Read

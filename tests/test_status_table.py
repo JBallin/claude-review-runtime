@@ -7,7 +7,7 @@ from test_claude_review_check import check, HEAD, OTHER
 import test_presentation_ownership as ownership
 
 DONE = "2026-10-07T13:09:19Z"
-HEADER = "| Status | Commit | Review trigger |"
+HEADER = "| Status | Reviewed commit | Review trigger |"
 
 
 class StatusTableTests(unittest.TestCase):
@@ -26,9 +26,10 @@ class StatusTableTests(unittest.TestCase):
 
     def row(self):
         visible = self.visible()
-        self.assertEqual(visible.count(HEADER), 1)
+        header = next(line for line in visible.splitlines() if line.startswith("| Status |"))
+        self.assertEqual(visible.count(header), 1)
         rows = [line for line in visible.splitlines()
-                if line.startswith("| ") and line not in (HEADER, "| --- | --- | --- |")]
+                if line.startswith("| ") and line not in (header, "| --- | --- | --- |")]
         self.assertEqual(len(rows), 1)
         return rows[0]
 
@@ -67,11 +68,11 @@ class StatusTableTests(unittest.TestCase):
                             self.assertNotIn("**Last completed review**", self.visible())
                             self.assertNotIn("Last completed review", self.row())
                             self.assertTrue(self.row().endswith(f"| {check.commit_link(HEAD)} | {label} |"))
-                            self.assertIn(check.relative_time(DONE), self.row())
+                            self.assertIn(check.relative_time(DONE), self.api.status["body"])
                             self.assertEqual(check.last_completed_review_details(self.api.status)["trigger"], label)
-                            caveat = ("Integration with the current baseline has not been reviewed."
-                                      if movement == "base" else "⚠️ This completed review doesn’t cover the current version."
-                                      if result == "success" else "⚠️ These recorded findings are from a review of a previous version.")
+                            caveat = (check.TARGET_TIP_WARNING
+                                      if movement == "base" else "The current PR commit"
+                                      if movement == "head" else "current target `release`")
                             self.assertGreater(self.visible().index(caveat), self.visible().index(HEADER))
 
     def test_repeat_neither_relabels_nor_backfills_legacy_event(self):
@@ -104,12 +105,12 @@ class StatusTableTests(unittest.TestCase):
                            DETAILS_URL="https://github.com/owner/repo/actions/runs/6")
                 if state != "in_progress":
                     check.best_effort_status(HEAD, state, completed_at="2026-10-07T14:00:00Z")
-                latest = ("**Current attempt:** 🔄 **Running**" if state == "in_progress"
-                          else "**Current attempt:** ❌ **Incomplete**")
-                self.assertLess(self.visible().index(latest), self.visible().index(HEADER))
-                self.assertIn("✅ **Completed**", self.row())
-                self.assertIn("**Last completed review**", self.visible())
-                self.assertTrue(self.row().endswith("| PR opened for review |"))
+                latest = "🔄 **[Running](https://github.com/owner/repo/actions/runs/6)**" if state == "in_progress" else "❌ **Incomplete**"
+                self.assertIn(latest, self.row())
+                self.assertNotIn("✅ **Completed**", self.visible())
+                self.assertIn("**Previous completed review**", self.api.status["body"].split("<details>")[1])
+                self.assertIn("**Review trigger:** PR opened for review", self.api.status["body"])
+                self.assertTrue(self.row().endswith("| Draft marked ready |"))
                 self.assertNotIn("14:00:00Z", self.row())
                 self.finish()
                 self.assertTrue(self.row().endswith("| Draft marked ready |"))
@@ -176,7 +177,7 @@ class StatusTableTests(unittest.TestCase):
                            DETAILS_URL="https://github.com/owner/repo/actions/runs/6")
                 self.assertEqual(check.status_owner(self.api.status)["run"], 6)
                 self.assertEqual(check.status_owner(self.api.status)["kind"], "automatic" if prior_manual else "pull_request_review_comment")
-                self.assertTrue(self.row().endswith("| " + label + " |"))
+                self.assertTrue(self.row().endswith("| " + ("Draft marked ready" if prior_manual else "Manual request") + " |"))
                 self.assertEqual(check.last_completed_review_details(self.api.status)["trigger"], label)
 
     def test_emergency_fallback_preserves_original_event_for_helper(self):
@@ -202,4 +203,4 @@ class StatusTableTests(unittest.TestCase):
                 os.environ["TRIGGER_LABEL"] = "PR opened for review"
                 check.best_effort_status(HEAD, "failure")
                 self.assertTrue(self.row().endswith("| Draft marked ready |"))
-                self.assertIn(check.relative_time(DONE), self.row())
+                self.assertIn(check.relative_time(DONE), self.api.status["body"])

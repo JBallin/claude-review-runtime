@@ -3,7 +3,7 @@ import copy
 import os
 import unittest
 
-from test_claude_review_check import check, HEAD, OTHER
+from test_claude_review_check import check, HEAD, OTHER, MERGE_BASE, NEWER
 import test_presentation_ownership as ownership
 
 DONE = "2026-10-07T13:09:19Z"
@@ -20,12 +20,15 @@ class BaseAdvancePresentationTests(unittest.TestCase):
 
     def assert_completed_result(self, result):
         body = self.api.status["body"]
-        label = "reviewed clean" if result == "success" else "reviewed with findings"
         self.assertIn("## Claude Review", body)
         self.assertNotIn("**Last completed review**", body)
         self.assertIn("✅ **Completed**" if result == "success" else "⚠️ **Findings**", body)
-        self.assertIn(f"**Current commit:** {check.commit_link(HEAD)} on `main` — {label}", body)
-        self.assertIn("**Current baseline:** " + f"{check.commit_link(self.api.base_tip)} — integration not reviewed", body)
+        self.assertIn("| Status | Reviewed commit | Review trigger |", body)
+        self.assertIn(f"**Current target commit:** {check.commit_link(self.api.base_tip)} on `main`", body)
+        self.assertEqual(body.count(check.TARGET_TIP_WARNING), 1)
+        self.assertIn("<!--\n**Reason:** " + check.STATUS_REASONS["base_advanced"] + "\n-->", body)
+        self.assertNotIn("Claude reviewed this unchanged commit", body)
+        self.assertNotIn("**PR commit:**", body)
         self.assertIn(check.STATUS_REASONS["base_advanced"], body)
         self.assertNotIn("Request a new review", body)
         self.assertEqual(check.status_state(self.api.status), "stale")
@@ -41,7 +44,7 @@ class BaseAdvancePresentationTests(unittest.TestCase):
         if "| ✅ **Completed**" in body:
             self.assertIn("**Last completed review**", body)
         self.assertNotIn(" — base advanced", body)
-        self.assertIn(" — not reviewed", body)
+        self.assertNotIn(check.TARGET_TIP_WARNING, body)
 
     def test_completed_result_survives_base_movement_during_or_after_review(self):
         for result in ("success", "action_required"):
@@ -68,6 +71,22 @@ class BaseAdvancePresentationTests(unittest.TestCase):
                     self.assertEqual([item["content"] for item in self.api.reactions.get(self.opening, [])],
                                      ["+1"] if result == "success" else [])
 
+    def test_differing_tips_keep_neutral_copy_and_the_legacy_receipt(self):
+        self.start()
+        self.finish()
+        for observed_tip in (OTHER, MERGE_BASE, NEWER):
+            with self.subTest(observed_tip=observed_tip):
+                self.api.base_tip = observed_tip
+                check.best_effort_status(HEAD, "stale")
+                self.assert_completed_result("success")
+                owner = check.status_owner(self.api.status)
+                self.assertTrue(check.completed_review_for_owner(self.api.status, owner))
+                self.assertEqual(check.terminal_status_reason(self.api.status, owner),
+                                 check.STATUS_REASONS["base_advanced"])
+                visible = self.api.status["body"].split("<details>")[0]
+                self.assertNotIn("advanced", visible)
+                self.assertNotIn("unchanged commit", visible)
+
     def test_changed_head_or_target_ref_remains_stale(self):
         for changed_head in (True, False):
             with self.subTest(changed_head=changed_head):
@@ -85,8 +104,9 @@ class BaseAdvancePresentationTests(unittest.TestCase):
                 check.best_effort_status(self.api.pr["head"]["sha"], "stale")
                 body = self.api.status["body"]
                 self.assertIn("## Claude Review", body)
-                self.assertIn("⚠️ This completed review doesn’t cover the current version.", body)
+                self.assertIn("The current PR commit" if changed_head else "current target `release`", body)
                 self.assertNotIn(" — base advanced", body)
+                self.assertNotIn(check.TARGET_TIP_WARNING, body)
                 self.assertIn(" — not reviewed", body)
                 self.assertEqual(check.status_state(self.api.status), "stale")
 
