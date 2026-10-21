@@ -17,8 +17,8 @@ Reviews run automatically when a PR becomes ready for review. Authorized users
 can also comment `/claude-review` on a PR to request an on-demand review.
 
 A standing status comment is updated as automatic and manual reviews progress.
-Eyes and thumbs-up reactions appear on the PR and on manual review request
-comments. Manual reviews can also post a completion comment on success.
+👀 and 👍 reactions appear on the PR and on manual review request
+comments. Manual reviews post a completion comment on success.
 The review format and flow were inspired by
 [OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
 See the [review guide](docs/review-guide.md) for more details.
