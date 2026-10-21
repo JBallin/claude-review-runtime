@@ -129,6 +129,7 @@ jobs:
           gh api "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA" \
             -H "Accept: application/vnd.github.v3.diff" \
             > "$RUNNER_TEMP/pr-review/diff.patch"
+          DIFF_LINE_COUNT=$(awk 'END { print NR + 0 }' "$RUNNER_TEMP/pr-review/diff.patch")
           MERGE_BASE_SHA=$(gh api "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA?per_page=1" \
             --jq '.merge_base_commit.sha')
           jq -n \
@@ -140,7 +141,8 @@ jobs:
             --arg runtime_sha "$RUNTIME_SHA" \
             --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" \
             --arg head_sha "$HEAD_SHA" \
-            '{number: ($number | tonumber), title: $title, body: $body, base_sha: $base_sha, head_sha: $head_sha, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}' \
+            --argjson diff_line_count "$DIFF_LINE_COUNT" \
+            '{number: ($number | tonumber), title: $title, body: $body, base_sha: $base_sha, head_sha: $head_sha, diff_line_count: $diff_line_count, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}' \
             > "$RUNNER_TEMP/pr-review/pr.json"
           echo "merge_base_sha=$MERGE_BASE_SHA" >> "$GITHUB_OUTPUT"
       - name: Record existing Claude review comments
@@ -157,14 +159,16 @@ jobs:
           python3 "$REVIEW_HELPER" snapshot
           --output "$RUNNER_TEMP/claude-review-evidence/before-comment-ids.json"
       - name: Upload review snapshot
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        # v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: pr-review-snapshot
           path: ${{ runner.temp }}/pr-review/
           if-no-files-found: error
           retention-days: 1
       - name: Upload pre-review comment evidence
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        # v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: claude-review-evidence
           path: ${{ runner.temp }}/claude-review-evidence/
@@ -187,6 +191,7 @@ jobs:
       finding_publication: ${{ steps.verify.outputs.finding_publication }}
     steps:
       - name: Check out repository
+        # v7.0.1
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           # Pin to the event's captured head SHA rather than the default
@@ -200,7 +205,8 @@ jobs:
       - name: Download review snapshot
         # The exact inputs start-check captured; this job never queries the
         # live PR itself.
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        # v8.0.2
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: pr-review-snapshot
           path: ${{ runner.temp }}/pr-review
@@ -214,7 +220,8 @@ jobs:
           fi
       - name: Review pull request
         id: review
-        uses: anthropics/claude-code-action@cab360f6565aa35a51d6ce9e43f1f4287c0a32ea
+        # v1.0.253
+        uses: anthropics/claude-code-action@5eb090f3c3afd701a0672cd32981197ca27688f6
         # Runs any subagent in the foreground, as a backstop to --tools below:
         # a background task lets the run end early on an interim result.
         env:
@@ -227,7 +234,9 @@ jobs:
             and diff path below. Read every line of both files before reviewing;
             if a response is partial, continue with offset and limit until all
             lines have been returned. Truncated or unread content cannot verify
-            a clean review.
+            a clean review. The metadata diff_line_count is the exact numbered
+            line total for the captured diff; continue until returned diff lines
+            cover 1 through that total without gaps.
             Review the pull request described in
             ${{ runner.temp }}/pr-review/pr.json (which includes head_sha,
             the exact commit this review covers) and the diff at
@@ -457,10 +466,21 @@ jobs:
           else
             verdict false "$reason"
           fi
-          # Diagnostics never affect the verdict. Emit only fixed labels/enums,
-          # counts and a partial-view flag; never paths, payloads or transcripts.
+          # Diagnostics are optional: the verdict is already written, and a
+          # five-second subprocess deadline bounds generation. Emit only fixed
+          # labels/enums, bounded integers/ranges and flags; never raw content.
           if [ "${reason:-}" = captured_inputs_not_read ] || [ "${reason:-}" = verified ]; then
-            if diagnostics=$(jq -c --arg metadata "$REVIEW_METADATA_FILE" --arg diff "$REVIEW_DIFF_FILE" \
+            if diagnostics=$(python3 -c '
+          import subprocess
+          import sys
+
+          try:
+              result = subprocess.run(sys.argv[1:], stdout=subprocess.PIPE,
+                                      stderr=subprocess.DEVNULL, timeout=5, check=True)
+              sys.stdout.buffer.write(result.stdout)
+          except (OSError, subprocess.SubprocessError):
+              sys.exit(1)
+          ' jq -c --arg metadata "$REVIEW_METADATA_FILE" --arg diff "$REVIEW_DIFF_FILE" \
               --rawfile metadata_content "$REVIEW_METADATA_FILE" --rawfile diff_content "$REVIEW_DIFF_FILE" '
               def blocks: (.message.content? // []) | if type == "array" then . else [] end;
               def text:
@@ -472,28 +492,75 @@ jobs:
                 elif type == "array" then
                   if all(.[]; .type? == "text" and (.text? | type) == "string") then "text_blocks" else "mixed_blocks" end
                 else "other" end;
+              def request_integer($value):
+                if $value == null then null
+                elif ($value | type) == "number" and $value == ($value | floor)
+                  and $value >= 0 and $value <= 1000000000 then $value
+                else "invalid" end;
+              def ranges($numbers):
+                reduce ($numbers | unique)[] as $number
+                  ([]; if length == 0 or $number > (.[-1].end + 1)
+                    then . + [{start: $number, end: $number}]
+                    else .[-1].end = $number end);
               def stats($uses; $responses; $path; $captured):
-                [$uses[] | select(.name == "Read" and .input.file_path == $path)] as $matching
-                | [$matching[] | .id as $id | $responses[] | select(.tool_use_id == $id)] as $paired
-                | [$paired[] | select(.is_error == null or .is_error == false)] as $successful
-                | [$successful[] | .content | text | split("\n")[]] as $returned
-                | [$returned[] | try capture("^[ \t]*(?<number>[0-9]+)[→\t:](?<text>.*)$") catch empty] as $parsed
-                | (reduce $parsed[] as $line ({}; .[($line.number | tonumber | tostring)] += [$line.text])) as $lines
-                | ($captured | if . == "" then [] else split("\n") | if .[-1] == "" then .[:-1] else . end | map(rtrimstr("\r")) end) as $expected
-                | ([$expected | to_entries[] | . as $line
-                    | select(($lines[($line.key + 1 | tostring)] // [] | index($line.value)) != null)] | length) as $matched
-                | {read_count: ($matching | length), successful_read_count: ($successful | length),
-                   expected_line_count: ($expected | length), matched_line_count: $matched,
-                   missing_line_count: (($expected | length) - $matched),
-                   unparsed_line_count: (($returned | length) - ($parsed | length)),
-                   content_shapes: ([$paired[] | .content | shape] | unique),
-                   partial_view: any($returned[]; (test("^[ \t]*[0-9]+[→\t:]") | not) and contains("PARTIAL view"))};
+                ($captured | if . == "" then [] else split("\n") | if .[-1] == "" then .[:-1] else . end | map(rtrimstr("\r")) end) as $expected
+                | ($expected | length) as $expected_count
+                | [$uses[] | select(.name == "Read" and .input.file_path == $path)] as $matching
+                | [$matching[] as $use
+                    | ($responses[$use.id] // []) as $answers
+                    | [$answers[] | select(.is_error == null or .is_error == false)] as $successful
+                    | [$successful[] | .content | text | split("\n")[]] as $returned
+                    | [$returned[]
+                        | try capture("^[ \t]*(?<number>[0-9]+)[→\t:](?<text>.*)$") catch empty
+                        | .number |= tonumber] as $parsed
+                    | {input: $use.input, responses: $answers, successful: $successful,
+                       returned: $returned, parsed: $parsed}] as $reads
+                | (reduce ($reads[] | .parsed[]) as $line
+                    ({}; if $line.number >= 1 and $line.number <= $expected_count
+                      and $line.text == $expected[$line.number - 1]
+                      then .[($line.number | tostring)] = true else . end)) as $matched
+                | ([range(1; $expected_count + 1) as $number
+                    | select($matched[($number | tostring)] != true) | $number]) as $missing_numbers
+                | (ranges($missing_numbers)) as $gap_ranges
+                # Each response is parsed once. Fold prior line membership
+                # forward instead of rescanning/reparsing all earlier reads.
+                | (reduce $reads[0:16][] as $read ({prior: {}, summaries: []};
+                    [$read.parsed[] | .number | select(. >= 1 and . <= $expected_count)] as $numbers
+                    | (ranges($numbers)) as $returned_ranges
+                    | .prior as $prior
+                    | .summaries += [{
+                        request_offset: request_integer($read.input.offset?),
+                        request_limit: request_integer($read.input.limit?),
+                        response_count: ($read.responses | length),
+                        successful: (($read.successful | length) > 0),
+                        parsed_line_count: ($numbers | length),
+                        overlap_line_count: ([$numbers | unique | .[]
+                          | select($prior[(tostring)] == true)] | length),
+                        returned_range_count: ($returned_ranges | length),
+                        returned_ranges: $returned_ranges[0:16],
+                        returned_ranges_truncated: (($returned_ranges | length) > 16)}]
+                    | reduce $numbers[] as $number (.; .prior[($number | tostring)] = true))
+                    | .summaries) as $read_diagnostics
+                | {read_count: ($matching | length),
+                   successful_read_count: ([$reads[] | .successful | length] | add // 0),
+                   expected_line_count: $expected_count, matched_line_count: ($matched | length),
+                   missing_line_count: ($missing_numbers | length),
+                   unparsed_line_count: ([$reads[] | (.returned | length) - (.parsed | length)] | add // 0),
+                   content_shapes: ([$reads[] | .responses[] | .content | shape] | unique),
+                   partial_view: any($reads[] | .returned[];
+                     (test("^[ \t]*[0-9]+[→\t:]") | not) and contains("PARTIAL view")),
+                   reads: $read_diagnostics,
+                   reads_truncated: (($reads | length) > 16),
+                   gap_range_count: ($gap_ranges | length),
+                   gap_ranges: $gap_ranges[0:16],
+                   gap_ranges_truncated: (($gap_ranges | length) > 16)};
               [.[] | select(.type == "assistant") | blocks[] | select(.type == "tool_use")] as $uses
-              | [.[] | select(.type == "user") | blocks[] | select(.type == "tool_result")] as $responses
+              | (reduce (.[] | select(.type == "user") | blocks[] | select(.type == "tool_result")) as $response
+                  ({}; .[$response.tool_use_id] += [$response])) as $responses
               | {metadata: stats($uses; $responses; $metadata; $metadata_content),
                  diff: stats($uses; $responses; $diff; $diff_content)}
               ' "$EXECUTION_FILE" 2> /dev/null); then
-              printf 'Claude review captured-input coverage: %s\n' "$diagnostics"
+              printf 'Claude review captured-input coverage: %s\n' "$diagnostics" || :
             fi
           fi
 
@@ -527,7 +594,8 @@ jobs:
         # missing snapshot as incomplete evidence and fails closed.
         if: needs.start-check.result == 'success'
         continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        # v8.0.2
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: claude-review-evidence
           path: ${{ runner.temp }}/claude-review-evidence
@@ -730,11 +798,11 @@ jobs:
             verify_presentation_owner || return 0
             observed_patch=$(verify_known_patch) || return 0
             [ "$observed_patch" = "$live_patch" ] || return 0
-            heading='❌ Claude Review incomplete'
+            heading='Claude Review'
             reason='Trusted review tooling was unavailable; the review could not be finalized reliably.'
+            note='If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.'
             if [ "$current_patch" != true ]; then
               state=stale
-              heading='⚠️ Claude Review stale'
               message='The captured head or base was superseded; the current patch is not reviewed by this attempt.'
             elif [ "$1" = failure ]; then
               state=failure
@@ -806,14 +874,33 @@ jobs:
             if [ -n "$reviewed_markers" ]; then
               reviewed_markers="$reviewed_markers"$'\n'
             fi
-            trigger_line=
-            if [ -n "$TRIGGER_LABEL" ]; then
-              trigger_line=$'\n'"**Trigger:** $TRIGGER_LABEL"
+            attempt_metadata=$(printf '%s' "$comment" | python3 -c '
+          import json, re, sys
+          from urllib.parse import quote, unquote
+          owner = json.loads(sys.argv[1])
+          body = json.load(sys.stdin).get("body") or ""
+          prefix = "<!-- claude-review-runtime:attempt-trigger:"
+          values = re.findall(re.escape(prefix) + r"(.*?) -->", body)
+          marker, label = "", "Not recorded"
+          try:
+              if body.count(prefix) == 1 and len(values) == 1:
+                  generation, candidate = json.loads(unquote(values[0]))
+                  allowed = ("PR opened for review", "Draft marked ready") if owner["kind"] == "automatic" else ("Manual request",)
+                  canonical = quote(json.dumps([generation, candidate], separators=(",", ":")), safe="")
+                  if generation == owner["generation"] and candidate in allowed and canonical == values[0]:
+                      marker, label = prefix + canonical + " -->", candidate
+          except (ValueError, TypeError):
+              pass
+          print(json.dumps({"marker": marker, "label": label}))
+          ' "$PRESENTATION_OWNER") || return 0
+            attempt_marker=$(printf '%s' "$attempt_metadata" | jq -r '.marker')
+            accepted_trigger=$(printf '%s' "$attempt_metadata" | jq -r '.label')
+            trigger_line=$'\n'"**Trigger:** $accepted_trigger"
+            if [ -n "$attempt_marker" ]; then
+              reviewed_markers="$attempt_marker"$'\n'"$reviewed_markers"
             fi
             historical_lines=
-            attempt_label='Workflow run'
             if [ "$state" = stale ]; then
-              attempt_label='Attempt workflow run'
               # Historical metadata is informational: validate each field and
               # never fill missing values from the current attempt.
               historical_lines=$(printf '%s' "$reviewed_markers" | python3 -c '
@@ -840,7 +927,13 @@ jobs:
               padding = " " if chr(96) in ref else ""
               code_ref = ticks + padding + ref + padding + ticks
               label = "✅ clean" if result == "success" else "⚠️ findings"
-              print("**Last reviewed (historical):** " + chr(96) + head[:7] + chr(96) + " on " + code_ref + " — " + label)
+              base = field("base-sha", r"[0-9a-f]{40}")
+              url = decoded(field("run-url", r"[A-Za-z0-9_.~%\-]+"))
+              expected = sys.argv[2].rstrip("/") + "/" + sys.argv[1] + "/actions/runs/"
+              if not (url and re.fullmatch(re.escape(expected) + r"[1-9][0-9]*", url)):
+                  url = None
+              reviewed = "[reviewed](" + url + ")" if url and not base else "reviewed"
+              print("**Last " + reviewed + " (historical):** " + chr(96) + head[:7] + chr(96) + " on " + code_ref + " — " + label)
               completed = field("completed-at", r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
               if completed:
                   try:
@@ -849,17 +942,17 @@ jobs:
                       completed = None
               if completed:
                   print("**Last review completed:** <relative-time datetime=" + chr(34) + completed + chr(34) + ">" + completed + "</relative-time>")
-              base = field("base-sha", r"[0-9a-f]{40}")
               if base:
-                  print("**Reviewed baseline:** " + chr(96) + base[:7] + chr(96))
-              url = decoded(field("run-url", r"[A-Za-z0-9_.~%\-]+"))
-              expected = sys.argv[2].rstrip("/") + "/" + sys.argv[1] + "/actions/runs/"
-              if url and re.fullmatch(re.escape(expected) + r"[1-9][0-9]*", url):
-                  print("[Reviewed workflow run](" + url + ")")
+                  reviewed = "[Reviewed](" + url + ")" if url else "Reviewed"
+                  print("**" + reviewed + " baseline:** " + chr(96) + base[:7] + chr(96))
           ' "$REPO" "${GITHUB_SERVER_URL:-https://github.com}") || return 0
             fi
             reviewed_markers="$owner_marker"$'\n''<!-- claude-review-runtime:presentation-owner-phase:terminal -->'$'\n'"$reviewed_markers"
-            captured_line=$'\n'"**Captured commit:** \`$HEAD_SHA\`"$'\n'"**Captured baseline:** \`$BASE_SHA\`"
+            captured_baseline_label='Captured baseline'
+            if [ -n "$DETAILS_URL" ]; then
+              captured_baseline_label="[Captured]($DETAILS_URL) baseline"
+            fi
+            captured_line=$'\n'"**Captured commit:** \`$HEAD_SHA\`"$'\n'"**$captured_baseline_label:** \`$BASE_SHA\`"
             started_line=$(printf '%s' "$PRESENTATION_OWNER" | python3 -c '
           import json, sys
           from datetime import datetime, timezone
@@ -881,8 +974,10 @@ jobs:
                 captured_line="$captured_line"$'\n'"$historical_lines"
               fi
             fi
-            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n**Current commit:** `%s`%s%s\n\n%s\n\n**Reason:** %s\n\n[%s](%s)' \
-              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "${display_head:0:7}" "$trigger_line" "$captured_line" "$message" "$reason" "$attempt_label" "$DETAILS_URL")
+            metadata="**Current commit:** \`${display_head:0:7}\`$trigger_line$captured_line"
+            metadata=${metadata//$'\n'/$'  \n'}
+            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n**Reason:** %s\n**Note:** %s\n\n%s\n\n</details>' \
+              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "$message" "$reason" "$note" "$metadata")
             body=$(jq -n --arg body "$rendered" '{body: $body}')
             verify_presentation_owner || return 0
             observed_patch=$(verify_known_patch) || return 0
@@ -926,9 +1021,9 @@ jobs:
             exit 1
           fi
           summary=$(printf '**Reviewed commit:** `%s`\n\nThe review outcome could not be published because the review tooling was unavailable; treat this commit as not reviewed.\n\n[Workflow run](%s)' "$HEAD_SHA" "$DETAILS_URL")
-          evidence=$(jq -n --arg head "$HEAD_SHA" --arg pr "$PR_NUMBER" --arg base "$BASE_SHA" --arg merge_base "$MERGE_BASE_SHA" \
+          evidence=$(jq -n --arg head "$HEAD_SHA" --arg pr "$PR_NUMBER" --arg base "$BASE_SHA" --arg base_ref "$BASE_REF" --arg merge_base "$MERGE_BASE_SHA" \
             --arg runtime_repository "$RUNTIME_REPOSITORY" --arg runtime_sha "$RUNTIME_SHA" --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" \
-            '{reviewed_sha: $head, pr_number: ($pr | tonumber? // null), base_sha: $base, merge_base_sha: $merge_base, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}')
+            '{reviewed_sha: $head, pr_number: ($pr | tonumber? // null), base_sha: $base, base_ref: $base_ref, merge_base_sha: $merge_base, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}')
           output=$(jq -n --arg summary "$summary" --arg evidence "$evidence" \
             '{title: "Review outcome could not be published", summary: $summary, text: ("```json\n" + $evidence + "\n```")}')
           if [ -n "$CHECK_RUN_ID" ]; then

@@ -469,7 +469,7 @@ class JobStructureTests(unittest.TestCase):
                 "Resolve PR under review",
                 "Capture presentation start",
                 "Check review tooling",
-                "Verify manual base freshness",
+                "Validate manual patch authority",
                 "Start Claude Review check",
                 "Capture PR review snapshot",
             ],
@@ -483,7 +483,7 @@ class JobStructureTests(unittest.TestCase):
 
     def test_fork_evidence_failures_cannot_skip_the_manual_review(self):
         named = steps(job(MANUAL, "start-check"))
-        required = ["Resolve PR under review", "Verify manual base freshness", "Capture PR review snapshot", "Upload review snapshot"]
+        required = ["Resolve PR under review", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
         evidence_only = [
             "Check review tooling",
             "Start Claude Review check",
@@ -653,6 +653,14 @@ class JobStructureTests(unittest.TestCase):
                 self.assertNotIn("gh pr view", review)
                 self.assertNotIn("gh api", review)
                 self.assertIn("name: pr-review-snapshot", review)
+
+    def test_review_prompt_uses_the_captured_diff_line_count_as_its_completion_target(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                prompt = folded(steps(job(path, "review"))["Review pull request"], "prompt", 10)
+                self.assertIn("metadata diff_line_count is the exact numbered line total", prompt)
+                self.assertIn("cover 1 through that total without gaps", prompt)
+                self.assertNotIn("increase", prompt)
 
     def test_status_publication_is_only_in_trusted_jobs(self):
         for path in (AUTOMATIC, MANUAL):
@@ -929,7 +937,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 evidence = json.loads(text.removeprefix("```json\n").removesuffix("\n```"))
                 self.assertEqual(evidence, {
                     "reviewed_sha": HEAD, "pr_number": 7,
-                    "base_sha": "d" * 40, "merge_base_sha": "c" * 40,
+                    "base_sha": "d" * 40, "base_ref": BASE_REF, "merge_base_sha": "c" * 40,
                     "runtime_repository": "example/review-runtime",
                     "runtime_sha": "f" * 40,
                     "runtime_workflow_path": ".github/workflows/claude-review.yml",
@@ -1093,11 +1101,19 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 1)
                 self.assertEqual(self.methods(calls)[-1], "PATCH")
                 repaired = next(call for call in calls if call["method"] == "PATCH" and any("issues/comments/55" in arg for arg in call["args"]))
-                self.assertIn("❌ Claude Review incomplete", repaired["body"]["body"])
-                self.assertIn(HEAD, repaired["body"]["body"])
-                self.assertIn(f"**Current commit:** `{HEAD[:7]}`\n**Trigger:** {label}\n", repaired["body"]["body"])
-                self.assertNotIn("Authority:", repaired["body"]["body"])
-                self.assertNotIn("Check", repaired["body"]["body"])
+                body = repaired["body"]["body"]
+                visible, details = body.split("<details>", 1)
+                self.assertIn("### Claude Review\n", visible)
+                self.assertIn(HEAD, body)
+                self.assertNotIn("**Reason:**", visible)
+                self.assertIn("<summary>ℹ️ Details</summary>\n\n<br/>\n\n", details)
+                self.assertEqual(body.count("<br/>"), 1)
+                reason = "**Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably."
+                note = "**Note:** " + check.INCOMPLETE_NOTE
+                metadata = f"**Current commit:** `{HEAD[:7]}`  \n**Trigger:** Not recorded  \n"
+                self.assertIn(reason + "\n" + note + "\n\n" + metadata, details)
+                self.assertNotIn("Authority:", body)
+                self.assertNotIn("Check", body)
 
     def test_fallback_records_an_encoded_base_ref(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
@@ -1232,6 +1248,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertEqual(check.status_head({"body": repaired}), "b" * 40)
                         self.assertIn(f"**Captured commit:** `{HEAD}`", repaired)
                         self.assertIn("**Reason:**", repaired)
+                        self.assertIn("**Note:** " + check.INCOMPLETE_NOTE, repaired)
+                        self.assertNotIn("**Reason:**", repaired.split("<details>", 1)[0])
                     else:
                         self.assertEqual(len(patches), 1)
                     self.assertEqual(calls[0]["body"]["conclusion"], "failure")
@@ -1252,7 +1270,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         self.assertIn("could not be published", repaired["body"]["body"])
         self.assertNotIn("Authority:", repaired["body"]["body"])
         self.assertIn("authoritative Check result could not be published", repaired["body"]["body"])
-        self.assertIn("**Trigger:** PR opened for review", repaired["body"]["body"])
+        self.assertIn("**Trigger:** Not recorded", repaired["body"]["body"])
 
     def test_fallback_worst_case_fits_its_step_timeout(self):
         for path in (AUTOMATIC, MANUAL):
@@ -1425,6 +1443,33 @@ class CompletionVerifierTests(unittest.TestCase):
                 self.assertEqual(self.verify(stream, path=path, diff=diff), ("true", "verified"))
                 stream[8]["message"]["content"][0]["is_error"] = True
                 self.assertRejected(stream, "captured_inputs_not_read", path=path, diff=diff)
+
+    def test_observed_1793_line_pagination_shapes_preserve_fail_closed_coverage(self):
+        diff = "\n".join(f"+sanitized line {number}" for number in range(1, 1794)) + "\n"
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name, shape="repeated-prefix"):
+                stream = clean_stream()
+                stream[4] = read_result("t2", diff, stop=1496)
+                stream[5:5] = [
+                    tool_use("repeat", "Read", file_path="/captured/diff.patch", offset=1497, limit=297),
+                    read_result("repeat", diff, stop=1496),
+                ]
+                self.assertRejected(stream, "captured_inputs_not_read", path=path, diff=diff)
+
+            with self.subTest(workflow=path.name, shape="correct-continuation"):
+                stream[6] = read_result("repeat", diff, start=1497)
+                self.assertEqual(self.verify(stream, path=path, diff=diff), ("true", "verified"))
+
+            with self.subTest(workflow=path.name, shape="three-reads"):
+                stream = clean_stream()
+                stream[4] = read_result("t2", diff, stop=700)
+                stream[5:5] = [
+                    tool_use("middle", "Read", file_path="/captured/diff.patch", offset=701, limit=796),
+                    read_result("middle", diff, start=701, stop=1496),
+                    tool_use("tail", "Read", file_path="/captured/diff.patch", offset=1497, limit=297),
+                    read_result("tail", diff, start=1497),
+                ]
+                self.assertEqual(self.verify(stream, path=path, diff=diff), ("true", "verified"))
 
     def test_supported_read_rendering_preserves_payload_and_empty_file_evidence(self):
         empty_notice = "<system-reminder>Warning: the file exists but the contents are empty.</system-reminder>"
