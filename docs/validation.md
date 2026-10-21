@@ -5,13 +5,12 @@ branch, which has not been live-API-tested. Offline checks do not establish live
 authentication, model completion, or publication. See the
 [shared setup guide](consumer-workflows.md) for branch selection.
 
-Choose validation based on the upstream changes and remaining risk. Routine
-compatible dependency updates can use required offline checks, independent
-review, and verified adoption in the next normal review. Propose a separate lab
-trial only when those steps leave material risk uncovered, following the
+For compatible dependency updates, use required offline checks, independent
+review, and verified adoption in a normal review. Propose a separate live
+validation run only for material gaps, under the
 [existing approval requirements](../AGENTS.md#scope-and-runtime-adoption).
-Preserve fail-closed safeguards and clearly state unverified behavior; a pin
-update or review using an older Runtime does not prove adoption.
+Preserve fail-closed safeguards and state unverified behavior; changing pins or
+reviewing with an older Runtime does not prove adoption.
 
 ## Offline evidence
 
@@ -57,8 +56,8 @@ The installed OAuth runtime pins are in the
 [manual](../.github/workflows/self-review-manual.yml), and
 [status](../.github/workflows/self-review-status.yml) callers.
 See the [review guide](review-guide.md) for behavior and update precautions.
-Caller adoption does not add live validation; evidence applies only to the
-revisions and configurations exercised.
+Changing caller pins alone does not establish live validation; evidence applies
+only to the revisions and configurations exercised.
 
 ## Remaining boundaries
 
@@ -67,7 +66,13 @@ OAuth with default Anthropic App/OIDC authentication.
 [Verified public-consumer evidence](https://github.com/JBallin/claude-review-runtime/issues/29#issuecomment-5974625017)
 covers one manual review using the
 [installed caller](https://github.com/JBallin/ballin-scripts/blob/729264f35ce52d5605a0b2681b762c85bbe4346e/.github/workflows/claude.yml).
-It does not validate automatic triggers or failure paths. Broader public-consumer
+Newer [automatic-review evidence](https://github.com/JBallin/ballin-scripts/runs/118853407289)
+from Ballin #590 records “Draft marked ready,” verified completion, and success
+with no findings or evidence errors. Its
+[workflow run](https://github.com/JBallin/ballin-scripts/actions/runs/39487997147)
+used Runtime `d85a8b21653d2d3703829f9b49fce447acd57415`; it does not validate
+the upstream pins proposed in [Runtime #78](https://github.com/JBallin/claude-review-runtime/pull/78).
+Failure paths, broader public-consumer
 coverage, other owners, fork behavior, and GitHub Enterprise Server remain
 unvalidated. The automatic entrypoint excludes forks; the manual entrypoint has
 limited fork handling, while this repository's caller gate excludes them. These
@@ -78,10 +83,11 @@ before the trusted helper starts, preventing it from publishing a Check.
 App/OIDC validation can instead skip model execution while the Actions workflow
 succeeds; the review remains incomplete and cannot establish clean completion.
 
-[Issue 9](https://github.com/JBallin/claude-review-runtime/issues/9) tracks a
-specific trusted diagnostic for that provider condition, with the proposed
-caller-visible output in
-[upstream PR 1879](https://github.com/anthropics/claude-code-action/pull/1879).
+[Issue 9](https://github.com/JBallin/claude-review-runtime/issues/9) records the
+deferred trusted diagnostic for that provider condition. It is closed pending
+the caller-visible output proposed in
+[upstream PR 1879](https://github.com/anthropics/claude-code-action/pull/1879),
+which remains open and unmerged.
 A supported upstream revision, reviewed immutable dependency adoption, and tested
 runtime Check/status handling are still required. Until then, unknown causes
 retain the generic incomplete, non-clean result. Missing execution alone cannot
@@ -99,9 +105,12 @@ requirements in place.
 
 An accepted `/claude-review` request captures one patch. A completed review with
 confirmed inline findings produces an action-required Check and retains those
-findings. A clean completed review produces a successful Check and a historical
-completion notice; a clean rerun of the same patch identity adds no duplicate
-notice. Unconfirmed publication produces an incomplete review and no clean notice.
+findings. A clean completed review produces a successful authoritative Check.
+Eligible manual completion may also publish a best-effort historical notice;
+automatic reviews do not publish this notice. Publishing or suppressing it does
+not change the Check's authority. A clean rerun of the same captured patch
+identity adds no duplicate notice. Unconfirmed finding publication produces an
+incomplete review and no clean notice.
 Prior notices remain historical information after findings or a failed rerun;
 consult the current Check and status. Findings remain sticky for the same PR,
 head, and merge base through trusted Check evidence.
