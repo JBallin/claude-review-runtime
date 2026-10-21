@@ -5,42 +5,32 @@
 ![Claude Review Runtime — AI-powered pull-request reviews](docs/assets/readme-hero.jpg)
 
 Built on [Anthropic’s Claude Code Action](https://github.com/anthropics/claude-code-action),
-this project packages a focused Claude review workflow for your repositories.
-Reviews concentrate on significant bugs and correctness issues introduced by the
-change, with precision and actionability as design goals. Reusable workflows
-provide a consistent way to request reviews and follow their progress across
-repositories without maintaining separate review logic in each project.
+Runtime makes review scope and status inspectable: it records the reviewed head
+and base commits and distinguishes current results from stale or incomplete
+review evidence.
 
-## Getting Started
+## Usage
 
-The [consumer setup guide](docs/consumer-workflows.md#first-review-checklist)
-covers installation with a Claude account token or Anthropic API key and Claude
-GitHub App access to your repository. The runtime targets GitHub.com with
-GitHub-hosted Ubuntu runners; the guide explains the prerequisites and validation
-limits for your chosen authentication mode.
+Use a Claude account token or an Anthropic API key for model authentication.
+Follow the [consumer setup guide](docs/consumer-workflows.md#first-review-checklist)
+to install the workflows for your chosen authentication mode.
 
-Once installed, reviews run automatically when an eligible non-draft PR is
-opened or marked ready for review. To review an existing PR or request another
-pass after changes, post `/claude-review` as a PR comment. Automatic reviews
-exclude fork PRs and Dependabot-triggered runs; manual requests require a trusted
-commenter.
+Reviews run automatically when an eligible non-draft PR is opened or a draft is
+marked ready for review. Authorized users can also post `/claude-review` as a PR
+comment to request an on-demand review, including another pass after changes.
 
-Findings appear inline on the reviewed file and line. A shared review-status
-comment shows progress and results for the latest accepted attempt. The
-[review guide](docs/review-guide.md) explains how to interpret results, check
-coverage after changes, and recover incomplete reviews.
+Findings appear inline. A standing review-status comment is updated as the
+review progresses, with 👀 and 👍 reactions on the PR and accepted manual requests
+signaling progress and verified clean completion. A verified-clean manual review
+may also post a separate completion notice. The review format and flow were
+inspired by [OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
+See the [review guide](docs/review-guide.md).
 
-Used by [Ballin](https://github.com/JBallin/ballin-scripts). Its
+## Examples and Alternatives
+
+For a working example, see Ballin’s
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
-and [pull requests](https://github.com/JBallin/ballin-scripts/pulls) show the setup
-and review experience in practice.
+and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 
-## Background and Alternatives
-
-[Anthropic’s Claude Code Action](https://github.com/anthropics/claude-code-action)
-can also be used directly for reviews and other PR/issue tasks.
-[DataDog’s code-review-action](https://github.com/DataDog/code-review-action)
-is another reusable review option.
-
-The review format and flow were inspired by
-[OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
+You can also use [Anthropic’s Claude Code Action](https://github.com/anthropics/claude-code-action)
+directly or [DataDog’s code-review-action](https://github.com/DataDog/code-review-action).
