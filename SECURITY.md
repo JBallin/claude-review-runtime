@@ -8,11 +8,6 @@ Do not post exploit details, credentials, or private project content in public
 issues or PRs. Include the affected runtime SHA and component, expected security
 boundary, impact, and a sanitized reproduction.
 
-## Supported versions
-
-This runtime is experimental, with no commitment to ongoing support or response
-times for any revision.
-
 ## Runtime security boundaries
 
 PR code, comments, and model output are untrusted. Bind reviews to their captured

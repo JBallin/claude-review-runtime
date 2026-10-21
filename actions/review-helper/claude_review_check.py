@@ -9,7 +9,7 @@ Subcommands (configured through environment variables set by the workflow):
   snapshot  record Claude's review-comment IDs on HEAD_SHA before the review
   finalize  map the review outcome to a conclusion and complete the check run
   stale     refresh an existing status comment for a new PR head
-  admit-manual  reject a manual snapshot whose PR base projection is outdated
+  admit-manual  validate a manual snapshot without replacing its captured baseline
 """
 
 import argparse
@@ -37,6 +37,8 @@ STATUS_REVIEWED_BASE_SHA_PREFIX = "<!-- claude-review-runtime:claude-review-last
 STATUS_REVIEWED_GENERATION_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-generation:"
 STATUS_REVIEWED_COMPLETED_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-completed-at:"
 STATUS_REVIEWED_RUN_URL_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-run-url:"
+_TRIGGER_FROM_LABEL = object()
+ATTEMPT_TRIGGER_PREFIX = "<!-- claude-review-runtime:attempt-trigger:"
 STATUS_REVIEWED_TRIGGER_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-trigger:"
 REVIEW_TRIGGERS = {"PR opened for review", "Draft marked ready", "Manual request"}
 STATUS_AUTHOR = "github-actions[bot]"
@@ -49,10 +51,13 @@ STATUS_REASONS = {
     "check_publication_failed": "The authoritative Check result could not be published.",
     "tooling_unavailable": "Trusted review tooling was unavailable; the review could not be finalized reliably.",
     "stale": "The captured head or base was superseded; the current patch is not reviewed by this attempt.",
-    "base_advanced": "The target branch advanced; integration with the current baseline has not been reviewed.",
+    "base_advanced": "The target baseline differs; integration with the current baseline has not been reviewed.",
     "completion_metadata_unverified": "The stored presentation metadata cannot establish a completed result for this attempt.",
 }
+LEGACY_BASE_ADVANCED_REASON = "The target branch advanced; integration with the current baseline has not been reviewed."
+CAPTURED_PATCH_SCOPE = "This review covers the captured patch only; integration with other target baselines is not covered."
 INCOMPLETE_NOTE = "If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected."
+TARGET_TIP_WARNING = "⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed."
 PRESENTATION_SECONDS = 120
 PRESENTATION_DEADLINE = None
 COMPLETION_PREFIX = "<!-- claude-review-runtime:manual-clean-completion:"
@@ -88,9 +93,9 @@ WORST_CASE = {
     "create": (1 + 2 * (ATTEMPTS - 1), 1),
     "snapshot": (ATTEMPTS, 1),
     "finalize": (5 * ATTEMPTS, 5),
-    # Paginated dedup discovery and the live snapshot read may retry; the
-    # completion POST is attempted once because a lost response is ambiguous.
-    "completion": (4 * ATTEMPTS + 1, 4),
+    # Dedup discovery, two owner listings, and three live identity reads may
+    # retry. The completion POST is attempted once; a lost response is ambiguous.
+    "completion": (6 * ATTEMPTS + 1, 6),
     "admit-manual": (3 * ATTEMPTS, 3),
 }
 
@@ -499,14 +504,37 @@ def review_trigger(label, owner):
     return label if automatic == (owner["kind"] == "automatic") else None
 
 
+def attempt_trigger_marker(owner, label):
+    receipt = quote(json.dumps([owner["generation"], label], separators=(",", ":")), safe="")
+    return f"{ATTEMPT_TRIGGER_PREFIX}{receipt} -->"
+
+
+def status_attempt_trigger(comment, owner):
+    """Recover only a canonical receipt from the trusted exact attempt owner."""
+    if not comment or not owner or not owned_status(comment) or status_owner(comment) != owner:
+        return None
+    body = comment.get("body") or ""
+    values = re.findall(re.escape(ATTEMPT_TRIGGER_PREFIX) + r"(.*?) -->", body)
+    if body.count(ATTEMPT_TRIGGER_PREFIX) != 1 or len(values) != 1:
+        return None
+    try:
+        generation, label = json.loads(unquote(values[0]))
+        if (generation == owner["generation"] and review_trigger(label, owner)
+                and attempt_trigger_marker(owner, label) == ATTEMPT_TRIGGER_PREFIX + values[0] + " -->"):
+            return label
+    except (ValueError, TypeError):
+        pass
+    return None
+
+
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
                         last_review_details=None, base_sha=None, trigger_label=None,
                         owner=None, owner_running=None, reason=None, completed_at=None,
-                        completed_owner_verified=False):
+                        completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL):
     """Render trusted informational state without affecting Check authority."""
     messages = {
         "in_progress": "Claude is reviewing this commit.",
-        "action_required": "Claude recorded findings. Assess them in the inline review threads.",
+        "action_required": "Assess the recorded findings in the inline review threads.",
         "failure": "This review did not complete reliably; this commit is not approved by it.",
         "publication_incomplete": "The authoritative Check result could not be published. Treat this commit as not reviewed.",
         "stale": "Current head and base coverage is not established by this attempt.",
@@ -534,27 +562,41 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         and base_sha != owner["base"]
         and reason in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
     )
+    superseded_review = (
+        state == "stale" and check_available and completed_owner_verified
+        and last_review and last_review[:2] != (head_sha, base_ref)
+        and not owner_running and reason == STATUS_REASONS["stale"]
+    )
     if base_advanced:
-        messages["stale"] = (
-            "Claude reviewed this unchanged commit with no findings." if last_review[2] == "success"
-            else "Claude recorded findings on this unchanged commit. Assess them in the inline review threads."
-        )
+        messages["stale"] = ""
         reason = STATUS_REASONS["base_advanced"]
-    elif (state == "stale" and check_available and completed_owner_verified
-          and last_review and last_review[:2] != (head_sha, base_ref)
-          and not owner_running and reason == STATUS_REASONS["stale"]):
-        messages["stale"] = (
-            "⚠️ This completed review doesn’t cover the current version." if last_review[2] == "success"
-            else "⚠️ These recorded findings are from a review of a previous version."
-        )
+    elif superseded_review:
+        if last_review[0] != head_sha:
+            warning_repo = owner["repo"] if owner else env("REPO")
+            messages["stale"] = (
+                f"⚠️ This review covers commit {commit_link(last_review[0], warning_repo)}. "
+                f"The current PR commit {commit_link(head_sha, warning_repo)} has not been reviewed by it."
+            )
+        else:
+            messages["stale"] = (
+                f"⚠️ This review was against {inline_code(last_review[1])}. "
+                f"It does not cover the PR’s current target {inline_code(base_ref)}."
+            )
     lines = [
         STATUS_MARKER,
         f"{STATUS_HEAD_PREFIX}{head_sha} -->",
         f"{STATUS_BASE_REF_PREFIX}{quote(base_ref, safe='')} -->",
         f"{STATUS_STATE_PREFIX}{state} -->",
     ]
+    if attempt_trigger is _TRIGGER_FROM_LABEL:
+        attempt_trigger = review_trigger(trigger_label, owner) if state != "stale" else None
+    else:
+        # Explicit None preserves missing persisted evidence on reconciliation.
+        attempt_trigger = review_trigger(attempt_trigger, owner)
     if owner:
         lines.append(owner_marker(owner))
+        if attempt_trigger:
+            lines.append(attempt_trigger_marker(owner, attempt_trigger))
         running = state == "in_progress" if owner_running is None else owner_running
         lines.append(f"{OWNER_PHASE_PREFIX}{'running' if running else 'terminal'} -->")
     if last_review:
@@ -585,28 +627,21 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
     )
     started_suffix = " started " + relative_time(started) if active and started else ""
+    adverse = state in ("in_progress", "failure", "publication_incomplete")
+    current_attempt = active or incomplete or adverse
+    show_review = last_review is not None and not current_attempt
     lines += ["## Claude Review", ""]
-    if active and last_review:
-        lines += ["**Current attempt:** 🔄 **Running**" + started_suffix, ""]
-    elif incomplete and last_review:
-        lines += ["**Current attempt:** ❌ **Incomplete**", ""]
-    # Failure and running receipts remain ahead of historical completion.
-    # Keep the current attempt explicit when the table contains older history.
     specific_reason = reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
     if state == "stale" and owner_running:
         lines += [f"Claude is reviewing captured commit {commit_link(owner['head'] if owner else head_sha, owner['repo'] if owner else None)}. "
                   "Review coverage of the current head and baseline is not established.", ""]
-    adverse = state in ("in_progress", "failure", "publication_incomplete")
     if adverse and not ((state == "in_progress" and check_available)
                         or (state == "failure" and specific_reason)):
         lines += [messages[state], ""]
-    if last_review:
-        row_status = "✅ **Completed**" if last_review[2] == "success" else "⚠️ **Findings**"
-        if state not in ("success", "action_required") and not (
-                base_advanced or (state == "stale" and check_available and completed_owner_verified
-                                  and last_review[:2] != (head_sha, base_ref)
-                                  and not owner_running and reason == STATUS_REASONS["stale"])):
+    if show_review:
+        if state == "stale" and not (base_advanced or superseded_review):
             lines += ["**Last completed review**", ""]
+        row_status = "✅ **Completed**" if last_review[2] == "success" else "⚠️ **Findings**"
         if completed:
             row_status += " " + relative_time(completed)
         row_commit = last_review[0]
@@ -614,24 +649,24 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         if row_trigger not in REVIEW_TRIGGERS:
             row_trigger = "Not recorded"
     else:
-        row_status = {"in_progress": "🔄 **Running**", "failure": "❌ **Incomplete**",
-                      "publication_incomplete": "❌ **Incomplete**", "stale": "**Not reviewed**"}[state]
-        if state == "stale" and owner_running:
-            row_status = "🔄 **Running**"
-        if active:
-            row_status += started_suffix
+        row_status = "🔄 **Running**" if active else "❌ **Incomplete**" if incomplete else "**Not reviewed**"
+        row_status += started_suffix
         row_commit = owner["head"] if owner else head_sha
-        row_trigger = review_trigger(trigger_label, owner) if state != "stale" else None
-        row_trigger = row_trigger or "Not recorded"
+        # Refresh labels and completed-history triggers cannot identify this attempt.
+        row_trigger = attempt_trigger or "Not recorded"
     repo = owner["repo"] if owner else env("REPO")
-    lines += ["| Status | Commit | Review trigger |", "| --- | --- | --- |",
+    commit_label = "Reviewed commit" if show_review else "Attempt commit" if owner else "PR commit"
+    lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
-    if state != "success" and not adverse and not (state == "stale" and owner_running):
+    if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
         lines += ["", messages[state]]
+    manual_scope = last_review and owner and owner["kind"] != "automatic"
+    if manual_scope and not current_attempt:
+        lines += ["", CAPTURED_PATCH_SCOPE]
+    if state == "stale" and show_review and last_review[2] == "action_required":
+        lines += ["", messages["action_required"]]
     if base_advanced:
-        lines += ["", "⚠️ Integration with the current baseline has not been reviewed."]
-    if state == "stale" and last_review and last_review[2] == "action_required":
-        lines += ["", "Recorded findings remain in the inline review threads."]
+        lines += ["", TARGET_TIP_WARNING]
     attempt_url = (env("DETAILS_URL") if not owner else
                    f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
     historical = last_review is not None and state not in ("success", "action_required")
@@ -641,46 +676,94 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         or (owner and last_review_details.get("generation")
             and last_review_details["generation"] != owner["generation"])
     )
+    history_in_details = last_review is not None and current_attempt
     lines += ["", "<details>", "<summary>ℹ️ Details</summary>", "", "<br/>", ""]
-    if state == "success":
-        lines += ["**Result:** No findings.", ""]
     if reason:
+        # Existing parsers recover this exact receipt from the raw Markdown.
+        # Do not add hard-break whitespace to the Reason line.
+        if base_advanced or superseded_review:
+            lines += ["<!--"]
         lines += [f"**Reason:** {reason}"]
+        if base_advanced or superseded_review:
+            lines += ["-->"]
         if incomplete:
             lines += [f"**Note:** {INCOMPLETE_NOTE}"]
         lines += [""]
-    metadata = [
-        f"**Current commit:** {commit_link(head_sha, repo)}" +
-        (f" on {inline_code(base_ref)} — " +
-         ("reviewed clean" if last_review[2] == "success" else "reviewed with findings")
-         if base_advanced else f" on {inline_code(base_ref)} — not reviewed" if state == "stale" else ""),
-    ]
-    if started:
+    metadata = ["**Current attempt**"] if history_in_details else []
+    if state == "success" or (base_advanced and last_review[2] == "success"):
+        metadata += ["**Result:** No findings."]
+    row_ref = last_review[1] if show_review else owner["base_ref"] if owner else base_ref
+    if (head_sha, base_ref) != (row_commit, row_ref):
+        metadata += [f"**PR commit:** {commit_link(head_sha, repo)} on {inline_code(base_ref)}" +
+                     (" — not reviewed" if state == "stale" else "")]
+    elif not show_review and not owner:
+        metadata += [f"**PR target:** {inline_code(base_ref)}" +
+                     (" — not reviewed" if state == "stale" else "")]
+    if started and not active and (incomplete or separate_attempt):
         label = "Attempt started" if separate_attempt else "Started"
         metadata += [f"**{label}:** {relative_time(started)}"]
+    reviewed_baseline = (last_review_details.get("base_sha"), last_review[1]) if last_review else None
+    displayed_baselines = set()
     if owner:
-        if state == "stale" or separate_attempt:
-            label = "Attempt commit" if separate_attempt else "Captured commit"
-            metadata += [f"**{label}:** {commit_link(owner['head'], repo)}"]
-        label = "Attempt baseline" if separate_attempt else "Captured baseline"
-        metadata += [f"**{label}:** {commit_link(owner['base'], repo)} on {inline_code(owner['base_ref'])}"]
-    if state == "stale" and base_sha:
-        metadata += [f"**Current baseline:** {commit_link(base_sha, repo)} — " +
-                  ("integration not reviewed" if base_advanced else "not reviewed")]
-    if historical and last_review_details.get("base_sha"):
-        metadata += [f"**Reviewed baseline:** {commit_link(last_review_details['base_sha'], repo)} "
-                  f"on {inline_code(last_review[1])}"]
-    lines += ["  \n".join(metadata), ""]
-    if historical:
-        if attempt_url and attempt_url != reviewed_url:
-            lines += [f"[Attempt workflow run]({attempt_url})", ""]
-        if reviewed_url:
-            label = "Attempt and reviewed workflow run" if separate_attempt and attempt_url == reviewed_url else "Reviewed workflow run"
-            lines += [f"[{label}]({reviewed_url})", ""]
-    elif attempt_url:
-        label = "Attempt workflow run" if owner and state == "stale" else "Workflow run"
-        lines += [f"[{label}]({attempt_url})", ""]
-    lines += ["", "</details>"]
+        if owner["head"] not in (head_sha, row_commit):
+            metadata += [f"**Attempt commit:** {commit_link(owner['head'], repo)}"]
+        attempt_baseline = (owner["base"], owner["base_ref"])
+        if attempt_baseline != reviewed_baseline:
+            metadata += [f"**Attempt baseline:** {commit_link(owner['base'], repo)} on {inline_code(owner['base_ref'])}"]
+            displayed_baselines.add(attempt_baseline)
+    previous = []
+    if history_in_details:
+        previous += ["**Previous completed review**",
+                     "**Result:** " + ("No findings." if last_review[2] == "success" else "Findings."),
+                     f"**Reviewed commit:** {commit_link(last_review[0], repo)} on {inline_code(last_review[1])}"]
+        if completed:
+            previous += [f"**Completed:** {relative_time(completed)}"]
+        if last_review_details.get("trigger") in REVIEW_TRIGGERS:
+            previous += [f"**Review trigger:** {last_review_details['trigger']}"]
+    review_metadata = previous if history_in_details else metadata
+    if last_review and last_review_details.get("base_sha"):
+        review_metadata += [f"**Reviewed against:** {commit_link(last_review_details['base_sha'], repo)} "
+                            f"on {inline_code(last_review[1])}"]
+        displayed_baselines.add(reviewed_baseline)
+    elif last_review:
+        review_metadata += [f"**Reviewed target:** {inline_code(last_review[1])}"]
+    if state == "stale" and base_sha and (base_sha, base_ref) not in displayed_baselines:
+        metadata += [f"**Current target commit:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
+    review_url = reviewed_url if historical else attempt_url if last_review else None
+    if review_url:
+        for index, field in enumerate(review_metadata):
+            if field.startswith("**Reviewed against:**") or field.startswith("**Reviewed target:**"):
+                review_metadata[index] = field.replace("**Reviewed ", f"**[Reviewed]({review_url}) ", 1)
+                break
+    attempt_link = attempt_url if not last_review or history_in_details or separate_attempt else None
+    if attempt_link:
+        for label in ("Attempt baseline", "Attempt started", "Started", "Attempt commit"):
+            prefix = f"**{label}:**"
+            index = next((i for i, field in enumerate(metadata) if field.startswith(prefix)), None)
+            if index is not None:
+                word = label.split()[0]
+                metadata[index] = metadata[index].replace(word, f"[{word}]({attempt_link})", 1)
+                break
+        else:
+            if not show_review:
+                # Shared-baseline active attempts already show timing/status in
+                # the table; link that status without adding duplicate metadata.
+                label = "Running" if active else "Incomplete" if incomplete else "Not reviewed"
+                linked_status = row_status.replace(f"**{label}**", f"**[{label}]({attempt_link})**", 1)
+                lines = [line.replace(f"| {row_status} |", f"| {linked_status} |", 1) for line in lines]
+            else:
+                # Legacy history may retain a different attempt URL but no
+                # trusted attempt timing or baseline. Do not invent either.
+                metadata.insert(0, f"**[Attempt]({attempt_link}) status:** Not recorded")
+    if metadata == ["**Current attempt**"]:
+        metadata = []
+    if metadata:
+        lines += ["  \n".join(metadata), ""]
+    if previous:
+        if manual_scope:
+            previous += [CAPTURED_PATCH_SCOPE]
+        lines += ["  \n".join(previous), ""]
+    lines += ["</details>"]
     return "\n".join(lines)
 
 
@@ -896,7 +979,7 @@ def owned_status(comment):
 
 def stale_status_reason(reason):
     stale_reason = STATUS_REASONS["stale"]
-    if reason == STATUS_REASONS["base_advanced"]:
+    if reason in (STATUS_REASONS["base_advanced"], LEGACY_BASE_ADVANCED_REASON):
         return stale_reason
     if reason and (reason == stale_reason or reason.startswith(stale_reason + " ")):
         return reason
@@ -912,6 +995,8 @@ def terminal_status_reason(comment, owner):
     reasons = re.findall(r"^\*\*Reason:\*\* (.+)$", body, re.MULTILINE)
     if phases != ["terminal"] or len(reasons) != 1:
         return None
+    if reasons[0] == LEGACY_BASE_ADVANCED_REASON:
+        return STATUS_REASONS["base_advanced"]
     allowed = set(STATUS_REASONS.values()) | {
         f"{STATUS_REASONS['stale']} {text}" for key, text in STATUS_REASONS.items() if key != "stale"
     }
@@ -1012,12 +1097,14 @@ def direct_base_tip(repo, base_ref):
     return ref["object"]["sha"]
 
 
-def live_pr_identity(repo, pr_number, *, include_base_sha=False, require_projection_match=False):
+def live_pr_identity(repo, pr_number, *, include_base_sha=False, require_projection_match=False,
+                     allow_projection_change=False):
     before = live_pr_projection(repo, pr_number)
     head_sha, base_ref, _ = before
     if include_base_sha:
         base_sha = direct_base_tip(repo, base_ref)
-        if live_pr_projection(repo, pr_number) != before:
+        after = live_pr_projection(repo, pr_number)
+        if (after[:2] != before[:2] if allow_projection_change else after != before):
             raise ValueError("the PR changed while resolving its base branch tip")
         if require_projection_match and before[2] != base_sha:
             raise ValueError("the PR comparison base and direct branch tip disagree")
@@ -1032,14 +1119,15 @@ def cmd_admit_manual():
     try:
         repo, number = env("REPO"), env("PR_NUMBER")
         captured = (env("HEAD_SHA"), env("BASE_REF"), env("BASE_SHA"))
+        if (not number.isdigit() or int(number) <= 0 or not captured[1] or len(captured[1]) > 255
+                or any(not re.fullmatch(r"[0-9a-f]{40}", sha) for sha in (captured[0], captured[2]))):
+            raise ValueError("the captured manual identity is invalid")
         projected = live_pr_projection(repo, number)
-        if projected != captured:
+        if projected[:2] != captured[:2]:
             raise ValueError("the PR no longer matches the captured manual snapshot")
-        tip = direct_base_tip(repo, projected[1])
-        if tip != captured[2]:
-            raise ValueError("the PR comparison base differs from the current base branch tip")
-        if live_pr_projection(repo, number) != projected:
-            raise ValueError("the PR changed during manual freshness admission")
+        direct_base_tip(repo, projected[1])
+        if live_pr_projection(repo, number)[:2] != projected[:2]:
+            raise ValueError("the PR changed during manual admission")
         return 0
     except (GhError, ValueError, KeyError, TypeError) as error:
         print(f"::error::Cannot admit manual review: {error}")
@@ -1099,12 +1187,16 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 return "unavailable"
         existing = find_status_comment(repo, pr_number)
         prior = status_owner(existing)
+        def live_identity(*, require_projection_match=False):
+            return live_pr_identity(repo, pr_number, include_base_sha=True,
+                                    require_projection_match=require_projection_match,
+                                    allow_projection_change=owner["kind"] != "automatic")
         if stale:
             if not prior or (prior["repo"], str(prior["pr"])) != (repo, pr_number):
                 raise ValueError("stale refresh has no verified owner")
             owner = prior
             expected_patch = (head_sha, base_ref)
-            live = live_pr_identity(repo, pr_number, include_base_sha=True)
+            live = live_identity()
             if live[:2] != expected_patch:
                 return
             if ((status_head(existing), status_base_ref(existing)) == expected_patch
@@ -1152,16 +1244,26 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 reason = STATUS_REASONS["incomplete"]
         elif state == "publication_incomplete":
             reason = STATUS_REASONS["check_publication_failed"]
-        projection_must_match = not stale
-        current = lambda: live_pr_identity(repo, pr_number, include_base_sha=True,
-                                          require_projection_match=projection_must_match) == expected_patch
+        manual = owner["kind"] != "automatic"
+        # Only a trusted terminal verdict may create a manual completion signal.
+        # Refresh has no execution result and keeps its no-recreate semantics.
+        manual_clean_finalize = manual and not stale and not acquire and state == "success" and check_available
+        def follow_movement(live):
+            return acquire or prior == owner and (
+                status_owner_running(existing)
+                or manual and live[:2] == (owner["head"], owner["base_ref"])
+            )
+        projection_must_match = not stale and not manual
+        current = lambda: live_identity(require_projection_match=projection_must_match) == expected_patch
         last_review = last_completed_review(existing) if existing else None
         last_review_details = last_completed_review_details(existing)
         completed_owner_verified = (
             state in ("success", "action_required") and check_available
             or stale and completed_review_for_owner(existing, owner)
         )
-        trigger_label = env("TRIGGER_LABEL")
+        attempt_trigger = (review_trigger(env("TRIGGER_LABEL"), owner) if acquire
+                           else status_attempt_trigger(existing, owner))
+        trigger_label = attempt_trigger
         if (stale and not completed_owner_verified and not status_owner_running(existing)
                 and last_review_details.get("generation") == owner["generation"]
                 and reason == STATUS_REASONS["stale"]):
@@ -1181,9 +1283,9 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 stored_time = last_review_details.get("completed_at")
                 if not check_completed_at or stored_time is None:
                     completed_at = stored_time
-        live = live_pr_identity(repo, pr_number, include_base_sha=True)
+        live = live_identity()
         if (live != expected_patch and not stale
-                and (acquire or (prior == owner and status_owner_running(existing)))):
+                and follow_movement(live)):
             # The Check and owner retain their captured patch. Only the visible
             # current identity follows movement; it must never imply approval.
             # The newer-owner gate above still prevents old starts/finalizers
@@ -1192,7 +1294,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 last_review = (head_sha, base_ref, state)
                 last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL"),
                                        "completed_at": completed_at, "generation": owner["generation"],
-                                       "trigger": review_trigger(env("TRIGGER_LABEL"), owner)}
+                                       "trigger": review_trigger(trigger_label, owner)}
             state = "stale"
             reason = stale_status_reason(reason)
             head_sha, base_ref = live[:2]
@@ -1220,22 +1322,22 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 write_output("presentation_outcome", "suppressed_presentation_changed")
             print("::notice::Claude Review presentation suppressed: presentation changed before status publication.")
             return
-        publication_patch = live_pr_identity(repo, pr_number, include_base_sha=True)
+        publication_patch = live_identity()
         if publication_patch == expected_patch and projection_must_match and not current():
             raise ValueError("captured patch authority changed before status publication")
         if publication_patch != expected_patch:
-            if not stale and (acquire or (prior == owner and status_owner_running(existing))):
+            if not stale and follow_movement(publication_patch):
                 if state in ("success", "action_required") and check_available:
                     last_review = (owner["head"], owner["base_ref"], state)
                     last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL"),
                                            "completed_at": completed_at, "generation": owner["generation"],
-                                           "trigger": review_trigger(env("TRIGGER_LABEL"), owner)}
+                                           "trigger": review_trigger(trigger_label, owner)}
                 state = "stale"
                 reason = stale_status_reason(reason)
                 head_sha, base_ref = publication_patch[:2]
                 expected_patch = publication_patch
                 projection_must_match = False
-                if not current():
+                if (live_identity()[:2] != expected_patch[:2] if manual else not current()):
                     raise ValueError("PR identity kept changing before status publication")
             else:
                 if acquire:
@@ -1248,7 +1350,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             trigger_label=trigger_label, owner=owner,
             owner_running=status_owner_running(existing) if stale else acquiring_running if state == "stale" else None,
             reason=reason, completed_at=completed_at,
-            completed_owner_verified=completed_owner_verified)}
+            completed_owner_verified=completed_owner_verified, attempt_trigger=attempt_trigger)}
         published = False
         try:
             if existing:
@@ -1272,10 +1374,18 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             write_output("presentation_owner", json.dumps(owner, separators=(",", ":")))
             write_output("presentation_outcome", "acquired")
         write_output("status_comment_id", confirmed["id"])
+        manual_clean_finalize = (
+            manual_clean_finalize and published and completed_review_for_owner(confirmed, owner)
+            and last_completed_review(confirmed) == (owner["head"], owner["base_ref"], "success")
+        )
+        def signal_current():
+            if manual_clean_finalize:
+                return live_identity()[:2] == (owner["head"], owner["base_ref"])
+            return current()
         def guard(require_patch=True):
-            return (status_publication_identity(find_status_comment(repo, pr_number)) ==
-                    status_publication_identity(confirmed)
-                    and (not require_patch or current()))
+            return ((not require_patch or signal_current())
+                    and status_publication_identity(find_status_comment(repo, pr_number)) ==
+                    status_publication_identity(confirmed))
         desired = desired_pr_reaction(state, check_available) if published else None
         if published and state == "stale":
             if status_owner_running(confirmed):
@@ -1296,11 +1406,19 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 # A refresh may retain a clean historical signal, but cannot
                 # recreate one cleared by a later unsuccessful publication.
                 create = not (stale and desired == "+1")
-                if opening:
+                if manual_clean_finalize:
+                    # A changed head/ref blocks new completion signals, but
+                    # the still-owned attempt must also clear its progress.
+                    require_patch = signal_current()
+                    if guard(require_patch=require_patch):
+                        reconcile_reactions(path, desired,
+                                            lambda: guard(require_patch=require_patch),
+                                            create=create and require_patch)
+                elif opening:
                     if guard():
                         reconcile_reactions(path, desired, lambda: guard(), create=create)
                 elif guard(require_patch=False):
-                    trigger_desired = desired if current() else None
+                    trigger_desired = desired if signal_current() else None
                     reconcile_reactions(path, trigger_desired,
                                         lambda: guard(require_patch=trigger_desired is not None), create=create)
             except Exception as error:
@@ -1324,15 +1442,22 @@ def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_
     return f"{COMPLETION_PREFIX}{encoded} -->"
 
 
-def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url):
+def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url, *, observed_base_sha=None):
+    reviewed = f"[Reviewed]({details_url})" if details_url else "Reviewed"
+    warning = ""
+    observed_tip = ""
+    if observed_base_sha and observed_base_sha != base_sha:
+        warning = f"{TARGET_TIP_WARNING}\n\n"
+        observed_tip = (f"  \n**Observed target commit:** {commit_link(observed_base_sha, repo)} "
+                        f"on {inline_code(base_ref)}")
     return (
         f"{marker}\n"
-        "🎉 Claude review completed with no findings on "
-        f"[`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}).\n\n"
-        "<details>\n<summary>ℹ️ Details</summary>\n\n"
-        f"Compared against {inline_code(base_ref)} at "
-        f"[`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) · "
-        f"[Review run]({details_url})\n\n</details>"
+        "Claude Review: No findings. 🎉\n\n"
+        f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha})\n\n"
+        f"{warning}"
+        "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
+        f"**{reviewed} against:** [`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) "
+        f"on {inline_code(base_ref)}{observed_tip}\n\n</details>"
     )
 
 
@@ -1363,14 +1488,28 @@ def best_effort_manual_completion(head_sha):
             for page in parse_pages(raw) for comment in page
         ):
             return
+        owner = validate_owner(json.loads(env("PRESENTATION_OWNER")))
+        if (owner["kind"] == "automatic" or
+                (owner["repo"], str(owner["pr"]), owner["head"], owner["base_ref"], owner["base"],
+                 str(owner["run"]), str(owner["attempt"])) !=
+                (repo, pr_number, head_sha, base_ref, base_sha, env("GITHUB_RUN_ID"), env("GITHUB_RUN_ATTEMPT"))
+                or details_url != f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{repo}/actions/runs/{owner['run']}"):
+            raise ValueError("the completion owner differs from the executing manual attempt")
+        existing = find_status_comment(repo, pr_number)
+        if (not completed_review_for_owner(existing, owner)
+                or last_completed_review(existing) != (head_sha, base_ref, "success")):
+            raise ValueError("the persisted owner does not establish this clean completion")
         # Read after discovery, immediately before POST. GitHub cannot make
         # this read/write atomic, so the notice describes the captured history
         # and never claims that it covers the PR's current patch.
-        if live_pr_identity(repo, pr_number, include_base_sha=True,
-                            require_projection_match=True) != (head_sha, base_ref, base_sha):
+        live = live_pr_identity(repo, pr_number, include_base_sha=True, allow_projection_change=True)
+        if live[:2] != (head_sha, base_ref):
             print("::notice::Skipping manual completion notice for a superseded review snapshot.")
             return
-        body = completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url)
+        if status_publication_identity(find_status_comment(repo, pr_number)) != status_publication_identity(existing):
+            raise ValueError("presentation changed before manual completion publication")
+        body = completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url,
+                                       observed_base_sha=live[2])
         # Never retry an ambiguous POST. A subsequent clean rerun can discover
         # a notice that was created despite a failed response.
         gh_api(["--method", "POST", path, "--input", "-"], {"body": body})
@@ -1387,6 +1526,9 @@ def summary_lines(head_sha, sentence, *, completed_at=None):
         "",
         sentence,
     ]
+    if env("BASE_REF") and re.fullmatch(r"[0-9a-f]{40}", env("BASE_SHA")):
+        lines += ["", f"**Captured baseline:** {inline_code(env('BASE_REF'))} at `{env('BASE_SHA')}`",
+                  CAPTURED_PATCH_SCOPE]
     if completed := valid_review_timestamp(completed_at):
         lines += ["", f"**Completed:** {relative_time(completed)}"]
     if env("DETAILS_URL"):
@@ -1405,6 +1547,7 @@ def review_identity(head_sha):
         "reviewed_sha": head_sha,
         "pr_number": int(pr_number) if pr_number.isdigit() else pr_number or None,
         "base_sha": env("BASE_SHA") or None,
+        "base_ref": env("BASE_REF") or None,
         "merge_base_sha": env("MERGE_BASE_SHA") or None,
         "runtime_repository": env("RUNTIME_REPOSITORY") or None,
         "runtime_sha": env("RUNTIME_SHA") or None,

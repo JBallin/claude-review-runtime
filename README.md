@@ -42,17 +42,18 @@ progress and may become stale after a patch change. Request a fresh manual revie
 when the diff changes. The [review guide](docs/review-guide.md) explains commands,
 clean-completion notices, failures, trust boundaries, and rollback.
 
-## Validation and status
+The review format and flow were inspired by
+[OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
 
-This is an experimental runtime with no commitment to ongoing support.
-The [validation summary](docs/validation.md) distinguishes tested revisions from
-the deployed callers and remaining gaps.
+## Validation
+
+The [validation summary](docs/validation.md) covers exercised configurations,
+validation choices, and coverage limits.
 The pinned callers include confirmed finding publication and sanitized Read
 coverage diagnostics. A verified Check establishes those runtime contracts; keep
 independent review requirements in place.
 
 Offline evidence includes bounded restoration and recovery regressions.
-The validation summary records the exact
-tested revision and the remaining platform and concurrency limits. Source
-availability does not establish broad public-consumer or other-owner support.
+Source availability does not establish broad public-consumer or other-owner
+support.
 Consumers retain their own pins until a separate reviewed adoption updates them.

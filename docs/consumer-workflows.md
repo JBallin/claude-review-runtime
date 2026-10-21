@@ -12,8 +12,9 @@
    under the branch's exact secret name below. Never commit the credential.
 2. Choose one reviewed, full immutable 40-character SHA from that
    authentication-compatible branch for all three callers; consult the
-   [validation summary](validation.md) for evidence and limits. The `api-key`
-   branch is not live-API-tested; publication alone does not validate a pin.
+   [validation summary](validation.md) for validation choices and coverage limits.
+   The `api-key` branch is not live-API-tested; publication alone does not
+   validate a pin.
 3. [Install the callers](#install-the-callers) as three separate files under
    `.github/workflows/`: [automatic](#automatic-review), [manual](#manual-review),
    and [stale status](#stale-presentation-refresh). Forward only the selected
@@ -62,8 +63,8 @@ The supported platform is GitHub.com with GitHub-hosted Ubuntu runners. The
 runtime-local helper action uses `$/actions/review-helper`, which requires runner
 version 2.336.0 or later. Broader public-consumer coverage, other-owner, fork, and
 GitHub Enterprise Server configurations remain unvalidated. See the
-[validation summary](validation.md) for tested revisions. The runtime is licensed
-under the [MIT License](../LICENSE).
+[validation summary](validation.md) for exercised configurations and coverage
+limits. The runtime is licensed under the [MIT License](../LICENSE).
 
 ## Install the callers
 
