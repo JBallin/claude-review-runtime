@@ -4,7 +4,7 @@
 
 Live consumer reviews have exercised GitHub.com, hosted Ubuntu runners, and
 Claude OAuth with default Anthropic App/OIDC authentication, including automatic
-and manual reviews. The experimental API-key branch has not been live-tested.
+and manual reviews. The API-key branch has not been live-tested.
 Live finding publication has been exercised in a bounded private,
 same-personal-owner configuration. See the [consumer guide](consumer-workflows.md)
 for setup and branch selection.
