@@ -66,12 +66,14 @@ OAuth with default Anthropic App/OIDC authentication.
 [Verified public-consumer evidence](https://github.com/JBallin/claude-review-runtime/issues/29#issuecomment-5974625017)
 covers one manual review using the
 [installed caller](https://github.com/JBallin/ballin-scripts/blob/729264f35ce52d5605a0b2681b762c85bbe4346e/.github/workflows/claude.yml).
-Newer [automatic-review evidence](https://github.com/JBallin/ballin-scripts/runs/118853407289)
-from Ballin #590 records “Draft marked ready,” verified completion, and success
-with no findings or evidence errors. Its
-[workflow run](https://github.com/JBallin/ballin-scripts/actions/runs/39487997147)
-used Runtime `d85a8b21653d2d3703829f9b49fce447acd57415`; it does not validate
-the upstream pins proposed in [Runtime #78](https://github.com/JBallin/claude-review-runtime/pull/78).
+On 2026-10-20, the [Ballin #590 review receipt](https://github.com/JBallin/ballin-scripts/pull/590#issuecomment-6296556598)
+recorded automatic completion after “Draft marked ready,” with no findings.
+The [authoritative Check](https://github.com/JBallin/ballin-scripts/runs/118853407289)
+verified completion without evidence errors; the
+[supporting run](https://github.com/JBallin/ballin-scripts/actions/runs/39487997147)
+used Runtime [`d85a8b2`](https://github.com/JBallin/claude-review-runtime/commit/d85a8b21653d2d3703829f9b49fce447acd57415).
+This historical evidence does not validate the upstream pins proposed in
+[Runtime #78](https://github.com/JBallin/claude-review-runtime/pull/78).
 Failure paths, broader public-consumer
 coverage, other owners, fork behavior, and GitHub Enterprise Server remain
 unvalidated. The automatic entrypoint excludes forks; the manual entrypoint has
