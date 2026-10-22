@@ -51,8 +51,10 @@ The generator uses actual presentation helpers and fixed synthetic fixtures,
 without network, browser, or model calls. CI checks exact bytes and fails on
 missing or stale output; it never regenerates the committed file. Keep behavioral
 regression tests alongside freshness checks. Operational markers are omitted;
-hidden legacy Reason receipts remain for rendering checks. Edit the renderer or
-sample inputs, then regenerate; keep observations out of the generated file.
+hidden legacy Reason receipts remain for rendering checks. Markdown hard breaks
+use equivalent backslashes to avoid trailing whitespace in Git diffs. Edit the
+renderer or sample inputs, then regenerate; keep observations out of the generated
+file.
 
 When a change adds or materially alters a rendered state, add or update
 representative scenarios in the gallery generator and visually inspect the

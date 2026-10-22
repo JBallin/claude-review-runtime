@@ -33,7 +33,7 @@ class PresentationGalleryTests(unittest.TestCase):
         # Keep conservative byte headroom below GitHub's 65,536-character limit.
         self.assertLess(len(body.encode("utf-8")), 60_000)
 
-    def test_each_sample_reuses_helper_output_with_only_markers_removed(self):
+    def test_each_sample_reuses_helper_output_with_only_markers_and_hard_breaks_normalized(self):
         check = gallery.check
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
@@ -45,7 +45,7 @@ class PresentationGalleryTests(unittest.TestCase):
         body = gallery.render_gallery()
         for title, raw in samples:
             with self.subTest(title=title):
-                self.assertIn(gallery.strip_operational_markers(raw), body)
+                self.assertIn(gallery.sample_markdown(raw), body)
                 self.assertTrue("claude-review-runtime:" in raw)
 
     def test_current_findings_completion_has_current_commit_run_and_evidence(self):
@@ -73,7 +73,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** "
                       + check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), details)
         body = gallery.render_gallery()
-        self.assertIn(gallery.strip_operational_markers(raw), body)
+        self.assertIn(gallery.sample_markdown(raw), body)
         self.assertIn("Synthetic inline finding context (separate from the status comment)", body)
         self.assertIn(gallery.SYNTHETIC_FINDING, body)
         self.assertIn("src/cache.py:42", gallery.SYNTHETIC_FINDING)
@@ -95,6 +95,11 @@ class PresentationGalleryTests(unittest.TestCase):
         expected = "## Heading\n\n" + reason + "\nvisible\n<!-- unrelated -->"
         raw = gallery.check.STATUS_MARKER + "\n" + expected
         self.assertEqual(gallery.strip_operational_markers(raw), expected)
+
+    def test_hard_break_normalization_preserves_lines_without_trailing_whitespace(self):
+        raw = gallery.check.STATUS_MARKER + "\nfirst  \nsecond\n"
+        self.assertEqual(gallery.sample_markdown(raw), "first\\\nsecond\n")
+        self.assertTrue(all(line == line.rstrip() for line in gallery.render_gallery().splitlines()))
 
     def test_real_samples_keep_legacy_reason_hidden_and_label_identity_roles(self):
         samples = dict(gallery.gallery_samples())

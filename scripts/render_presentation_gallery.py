@@ -194,6 +194,11 @@ def gallery_samples():
         return samples
 
 
+def sample_markdown(body):
+    """Preserve rendered hard breaks without trailing whitespace in Git diffs."""
+    return strip_operational_markers(body).replace("  \n", "\\\n")
+
+
 def render_gallery():
     sections = ["\n\n".join([
         f"# {HEADING}",
@@ -203,7 +208,7 @@ def render_gallery():
         f"Generated with `{REGENERATE}`. Edit the generator or sample inputs, then regenerate.",
     ])]
     for title, body in gallery_samples():
-        sample_body = strip_operational_markers(body)
+        sample_body = sample_markdown(body)
         sections.append(f"### {title}\n\n{sample_body}")
         if title == FINDINGS_SAMPLE:
             # Findings live in inline threads, outside the status renderer.
