@@ -21,6 +21,8 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: git diff --check "$BASE_SHA...$HEAD_SHA"
+      - name: Check generated review gallery
+        run: python3 -B scripts/render_presentation_gallery.py --check
       - name: Run regression tests
         env:
           PYTHONDONTWRITEBYTECODE: '1'

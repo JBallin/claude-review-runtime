@@ -1,6 +1,5 @@
 """Offline gallery safety and renderer-reuse contracts."""
 
-import argparse
 from contextlib import redirect_stdout
 import importlib.util
 import io
@@ -9,6 +8,7 @@ from pathlib import Path
 import socket
 import subprocess
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
@@ -17,17 +17,16 @@ SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "render_presentati
 spec = importlib.util.spec_from_file_location("presentation_gallery", SCRIPT)
 gallery = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gallery)
-REVISION = "1" * 40
 
 
 class PresentationGalleryTests(unittest.TestCase):
-    def test_deterministic_complete_gallery_fits_one_comment(self):
-        body = gallery.render_gallery(REVISION)
-        self.assertEqual(body, gallery.render_gallery(REVISION))
+    def test_deterministic_complete_gallery(self):
+        body = gallery.render_gallery()
+        self.assertEqual(body, gallery.render_gallery())
         self.assertTrue(body.startswith("# " + gallery.HEADING + "\n"))
-        self.assertIn(f"{gallery.SOURCE_REPOSITORY}/commit/{REVISION}", body)
+        self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
-        self.assertIn("**Not yet inspected.**", body)
+        self.assertNotIn("Visual-QA observations", body)
         self.assertEqual(len(gallery.gallery_samples()), 34)
         for letter in "ABCDEFGHIJKLMNOPQR":
             self.assertIn(f"### {letter} — ", body)
@@ -43,7 +42,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(completion.call_count, 2)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
-        body = gallery.render_gallery(REVISION)
+        body = gallery.render_gallery()
         for title, raw in samples:
             with self.subTest(title=title):
                 self.assertIn(gallery.strip_operational_markers(raw), body)
@@ -73,7 +72,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(check.status_owner({"body": raw})["run"], 5)
         self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** "
                       + check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), details)
-        body = gallery.render_gallery(REVISION)
+        body = gallery.render_gallery()
         self.assertIn(gallery.strip_operational_markers(raw), body)
         self.assertIn("Synthetic inline finding context (separate from the status comment)", body)
         self.assertIn(gallery.SYNTHETIC_FINDING, body)
@@ -81,7 +80,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn("[P2]", gallery.SYNTHETIC_FINDING)
 
     def test_gallery_cannot_be_treated_as_an_owned_record_even_for_bot_author(self):
-        body = gallery.render_gallery(REVISION)
+        body = gallery.render_gallery()
         self.assertNotIn("claude-review-runtime:", body)
         self.assertNotIn("@claude", body)
         self.assertNotIn("@codex", body)
@@ -258,7 +257,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     mock.patch.object(subprocess, "Popen", side_effect=AssertionError("subprocess")), \
                     mock.patch.object(socket, "socket", side_effect=AssertionError("network")), \
                     mock.patch.object(gallery.check, "gh_api", side_effect=AssertionError("publication")):
-                body = gallery.render_gallery(REVISION)
+                body = gallery.render_gallery()
             self.assertEqual(os.environ, before)
             self.assertNotIn("private", body)
         self.assertEqual(os.environ, original)
@@ -267,21 +266,39 @@ class PresentationGalleryTests(unittest.TestCase):
         before = os.environ.copy()
         with mock.patch.object(gallery.check, "status_comment_body", side_effect=RuntimeError("fixture failure")):
             with self.assertRaises(RuntimeError):
-                gallery.render_gallery(REVISION)
+                gallery.render_gallery()
         self.assertEqual(os.environ, before)
 
-    def test_cli_writes_gallery_to_stdout_and_requires_full_sha(self):
+    def test_cli_stdout_write_and_exact_freshness_without_mutation(self):
         with redirect_stdout(io.StringIO()) as output:
-            gallery.main(["--source-revision", REVISION])
-        self.assertEqual(output.getvalue(), gallery.render_gallery(REVISION))
-        for invalid in ("", "main", "a" * 7, "A" * 40, "g" * 40, "a" * 41):
-            with self.subTest(invalid=invalid):
-                with self.assertRaises(argparse.ArgumentTypeError):
-                    gallery.render_gallery(invalid)
-        with redirect_stdout(io.StringIO()), mock.patch("sys.stderr", io.StringIO()):
-            with self.assertRaises(SystemExit) as missing:
-                gallery.main([])
-        self.assertEqual(missing.exception.code, 2)
+            self.assertEqual(gallery.main([]), 0)
+        expected = gallery.render_gallery().encode("utf-8")
+        self.assertEqual(output.getvalue().encode("utf-8"), expected)
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "gallery.md"
+            with mock.patch.object(gallery, "GALLERY", target):
+                for content in (None, b"stale", expected.replace(b"\n", b"\r\n")):
+                    if content is not None:
+                        target.write_bytes(content)
+                    with mock.patch("sys.stderr", io.StringIO()) as error:
+                        self.assertEqual(gallery.main(["--check"]), 1)
+                    self.assertIn(gallery.REGENERATE, error.getvalue())
+                    self.assertEqual(target.read_bytes() if target.exists() else None, content)
+                self.assertEqual(gallery.main(["--write"]), 0)
+                self.assertEqual(target.read_bytes(), expected)
+                self.assertEqual(gallery.main(["--check"]), 0)
+
+    def test_cli_is_stable_under_hostile_ambient_environment(self):
+        expected = gallery.render_gallery().encode("utf-8")
+        for seed in ("1", "123"):
+            env = {"PYTHONHASHSEED": seed, "TZ": "Pacific/Honolulu",
+                   "HOME": "/nonexistent-gallery-home", "GH_TOKEN": "synthetic-secret",
+                   "REPO": "private/secret", "DETAILS_URL": "https://private.invalid",
+                   "GITHUB_SERVER_URL": "https://private.invalid"}
+            result = subprocess.run([sys.executable, "-B", str(SCRIPT)], env=env,
+                                    capture_output=True, check=True)
+            self.assertEqual(result.stdout, expected)
+            self.assertEqual(result.stderr, b"")
 
 
 if __name__ == "__main__":

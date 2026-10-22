@@ -39,17 +39,20 @@ ready without the applicable authorization.
 
 ### Review presentation gallery
 
-Generate the offline, synthetic gallery with the [sample command](scripts/render_presentation_gallery.py):
+Regenerate and check the committed [synthetic gallery](docs/review-presentation-gallery.md)
+with the existing [generator](scripts/render_presentation_gallery.py):
 
 ```sh
-python3 -B scripts/render_presentation_gallery.py --source-revision "$(git rev-parse HEAD)"
+python3 -B scripts/render_presentation_gallery.py --write
+python3 -B scripts/render_presentation_gallery.py --check
 ```
 
-It writes Markdown to stdout using the actual presentation helpers and test
-fixtures. Operational review markers are omitted; representative supported states are
-rendered from those helpers. Hidden legacy Reason receipts remain for rendering
-checks.
-Generation makes no network calls or persistent changes.
+The generator uses actual presentation helpers and fixed synthetic fixtures,
+without network, browser, or model calls. CI checks exact bytes and fails on
+missing or stale output; it never regenerates the committed file. Keep behavioral
+regression tests alongside freshness checks. Operational markers are omitted;
+hidden legacy Reason receipts remain for rendering checks. Edit the renderer or
+sample inputs, then regenerate; keep observations out of the generated file.
 
 When a change adds or materially alters a rendered state, add or update
 representative scenarios in the gallery generator and visually inspect the
@@ -59,27 +62,26 @@ or a new example for every issue.
 
 When emergency workflow presentation changes, also capture synthetic output from
 both workflows through `ToolingFallbackScriptTests.run_fallback` (stubbed GitHub
-calls and temporary fixtures). Append matching outputs as labeled QA adjuncts
-to the same gallery, removing operational markers. This harness is separate
-from the side-effect-free gallery command; do not duplicate fallback templates.
+calls and temporary fixtures). Keep matching outputs as labeled QA adjuncts
+in the PR review evidence, removing operational markers. This harness is separate
+from the gallery generator; do not duplicate fallback templates or append
+hand-edited output to the committed gallery.
 
-After publication is authorized, verify the clean generating checkout matches
-the published PR head and the gallery's full source revision. Publish it as one
-top-level PR comment through the GitHub API/CLI, retain its ID and direct link,
-and update that same comment after presentation changes. If its ID is lost,
-find the unique matching gallery heading and publisher across paginated comments;
-reconcile ambiguity or uncertain writes before creating another comment. Keep
-the payload synthetic and free of reviewer invocation text; publication must
-not invoke Claude or change review state.
+After publication is authorized, verify the generating checkout and committed
+gallery match the exact published PR head. Use the gallery's exact-revision URL
+for provenance, without embedding its own commit SHA in the generated file.
+Link it in the PR description with inspected scenarios, a concise visual-QA
+assessment, and meaningful limitations. Do not paste the full gallery or duplicate
+the Files changed diff into PR comments or the description. Keep all samples
+synthetic and free of reviewer invocation text.
 
-Inspect the rendered PR comment at desktop (about 1280 px) and narrow (about
-390 px) widths with every Details section collapsed and expanded. Check spacing,
-tables, warnings, identity labels, link targets, and hidden-receipt suppression.
-Record observed results, actual widths, and inspected revision in the gallery's
-QA section; reset results after regeneration. Markdown generation alone does
-not complete visual QA. Agent browser inspection needs scoped UI authorization;
-report any blocked browser access or sizing check precisely instead of
-claiming visual QA passed.
+Inspect the rendered committed gallery at desktop (about 1280 px) and narrow
+(about 390 px) widths with every Details section collapsed and expanded. Check
+spacing, tables, warnings, identity labels, link targets, and hidden-receipt
+suppression. Record observed results, actual widths, and inspected revision in
+the PR description. Markdown generation alone does not complete visual QA.
+Agent browser inspection needs scoped UI authorization; report any blocked
+browser access or sizing check precisely instead of claiming visual QA passed.
 
 Include representative desktop and narrow screenshots of changed rendered views
 in the task handoff, identifying the source revision and scenarios shown.
