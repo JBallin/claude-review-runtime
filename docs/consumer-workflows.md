@@ -193,6 +193,8 @@ name: Claude review status
 on:
   pull_request:
     types: [synchronize, edited]
+  push:
+    branches: ["**"]
 
 permissions: {}
 
@@ -207,7 +209,23 @@ jobs:
 
 This entrypoint needs no model secret, OIDC permission, or Check write permission.
 It refreshes existing presentation after head changes and qualifying base
-retargeting edits; it does not create a review when none exists.
+retargeting edits and pushes to their target branch. It does not create a review
+when none exists or rerun Claude. Completed review evidence and exact-patch Checks
+remain unchanged; the existing status explains coverage of the newer baseline.
+
+Target pushes discover only open PRs with that exact base branch, including
+stacked PRs on non-default branches. Discovery is read-only and bounded to 100
+pages of 100 PRs and 120 seconds. More than 256 affected PRs or incomplete discovery
+fails without emitting a partial job matrix. At most four refresh jobs run in
+parallel, each sharing its PR's review queue. Delayed pushes, closed or retargeted
+PRs, and changed presentation owners are rechecked before publication. Status API
+failures remain best effort and appear as workflow warnings; they never change a
+Check verdict. A later qualifying event can retry a missed refresh.
+
+Existing consumers must separately update their status caller to include the
+`push` trigger and select a reviewed runtime revision. Updating a runtime pin
+alone cannot add caller events. This repository's pinned self-review callers
+also require separate adoption; this implementation does not repin them.
 
 ## Permission and failure boundaries
 

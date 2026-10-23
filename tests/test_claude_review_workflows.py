@@ -320,9 +320,10 @@ def start_check_predicate(path):
 
 
 def concurrency_group(path):
-    lines = block(lines_of(path), "concurrency", 0)
-    value = scalar(lines, "group", 2)
-    return folded(lines, "group", 2) if value == ">-" else value
+    indent = 4 if path == STALE else 0
+    lines = block(job(path, "refresh-status") if path == STALE else lines_of(path), "concurrency", indent)
+    value = scalar(lines, "group", indent + 2)
+    return folded(lines, "group", indent + 2) if value == ">-" else value
 
 
 class EligibilityPredicateTests(unittest.TestCase):
