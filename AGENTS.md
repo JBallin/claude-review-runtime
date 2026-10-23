@@ -56,6 +56,13 @@ use equivalent backslashes to avoid trailing whitespace in Git diffs. Edit the
 renderer or sample inputs, then regenerate; keep observations out of the generated
 file.
 
+Review the gallery diff and inspect affected rendered states. When metadata,
+operational markers, or their generation paths change, verify the intended
+semantics against source and focused tests, including evidence not visible in
+the gallery. The gallery deliberately omits operational markers and cannot
+validate them. Focus on the changes; a full audit of unchanged metadata is not
+required for every PR.
+
 When a change adds or materially alters a rendered state, add or update
 representative scenarios in the gallery generator and visually inspect the
 resulting output. Cover genuinely distinct behavior, including relevant
