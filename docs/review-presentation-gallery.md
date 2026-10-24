@@ -140,7 +140,7 @@ Assess the recorded findings in the inline review threads.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -255,7 +255,7 @@ Claude Review: No findings. 🎉
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -287,7 +287,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -375,7 +375,7 @@ Assess the recorded findings in the inline review threads.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -399,7 +399,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -431,7 +431,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -463,7 +463,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -487,7 +487,7 @@ Review completion cannot be established because authoritative Check publication 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -519,7 +519,7 @@ Review completion cannot be established because authoritative Check publication 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -630,7 +630,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-Required review inputs were not fully read. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#incomplete-captured-input-reads).
+Required review inputs were not fully read. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#incomplete-captured-input-reads).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -654,7 +654,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
-Required review inputs were not fully read. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#incomplete-captured-input-reads).
+Required review inputs were not fully read. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#incomplete-captured-input-reads).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -678,7 +678,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ The captured patch changes the review workflow, which may prevent the review from starting. Check the [workflow run](https://github.com/owner/repo/actions/runs/5/attempts/1) for a validation rejection. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+⚠️ The captured patch changes the review workflow, which may prevent the review from starting. Check the [workflow run](https://github.com/owner/repo/actions/runs/5/attempts/1) for a validation rejection. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -704,7 +704,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 Current head and base coverage is not established by this attempt.
 
-⚠️ The captured patch changes the review workflow, which may prevent the review from starting. Check the [workflow run](https://github.com/owner/repo/actions/runs/5/attempts/1) for a validation rejection. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+⚠️ The captured patch changes the review workflow, which may prevent the review from starting. Check the [workflow run](https://github.com/owner/repo/actions/runs/5/attempts/1) for a validation rejection. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -757,7 +757,7 @@ This review covers the captured patch only; integration with other target baseli
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -790,7 +790,7 @@ This review covers the captured patch only; integration with other target baseli
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -847,7 +847,7 @@ This review covers the captured patch only; integration with other target baseli
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | PR opened for review |
 
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>

@@ -60,8 +60,8 @@ STATUS_REASONS = {
 }
 LEGACY_BASE_ADVANCED_REASON = "The target branch advanced; integration with the current baseline has not been reviewed."
 CAPTURED_PATCH_SCOPE = "This review covers the captured patch only; integration with other target baselines is not covered."
-# Recovery links target an already published revision, including #75's guidance.
-RECOVERY_GUIDE = "https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md"
+# Recovery guidance follows main; captured review evidence stays immutable.
+RECOVERY_GUIDE = "https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md"
 INCOMPLETE_RECOVERY = RECOVERY_GUIDE + "#installation-and-incomplete-reviews"
 UNREAD_RECOVERY = RECOVERY_GUIDE + "#incomplete-captured-input-reads"
 TARGET_TIP_WARNING = "⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed."

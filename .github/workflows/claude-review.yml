@@ -800,7 +800,7 @@ jobs:
             [ "$observed_patch" = "$live_patch" ] || return 0
             heading='Claude Review'
             reason='Trusted review tooling was unavailable; the review could not be finalized reliably.'
-            recovery='[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).'
+            recovery='[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).'
             if [ "$current_patch" != true ]; then
               state=stale
               message='The captured head or base was superseded; the current patch is not reviewed by this attempt.'

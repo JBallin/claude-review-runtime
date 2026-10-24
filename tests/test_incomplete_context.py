@@ -135,6 +135,24 @@ class IncompletePresentationTests(unittest.TestCase):
     start = ownership.OwnershipTests.start
     target = ownership.OwnershipTests.target
 
+    def test_recovery_links_follow_main_while_patch_and_run_links_stay_captured(self):
+        owner = self.start()
+        guide = "https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md"
+        for key, anchor in (("incomplete", "installation-and-incomplete-reviews"),
+                            ("unread_inputs", "incomplete-captured-input-reads"),
+                            ("workflow_changed", "installation-and-incomplete-reviews")):
+            with self.subTest(reason=key):
+                body = context.status_comment_body(CAPTURED_HEAD, "main", "failure",
+                                                   owner=owner, reason=context.STATUS_REASONS[key])
+                self.assertIn(guide + "#" + anchor, body.split("<details>", 1)[0])
+                self.assertIn(context.commit_link(CAPTURED_HEAD), body)
+                self.assertEqual(context.status_owner({"body": body}), owner)
+                if key == "workflow_changed":
+                    self.assertIn("https://github.com/owner/repo/actions/runs/5/attempts/1", body)
+        _, _, summary = context.decide("success", "success", [], [], [],
+                                      completion_reason="captured_inputs_not_read")
+        self.assertIn(guide + "#incomplete-captured-input-reads", summary)
+
     def test_unread_input_reason_and_direct_recovery_override_path_context(self):
         for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
             for changed in (True, False, None):

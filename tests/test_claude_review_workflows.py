@@ -1123,6 +1123,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertIn("### Claude Review\n", visible)
                 self.assertIn(HEAD, body)
                 self.assertNotIn("**Reason:**", visible)
+                self.assertIn("https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md"
+                              "#installation-and-incomplete-reviews", visible)
                 self.assertIn("<summary>ℹ️ Details</summary>\n\n<br/>\n\n", details)
                 self.assertEqual(body.count("<br/>"), 1)
                 reason = "**Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably."
