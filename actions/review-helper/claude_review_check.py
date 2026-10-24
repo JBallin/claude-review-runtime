@@ -8,7 +8,9 @@ Subcommands (configured through environment variables set by the workflow):
   create    open an in_progress check run for HEAD_SHA
   snapshot  record Claude's review-comment IDs on HEAD_SHA before the review
   finalize  map the review outcome to a conclusion and complete the check run
-  stale     refresh an existing status comment for a new PR head
+  stale     refresh an existing status comment for a changed PR snapshot
+  discover-target  list bounded open PRs targeting a pushed branch
+  refresh-target   refresh one affected PR without executing a review
   admit-manual  validate a manual snapshot without replacing its captured baseline
 """
 
@@ -1081,6 +1083,8 @@ def live_pr_projection(repo, pr_number):
     base_sha = pr["base"]["sha"]
     if not isinstance(base_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", base_sha):
         raise ValueError("the live PR comparison base SHA is invalid")
+    if env("PUSH_REF") and (pr.get("state") != "open" or base_ref != env("PUSH_REF")):
+        raise ValueError("the PR is closed or no longer targets the pushed branch")
     return head_sha, base_ref, base_sha
 
 
@@ -1188,9 +1192,12 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
         existing = find_status_comment(repo, pr_number)
         prior = status_owner(existing)
         def live_identity(*, require_projection_match=False):
-            return live_pr_identity(repo, pr_number, include_base_sha=True,
-                                    require_projection_match=require_projection_match,
-                                    allow_projection_change=owner["kind"] != "automatic")
+            identity = live_pr_identity(repo, pr_number, include_base_sha=True,
+                                        require_projection_match=require_projection_match,
+                                        allow_projection_change=owner["kind"] != "automatic")
+            if env("PUSH_REF") and identity[2] != env("PUSH_SHA"):
+                raise ValueError("the target push was superseded")
+            return identity
         if stale:
             if not prior or (prior["repo"], str(prior["pr"])) != (repo, pr_number):
                 raise ValueError("stale refresh has no verified owner")
@@ -1943,6 +1950,81 @@ def cmd_finalize():
     return 0
 
 
+# GitHub matrices allow 256 jobs. Refuse overflow rather than silently omit PRs.
+TARGET_PR_LIMIT = 256
+TARGET_PAGE_LIMIT = 100
+
+
+def target_push_is_current():
+    ref, sha = env("PUSH_REF"), env("PUSH_SHA")
+    if (not ref or len(ref) > 255 or not re.fullmatch(r"[0-9a-f]{40}", sha)
+            or sha == "0" * 40):
+        raise ValueError("a branch push ref and non-deletion SHA are required")
+    return direct_base_tip(env("REPO"), ref) == sha
+
+
+def cmd_discover_target():
+    """Read-only, bounded discovery; never emit a partial matrix on failure."""
+    global PRESENTATION_DEADLINE
+    PRESENTATION_DEADLINE = time.monotonic() + PRESENTATION_SECONDS
+    try:
+        if not target_push_is_current():
+            write_output("prs", "[]")
+            return 0
+        numbers = set()
+        for page in range(1, TARGET_PAGE_LIMIT + 1):
+            query = urlencode({"state": "open", "base": env("PUSH_REF"),
+                               "per_page": 100, "page": page})
+            raw = with_retries(lambda: gh_api([f"repos/{env('REPO')}/pulls?{query}"]),
+                               "Discovering affected open PRs")
+            items = json.loads(raw, object_pairs_hook=unique_json_object)
+            if not isinstance(items, list) or len(items) > 100:
+                raise ValueError("invalid open PR page")
+            for pr in items:
+                number = pr["number"]
+                if type(number) is not int or number <= 0:
+                    raise ValueError("invalid PR number")
+                # Do not trust the API filter alone, including prefix-like refs.
+                if (pr["state"] == "open" and pr["base"]["ref"] == env("PUSH_REF")
+                        and pr["base"]["repo"]["full_name"] == env("REPO")):
+                    numbers.add(number)
+                if len(numbers) > TARGET_PR_LIMIT:
+                    raise ValueError("affected PR fan-out exceeds 256; no refresh jobs emitted")
+            if len(items) < 100:
+                break
+        else:
+            raise ValueError("open PR pagination exceeded its bound; no refresh jobs emitted")
+        # Another push during discovery makes this event obsolete.
+        write_output("prs", json.dumps(sorted(numbers)) if target_push_is_current() else "[]")
+        return 0
+    except (GhError, ValueError, KeyError, TypeError) as error:
+        print(f"::error::Could not discover target-branch refreshes: {error}")
+        return 1
+    finally:
+        PRESENTATION_DEADLINE = None
+
+
+def cmd_refresh_target():
+    """Resolve the queued PR live; existing ownership guards handle publication."""
+    global PRESENTATION_DEADLINE
+    PRESENTATION_DEADLINE = time.monotonic() + PRESENTATION_SECONDS
+    try:
+        number = env("PR_NUMBER")
+        if not number.isdigit() or int(number) <= 0:
+            raise ValueError("invalid PR number")
+        if not target_push_is_current():
+            print("::notice::Target push was superseded; skipping status refresh.")
+            return 0
+        head, base, _ = live_pr_projection(env("REPO"), number)
+        os.environ.update(HEAD_SHA=head, BASE_REF=base)
+    except (GhError, ValueError, KeyError, TypeError) as error:
+        print(f"::warning::Could not admit target-branch refresh: {error}")
+        return 0
+    finally:
+        PRESENTATION_DEADLINE = None
+    return cmd_stale()
+
+
 def cmd_stale():
     head_sha, base_ref = env("HEAD_SHA"), env("BASE_REF")
     if not re.fullmatch(r"[0-9a-f]{40}", head_sha) or not base_ref or not env("PR_NUMBER"):
@@ -1970,6 +2052,8 @@ def main(argv=None):
     snapshot.add_argument("--output", required=True)
     sub.add_parser("finalize")
     sub.add_parser("stale")
+    sub.add_parser("discover-target")
+    sub.add_parser("refresh-target")
     sub.add_parser("admit-manual")
     args = parser.parse_args(argv)
     if args.command == "create":
@@ -1980,6 +2064,10 @@ def main(argv=None):
         except GhError as error:
             print(f"::error::Could not record existing Claude review comments: {error}")
             return 1
+    if args.command == "discover-target":
+        return cmd_discover_target()
+    if args.command == "refresh-target":
+        return cmd_refresh_target()
     if args.command == "stale":
         return cmd_stale()
     if args.command == "admit-manual":

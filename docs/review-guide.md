@@ -22,8 +22,8 @@ the executing runtime's repository, SHA, and workflow path.
 | [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted exact `/claude-review` command followed by a read-only check for an open, non-draft, same-repository PR. |
 | [Status](../.github/workflows/self-review-status.yml) | PR `synchronize`, `edited` | Open, same-repository PRs; refreshes existing presentation after head changes or base-ref retargeting. |
 
-Stacked PRs are eligible; the callers do not restrict the base branch. Status
-refresh does not run Claude, change the authoritative exact-head Check, or
+Stacked PRs are eligible; the callers do not restrict the base branch. The pinned
+status caller does not run Claude, change the authoritative exact-head Check, or
 watch base-tip advancement on the same branch. Request a new review when the
 diff changes, and assess whether a changed base invalidates previous evidence.
 
@@ -220,10 +220,10 @@ Status-only refresh can retain a historical 👍 but cannot recreate a removed o
 Freshness checks read the exact encoded branch ref directly and validate its
 ref name, commit type, and full SHA, with PR identity reads around that lookup.
 A status refresh can observe this movement
-even if the PR API still reports the old comparison base. This is not a watcher
-for base-branch pushes, and separate API reads and writes are not atomic:
-movement after the last read remains possible. Unavailable branch authority
-suppresses new clean presentation rather than strengthening the Check result.
+even if the PR API still reports the old comparison base. Separate API reads
+and writes are not atomic: movement after the last read remains possible.
+Unavailable branch authority suppresses new clean presentation rather than
+strengthening the Check result.
 Stale refresh preserves ownership metadata and
 affects only current PR presentation. Reaction and status publication are best-effort: API failures or
 unverifiable ownership can leave stale or missing reactions. Consult the current
@@ -250,10 +250,12 @@ The reusable automatic entrypoint excludes drafts, fork pull requests, and
 Dependabot-triggered runs. Its manual entrypoint supports top-level fork requests
 with best-effort Check publication limits; this repository's additional caller
 gate excludes forks. Fork behavior remains unvalidated in this prototype. The
-status entrypoint refreshes existing presentation after head changes or base-ref
-retargeting; it does not initiate a model review or watch base-tip advancement
-on the same branch. Consumers must assess whether a changed base invalidates
-previous review evidence.
+status entrypoint refreshes existing presentation after head changes, base-ref
+retargeting, or target-branch pushes forwarded by its caller; it never initiates
+a model review. This repository's pinned status caller has not adopted push
+refreshes. Consumers need a separate [caller update](consumer-workflows.md#stale-presentation-refresh)
+to enable them and must assess whether a changed base invalidates previous review
+evidence.
 
 ## Finding publication
 
