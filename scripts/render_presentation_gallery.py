@@ -153,6 +153,18 @@ def gallery_samples():
             kind="issue_comment", target=11, head=fixtures.OTHER, base=fixtures.NEWER,
             run=6, started=STARTED + 600_000_000_000,
         )
+        samples += [
+            ("S — Required inputs unread, automatic attempt", status(
+                "failure", reason=check.STATUS_REASONS["unread_inputs"])),
+            ("T — Required inputs unread, manual attempt with workflow changes", status(
+                "failure", head=fixtures.OTHER, owner=manual_owner, trigger_label="Manual request",
+                reason=check.STATUS_REASONS["unread_inputs"])),
+            ("U — Relevant review workflow changed, cause unknown", status(
+                "failure", reason=check.STATUS_REASONS["workflow_changed"])),
+            ("V — Workflow-change context retained for a superseded attempt", status(
+                "stale", head=fixtures.OTHER, owner_running=False,
+                reason=check.stale_status_reason(check.STATUS_REASONS["workflow_changed"]))),
+        ]
         for letter, state, result in (("H", "in_progress", "success"),
                                       ("I", "failure", "action_required"),
                                       ("K", "publication_incomplete", "success")):

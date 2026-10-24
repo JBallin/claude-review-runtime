@@ -599,7 +599,8 @@ class FinalizeTests(ScriptTestCase):
         self.assertIn(f'"reviewed_sha": "{HEAD}"', body["output"]["text"])
 
     def test_missing_or_unverified_completion_publishes_failure(self):
-        for verdict, reason in (("", ""), ("false", "background_task_activity"), ("TRUE", "verified")):
+        for verdict, reason in (("", ""), ("false", "background_task_activity"), ("TRUE", "verified"),
+                                ("true", "captured_inputs_not_read"), ("true", "missing_execution_file")):
             with self.subTest(verdict=verdict):
                 self.log.unlink(missing_ok=True)
                 result = self.finalize(
@@ -611,7 +612,8 @@ class FinalizeTests(ScriptTestCase):
                 body = self.published()
                 self.assertEqual(body["conclusion"], "failure")
                 self.assertEqual(body["output"]["title"], "Review completion could not be verified")
-                self.assertIs(evidence_of(body)["completion_verified"], False)
+                # Preserve raw verifier evidence even when its fields conflict.
+                self.assertIs(evidence_of(body)["completion_verified"], verdict == "true")
                 self.assertNotIn("**Completed:**", body["output"]["summary"])
 
     def test_rejected_tool_or_input_evidence_cannot_publish_a_clean_check(self):
@@ -626,7 +628,8 @@ class FinalizeTests(ScriptTestCase):
                 self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
                 body = self.published()
                 self.assertEqual(body["conclusion"], "failure")
-                self.assertEqual(body["output"]["title"], "Review completion could not be verified")
+                self.assertEqual(body["output"]["title"], "Review inputs were not fully read"
+                                 if reason == "captured_inputs_not_read" else "Review completion could not be verified")
                 evidence = evidence_of(body)
                 self.assertEqual(evidence["start_check_result"], "success")
                 self.assertEqual(evidence["review_job_result"], "success")
@@ -634,7 +637,8 @@ class FinalizeTests(ScriptTestCase):
                 self.assertIs(evidence["completion_verified"], False)
                 self.assertEqual(evidence["completion_reason"], reason)
                 self.assertEqual(evidence["claude_finding_comment_ids"], [])
-                self.assertIn(reason, body["output"]["summary"])
+                self.assertIn(check.STATUS_REASONS["unread_inputs"] if reason == "captured_inputs_not_read"
+                              else reason, body["output"]["summary"])
 
     def test_findings_from_an_unverified_run_are_recorded_and_stay_sticky(self):
         first = self.finalize(
@@ -1652,7 +1656,7 @@ class StatusCommentTests(ScriptTestCase):
                 self.assertIn(phrase, body)
                 if expected == "failure":
                     self.assertNotIn("**Reason:**", body.split("<details>", 1)[0])
-                    self.assertIn("**Note:** " + check.INCOMPLETE_NOTE, body)
+                    self.assertNotIn("**Note:**", body)
                 else:
                     self.assertNotIn("**Note:**", body)
                 self.assertIn(HEAD, body)
@@ -1680,7 +1684,7 @@ class StatusCommentTests(ScriptTestCase):
                 status = {"body": body}
                 self.assertEqual(check.status_state(status), "publication_incomplete")
                 self.assertIn("**Reason:** " + check.STATUS_REASONS["check_publication_failed"], body)
-                self.assertIn("**Note:** " + check.INCOMPLETE_NOTE, body)
+                self.assertNotIn("**Note:**", body)
                 self.assertNotIn(check.STATUS_REASONS["incomplete"], body)
                 self.assertFalse(check.status_owner_running(status))
                 self.assertEqual(check.status_owner(status), presentation_owner())

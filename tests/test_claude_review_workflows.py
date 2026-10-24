@@ -1126,9 +1126,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertIn("<summary>ℹ️ Details</summary>\n\n<br/>\n\n", details)
                 self.assertEqual(body.count("<br/>"), 1)
                 reason = "**Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably."
-                note = "**Note:** " + check.INCOMPLETE_NOTE
                 metadata = f"**Current commit:** `{HEAD[:7]}`  \n**Trigger:** Not recorded  \n"
-                self.assertIn(reason + "\n" + note + "\n\n" + metadata, details)
+                self.assertIn(reason + "\n\n" + metadata, details)
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("Check", body)
 
@@ -1265,7 +1264,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertEqual(check.status_head({"body": repaired}), "b" * 40)
                         self.assertIn(f"**Captured commit:** `{HEAD}`", repaired)
                         self.assertIn("**Reason:**", repaired)
-                        self.assertIn("**Note:** " + check.INCOMPLETE_NOTE, repaired)
+                        self.assertNotIn("**Note:**", repaired)
                         self.assertNotIn("**Reason:**", repaired.split("<details>", 1)[0])
                     else:
                         self.assertEqual(len(patches), 1)

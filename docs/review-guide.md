@@ -51,10 +51,10 @@ The exact-SHA `Claude Review` Check is authoritative. The stable workflow-owned
 status comment and opening-post reactions present progress, clean completion,
 findings, failure, and stale state. One shared status comment shows the latest
 accepted attempt, including its captured head/base and workflow run. Checks and
-workflow runs retain earlier attempts. Incomplete and cancelled reviews include
-a reason inside Details. An incomplete presentation also includes the general
-workflow-change note; it is context about a known validation limitation, not a
-diagnosis of that attempt. A comment API or permission failure is reported in
+workflow runs retain earlier attempts. Incomplete and cancelled reviews show
+a concise explanation and recovery link above Details. Verified unread inputs
+take precedence over workflow-change context. Details retain the reason receipt
+and captured attempt identity. A comment API or permission failure is reported in
 the Check/run when publication is possible. Accepted manual requests also receive
 runtime reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
@@ -295,6 +295,17 @@ trusted `Claude Review` Check remains incomplete or failed, and required review
 remains unsatisfied. This condition does not mean every first run fails or every
 PR changing a workflow is unreviewable.
 
+For an incomplete attempt, the status may warn that its captured patch changes
+the review workflow. This is context to investigate, not proof of rejection.
+The check uses the actual caller from that run/attempt, the executing Runtime
+workflow path, and the captured base/head comparison, including caller pin
+changes. Unrelated workflow changes do not produce the warning. Missing or
+conflicting run identity, unavailable path data, or a comparison at GitHub's
+300-file limit keeps the generic explanation. This optional lookup does not
+expand token permissions; inaccessible run metadata also keeps the generic
+explanation. A later status refresh preserves the original attempt's reason
+rather than attributing current workflow changes to it.
+
 Reconcile the automatic review's Check and workflow run before requesting
 recovery. After a confirmed caller-validation rejection, use the already deployed
 trusted manual caller only when no applicable review request is completed or
@@ -302,6 +313,15 @@ pending. Follow its documented command and verify the captured head, base, and
 executing Runtime revision in the resulting Check and workflow run. A pin update
 alone does not require manual review; this recovery applies to the confirmed
 rejection, not every caller change.
+
+Distinguish the PR's proposed pin from the caller and Runtime actually executing
+each attempt. Inspect the linked run's caller and referenced workflows, then
+the Check's `runtime_repository`, `runtime_sha`, and `runtime_workflow_path`.
+A deployed manual caller can execute its previously installed Runtime while
+reviewing the proposed patch. A clean review through that older revision does
+not establish live adoption of the proposed pin. Automatic and manual attempts
+can execute different revisions; neither recovery nor use of the old revision
+is guaranteed for every pin change or authentication setup.
 
 A skipped action or successful workflow without verified model completion is
 not a Claude review. Do not suppress the incomplete Check or bypass it. Keep an

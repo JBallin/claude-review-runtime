@@ -27,7 +27,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 34)
+        self.assertEqual(len(gallery.gallery_samples()), 38)
         for letter in "ABCDEFGHIJKLMNOPQR":
             self.assertIn(f"### {letter} — ", body)
         # Keep conservative byte headroom below GitHub's 65,536-character limit.
@@ -38,7 +38,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 32)
+        self.assertEqual(status.call_count, 36)
         self.assertEqual(completion.call_count, 2)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
@@ -204,8 +204,8 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
                     self.assertNotIn(reviewed, current)
                     self.assertNotIn(attempt, previous)
-                elif title.startswith(("E —", "K —", "L —")):
-                    url = reviewed if title.startswith("E —") else attempt
+                elif title.startswith(("E —", "K —", "L —", "S —", "T —", "U —", "V —")):
+                    url = reviewed if title.startswith(("E —", "S —", "U —", "V —")) else attempt
                     self.assertIn(f"**[Attempt]({url}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
                 elif title.startswith("M —"):
@@ -213,6 +213,26 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertNotIn("[Reviewed]", details)
                 else:
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", details)
+
+    def test_incomplete_explanations_are_visible_and_keep_diagnostics_collapsed(self):
+        for title, body in gallery.gallery_samples():
+            if not title.startswith(("S —", "T —", "U —", "V —")):
+                continue
+            visible, details = body.split("<details>", 1)
+            with self.subTest(title=title):
+                self.assertIn("❌ **Incomplete**", visible)
+                self.assertIn("Recovery guidance]", visible)
+                self.assertIn("**Reason:**", details)
+                self.assertNotIn("**Reason:**", visible)
+                self.assertNotIn("**Note:**", body)
+                if title.startswith(("S —", "T —")):
+                    self.assertIn("Required review inputs were not fully read.", visible)
+                    self.assertIn("#incomplete-captured-input-reads", visible)
+                    self.assertNotIn("validation rejection", body)
+                else:
+                    self.assertIn("may prevent the review from starting", visible)
+                    self.assertIn("/actions/runs/5/attempts/1", visible)
+                    self.assertIn("cause of the incomplete review is unknown", details)
 
     def test_edge_samples_keep_plain_headings_and_exact_run_association(self):
         run = "https://github.com/owner/repo/actions/runs/5"
