@@ -6,7 +6,9 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 ---
 
-### A — Clean completion, matching baseline
+<a id="current-clean"></a>
+
+### 1 — Clean completion, matching baseline
 
 ## Claude Review
 
@@ -26,7 +28,9 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 ---
 
-### A2 — Current findings completion, matching baseline
+<a id="current-findings"></a>
+
+### 2 — Current findings completion, matching baseline
 
 ## Claude Review
 
@@ -51,7 +55,9 @@ Assess the recorded findings in the inline review threads.
 
 ---
 
-### B — Clean completion, changed target branch
+<a id="baseline-clean"></a>
+
+### 3 — Clean completion, changed target branch
 
 ## Claude Review
 
@@ -78,7 +84,9 @@ Assess the recorded findings in the inline review threads.
 
 ---
 
-### C — Findings, changed target branch
+<a id="baseline-findings"></a>
+
+### 4 — Findings, changed target branch
 
 ## Claude Review
 
@@ -106,7 +114,9 @@ Assess the recorded findings in the inline review threads.
 
 ---
 
-### D — PR commit changed after clean completion
+<a id="changed-head"></a>
+
+### 5 — PR commit changed after clean completion
 
 ## Claude Review
 
@@ -132,7 +142,9 @@ Assess the recorded findings in the inline review threads.
 
 ---
 
-### E — Incomplete attempt without completed history
+<a id="incomplete-unknown"></a>
+
+### 6 — Incomplete attempt without completed history
 
 ## Claude Review
 
@@ -156,473 +168,9 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 ---
 
-### F — Compact clean completion, matching baseline
+<a id="unread-automatic"></a>
 
-Claude Review: No findings. 🎉
-
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### G — Compact clean completion, differing baseline
-
-Claude Review: No findings. 🎉
-
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
-
-⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed.
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Observed target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`
-
-</details>
-
----
-
-### H — Running attempt with older completed history: clean
-
-## Claude Review
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Current attempt**\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-**Previous completed review**\
-**Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
-**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
-**Review trigger:** PR opened for review\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### H — Running attempt with older completed history: findings
-
-## Claude Review
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Current attempt**\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-**Previous completed review**\
-**Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
-**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
-**Review trigger:** PR opened for review\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### I — Incomplete attempt with older completed history: clean
-
-## Claude Review
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Reason:** The review did not complete with reliable execution and finding evidence.
-
-**Current attempt**\
-**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-**Previous completed review**\
-**Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
-**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
-**Review trigger:** PR opened for review\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### I — Incomplete attempt with older completed history: findings
-
-## Claude Review
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Reason:** The review did not complete with reliable execution and finding evidence.
-
-**Current attempt**\
-**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-**Previous completed review**\
-**Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
-**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
-**Review trigger:** PR opened for review\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### J — Retargeted provenance: clean
-
-## Claude Review
-
-| Status | Reviewed commit | Review trigger |
-| --- | --- | --- |
-| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
-
-⚠️ This review was against `main`. It does not cover the PR’s current target `release`.
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-<!--
-**Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
--->
-
-**PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`
-
-</details>
-
----
-
-### J — Retargeted provenance: findings
-
-## Claude Review
-
-| Status | Reviewed commit | Review trigger |
-| --- | --- | --- |
-| ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
-
-⚠️ This review was against `main`. It does not cover the PR’s current target `release`.
-
-Assess the recorded findings in the inline review threads.
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-<!--
-**Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
--->
-
-**PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`
-
-</details>
-
----
-
-### K — Authoritative Check publication incomplete: no completed history
-
-## Claude Review
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Reason:** The authoritative Check result could not be published.
-
-**Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-</details>
-
----
-
-### K — Authoritative Check publication incomplete: previous clean review
-
-## Claude Review
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Reason:** The authoritative Check result could not be published.
-
-**Current attempt**\
-**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-**Previous completed review**\
-**Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
-**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
-**Review trigger:** PR opened for review\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### K — Authoritative Check publication incomplete: previous findings
-
-## Claude Review
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Reason:** The authoritative Check result could not be published.
-
-**Current attempt**\
-**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-**Previous completed review**\
-**Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
-**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
-**Review trigger:** PR opened for review\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### L — Completion with unavailable Check publication: no completed history
-
-## Claude Review
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Reason:** The authoritative Check result could not be published.
-
-**Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-</details>
-
----
-
-### L — Completion with unavailable Check publication: previous clean review
-
-## Claude Review
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Reason:** The authoritative Check result could not be published.
-
-**Current attempt**\
-**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-**Previous completed review**\
-**Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
-**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
-**Review trigger:** PR opened for review\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### L — Completion with unavailable Check publication: previous findings
-
-## Claude Review
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Reason:** The authoritative Check result could not be published.
-
-**Current attempt**\
-**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-**Previous completed review**\
-**Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
-**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
-**Review trigger:** PR opened for review\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### M — Running with unavailable Check publication: no completed history
-
-## Claude Review
-
-Claude is reviewing this commit, but authoritative Check publication is unavailable.
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-</details>
-
----
-
-### M — Running with unavailable Check publication: previous clean review
-
-## Claude Review
-
-Claude is reviewing this commit, but authoritative Check publication is unavailable.
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Current attempt**\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-**Previous completed review**\
-**Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
-**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
-**Review trigger:** PR opened for review\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### M — Running with unavailable Check publication: previous findings
-
-## Claude Review
-
-Claude is reviewing this commit, but authoritative Check publication is unavailable.
-
-| Status | Attempt commit | Review trigger |
-| --- | --- | --- |
-| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
-
-<details>
-<summary>ℹ️ Details</summary>
-
-<br/>
-
-**Current attempt**\
-**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
-
-**Previous completed review**\
-**Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
-**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
-**Review trigger:** PR opened for review\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
-</details>
-
----
-
-### S — Required inputs unread, automatic attempt
+### 7 — Required inputs unread, automatic attempt
 
 ## Claude Review
 
@@ -646,7 +194,9 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 ---
 
-### T — Required inputs unread, manual attempt with workflow changes
+<a id="unread-manual"></a>
+
+### 8 — Required inputs unread, manual attempt with workflow changes
 
 ## Claude Review
 
@@ -670,7 +220,9 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 ---
 
-### U — Relevant review workflow changed, cause unknown
+<a id="workflow-changed"></a>
+
+### 9 — Relevant review workflow changed, cause unknown
 
 ## Claude Review
 
@@ -694,7 +246,9 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 ---
 
-### V — Workflow-change context retained for a superseded attempt
+<a id="workflow-changed-superseded"></a>
+
+### 10 — Workflow-change context retained for a superseded attempt
 
 ## Claude Review
 
@@ -721,7 +275,108 @@ Current head and base coverage is not established by this attempt.
 
 ---
 
-### H — Manual current attempt with previous completed review: in_progress
+<a id="compact-clean"></a>
+
+### 11 — Compact clean completion, matching baseline
+
+Claude Review: No findings. 🎉
+
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="compact-differing-baseline"></a>
+
+### 12 — Compact clean completion, differing baseline
+
+Claude Review: No findings. 🎉
+
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
+
+⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed.
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
+**Observed target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`
+
+</details>
+
+---
+
+<a id="running-history-clean"></a>
+
+### 13 — Running attempt with older completed history: clean
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Current attempt**\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+**Previous completed review**\
+**Result:** No findings.\
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
+**Review trigger:** PR opened for review\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="running-history-findings"></a>
+
+### 14 — Running attempt with older completed history: findings
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Current attempt**\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+**Previous completed review**\
+**Result:** Findings.\
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
+**Review trigger:** PR opened for review\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="running-history-manual"></a>
+
+### 15 — Manual current attempt with previous completed review: in_progress
 
 ## Claude Review
 
@@ -749,7 +404,77 @@ This review covers the captured patch only; integration with other target baseli
 
 ---
 
-### I — Manual current attempt with previous completed review: failure
+<a id="incomplete-history-clean"></a>
+
+### 16 — Incomplete attempt with older completed history: clean
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** The review did not complete with reliable execution and finding evidence.
+
+**Current attempt**\
+**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+**Previous completed review**\
+**Result:** No findings.\
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
+**Review trigger:** PR opened for review\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="incomplete-history-findings"></a>
+
+### 17 — Incomplete attempt with older completed history: findings
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** The review did not complete with reliable execution and finding evidence.
+
+**Current attempt**\
+**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+**Previous completed review**\
+**Result:** Findings.\
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
+**Review trigger:** PR opened for review\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="incomplete-history-manual"></a>
+
+### 18 — Manual current attempt with previous completed review: failure
 
 ## Claude Review
 
@@ -782,7 +507,163 @@ This review covers the captured patch only; integration with other target baseli
 
 ---
 
-### K — Manual current attempt with previous completed review: publication_incomplete
+<a id="retargeted-clean"></a>
+
+### 19 — Retargeted provenance: clean
+
+## Claude Review
+
+| Status | Reviewed commit | Review trigger |
+| --- | --- | --- |
+| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
+
+⚠️ This review was against `main`. It does not cover the PR’s current target `release`.
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+<!--
+**Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
+-->
+
+**PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
+**Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`
+
+</details>
+
+---
+
+<a id="retargeted-findings"></a>
+
+### 20 — Retargeted provenance: findings
+
+## Claude Review
+
+| Status | Reviewed commit | Review trigger |
+| --- | --- | --- |
+| ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
+
+⚠️ This review was against `main`. It does not cover the PR’s current target `release`.
+
+Assess the recorded findings in the inline review threads.
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+<!--
+**Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
+-->
+
+**PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
+**Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`
+
+</details>
+
+---
+
+<a id="publication-incomplete-none"></a>
+
+### 21 — Authoritative Check publication incomplete: no completed history
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** The authoritative Check result could not be published.
+
+**Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+</details>
+
+---
+
+<a id="publication-incomplete-success"></a>
+
+### 22 — Authoritative Check publication incomplete: previous clean review
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** The authoritative Check result could not be published.
+
+**Current attempt**\
+**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+**Previous completed review**\
+**Result:** No findings.\
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
+**Review trigger:** PR opened for review\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="publication-incomplete-action-required"></a>
+
+### 23 — Authoritative Check publication incomplete: previous findings
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** The authoritative Check result could not be published.
+
+**Current attempt**\
+**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+**Previous completed review**\
+**Result:** Findings.\
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
+**Review trigger:** PR opened for review\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="publication-incomplete-manual"></a>
+
+### 24 — Manual current attempt with previous completed review: publication_incomplete
 
 ## Claude Review
 
@@ -815,7 +696,188 @@ This review covers the captured patch only; integration with other target baseli
 
 ---
 
-### N — Shared workflow run, matching historical baseline: in_progress
+<a id="publication-unavailable-none"></a>
+
+### 25 — Completion with unavailable Check publication: no completed history
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** The authoritative Check result could not be published.
+
+**Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+</details>
+
+---
+
+<a id="publication-unavailable-success"></a>
+
+### 26 — Completion with unavailable Check publication: previous clean review
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** The authoritative Check result could not be published.
+
+**Current attempt**\
+**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+**Previous completed review**\
+**Result:** No findings.\
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
+**Review trigger:** PR opened for review\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="publication-unavailable-action-required"></a>
+
+### 27 — Completion with unavailable Check publication: previous findings
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** The authoritative Check result could not be published.
+
+**Current attempt**\
+**Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+**Previous completed review**\
+**Result:** Findings.\
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
+**Review trigger:** PR opened for review\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="running-unavailable-none"></a>
+
+### 28 — Running with unavailable Check publication: no completed history
+
+## Claude Review
+
+Claude is reviewing this commit, but authoritative Check publication is unavailable.
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+</details>
+
+---
+
+<a id="running-unavailable-success"></a>
+
+### 29 — Running with unavailable Check publication: previous clean review
+
+## Claude Review
+
+Claude is reviewing this commit, but authoritative Check publication is unavailable.
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Current attempt**\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+**Previous completed review**\
+**Result:** No findings.\
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
+**Review trigger:** PR opened for review\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="running-unavailable-action-required"></a>
+
+### 30 — Running with unavailable Check publication: previous findings
+
+## Claude Review
+
+Claude is reviewing this commit, but authoritative Check publication is unavailable.
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Current attempt**\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+**Previous completed review**\
+**Result:** Findings.\
+**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
+**Review trigger:** PR opened for review\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="shared-run-in-progress"></a>
+
+### 31 — Shared workflow run, matching historical baseline: in_progress
 
 ## Claude Review
 
@@ -839,7 +901,9 @@ This review covers the captured patch only; integration with other target baseli
 
 ---
 
-### O — Shared workflow run, matching historical baseline: failure
+<a id="shared-run-failure"></a>
+
+### 32 — Shared workflow run, matching historical baseline: failure
 
 ## Claude Review
 
@@ -870,7 +934,9 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 ---
 
-### P — Legacy completed history without recorded attempt metadata
+<a id="legacy-history-run"></a>
+
+### 33 — Legacy completed history without recorded attempt metadata
 
 ## Claude Review
 
@@ -894,7 +960,9 @@ Current head and base coverage is not established by this attempt.
 
 ---
 
-### Q — Legacy completed review without workflow links
+<a id="legacy-history-no-links"></a>
+
+### 34 — Legacy completed review without workflow links
 
 ## Claude Review
 
@@ -920,7 +988,9 @@ Current head and base coverage is not established by this attempt.
 
 ---
 
-### R — Stale running attempt without completed history: changed head
+<a id="stale-running-head"></a>
+
+### 35 — Stale running attempt without completed history: changed head
 
 ## Claude Review
 
@@ -944,7 +1014,9 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 ---
 
-### R — Stale running attempt without completed history: changed base
+<a id="stale-running-base"></a>
+
+### 36 — Stale running attempt without completed history: changed base
 
 ## Claude Review
 
@@ -968,7 +1040,9 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 ---
 
-### R — Stale running attempt without completed history: changed ref
+<a id="stale-running-ref"></a>
+
+### 37 — Stale running attempt without completed history: changed ref
 
 ## Claude Review
 
@@ -993,7 +1067,9 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 ---
 
-### R — Stale manual attempt with distinct completed-review trigger
+<a id="stale-manual"></a>
+
+### 38 — Stale manual attempt with distinct completed-review trigger
 
 ## Claude Review
 
