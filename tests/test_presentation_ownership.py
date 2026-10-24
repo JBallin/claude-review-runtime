@@ -1156,14 +1156,18 @@ class EmergencyOwnershipTests(unittest.TestCase):
             self.assertIsNotNone(check.status_owner({"body": body}))
 
     def test_emergency_partial_rerun_cannot_claim_ownership(self):
+        from test_claude_review_workflows import REPO as workflow_repo
         result, calls = self.fallback(PR_NUMBER="7", STATUS_COMMENT_ID="55", GITHUB_RUN_ATTEMPT="2")
         self.assertEqual(result.returncode, 1)
-        self.assertEqual([call["method"] for call in calls], ["PATCH"])
+        self.assertEqual([call["method"] for call in calls], ["GET", "PATCH"])
+        self.assertTrue(all(f"repos/{workflow_repo}/check-runs/99" in call["args"] for call in calls))
 
     def test_missing_emergency_owner_cannot_bootstrap_or_clear(self):
+        from test_claude_review_workflows import REPO as workflow_repo
         result, calls = self.fallback(PR_NUMBER="7", STATUS_COMMENT_ID="55", PRESENTATION_OWNER="")
         self.assertEqual(result.returncode, 1)
-        self.assertEqual([call["method"] for call in calls], ["PATCH"])
+        self.assertEqual([call["method"] for call in calls], ["GET", "PATCH"])
+        self.assertTrue(all(f"repos/{workflow_repo}/check-runs/99" in call["args"] for call in calls))
 
     def test_legacy_emergency_status_cannot_authorize_repair(self):
         legacy = {"id":55, "user":{"login":check.STATUS_AUTHOR,"type":"Bot"}, "body":check.STATUS_MARKER}

@@ -1126,6 +1126,66 @@ jobs:
           evidence=$(jq -n --arg head "$HEAD_SHA" --arg pr "$PR_NUMBER" --arg base "$BASE_SHA" --arg base_ref "$BASE_REF" --arg merge_base "$MERGE_BASE_SHA" \
             --arg runtime_repository "$RUNTIME_REPOSITORY" --arg runtime_sha "$RUNTIME_SHA" --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" \
             '{reviewed_sha: $head, pr_number: ($pr | tonumber? // null), base_sha: $base, base_ref: $base_ref, merge_base_sha: $merge_base, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}')
+          # A partial rerun may reuse a Check that already retained findings.
+          # If its evidence cannot be verified, fail without replacing output.
+          if [ -n "$CHECK_RUN_ID" ]; then
+            if current_check=$(timeout "$attempt_timeout" gh api "repos/$REPO/check-runs/$CHECK_RUN_ID") &&
+               retained_evidence=$(printf '%s' "$current_check" | python3 -c '
+          import json, re, sys
+          def unique_object(pairs):
+              result = {}
+              for key, value in pairs:
+                  if key in result:
+                      raise ValueError("duplicate JSON key")
+                  result[key] = value
+              return result
+          try:
+              run = json.load(sys.stdin, object_pairs_hook=unique_object)
+              check_id, head, pr, merge_base = sys.argv[1:]
+              if (not isinstance(run, dict) or type(run.get("id")) is not int
+                      or str(run["id"]) != check_id or run.get("name") != "Claude Review"
+                      or (run.get("app") or {}).get("slug") != "github-actions"
+                      or run.get("head_sha") != head):
+                  raise ValueError("unverified Check identity")
+              text = (run.get("output") or {}).get("text") or ""
+              if run.get("status") == "in_progress" and run.get("conclusion") is None and not text:
+                  sys.exit(0)
+              if run.get("status") != "completed" or not isinstance(text, str):
+                  raise ValueError("unverified Check state")
+              start, end = text.find("```json\n"), text.rfind("\n```")
+              if start == -1 or end <= start or len(text.encode("utf-8")) > 60000:
+                  raise ValueError("unverified Check evidence")
+              evidence = json.loads(text[start + len("```json\n"):end], object_pairs_hook=unique_object)
+              if (not isinstance(evidence, dict) or not pr.isdigit() or not re.fullmatch(r"[0-9a-f]{40}", merge_base)
+                      or str(evidence.get("pr_number")) != pr or evidence.get("merge_base_sha") != merge_base
+                      or evidence.get("reviewed_sha", head) != head):
+                  raise ValueError("unverified captured diff")
+              for field in ("new_finding_comment_ids", "claude_finding_comment_ids"):
+                  values = evidence.get(field, [])
+                  if (not isinstance(values, list) or len(set(values)) != len(values)
+                          or any(type(value) is not int or not 0 < value <= 9007199254740991 for value in values)):
+                      raise ValueError("invalid finding IDs")
+              if "same_diff_findings_recorded" in evidence and type(evidence["same_diff_findings_recorded"]) is not bool:
+                  raise ValueError("invalid finding presence")
+              if (run.get("conclusion") == "action_required" or evidence.get("same_diff_findings_recorded") is True
+                      or evidence.get("new_finding_comment_ids") or evidence.get("claude_finding_comment_ids")):
+                  evidence["same_diff_findings_recorded"] = True
+              encoded = json.dumps(evidence, separators=(",", ":"), ensure_ascii=False)
+              if len(encoded.encode("utf-8")) > 60000:
+                  raise ValueError("unbounded retained evidence")
+              print(encoded)
+          except (ValueError, TypeError, KeyError, AttributeError):
+              sys.exit(1)
+          ' "$CHECK_RUN_ID" "$HEAD_SHA" "$PR_NUMBER" "$MERGE_BASE_SHA"); then
+              if [ -n "$retained_evidence" ]; then
+                evidence=$retained_evidence
+              fi
+            else
+              echo "::error::Existing Check evidence could not be verified; no Check was changed."
+              repair_review_presentation publication_incomplete
+              exit 1
+            fi
+          fi
           output=$(jq -n --arg summary "$summary" --arg evidence "$evidence" \
             '{title: "Review outcome could not be published", summary: $summary, text: ("```json\n" + $evidence + "\n```")}')
           if [ -n "$CHECK_RUN_ID" ]; then

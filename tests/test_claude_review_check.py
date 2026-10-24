@@ -132,7 +132,7 @@ def check_run(
         "conclusion": conclusion,
         "app": {"slug": slug},
     }
-    if not legacy:
+    if not legacy and status == "completed":
         run["output"] = {"text": evidence_text(pr=pr, merge_base=merge_base)}
     return run
 
@@ -252,7 +252,7 @@ class PureLogicTests(unittest.TestCase):
                 {**check_run(9, "failure"), "output": {"text": "not json"}},
             ]
         }
-        self.assertEqual(check.prior_finding_evidence([page], HEAD, 6, "7", MERGE_BASE)[0], [1, 7])
+        self.assertEqual(check.prior_finding_evidence([page], HEAD, 6, "7", MERGE_BASE)[0], [1, 6, 7])
 
     def test_sticky_history_is_scoped_to_the_pr_and_reviewed_diff(self):
         page = {
@@ -286,7 +286,7 @@ class PureLogicTests(unittest.TestCase):
         ]
         self.assertEqual(
             check.prior_finding_evidence([{"check_runs": runs}], HEAD, 99, "7", MERGE_BASE),
-            ([1], {10}, {20}),
+            ([1, 99], {10, 60}, {20}),
         )
 
 
@@ -307,6 +307,13 @@ class ScriptTestCase(unittest.TestCase):
 
     def run_script(self, command, rules, *, step_script=None, **extra_env):
         scenario = self.dir / "scenario.json"
+        current_path = f"repos/{REPO}/check-runs/{extra_env.get('CHECK_RUN_ID') or 99}"
+        if command[0] == "finalize" and not any(rule["method"] == "GET" and rule["path"] == current_path
+                                               for rule in rules):
+            # History and the direct resource can fail independently. Existing
+            # fixtures start with a fresh Check unless they override this read.
+            rules = [*rules, {"method": "GET", "path": current_path,
+                             "responses": [ok(json.dumps(check_run(99, None, status="in_progress")))]}]
         if (extra_env.get("STATUS_COMMENTS_ENABLED") == "true" and command[0] != "stale"
                 and not any(rule["path"] == f"repos/{REPO}/pulls/7" for rule in rules)):
             rules = [pr_head_rule(live_head(extra_env.get("HEAD_SHA", HEAD))), *rules]
@@ -484,7 +491,9 @@ class FinalizeTests(ScriptTestCase):
                     self.assertEqual(body["conclusion"], "failure")
                     self.assertEqual(evidence_of(body)["new_finding_comment_ids"], [9] if findings else [])
                     self.assertEqual(evidence_of(body)["same_diff_findings_recorded"], bool(findings))
-                    self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), check.ATTEMPTS)
+                    self.assertEqual(len([call for call in self.calls("GET") if "/commits/" in call["path"]]), check.ATTEMPTS)
+                    self.assertEqual(len([call for call in self.calls("GET")
+                                          if call["path"] == f"repos/{REPO}/check-runs/99"]), 1)
                     self.assertFalse(self.calls("POST"))
 
     def test_history_retry_reads_a_complete_listing_after_pagination_movement(self):
@@ -533,7 +542,9 @@ class FinalizeTests(ScriptTestCase):
                     self.assertEqual(evidence["new_finding_comment_ids"], [9] if findings else [])
                     self.assertEqual(evidence["same_diff_findings_recorded"], bool(findings))
                     self.assertIn("malformed or incomplete", evidence["evidence_errors"][0])
-                    self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), check.ATTEMPTS)
+                    self.assertEqual(len([call for call in self.calls("GET") if "/commits/" in call["path"]]), check.ATTEMPTS)
+                    self.assertEqual(len([call for call in self.calls("GET")
+                                          if call["path"] == f"repos/{REPO}/check-runs/99"]), 1)
                     self.assertFalse(self.calls("POST"))
 
     def test_nullable_untrusted_apps_do_not_hide_trusted_sticky_findings(self):
@@ -1279,6 +1290,8 @@ class WorstCaseModelTests(ScriptTestCase):
         rules = [
             # Lookup fails twice, then finds the run; the history read then fails throughout.
             history_rule(FAIL, FAIL, found, FAIL, FAIL, FAIL),
+            {"method": "GET", "path": f"repos/{REPO}/check-runs/99",
+             "responses": [FAIL, FAIL, ok(json.dumps(check_run(99, None, status="in_progress")))]},
             comments_rule(FAIL),
             patch_rule(FAIL),
         ]
