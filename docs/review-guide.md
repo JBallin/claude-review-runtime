@@ -236,9 +236,13 @@ captured head SHA, and errored responses reject completion even if the model
 reports success.
 
 Findings remain sticky for the same PR, head, and merge base through trusted
-Check evidence. Captured target-ref evidence is additive; legacy Check records
-without it remain readable and require no migration. Findings attributed only to
-another diff do not carry across a base retarget; unknown attribution fails closed.
+Check evidence, including when a partial rerun reuses an existing Check or
+recovery records a failure. If that Check's evidence cannot be verified safely,
+the attempt fails without replacing it; inspect the failed workflow alongside
+the retained historical result. Captured target-ref evidence is additive; legacy
+Check records without it remain readable and require no migration. Findings
+attributed only to another diff do not carry across a base retarget; unknown
+attribution fails closed.
 Check evidence retains bounded ID samples and diagnostic counts/hashes, plus
 durable same-diff finding presence.
 Hashes cannot establish individual ID membership: rediscovered IDs omitted from

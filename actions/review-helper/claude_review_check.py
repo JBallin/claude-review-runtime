@@ -87,14 +87,15 @@ EVIDENCE_ID_FIELDS = (
 # of the same duration, reset before any authoritative Check work. Each call is
 # capped at GH_TIMEOUT_SECONDS and each retried operation adds its backoff.
 # create's retries each add a reconciliation lookup before POSTing again;
-# finalize may look up an unreported run, then read history and comments and
-# PATCH the result and its fallback. The tests check the implementation against
+# finalize may look up an unreported run, read history and a retained Check
+# independently, then read comments and PATCH the result and its fallback.
+# The tests check the implementation against
 # this model and the start-check and publish-status job timeouts against the
 # budget it implies, so publication is not cut off by a job timeout.
 WORST_CASE = {
     "create": (1 + 2 * (ATTEMPTS - 1), 1),
     "snapshot": (ATTEMPTS, 1),
-    "finalize": (5 * ATTEMPTS, 5),
+    "finalize": (6 * ATTEMPTS, 6),
     # Dedup discovery, two owner listings, and three live identity reads may
     # retry. The completion POST is attempted once; a lost response is ambiguous.
     "completion": (6 * ATTEMPTS + 1, 6),
@@ -232,7 +233,8 @@ def prior_finding_evidence(pages, head_sha, current_check_run_id, pr_number, mer
     base. Only completed trusted Check evidence can attribute earlier comment
     IDs to this diff or to another diff of the same PR/head. Failed runs also
     preserve any findings they recorded. Keep recorded IDs even when the
-    corresponding comments have since been deleted.
+    corresponding comments have since been deleted. A completed current Check
+    is also history when a partial rerun reuses the start job's Check ID.
     """
     if not pr_number or not merge_base_sha:
         return [], set(), set()
@@ -244,7 +246,6 @@ def prior_finding_evidence(pages, head_sha, current_check_run_id, pr_number, mer
                 run.get("name") == CHECK_NAME
                 and (run.get("app") or {}).get("slug") == CHECK_APP_SLUG
                 and run.get("head_sha") == head_sha
-                and str(run.get("id")) != str(current_check_run_id)
                 and run.get("status") == "completed"
                 and str(evidence.get("pr_number")) == str(pr_number)
                 and evidence.get("merge_base_sha")
@@ -334,7 +335,47 @@ def fetch_prior_finding_evidence(repo, head_sha, current_check_run_id, pr_number
         lambda: check_run_history(repo, head_sha, required_check_run_id=current_check_run_id),
         "Listing Claude Review check history"
     )
+    current = next(run for page in history for run in page["check_runs"]
+                   if str(run["id"]) == str(current_check_run_id))
+    validate_retained_check(current, head_sha, current_check_run_id, pr_number, merge_base_sha)
     return history, prior_finding_evidence(history, head_sha, current_check_run_id, pr_number, merge_base_sha)
+
+
+def validate_retained_check(run, head_sha, check_run_id, pr_number, merge_base_sha):
+    """Validate the record whose evidence finalization would replace.
+
+    An initial in-progress Check has no evidence yet. Completed legacy evidence
+    remains readable without new provenance keys, but ambiguous or foreign data
+    must not be overwritten as if it established an empty finding history.
+    """
+    try:
+        if (not isinstance(run, dict) or not positive_comment_id(run.get("id"))
+                or str(run["id"]) != str(check_run_id) or run.get("name") != CHECK_NAME
+                or (run.get("app") or {}).get("slug") != CHECK_APP_SLUG
+                or run.get("head_sha") != head_sha
+                or run.get("status") not in ("in_progress", "completed")):
+            raise ValueError("invalid Check identity")
+        text = (run.get("output") or {}).get("text") or ""
+        if not text and run["status"] == "in_progress" and run.get("conclusion") is None:
+            return
+        if (run["status"] != "completed" or not isinstance(text, str) or text.count("```json\n") != 1
+                or not text.endswith("\n```")):
+            raise ValueError("missing or ambiguous Check evidence")
+        evidence = json.loads(text.split("```json\n", 1)[1][:-4], object_pairs_hook=unique_json_object)
+        if (not isinstance(evidence, dict)
+                or str(evidence.get("pr_number")) != str(pr_number)
+                or evidence.get("merge_base_sha") != merge_base_sha
+                or not re.fullmatch(r"[0-9a-f]{40}", merge_base_sha or "")
+                or evidence.get("reviewed_sha", head_sha) != head_sha):
+            raise ValueError("Check evidence differs from the captured diff")
+        for field in ("new_finding_comment_ids", "claude_finding_comment_ids"):
+            if field in evidence and not valid_comment_id_list(evidence[field]):
+                raise ValueError("invalid retained finding IDs")
+        if ("same_diff_findings_recorded" in evidence
+                and type(evidence["same_diff_findings_recorded"]) is not bool):
+            raise ValueError("invalid retained finding presence")
+    except (ValueError, TypeError, KeyError, AttributeError) as error:
+        raise GhError("the existing Check's finding evidence cannot be safely replaced") from error
 
 
 def completed_check_timestamp(history, check_run_id, head_sha, conclusion):
@@ -1798,6 +1839,7 @@ def cmd_finalize():
     # preexisting comments. A raw head SHA alone cannot identify their diff.
     errors = []
     history = []
+    retained_check_unavailable = False
     try:
         history, (prior_ids, recorded_ids, other_diff_ids) = fetch_prior_finding_evidence(
             repo, head_sha, check_run_id, pr_number, merge_base_sha
@@ -1805,6 +1847,17 @@ def cmd_finalize():
     except GhError as error:
         prior_ids, recorded_ids, other_diff_ids = [], set(), set()
         errors.append(f"earlier Claude Review history is unavailable ({error})")
+        # A history outage cannot authorize erasing this Check's old findings.
+        # A direct read can still preserve them while the review remains failed.
+        try:
+            current = with_retries(lambda: json.loads(gh_api([
+                f"repos/{repo}/check-runs/{check_run_id}"]), object_pairs_hook=unique_json_object),
+                "Reading the existing Claude Review Check")
+            validate_retained_check(current, head_sha, check_run_id, pr_number, merge_base_sha)
+            prior_ids, recorded_ids, other_diff_ids = prior_finding_evidence(
+                [{"check_runs": [current]}], head_sha, check_run_id, pr_number, merge_base_sha)
+        except (GhError, ValueError, TypeError, KeyError):
+            retained_check_unavailable = True
 
     observed_ids = None
     try:
@@ -1905,6 +1958,12 @@ def cmd_finalize():
             "text": evidence_text(evidence),
         },
     }
+    if retained_check_unavailable:
+        # Even the old action_required conclusion can be the only durable
+        # finding receipt. Do not replace it when its evidence is unknown.
+        best_effort_status(head_sha, "publication_incomplete")
+        print("::error::Existing Check evidence was unavailable; the Check was not changed.")
+        return 1
     try:
         patch_check_run(repo, check_run_id, body, "Publishing the Claude Review result")
     except GhError:
