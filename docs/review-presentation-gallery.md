@@ -140,13 +140,14 @@ Assess the recorded findings in the inline review threads.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary>ℹ️ Details</summary>
 
 <br/>
 
 **Reason:** The review did not complete with reliable execution and finding evidence.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
@@ -254,13 +255,14 @@ Claude Review: No findings. 🎉
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary>ℹ️ Details</summary>
 
 <br/>
 
 **Reason:** The review did not complete with reliable execution and finding evidence.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Current attempt**\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
@@ -285,13 +287,14 @@ Claude Review: No findings. 🎉
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary>ℹ️ Details</summary>
 
 <br/>
 
 **Reason:** The review did not complete with reliable execution and finding evidence.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Current attempt**\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
@@ -368,11 +371,11 @@ Assess the recorded findings in the inline review threads.
 
 ## Claude Review
 
-The authoritative Check result could not be published. Treat this commit as not reviewed.
-
 | Status | Attempt commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -380,7 +383,6 @@ The authoritative Check result could not be published. Treat this commit as not 
 <br/>
 
 **Reason:** The authoritative Check result could not be published.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
@@ -393,11 +395,11 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 ## Claude Review
 
-The authoritative Check result could not be published. Treat this commit as not reviewed.
-
 | Status | Attempt commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -405,7 +407,6 @@ The authoritative Check result could not be published. Treat this commit as not 
 <br/>
 
 **Reason:** The authoritative Check result could not be published.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Current attempt**\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
@@ -426,11 +427,11 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 ## Claude Review
 
-The authoritative Check result could not be published. Treat this commit as not reviewed.
-
 | Status | Attempt commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -438,7 +439,6 @@ The authoritative Check result could not be published. Treat this commit as not 
 <br/>
 
 **Reason:** The authoritative Check result could not be published.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Current attempt**\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
@@ -459,11 +459,11 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 ## Claude Review
 
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.
-
 | Status | Attempt commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -471,7 +471,6 @@ Review completion cannot be established because authoritative Check publication 
 <br/>
 
 **Reason:** The authoritative Check result could not be published.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
@@ -484,11 +483,11 @@ Review completion cannot be established because authoritative Check publication 
 
 ## Claude Review
 
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.
-
 | Status | Attempt commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -496,7 +495,6 @@ Review completion cannot be established because authoritative Check publication 
 <br/>
 
 **Reason:** The authoritative Check result could not be published.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Current attempt**\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
@@ -517,11 +515,11 @@ Review completion cannot be established because authoritative Check publication 
 
 ## Claude Review
 
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.
-
 | Status | Attempt commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -529,7 +527,6 @@ Review completion cannot be established because authoritative Check publication 
 <br/>
 
 **Reason:** The authoritative Check result could not be published.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Current attempt**\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
@@ -625,6 +622,105 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 ---
 
+### S — Required inputs unread, automatic attempt
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
+
+Required review inputs were not fully read. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#incomplete-captured-input-reads).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** Required review inputs were not fully read.
+
+**Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+### T — Required inputs unread, manual attempt with workflow changes
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
+
+Required review inputs were not fully read. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#incomplete-captured-input-reads).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** Required review inputs were not fully read.
+
+**Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
+
+</details>
+
+---
+
+### U — Relevant review workflow changed, cause unknown
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
+
+⚠️ The captured patch changes the review workflow, which may prevent the review from starting. Check the [workflow run](https://github.com/owner/repo/actions/runs/5/attempts/1) for a validation rejection. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** The captured patch changes the review workflow; the cause of the incomplete review is unknown.
+
+**Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+### V — Workflow-change context retained for a superseded attempt
+
+## Claude Review
+
+| Status | Attempt commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
+
+Current head and base coverage is not established by this attempt.
+
+⚠️ The captured patch changes the review workflow, which may prevent the review from starting. Check the [workflow run](https://github.com/owner/repo/actions/runs/5/attempts/1) for a validation rejection. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt. The captured patch changes the review workflow; the cause of the incomplete review is unknown.
+
+**PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
+**Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
 ### H — Manual current attempt with previous completed review: in_progress
 
 ## Claude Review
@@ -661,13 +757,14 @@ This review covers the captured patch only; integration with other target baseli
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary>ℹ️ Details</summary>
 
 <br/>
 
 **Reason:** The review did not complete with reliable execution and finding evidence.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Current attempt**\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
@@ -689,11 +786,11 @@ This review covers the captured patch only; integration with other target baseli
 
 ## Claude Review
 
-The authoritative Check result could not be published. Treat this commit as not reviewed.
-
 | Status | Attempt commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
+
+The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -701,7 +798,6 @@ The authoritative Check result could not be published. Treat this commit as not 
 <br/>
 
 **Reason:** The authoritative Check result could not be published.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Current attempt**\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
@@ -751,13 +847,14 @@ This review covers the captured patch only; integration with other target baseli
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | PR opened for review |
 
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/a81bea2dbd548802204b4c9f406fadef36629b8a/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary>ℹ️ Details</summary>
 
 <br/>
 
 **Reason:** The review did not complete with reliable execution and finding evidence.
-**Note:** If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected.
 
 **Current attempt**\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>

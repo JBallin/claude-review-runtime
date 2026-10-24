@@ -149,7 +149,7 @@ class StatusPresentationTests(unittest.TestCase):
                 if state != 'in_progress':
                     self.assertNotIn('**Reason:**', visible)
                     self.assertIn('**Reason:**', body.split('<details>', 1)[1])
-                    self.assertIn('**Note:** ' + check.INCOMPLETE_NOTE, body)
+                    self.assertNotIn('**Note:**', body)
                     reason = check.terminal_status_reason(self.api.status, check.status_owner(self.api.status))
                     self.assertIsNotNone(reason)
                     check.best_effort_status(OTHER, 'stale')
@@ -198,43 +198,23 @@ class StatusPresentationTests(unittest.TestCase):
                     self.assertNotIn('**Reason:**', visible)
                     details = body.split('<details>', 1)[1]
                     self.assertIn('**Reason:** ' + reason, details)
-                    self.assertIn('**Note:** ' + check.INCOMPLETE_NOTE, details)
+                    self.assertNotIn('**Note:**', details)
                     self.assertNotIn(fallback, visible)
                     self.assertEqual(check.terminal_status_reason({**self.api.status, 'body': body}, owner), reason)
                 else:
                     self.assertIn(fallback, visible)
                     self.assertNotIn('**Reason:**', visible)
 
-    def test_incomplete_note_uses_approved_conditional_wording(self):
-        self.assertEqual(check.INCOMPLETE_NOTE,
-                         "If this PR changes Claude’s review workflow, including Runtime pins, "
-                         "an incomplete review is expected.")
-
-    def test_reason_note_and_metadata_order_tracks_incomplete_presentation(self):
+    def test_visible_reason_and_recovery_precede_collapsed_receipt(self):
         owner = self.start()
-        histories = (None, (OTHER, 'release/old', 'success'), (OTHER, 'release/old', 'action_required'))
-        for state, reason in (('failure', check.STATUS_REASONS['incomplete']),
-                              ('publication_incomplete', check.STATUS_REASONS['check_publication_failed'])):
-            for history in histories:
-                with self.subTest(state=state, history=history):
-                    body = check.status_comment_body(HEAD, 'main', state, owner=owner,
-                                                     last_review=history, reason=reason)
-                    visible, details = body.split('<details>', 1)
-                    self.assertNotIn('**Reason:**', visible)
-                    self.assertNotIn('**Note:**', visible)
-                    if history:
-                        self.assertIn('| ❌ **Incomplete**', visible)
-                        self.assertIn('**Previous completed review**', details)
-                    else:
-                        self.assertIn('❌ **Incomplete**', visible)
-                    reason_line = '**Reason:** ' + reason
-                    note_line = '**Note:** ' + check.INCOMPLETE_NOTE
-                    metadata = '**Current attempt**' if history else '**Started:**'
-                    self.assertEqual(body.count(reason_line), 1)
-                    self.assertEqual(body.count(note_line), 1)
-                    self.assertLess(details.index(reason_line), details.index(note_line))
-                    self.assertLess(details.index(note_line), details.index(metadata))
-                    self.assertIn(reason_line + '\n' + note_line + '\n\n' + metadata, details)
+        for reason in (check.STATUS_REASONS['incomplete'], check.STATUS_REASONS['unread_inputs'],
+                       check.STATUS_REASONS['workflow_changed']):
+            body = check.status_comment_body(HEAD, 'main', 'failure', owner=owner, reason=reason)
+            visible, details = body.split('<details>', 1)
+            self.assertIn('guidance]' if reason != check.STATUS_REASONS['incomplete'] else 'reviews]', visible)
+            self.assertIn('**Reason:** ' + reason, details)
+            self.assertNotIn('**Reason:**', visible)
+            self.assertNotIn('**Note:**', body)
 
     def test_success_findings_running_and_coverage_only_stale_have_no_incomplete_note(self):
         owner = self.start()

@@ -802,7 +802,7 @@ class OwnershipTests(unittest.TestCase):
                             self.assertEqual(check.status_owner(self.api.status), owner)
                             self.assertFalse(check.status_owner_running(self.api.status))
                             self.assertEqual(self.api.status["body"].count("**Reason:**"),1)
-                            self.assertEqual(self.api.status["body"].count("**Note:** " + check.INCOMPLETE_NOTE),1)
+                            self.assertNotIn("**Note:**", self.api.status["body"])
                             self.assertEqual(self.api.status["body"].count(check.STATUS_REASONS["stale"]),1)
                     self.assertEqual(self.owned(self.opening), [])
                     self.assertEqual(len([call for call in self.writes() if call[0] == "POST"
