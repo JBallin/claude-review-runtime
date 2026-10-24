@@ -12,6 +12,7 @@ import importlib.util
 import os
 from pathlib import Path
 import re
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -23,7 +24,8 @@ SPEC.loader.exec_module(fixtures)
 check = fixtures.check
 
 HEADING = "SAMPLE ONLY — visual QA gallery, not actual review results"
-SOURCE_REPOSITORY = "https://github.com/JBallin/claude-review-runtime"
+GALLERY = ROOT / "docs" / "review-presentation-gallery.md"
+REGENERATE = "python3 -B scripts/render_presentation_gallery.py --write"
 FINDINGS_SAMPLE = "A2 — Current findings completion, matching baseline"
 SYNTHETIC_FINDING = (
     "`src/cache.py:42` — **[P2] Invalidate cached entries after deletion.** "
@@ -61,7 +63,7 @@ def strip_operational_markers(body):
 
 def gallery_samples():
     """Return labeled raw helper output for representative supported states."""
-    with fixture_environment():
+    with fixture_environment(), mock.patch.object(check, "now", return_value=COMPLETED_AT):
         owner = fixtures.presentation_owner(started=STARTED)
         details = {
             "base_sha": fixtures.BASE_TIP,
@@ -192,44 +194,46 @@ def gallery_samples():
         return samples
 
 
-def source_revision(value):
-    if not re.fullmatch(r"[0-9a-f]{40}", value):
-        raise argparse.ArgumentTypeError("source revision must be a full lowercase 40-character commit SHA")
-    return value
+def sample_markdown(body):
+    """Preserve rendered hard breaks without trailing whitespace in Git diffs."""
+    return strip_operational_markers(body).replace("  \n", "\\\n")
 
 
-def render_gallery(revision):
-    revision = source_revision(revision)
+def render_gallery():
     sections = ["\n\n".join([
         f"# {HEADING}",
         "All sample repository, commit, run, and timestamp identities are synthetic. "
         "Sample links may intentionally have no live destination. Operational Runtime "
         "markers are omitted; these samples are not review records.",
-        f"**Source revision:** [{revision}]({SOURCE_REPOSITORY}/commit/{revision})",
+        f"Generated with `{REGENERATE}`. Edit the generator or sample inputs, then regenerate.",
     ])]
     for title, body in gallery_samples():
-        sample_body = strip_operational_markers(body)
+        sample_body = sample_markdown(body)
         sections.append(f"### {title}\n\n{sample_body}")
         if title == FINDINGS_SAMPLE:
             # Findings live in inline threads, outside the status renderer.
             sections[-1] += ("\n\n**Synthetic inline finding context (separate from the status comment):**\n\n"
                              + SYNTHETIC_FINDING)
-    sections.append("\n\n".join([
-        "## Visual-QA observations",
-        "**Not yet inspected.** Inspect this revision at desktop (about 1280 px) and "
-        "narrow (about 390 px) widths, with every Details section collapsed and expanded. "
-        "Record the actual widths, revision, and observed spacing, tables, warnings, "
-        "identities, links, and hidden-receipt suppression here. Regeneration resets this status.",
-    ]))
     return "\n\n---\n\n".join(sections) + "\n"
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source-revision", required=True, type=source_revision)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--write", action="store_true", help="regenerate the committed gallery")
+    mode.add_argument("--check", action="store_true", help="fail if the committed gallery is missing or stale")
     args = parser.parse_args(argv)
-    sys.stdout.write(render_gallery(args.source_revision))
+    output = render_gallery().encode("utf-8")
+    if args.check:
+        if not GALLERY.is_file() or GALLERY.read_bytes() != output:
+            print(f"Gallery is missing or stale. Regenerate with: {REGENERATE}", file=sys.stderr)
+            return 1
+    elif args.write:
+        GALLERY.write_bytes(output)
+    else:
+        sys.stdout.write(output.decode("utf-8"))
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

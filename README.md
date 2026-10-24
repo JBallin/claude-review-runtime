@@ -25,7 +25,10 @@ See the [review guide](docs/review-guide.md) for more details.
 
 ## Examples and Alternatives
 
-For a working example, see Ballin’s
+Browse the [review presentation gallery](docs/review-presentation-gallery.md) for
+complete synthetic examples of review statuses and completion comments.
+
+For actual usage, see Ballin’s
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
 and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 
