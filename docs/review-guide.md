@@ -295,16 +295,10 @@ trusted `Claude Review` Check remains incomplete or failed, and required review
 remains unsatisfied. This condition does not mean every first run fails or every
 PR changing a workflow is unreviewable.
 
-For an incomplete attempt, the status may warn that its captured patch changes
-the review workflow. This is context to investigate, not proof of rejection.
-The check uses the actual caller from that run/attempt, the executing Runtime
-workflow path, and the captured base/head comparison, including caller pin
-changes. Unrelated workflow changes do not produce the warning. Missing or
-conflicting run identity, unavailable path data, or a comparison at GitHub's
-300-file limit keeps the generic explanation. This optional lookup does not
-expand token permissions; inaccessible run metadata also keeps the generic
-explanation. A later status refresh preserves the original attempt's reason
-rather than attributing current workflow changes to it.
+An incomplete review may flag changes to its caller or Runtime workflow as
+context, not a confirmed cause. The warning reflects that attempt's captured
+patch; unrelated changes don't trigger it. If the relevant evidence is
+unavailable or ambiguous, the explanation stays generic.
 
 Reconcile the automatic review's Check and workflow run before requesting
 recovery. After a confirmed caller-validation rejection, use the already deployed

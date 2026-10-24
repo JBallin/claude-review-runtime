@@ -17,7 +17,7 @@ Reviews run automatically when a PR becomes ready for review. Authorized users
 can also comment `/claude-review` on a PR to request an on-demand review.
 
 A standing status comment is updated as automatic and manual reviews progress.
-Incomplete reviews show an explanation and recovery guidance above Details.
+Incomplete reviews include an explanation and recovery guidance.
 👀 and 👍 reactions appear on the PR and on manual review request
 comments. Manual reviews post a completion comment on success.
 The review format and flow were inspired by
