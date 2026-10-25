@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import textwrap
 import unittest
@@ -1380,7 +1381,7 @@ class CompletionVerifierTests(unittest.TestCase):
     """Runs the verifier step's actual shell against execution-stream fixtures."""
 
     def verify(self, stream=None, *, raw=None, path=AUTOMATIC, execution_file=None,
-               metadata=METADATA_CONTENT, diff=DIFF_CONTENT):
+               metadata=METADATA_CONTENT, diff=DIFF_CONTENT, diagnostic_fault=None):
         step = steps(job(path, "review"))[VERIFY_STEP]
         script = run_block(step)
         with tempfile.TemporaryDirectory() as tmp:
@@ -1406,12 +1407,40 @@ class CompletionVerifierTests(unittest.TestCase):
                 "REVIEW_METADATA_FILE": str(metadata_file),
                 "REVIEW_DIFF_FILE": str(diff_file),
             }
+            if diagnostic_fault is not None:
+                real_jq = shutil.which("jq")
+                self.assertIsNotNone(real_jq)
+                shim = Path(tmp) / "jq"
+                shim.write_text(f"""#!{sys.executable}
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+args = sys.argv[1:]
+fault = {diagnostic_fault!r}
+if args[:2] == ["-c", "--argjson"]:
+    if fault in ("error", "timeout"):
+        print("private diagnostic stdout")
+        print("private diagnostic stderr", file=sys.stderr)
+        if fault == "timeout":
+            time.sleep(10)
+        sys.exit(1)
+elif args[0] == "-r" and fault == "malformed":
+    completed = subprocess.run([{real_jq!r}] + args)
+    Path(args[-1]).write_text("private malformed execution input")
+    sys.exit(completed.returncode)
+os.execv({real_jq!r}, [{real_jq!r}] + args)
+""")
+                shim.chmod(0o755)
+                environment["PATH"] = str(tmp) + os.pathsep + environment["PATH"]
             completed = subprocess.run(
                 ["bash", "-eo", "pipefail", "-c", script], env=environment, capture_output=True, text=True
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
             values = dict(line.split("=", 1) for line in output.read_text().splitlines())
         self.last_stdout = completed.stdout
+        self.last_stderr = completed.stderr
         self.last_outputs = values
         return values["completion_verified"], values["completion_reason"]
 
@@ -1609,6 +1638,63 @@ class CompletionVerifierTests(unittest.TestCase):
                 stream = clean_stream()
                 stream[1:3] = [tool_use("t1", name), tool_result("t1")]
                 self.assertRejected(stream, "unexpected_tool")
+
+    def test_unexpected_tool_diagnostic_emits_only_fixed_labels_in_call_order(self):
+        prefix = "Claude review unexpected-tool diagnostic: "
+        for path in (AUTOMATIC, MANUAL):
+            for name in ("Agent", "EndConversation", "ScheduleWakeup", "Bash",
+                         "mcp__github_ci__get_ci_status", "Agent\n::warning::private-name",
+                         "$(private-command)", "private-name" * 1000, None, 42, False, {}):
+                with self.subTest(workflow=path.name, name=name):
+                    stream = clean_stream()
+                    # Allowed calls come first; the second unexpected call must
+                    # not replace the first or cause more content to be logged.
+                    stream[7:7] = [tool_use("u1", name, secret="private argument"),
+                                   tool_result("u1", content="private output"),
+                                   tool_use("u2", "EndConversation"), tool_result("u2")]
+                    self.assertRejected(stream, "unexpected_tool", path=path)
+                    expected = name if name in ("Agent", "EndConversation", "ScheduleWakeup", "Bash") else (
+                        "other" if isinstance(name, str) else "malformed")
+                    self.assertEqual(self.last_stdout.splitlines(), [
+                        "Claude review completion verified: false (unexpected_tool)",
+                        prefix + json.dumps({"tool": expected}, separators=(",", ":")),
+                    ])
+                    self.assertEqual(self.last_outputs, {
+                        "completion_verified": "false", "completion_reason": "unexpected_tool"})
+                    self.assertEqual(self.last_stderr, "")
+            stream = clean_stream()
+            call = tool_use("missing", "private-name")
+            del call["message"]["content"][0]["name"]
+            stream[7:7] = [call, tool_result("missing")]
+            self.assertRejected(stream, "unexpected_tool", path=path)
+            self.assertIn(prefix + '{"tool":"malformed"}', self.last_stdout)
+
+    def test_unexpected_tool_diagnostic_faults_preserve_verdict_and_suppress_content(self):
+        for path in (AUTOMATIC, MANUAL):
+            for fault in ("error", "timeout", "malformed"):
+                with self.subTest(workflow=path.name, fault=fault):
+                    stream = clean_stream()
+                    stream[7:7] = [tool_use("u1", "Bash"), tool_result("u1")]
+                    self.assertRejected(stream, "unexpected_tool", path=path, diagnostic_fault=fault)
+                    self.assertEqual(self.last_stdout,
+                                     "Claude review completion verified: false (unexpected_tool)\n")
+                    self.assertEqual(self.last_stderr, "")
+                    self.assertEqual(self.last_outputs, {
+                        "completion_verified": "false", "completion_reason": "unexpected_tool"})
+
+    def test_other_verdicts_have_no_unexpected_tool_diagnostic(self):
+        for path in (AUTOMATIC, MANUAL):
+            for stream, expected in ((clean_stream(), ("true", "verified")),
+                                     ([init_message(), final_text(), result()],
+                                      ("false", "captured_inputs_not_read")),
+                                     ([init_message(), result()], ("false", "unfinished_tool_use"))):
+                self.assertEqual(self.verify(stream, path=path), expected)
+                self.assertNotIn("unexpected-tool diagnostic", self.last_stdout)
+            stream = clean_stream()
+            stream[7:7] = [tool_use("u1", "Bash"), tool_result("u1")]
+            stream[-1] = result("error_during_execution", True)
+            self.assertRejected(stream, "no_clean_terminal_result", path=path)
+            self.assertNotIn("unexpected-tool diagnostic", self.last_stdout)
 
     def test_unfinished_tool_activity_is_not_verified(self):
         unanswered = clean_stream()
