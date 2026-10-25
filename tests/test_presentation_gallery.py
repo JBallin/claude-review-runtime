@@ -4,6 +4,8 @@ from contextlib import redirect_stdout
 import importlib.util
 import io
 import os
+import re
+from itertools import groupby
 from pathlib import Path
 import socket
 import subprocess
@@ -19,6 +21,10 @@ gallery = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gallery)
 
 
+def sample_items():
+    return [(case.case_id, case.body) for case in gallery.gallery_samples()]
+
+
 class PresentationGalleryTests(unittest.TestCase):
     def test_deterministic_complete_gallery(self):
         body = gallery.render_gallery()
@@ -27,24 +33,77 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 34)
-        for letter in "ABCDEFGHIJKLMNOPQR":
-            self.assertIn(f"### {letter} — ", body)
+        self.assertEqual(len(gallery.gallery_samples()), 38)
+        self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
+                         list(range(1, 39)))
         # Keep conservative byte headroom below GitHub's 65,536-character limit.
         self.assertLess(len(body.encode("utf-8")), 60_000)
+
+    def test_semantic_anchors_are_unique_and_independent_of_group_order(self):
+        samples = gallery.gallery_samples()
+        case_ids = [case.case_id for case in samples]
+        self.assertEqual(len(case_ids), len(set(case_ids)))
+        for case in samples:
+            self.assertRegex(case.case_id, r"^[a-z][a-z0-9-]+$")
+            self.assertNotRegex(case.title, r"^(?:[A-Z]+[0-9]*|[0-9]+) — ")
+        self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', gallery.render_gallery(), re.MULTILINE),
+                         case_ids)
+        with mock.patch.object(gallery, "GROUP_ORDER", tuple(reversed(gallery.GROUP_ORDER))):
+            reordered = gallery.gallery_samples()
+        self.assertNotEqual([case.case_id for case in reordered], case_ids)
+        self.assertEqual({case.case_id: (case.title, case.body) for case in reordered},
+                         {case.case_id: (case.title, case.body) for case in samples})
+
+    def test_insertion_and_reordering_renumber_headings_without_changing_case_sections(self):
+        samples = gallery.gallery_samples()
+        inserted = gallery.GallerySample("additional-case", "incomplete", "Additional sample", samples[0].body)
+        changed_order = [inserted, *reversed(samples)]
+        original = gallery.render_gallery()
+        with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
+            changed = gallery.render_gallery()
+        self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
+                         list(range(1, 40)))
+        self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
+                         [case.case_id for case in changed_order])
+
+        def case_sections(body):
+            # Ignore the display heading while retaining each stable anchor's
+            # exact rendered sample and optional inline finding context.
+            return {re.match(r'<a id="([^"]+)">', section)[1]: section.split("\n\n", 2)[2]
+                    for section in body.removesuffix("\n").split("\n\n---\n\n")[1:]}
+
+        changed_sections = case_sections(changed)
+        for case_id, section in case_sections(original).items():
+            self.assertEqual(changed_sections[case_id], section)
+
+    def test_related_cases_are_contiguous_in_reading_order(self):
+        samples = gallery.gallery_samples()
+        self.assertEqual(tuple(group for group, _ in groupby(case.group for case in samples)),
+                         gallery.GROUP_ORDER)
+        case_ids = [case.case_id for case in samples]
+        for related in (
+                ["incomplete-unknown", "unread-automatic", "unread-manual",
+                 "workflow-changed", "workflow-changed-superseded"],
+                ["running-history-clean", "running-history-findings", "running-history-manual"],
+                ["incomplete-history-clean", "incomplete-history-findings", "incomplete-history-manual"],
+                ["publication-incomplete-none", "publication-incomplete-success",
+                 "publication-incomplete-action-required", "publication-incomplete-manual"]):
+            start = case_ids.index(related[0])
+            self.assertEqual(case_ids[start:start + len(related)], related)
 
     def test_each_sample_reuses_helper_output_with_only_markers_and_hard_breaks_normalized(self):
         check = gallery.check
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 32)
+        self.assertEqual(status.call_count, 36)
         self.assertEqual(completion.call_count, 2)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
         body = gallery.render_gallery()
-        for title, raw in samples:
-            with self.subTest(title=title):
+        for case in samples:
+            case_id, raw = case.case_id, case.body
+            with self.subTest(case_id=case_id):
                 self.assertIn(gallery.sample_markdown(raw), body)
                 self.assertTrue("claude-review-runtime:" in raw)
 
@@ -52,9 +111,10 @@ class PresentationGalleryTests(unittest.TestCase):
         check = gallery.check
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             samples = gallery.gallery_samples()
-        title, raw = samples[1]
-        self.assertEqual(title, gallery.FINDINGS_SAMPLE)
-        call = status.call_args_list[1]
+        case = next(case for case in samples if case.case_id == gallery.FINDINGS_SAMPLE)
+        raw = case.body
+        call = next(call for call in status.call_args_list
+                    if call.args == (gallery.fixtures.HEAD, "main", "action_required"))
         self.assertEqual(call.args, (gallery.fixtures.HEAD, "main", "action_required"))
         self.assertNotIn("last_review", call.kwargs)
         visible, details = raw.split("<details>", 1)
@@ -102,10 +162,10 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertTrue(all(line == line.rstrip() for line in gallery.render_gallery().splitlines()))
 
     def test_real_samples_keep_legacy_reason_hidden_and_label_identity_roles(self):
-        samples = dict(gallery.gallery_samples())
-        for title, raw in samples.items():
-            if title.startswith(("B —", "C —")):
-                with self.subTest(title=title):
+        samples = dict(sample_items())
+        for case_id, raw in samples.items():
+            if case_id in ("baseline-clean", "baseline-findings"):
+                with self.subTest(case_id=case_id):
                     body = gallery.strip_operational_markers(raw)
                     receipt = "<!--\n**Reason:** " + gallery.check.STATUS_REASONS["base_advanced"] + "\n-->"
                     self.assertIn(receipt, body)
@@ -114,16 +174,16 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertEqual(body.count(
                         "⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed."
                     ), 1)
-            elif title.startswith("E —"):
+            elif case_id == "incomplete-unknown":
                 self.assertIn("| Attempt commit |", raw)
-            elif title.startswith("F —"):
+            elif case_id == "compact-clean":
                 self.assertIn("Claude Review: No findings. 🎉", raw)
                 self.assertIn("**Reviewed commit:**", raw)
                 self.assertNotIn(gallery.check.TARGET_TIP_WARNING, raw)
                 self.assertNotIn("target commit:**", raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
-            elif title.startswith("G —"):
+            elif case_id == "compact-differing-baseline":
                 self.assertIn("Claude Review: No findings. 🎉", raw)
                 self.assertIn(gallery.check.TARGET_TIP_WARNING, raw.split("<details>")[0])
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
@@ -133,39 +193,39 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn("**Current target commit:**", raw)
 
     def test_publication_failures_and_unavailable_check_variants_use_current_attempt(self):
-        samples = dict(gallery.gallery_samples())
-        groups = {letter: [(t, b) for t, b in samples.items() if t.startswith(letter + " —")]
-                  for letter in ("K", "L", "M")}
-        for letter, cases in groups.items():
-            self.assertEqual(len(cases), 4 if letter == "K" else 3)
-            for title, body in cases:
-                with self.subTest(title=title):
+        groups = {group: [(case.case_id, case.body) for case in gallery.gallery_samples() if case.group == group]
+                  for group in ("publication-incomplete", "publication-unavailable", "running-unavailable")}
+        for group, cases in groups.items():
+            self.assertEqual(len(cases), 4 if group == "publication-incomplete" else 3)
+            for case_id, body in cases:
+                with self.subTest(case_id=case_id):
                     visible, details = body.split("<details>", 1)
                     self.assertIn("| Attempt commit |", visible)
                     self.assertIn("| " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO)
-                                  + (" | Manual request |" if "Manual current attempt" in title else " | Draft marked ready |"), visible)
+                                  + (" | Manual request |" if case_id.endswith("-manual") else " | Draft marked ready |"), visible)
                     self.assertNotIn("✅ **Completed**", visible)
                     self.assertNotIn("⚠️ **Findings**", visible)
-                    self.assertIn("🔄 **Running**" if letter == "M" else "❌ **Incomplete**", visible)
-                    if letter == "K":
+                    self.assertIn("🔄 **Running**" if group == "running-unavailable" else "❌ **Incomplete**", visible)
+                    if group == "publication-incomplete":
                         self.assertIn("The authoritative Check result could not be published.", visible)
                     else:
                         self.assertIn("authoritative Check publication is unavailable", visible)
-                    if "no completed history" in title:
+                    if case_id.endswith("-none"):
                         self.assertNotIn("**Previous completed review**", details)
                     else:
                         self.assertIn("**Current attempt**", details)
                         self.assertIn("\n\n**Previous completed review**  \n", details)
-                        self.assertIn("**Result:** " + ("Findings." if "previous findings" in title else "No findings."), details)
+                        self.assertIn("**Result:** " + ("Findings." if case_id.endswith("-action-required") else "No findings."), details)
                         self.assertEqual(gallery.check.last_completed_review({"body": body}),
-                                         (gallery.fixtures.HEAD, "main", "action_required" if "previous findings" in title else "success"))
+                                         (gallery.fixtures.HEAD, "main", "action_required" if case_id.endswith("-action-required") else "success"))
 
     def test_manual_history_samples_attach_scope_only_to_previous_review(self):
-        cases = [(title, body) for title, body in gallery.gallery_samples()
-                 if "Manual current attempt" in title]
+        cases = [(case.case_id, case.body) for case in gallery.gallery_samples()
+                 if case.group in ("running-history", "incomplete-history", "publication-incomplete")
+                 and case.case_id.endswith("-manual")]
         self.assertEqual(len(cases), 3)
-        for title, body in cases:
-            with self.subTest(title=title):
+        for case_id, body in cases:
+            with self.subTest(case_id=case_id):
                 current, previous = body.split("**Previous completed review**")
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, current)
                 self.assertEqual(previous.count(gallery.check.CAPTURED_PATCH_SCOPE), 1)
@@ -173,29 +233,30 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn("**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:**", current)
 
     def test_compact_metadata_keeps_links_on_consecutive_rendered_lines(self):
-        for title, body in gallery.gallery_samples():
-            if title.startswith(("A —", "B —", "C —", "F —", "G —", "J —")):
-                with self.subTest(title=title):
+        for case_id, body in sample_items():
+            if case_id in ("current-clean", "baseline-clean", "baseline-findings", "compact-clean",
+                           "compact-differing-baseline", "retargeted-clean", "retargeted-findings"):
+                with self.subTest(case_id=case_id):
                     details = body.split("<details>")[1]
                     self.assertNotIn("\n\n[", details)
                     self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", details)
-                    if title.startswith(("A —", "B —")):
+                    if case_id in ("current-clean", "baseline-clean"):
                         self.assertIn("**Result:** No findings.  \n**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", details)
-                    if title.startswith(("F —", "G —")):
+                    if case_id in ("compact-clean", "compact-differing-baseline"):
                         self.assertNotIn("captured patch only", body)
                         self.assertNotIn("merge approval", body)
 
     def test_run_links_are_embedded_in_the_correct_sample_context(self):
         reviewed = "https://github.com/owner/repo/actions/runs/5"
         attempt = "https://github.com/owner/repo/actions/runs/6"
-        for title, body in gallery.gallery_samples():
-            with self.subTest(title=title):
+        for case_id, body in sample_items():
+            with self.subTest(case_id=case_id):
                 details = body.split("<details>")[1]
                 self.assertNotIn("workflow run]", details)
                 self.assertNotIn("[Current attempt]", details)
                 self.assertNotIn("[Previous completed review]", details)
                 self.assertNotIn("[Review run]", details)
-                if title.startswith(("N —", "O —", "P —", "Q —", "R —")):
+                if case_id.startswith(("shared-run-", "legacy-history-", "stale-")):
                     continue
                 if "**Previous completed review**" in details:
                     current, previous = details.split("**Previous completed review**")
@@ -204,50 +265,71 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
                     self.assertNotIn(reviewed, current)
                     self.assertNotIn(attempt, previous)
-                elif title.startswith(("E —", "K —", "L —")):
-                    url = reviewed if title.startswith("E —") else attempt
+                elif case_id.startswith(("publication-incomplete-", "publication-unavailable-", "unread-", "workflow-changed")) or case_id == "incomplete-unknown":
+                    url = reviewed if case_id in ("incomplete-unknown", "unread-automatic",
+                                                   "workflow-changed", "workflow-changed-superseded") else attempt
                     self.assertIn(f"**[Attempt]({url}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
-                elif title.startswith("M —"):
+                elif case_id.startswith("running-unavailable-"):
                     self.assertIn(f"**[Attempt]({attempt}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
                 else:
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", details)
 
+    def test_incomplete_explanations_are_visible_and_keep_diagnostics_collapsed(self):
+        for case_id, body in sample_items():
+            if case_id not in ("unread-automatic", "unread-manual", "workflow-changed", "workflow-changed-superseded"):
+                continue
+            visible, details = body.split("<details>", 1)
+            with self.subTest(case_id=case_id):
+                self.assertIn("❌ **Incomplete**", visible)
+                self.assertIn("Recovery guidance]", visible)
+                self.assertIn("**Reason:**", details)
+                self.assertNotIn("**Reason:**", visible)
+                self.assertNotIn("**Note:**", body)
+                if case_id in ("unread-automatic", "unread-manual"):
+                    self.assertIn("Required review inputs were not fully read.", visible)
+                    self.assertIn("#incomplete-captured-input-reads", visible)
+                    self.assertNotIn("validation rejection", body)
+                else:
+                    self.assertIn("may prevent the review from starting", visible)
+                    self.assertIn("/actions/runs/5/attempts/1", visible)
+                    self.assertIn("cause of the incomplete review is unknown", details)
+
     def test_edge_samples_keep_plain_headings_and_exact_run_association(self):
         run = "https://github.com/owner/repo/actions/runs/5"
-        for title, body in gallery.gallery_samples():
+        for case_id, body in sample_items():
             self.assertNotIn("[Current attempt]", body)
             self.assertNotIn("[Previous completed review]", body)
-            with self.subTest(title=title):
-                if title.startswith(("N —", "O —")):
+            with self.subTest(case_id=case_id):
+                if case_id.startswith("shared-run-"):
                     current, previous = body.split("**Previous completed review**")
-                    self.assertEqual("**Current attempt**" in current, title.startswith("O —"))
-                    anchor = "Running" if title.startswith("N —") else "Attempt"
+                    self.assertEqual("**Current attempt**" in current, case_id == "shared-run-failure")
+                    anchor = "Running" if case_id == "shared-run-in-progress" else "Attempt"
                     self.assertIn(f"[{anchor}]({run})", current)
                     self.assertIn(f"**[Reviewed]({run}) against:**", previous)
                     self.assertNotIn("**Attempt baseline:**", current)
-                elif title.startswith("P —"):
+                elif case_id == "legacy-history-run":
                     self.assertIn("**[Attempt](https://github.com/owner/repo/actions/runs/6) status:** Not recorded", body)
                     self.assertIn(f"**[Reviewed]({run}) target:**", body)
-                elif title.startswith("Q —"):
+                elif case_id == "legacy-history-no-links":
                     self.assertNotIn("/actions/runs/", body)
                     self.assertIn("**Reviewed against:**", body)
-                elif title.startswith("R — Stale running"):
+                elif case_id.startswith("stale-running-"):
                     self.assertIn(f"**[Attempt]({run}) baseline:** " + gallery.check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), body)
                     self.assertEqual(gallery.check.status_state({"body": body}), "stale")
                     self.assertEqual(gallery.check.status_owner({"body": body})["head"], gallery.fixtures.HEAD)
 
     def test_stale_samples_use_bound_accepted_attempt_triggers(self):
-        for title, body in gallery.gallery_samples():
-            if not title.startswith("R —"):
+        for case_id, body in sample_items():
+            if not case_id.startswith("stale-"):
                 continue
             record = {"body":body,"user":{"login":gallery.check.STATUS_AUTHOR,"type":"Bot"}}
             owner = gallery.check.status_owner(record)
-            label = "Manual request" if "manual" in title else "Draft marked ready"
+            label = "Manual request" if case_id == "stale-manual" else "Draft marked ready"
             self.assertEqual(gallery.check.status_attempt_trigger(record, owner), label)
             self.assertIn("| " + label + " |", body.split("<details>")[0])
-            if "manual" in title:
+            if case_id == "stale-manual":
                 self.assertIn("**Review trigger:** PR opened for review", body)
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):

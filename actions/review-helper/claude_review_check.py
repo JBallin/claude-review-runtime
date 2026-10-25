@@ -50,6 +50,8 @@ STATUS_REASONS = {
     "cancelled": "The review was cancelled before verified completion.",
     "preparation_failed": "Review preparation failed; Claude did not complete this review.",
     "incomplete": "The review did not complete with reliable execution and finding evidence.",
+    "unread_inputs": "Required review inputs were not fully read.",
+    "workflow_changed": "The captured patch changes the review workflow; the cause of the incomplete review is unknown.",
     "check_publication_failed": "The authoritative Check result could not be published.",
     "tooling_unavailable": "Trusted review tooling was unavailable; the review could not be finalized reliably.",
     "stale": "The captured head or base was superseded; the current patch is not reviewed by this attempt.",
@@ -58,7 +60,10 @@ STATUS_REASONS = {
 }
 LEGACY_BASE_ADVANCED_REASON = "The target branch advanced; integration with the current baseline has not been reviewed."
 CAPTURED_PATCH_SCOPE = "This review covers the captured patch only; integration with other target baselines is not covered."
-INCOMPLETE_NOTE = "If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected."
+# Recovery guidance follows main; captured review evidence stays immutable.
+RECOVERY_GUIDE = "https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md"
+INCOMPLETE_RECOVERY = RECOVERY_GUIDE + "#installation-and-incomplete-reviews"
+UNREAD_RECOVERY = RECOVERY_GUIDE + "#incomplete-captured-input-reads"
 TARGET_TIP_WARNING = "⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed."
 PRESENTATION_SECONDS = 120
 PRESENTATION_DEADLINE = None
@@ -107,8 +112,8 @@ class GhError(Exception):
     pass
 
 
-def gh_api(args, body=None):
-    timeout = GH_TIMEOUT_SECONDS
+def gh_api(args, body=None, *, timeout_seconds=GH_TIMEOUT_SECONDS):
+    timeout = min(GH_TIMEOUT_SECONDS, timeout_seconds)
     if PRESENTATION_DEADLINE is not None:
         timeout = min(timeout, PRESENTATION_DEADLINE - time.monotonic())
         if timeout <= 0:
@@ -461,7 +466,17 @@ def decide(
             "Review did not complete",
             f"Claude Code reported execution conclusion `{action_conclusion or 'missing'}`.{kept}{notes}",
         )
+    if completion_verified and completion_reason not in ("", "verified"):
+        return (
+            "failure", "Review completion could not be verified",
+            f"Trusted completion evidence is contradictory; review completion is unknown.{kept}{notes}",
+        )
     if not completion_verified:
+        if completion_reason == "captured_inputs_not_read":
+            return (
+                "failure", "Review inputs were not fully read",
+                STATUS_REASONS["unread_inputs"] + f" [Recovery guidance]({UNREAD_RECOVERY}).{kept}{notes}",
+            )
         return (
             "failure",
             "Review completion could not be verified",
@@ -568,6 +583,117 @@ def status_attempt_trigger(comment, owner):
     except (ValueError, TypeError):
         pass
     return None
+
+
+REPOSITORY = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*/(?!\.{1,2}$)[A-Za-z0-9_.-]+")
+SHA = re.compile(r"[0-9a-f]{40}")
+WORKFLOW = re.compile(r"\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml")
+FILE_LIMIT = 300  # GitHub's compare endpoint returns at most 300 changed files.
+
+
+def workflow_path(value):
+    """Accept a repository workflow path, optionally qualified by a run ref."""
+    if not isinstance(value, str):
+        return None
+    path, separator, ref = value.partition("@")
+    if separator and (not ref or any(c in ref for c in "\r\n\x00")):
+        return None
+    return path if WORKFLOW.fullmatch(path) else None
+
+
+def workflow_changed(owner, runtime_repository, runtime_workflow_path, api):
+    """Return True, False, or None (unknown) using at most two API reads.
+
+    ``owner`` is the trusted captured presentation owner. ``api`` accepts one
+    gh-api argument list and returns UTF-8 JSON, like the publication helper's
+    gh_api. No retries or pagination consume the enclosing presentation budget.
+    All malformed, unavailable, or potentially truncated data stays unknown.
+    Call only for incomplete attempts; unread-input evidence takes precedence.
+    """
+    try:
+        repo, head, base = (owner[key] for key in ("repo", "head", "base"))
+        run_id, attempt = (owner[key] for key in ("run", "attempt"))
+        if (not isinstance(repo, str) or not REPOSITORY.fullmatch(repo)
+                or not isinstance(head, str) or not SHA.fullmatch(head)
+                or not isinstance(base, str) or not SHA.fullmatch(base)
+                or type(run_id) is not int or run_id <= 0
+                or type(attempt) is not int or attempt <= 0
+                or not isinstance(runtime_repository, str)
+                or not REPOSITORY.fullmatch(runtime_repository)
+                or not workflow_path(runtime_workflow_path)):
+            return None
+        run = json.loads(api([f"repos/{repo}/actions/runs/{run_id}/attempts/{attempt}"]))
+        if (not isinstance(run, dict) or type(run.get("id")) is not int
+                or run["id"] != run_id or type(run.get("run_attempt")) is not int
+                or run["run_attempt"] != attempt
+                or not isinstance(run.get("repository"), dict)
+                or run["repository"].get("full_name") != repo):
+            return None
+        caller = workflow_path(run.get("path"))
+        if not caller:
+            return None
+        # referenced_workflows is run-wide, not the review invocation graph:
+        # unrelated reusable lint/test jobs must never trigger this warning.
+        paths = {caller}
+        if runtime_repository == repo:
+            paths.add(workflow_path(runtime_workflow_path))
+        comparison = json.loads(api([f"repos/{repo}/compare/{base}...{head}"]))
+        if not isinstance(comparison, dict):
+            return None
+        files = comparison.get("files")
+        if not isinstance(files, list) or len(files) >= FILE_LIMIT:
+            return None
+        changed = set()
+        for item in files:
+            if not isinstance(item, dict) or not isinstance(item.get("filename"), str):
+                return None
+            for key in ("filename", "previous_filename"):
+                value = item.get(key)
+                if value is not None:
+                    if (not isinstance(value, str) or not value or value.startswith("/")
+                            or any(part in ("", ".", "..") for part in value.split("/"))
+                            or any(c in value for c in "\r\n\x00")):
+                        return None
+                    changed.add(value)
+        return bool(paths & changed)
+    except Exception:
+        # This optional diagnostic must not prevent authoritative publication.
+        # In particular, an API outage is not evidence of workflow rejection.
+        return None
+
+
+def incomplete_explanation(reason, owner):
+    """Render fixed, owner-bound diagnostics; never infer a provider rejection."""
+    if reason and reason.startswith(STATUS_REASONS["stale"] + " "):
+        reason = reason[len(STATUS_REASONS["stale"]) + 1:]
+    if reason == STATUS_REASONS["unread_inputs"]:
+        return reason + f" [Recovery guidance]({UNREAD_RECOVERY})."
+    if reason == STATUS_REASONS["workflow_changed"] and owner:
+        run = f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}/attempts/{owner['attempt']}"
+        return ("⚠️ The captured patch changes the review workflow, which may prevent the review from starting. "
+                f"Check the [workflow run]({run}) for a validation rejection. "
+                f"[Recovery guidance]({INCOMPLETE_RECOVERY}).")
+    if reason not in STATUS_REASONS.values() or reason == STATUS_REASONS["workflow_changed"]:
+        reason = STATUS_REASONS["incomplete"]
+    return reason + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
+
+
+def incomplete_status_reason(owner):
+    """Use verifier outputs first; changed paths supply context, never a cause."""
+    verdict = env("COMPLETION_REASON")
+    if verdict == "captured_inputs_not_read":
+        if (env("COMPLETION_VERIFIED") == "false" and env("START_RESULT", "success") == "success"
+                and env("REVIEW_RESULT") == "success" and env("ACTION_CONCLUSION") == "success"):
+            return STATUS_REASONS["unread_inputs"]
+        # Conflicting execution evidence is unknown, not a pre-start rejection.
+        return STATUS_REASONS["incomplete"]
+    if env("COMPLETION_VERIFIED") == "true" or verdict not in ("", "missing_execution_file"):
+        return STATUS_REASONS["incomplete"]
+    # Optional context gets at most ten seconds of the shared presentation
+    # budget, with no retries; reserve time for ownership checks and publication.
+    changed = workflow_changed(owner, env("RUNTIME_REPOSITORY"), env("RUNTIME_WORKFLOW_PATH"),
+                               lambda args: gh_api(args, timeout_seconds=5))
+    return STATUS_REASONS["workflow_changed"] if changed is True else STATUS_REASONS["incomplete"]
 
 
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
@@ -678,8 +804,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if state == "stale" and owner_running:
         lines += [f"Claude is reviewing captured commit {commit_link(owner['head'] if owner else head_sha, owner['repo'] if owner else None)}. "
                   "Review coverage of the current head and baseline is not established.", ""]
-    if adverse and not ((state == "in_progress" and check_available)
-                        or (state == "failure" and specific_reason)):
+    if state == "in_progress" and not check_available:
         lines += [messages[state], ""]
     if show_review:
         if state == "stale" and not (base_advanced or superseded_review):
@@ -710,6 +835,12 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines += ["", messages["action_required"]]
     if base_advanced:
         lines += ["", TARGET_TIP_WARNING]
+    if incomplete and not active:
+        if state == "publication_incomplete" or state == "failure" and not specific_reason:
+            explanation = messages[state] + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
+        else:
+            explanation = incomplete_explanation(reason, owner)
+        lines += ["", explanation]
     attempt_url = (env("DETAILS_URL") if not owner else
                    f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
     historical = last_review is not None and state not in ("success", "action_required")
@@ -729,8 +860,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines += [f"**Reason:** {reason}"]
         if base_advanced or superseded_review:
             lines += ["-->"]
-        if incomplete:
-            lines += [f"**Note:** {INCOMPLETE_NOTE}"]
         lines += [""]
     metadata = ["**Current attempt**"] if history_in_details else []
     if state == "success" or (base_advanced and last_review[2] == "success"):
@@ -1289,7 +1418,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             elif acquire or env("START_RESULT", "success") != "success":
                 reason = STATUS_REASONS["preparation_failed"]
             else:
-                reason = STATUS_REASONS["incomplete"]
+                reason = incomplete_status_reason(owner)
         elif state == "publication_incomplete":
             reason = STATUS_REASONS["check_publication_failed"]
         manual = owner["kind"] != "automatic"
@@ -1831,6 +1960,7 @@ def cmd_finalize():
         and review_result == "success"
         and action_conclusion == "success"
         and completion_verified
+        and completion_reason in ("", "verified")
     )
     merge_base_sha = env("MERGE_BASE_SHA")
 

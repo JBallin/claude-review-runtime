@@ -77,10 +77,11 @@ from the gallery generator; do not duplicate fallback templates or append
 hand-edited output to the committed gallery.
 
 After publication is authorized, verify the generating checkout and committed
-gallery match the exact published PR head. Use the gallery's exact-revision URL
-for provenance, without embedding its own commit SHA in the generated file.
-Link it in the PR description with inspected scenarios, a concise visual-QA
-assessment, and meaningful limitations. Do not paste the full gallery or duplicate
+gallery match the exact published PR head. In an open PR description, use one
+branch-based gallery preview link. Record the exact inspected commit as plain text
+alongside inspected scenarios, visual-QA results, and meaningful limitations;
+a second commit-pinned gallery link is not required. Do not embed the gallery's
+own commit SHA in the generated file. Do not paste the full gallery or duplicate
 the Files changed diff into PR comments or the description. Keep all samples
 synthetic and free of reviewer invocation text.
 
