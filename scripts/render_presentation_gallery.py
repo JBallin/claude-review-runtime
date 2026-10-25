@@ -110,14 +110,16 @@ def gallery_samples():
             "completed_owner_verified": True,
         }
         manual_owner = fixtures.presentation_owner(kind="issue_comment", target=12, started=STARTED)
-        def selected(models, evidence="observed", attempt=1):
-            record = {"generation": manual_owner["generation"], "requested_model": "opus",
-                      "requested_effort": "high", "models": models,
+        def selected(models, evidence="observed", attempt=1, model="opus", effort="high"):
+            record = {"generation": manual_owner["generation"], "requested_model": model,
+                      "requested_effort": effort, "models": models,
                       "model_evidence": evidence, "execution_attempt": attempt}
             return check.status_comment_body(fixtures.HEAD, "main", "success", owner=manual_owner,
                                             trigger_label="Manual request", completed_at=COMPLETED_AT,
                                             selection=record)
         samples = [
+            GallerySample("plain-selection", "current-completion", "Plain manual request with diagnostic model evidence", selected(["claude-sonnet-4-6"], model="", effort="")),
+            GallerySample("effort-only", "current-completion", "Effort-only request", selected(["claude-sonnet-4-6"], model="")),
             GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-4-7"])),
             GallerySample("opus-mismatch", "current-completion", "Completed review with model mismatch", selected(["claude-sonnet-4-6"])),
             GallerySample("opus-unknown", "current-completion", "Completed review with unknown model", selected([], "unknown", None)),

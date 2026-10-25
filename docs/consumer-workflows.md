@@ -215,7 +215,9 @@ policy. The pinned headless integration does not report effective effort, so
 presentation labels effort as **requested** and observed effort as **unknown**.
 No private reasoning text is exposed.
 
-The status shows requested overrides and available model evidence. Missing,
+The comment shows requested overrides and available model evidence only when a
+model or effort override was requested. Plain requests omit selection metadata
+from both the summary and Details; diagnostic evidence remains available. Missing,
 mixed, or different model evidence is informational: it never invalidates an
 otherwise verified review or erases findings. Check Details before deciding
 whether a completed review satisfies your intended model choice. There is no

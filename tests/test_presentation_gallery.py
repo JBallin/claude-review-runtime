@@ -33,9 +33,9 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 42)
+        self.assertEqual(len(gallery.gallery_samples()), 44)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 43)))
+                         list(range(1, 45)))
         # Keep conservative byte headroom below GitHub's 65,536-character limit.
         self.assertLess(len(body.encode("utf-8")), 60_000)
 
@@ -62,7 +62,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 44)))
+                         list(range(1, 46)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [case.case_id for case in changed_order])
 
@@ -96,7 +96,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 40)
+        self.assertEqual(status.call_count, 42)
         self.assertEqual(completion.call_count, 2)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])

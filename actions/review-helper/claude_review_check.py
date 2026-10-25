@@ -645,10 +645,10 @@ def selection_notice(record):
         else:
             line = "**Model:** Opus requested; execution model unknown."
     else:
-        line = "**Model:** No override requested."
+        line = ""
     if record["requested_effort"]:
         line += " **Requested effort:** " + record["requested_effort"] + "."
-    return [line] if record["requested_model"] or record["requested_effort"] else []
+    return [line.strip()] if record["requested_model"] or record["requested_effort"] else []
 
 
 def inline_code(value):
@@ -1002,7 +1002,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             lines += ["-->"]
         lines += [""]
     metadata = ["**Current attempt**"] if history_in_details else []
-    if selection:
+    if selection and (selection["requested_model"] or selection["requested_effort"]):
         metadata += ["**Requested model:** " + (selection["requested_model"] or "unspecified"),
                      "**Observed models:** " + (", ".join(selection["models"]) or "unknown"),
                      "**Requested effort:** " + (selection["requested_effort"] or "unspecified"),

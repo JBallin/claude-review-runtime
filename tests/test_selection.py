@@ -108,3 +108,22 @@ class SelectionTests(unittest.TestCase):
                         {'generation':'other'}, {'model_evidence':'unknown'}, {'extra':'value'}):
             candidate = {**record, **changes}
             self.assertIsNone(check.valid_selection(candidate, owner))
+
+    def test_plain_comment_is_quiet_but_preserves_diagnostics(self):
+        owner, record = self.record(requested_model='', requested_effort='')
+        for state in ('success', 'in_progress', 'failure', 'stale'):
+            body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=record)
+            for label in ('**Model:**', '**Requested model:**', '**Observed models:**',
+                          '**Requested effort:**', '**Observed effort:**', '**Model evidence attempt:**'):
+                self.assertNotIn(label, body)
+            self.assertIn(check.SELECTION_PREFIX, body)
+            self.assertEqual(check.current_selection(owner, {'body': body}), record)
+
+    def test_effort_only_confirmation_has_no_model_line(self):
+        owner, record = self.record(requested_model='')
+        body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
+        self.assertEqual(check.selection_notice(record), ['**Requested effort:** high.'])
+        self.assertNotIn('No override requested', body)
+        self.assertNotIn('**Model:**', body)
+        self.assertIn('**Observed models:** claude-opus-4-7', body)
+        self.assertIn('**Observed effort:** unknown', body)

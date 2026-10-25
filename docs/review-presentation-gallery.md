@@ -6,9 +6,64 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 ---
 
+<a id="plain-selection"></a>
+
+### 1 — Plain manual request with diagnostic model evidence
+
+## Claude Review
+
+| Status | Reviewed commit | Review trigger |
+| --- | --- | --- |
+| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
+
+This review covers the captured patch only; integration with other target baselines is not covered.
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Result:** No findings.\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
+<a id="effort-only"></a>
+
+### 2 — Effort-only request
+
+## Claude Review
+
+| Status | Reviewed commit | Review trigger |
+| --- | --- | --- |
+| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
+
+**Requested effort:** high.
+
+This review covers the captured patch only; integration with other target baselines is not covered.
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<br/>
+
+**Requested model:** unspecified\
+**Observed models:** claude-sonnet-4-6\
+**Requested effort:** high\
+**Observed effort:** unknown (not reported by this headless integration).\
+**Model evidence attempt:** 1\
+**Result:** No findings.\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+
+</details>
+
+---
+
 <a id="opus-observed"></a>
 
-### 1 — Opus observed with requested effort
+### 3 — Opus observed with requested effort
 
 ## Claude Review
 
@@ -39,7 +94,7 @@ This review covers the captured patch only; integration with other target baseli
 
 <a id="opus-mismatch"></a>
 
-### 2 — Completed review with model mismatch
+### 4 — Completed review with model mismatch
 
 ## Claude Review
 
@@ -70,7 +125,7 @@ This review covers the captured patch only; integration with other target baseli
 
 <a id="opus-unknown"></a>
 
-### 3 — Completed review with unknown model
+### 5 — Completed review with unknown model
 
 ## Claude Review
 
@@ -100,7 +155,7 @@ This review covers the captured patch only; integration with other target baseli
 
 <a id="opus-multiple"></a>
 
-### 4 — Completed review with multiple models
+### 6 — Completed review with multiple models
 
 ## Claude Review
 
@@ -131,7 +186,7 @@ This review covers the captured patch only; integration with other target baseli
 
 <a id="current-clean"></a>
 
-### 5 — Clean completion, matching baseline
+### 7 — Clean completion, matching baseline
 
 ## Claude Review
 
@@ -153,7 +208,7 @@ This review covers the captured patch only; integration with other target baseli
 
 <a id="current-findings"></a>
 
-### 6 — Current findings completion, matching baseline
+### 8 — Current findings completion, matching baseline
 
 ## Claude Review
 
@@ -180,7 +235,7 @@ Assess the recorded findings in the inline review threads.
 
 <a id="baseline-clean"></a>
 
-### 7 — Clean completion, changed target branch
+### 9 — Clean completion, changed target branch
 
 ## Claude Review
 
@@ -209,7 +264,7 @@ Assess the recorded findings in the inline review threads.
 
 <a id="baseline-findings"></a>
 
-### 8 — Findings, changed target branch
+### 10 — Findings, changed target branch
 
 ## Claude Review
 
@@ -239,7 +294,7 @@ Assess the recorded findings in the inline review threads.
 
 <a id="changed-head"></a>
 
-### 9 — PR commit changed after clean completion
+### 11 — PR commit changed after clean completion
 
 ## Claude Review
 
@@ -267,7 +322,7 @@ Assess the recorded findings in the inline review threads.
 
 <a id="incomplete-unknown"></a>
 
-### 10 — Incomplete attempt without completed history
+### 12 — Incomplete attempt without completed history
 
 ## Claude Review
 
@@ -293,7 +348,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="unread-automatic"></a>
 
-### 11 — Required inputs unread, automatic attempt
+### 13 — Required inputs unread, automatic attempt
 
 ## Claude Review
 
@@ -319,7 +374,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="unread-manual"></a>
 
-### 12 — Required inputs unread, manual attempt with workflow changes
+### 14 — Required inputs unread, manual attempt with workflow changes
 
 ## Claude Review
 
@@ -345,7 +400,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="workflow-changed"></a>
 
-### 13 — Relevant review workflow changed, cause unknown
+### 15 — Relevant review workflow changed, cause unknown
 
 ## Claude Review
 
@@ -371,7 +426,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="workflow-changed-superseded"></a>
 
-### 14 — Workflow-change context retained for a superseded attempt
+### 16 — Workflow-change context retained for a superseded attempt
 
 ## Claude Review
 
@@ -400,7 +455,7 @@ Current head and base coverage is not established by this attempt.
 
 <a id="compact-clean"></a>
 
-### 15 — Compact clean completion, matching baseline
+### 17 — Compact clean completion, matching baseline
 
 Claude Review: No findings. 🎉
 
@@ -419,7 +474,7 @@ Claude Review: No findings. 🎉
 
 <a id="compact-differing-baseline"></a>
 
-### 16 — Compact clean completion, differing baseline
+### 18 — Compact clean completion, differing baseline
 
 Claude Review: No findings. 🎉
 
@@ -441,7 +496,7 @@ Claude Review: No findings. 🎉
 
 <a id="running-history-clean"></a>
 
-### 17 — Running attempt with older completed history: clean
+### 19 — Running attempt with older completed history: clean
 
 ## Claude Review
 
@@ -470,7 +525,7 @@ Claude Review: No findings. 🎉
 
 <a id="running-history-findings"></a>
 
-### 18 — Running attempt with older completed history: findings
+### 20 — Running attempt with older completed history: findings
 
 ## Claude Review
 
@@ -499,7 +554,7 @@ Claude Review: No findings. 🎉
 
 <a id="running-history-manual"></a>
 
-### 19 — Manual current attempt with previous completed review: in_progress
+### 21 — Manual current attempt with previous completed review: in_progress
 
 ## Claude Review
 
@@ -529,7 +584,7 @@ This review covers the captured patch only; integration with other target baseli
 
 <a id="incomplete-history-clean"></a>
 
-### 20 — Incomplete attempt with older completed history: clean
+### 22 — Incomplete attempt with older completed history: clean
 
 ## Claude Review
 
@@ -563,7 +618,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="incomplete-history-findings"></a>
 
-### 21 — Incomplete attempt with older completed history: findings
+### 23 — Incomplete attempt with older completed history: findings
 
 ## Claude Review
 
@@ -597,7 +652,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="incomplete-history-manual"></a>
 
-### 22 — Manual current attempt with previous completed review: failure
+### 24 — Manual current attempt with previous completed review: failure
 
 ## Claude Review
 
@@ -632,7 +687,7 @@ This review covers the captured patch only; integration with other target baseli
 
 <a id="retargeted-clean"></a>
 
-### 23 — Retargeted provenance: clean
+### 25 — Retargeted provenance: clean
 
 ## Claude Review
 
@@ -661,7 +716,7 @@ This review covers the captured patch only; integration with other target baseli
 
 <a id="retargeted-findings"></a>
 
-### 24 — Retargeted provenance: findings
+### 26 — Retargeted provenance: findings
 
 ## Claude Review
 
@@ -692,7 +747,7 @@ Assess the recorded findings in the inline review threads.
 
 <a id="publication-incomplete-none"></a>
 
-### 25 — Authoritative Check publication incomplete: no completed history
+### 27 — Authoritative Check publication incomplete: no completed history
 
 ## Claude Review
 
@@ -718,7 +773,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-success"></a>
 
-### 26 — Authoritative Check publication incomplete: previous clean review
+### 28 — Authoritative Check publication incomplete: previous clean review
 
 ## Claude Review
 
@@ -752,7 +807,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-action-required"></a>
 
-### 27 — Authoritative Check publication incomplete: previous findings
+### 29 — Authoritative Check publication incomplete: previous findings
 
 ## Claude Review
 
@@ -786,7 +841,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-manual"></a>
 
-### 28 — Manual current attempt with previous completed review: publication_incomplete
+### 30 — Manual current attempt with previous completed review: publication_incomplete
 
 ## Claude Review
 
@@ -821,7 +876,7 @@ This review covers the captured patch only; integration with other target baseli
 
 <a id="publication-unavailable-none"></a>
 
-### 29 — Completion with unavailable Check publication: no completed history
+### 31 — Completion with unavailable Check publication: no completed history
 
 ## Claude Review
 
@@ -847,7 +902,7 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="publication-unavailable-success"></a>
 
-### 30 — Completion with unavailable Check publication: previous clean review
+### 32 — Completion with unavailable Check publication: previous clean review
 
 ## Claude Review
 
@@ -881,7 +936,7 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="publication-unavailable-action-required"></a>
 
-### 31 — Completion with unavailable Check publication: previous findings
+### 33 — Completion with unavailable Check publication: previous findings
 
 ## Claude Review
 
@@ -915,7 +970,7 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="running-unavailable-none"></a>
 
-### 32 — Running with unavailable Check publication: no completed history
+### 34 — Running with unavailable Check publication: no completed history
 
 ## Claude Review
 
@@ -938,7 +993,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="running-unavailable-success"></a>
 
-### 33 — Running with unavailable Check publication: previous clean review
+### 35 — Running with unavailable Check publication: previous clean review
 
 ## Claude Review
 
@@ -969,7 +1024,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="running-unavailable-action-required"></a>
 
-### 34 — Running with unavailable Check publication: previous findings
+### 36 — Running with unavailable Check publication: previous findings
 
 ## Claude Review
 
@@ -1000,7 +1055,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="shared-run-in-progress"></a>
 
-### 35 — Shared workflow run, matching historical baseline: in_progress
+### 37 — Shared workflow run, matching historical baseline: in_progress
 
 ## Claude Review
 
@@ -1026,7 +1081,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="shared-run-failure"></a>
 
-### 36 — Shared workflow run, matching historical baseline: failure
+### 38 — Shared workflow run, matching historical baseline: failure
 
 ## Claude Review
 
@@ -1059,7 +1114,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="legacy-history-run"></a>
 
-### 37 — Legacy completed history without recorded attempt metadata
+### 39 — Legacy completed history without recorded attempt metadata
 
 ## Claude Review
 
@@ -1085,7 +1140,7 @@ Current head and base coverage is not established by this attempt.
 
 <a id="legacy-history-no-links"></a>
 
-### 38 — Legacy completed review without workflow links
+### 40 — Legacy completed review without workflow links
 
 ## Claude Review
 
@@ -1113,7 +1168,7 @@ Current head and base coverage is not established by this attempt.
 
 <a id="stale-running-head"></a>
 
-### 39 — Stale running attempt without completed history: changed head
+### 41 — Stale running attempt without completed history: changed head
 
 ## Claude Review
 
@@ -1139,7 +1194,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-running-base"></a>
 
-### 40 — Stale running attempt without completed history: changed base
+### 42 — Stale running attempt without completed history: changed base
 
 ## Claude Review
 
@@ -1165,7 +1220,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-running-ref"></a>
 
-### 41 — Stale running attempt without completed history: changed ref
+### 43 — Stale running attempt without completed history: changed ref
 
 ## Claude Review
 
@@ -1192,7 +1247,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-manual"></a>
 
-### 42 — Stale manual attempt with distinct completed-review trigger
+### 44 — Stale manual attempt with distinct completed-review trigger
 
 ## Claude Review
 
