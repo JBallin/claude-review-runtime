@@ -15,9 +15,7 @@ Supports both Claude account tokens and Anthropic API keys; follow the
 
 Reviews run automatically when a PR becomes ready for review. Authorized users
 can also comment `/claude-review` on a PR to request an on-demand review.
-The reusable Runtime also supports an optional Opus override and requested effort;
-see the [command contract](docs/consumer-workflows.md#manual-review). Caller
-eligibility and pins must adopt that contract before the new forms work.
+Manual requests also support [optional Opus and effort selection](docs/consumer-workflows.md#optional-model-and-effort-selection).
 
 A standing status comment is updated as automatic and manual reviews progress.
 👀 and 👍 reactions appear on the PR and on manual review request

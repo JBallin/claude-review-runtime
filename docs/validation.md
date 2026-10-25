@@ -62,9 +62,7 @@ to investigate; keep independent review and merge requirements in place.
 
 ## Selection evidence
 
-Offline selection tests cover exact command grammar, shared queue eligibility,
-trusted authors, captured configuration consistency, safe literal arguments,
-ambient model conflicts, unknown/multiple response models, and owner-bound
-presentation receipts. Missing or mismatched model metadata does not change the
-completion verdict. These fixtures do not establish account entitlement, live
-alias resolution, provider fallback behavior, or effective effort.
+Offline tests cover selection admission, safe CLI arguments and attempt-bound
+model reporting. Model metadata does not determine review completion. These
+tests do not verify account access, live model selection or fallback, or
+effective effort.

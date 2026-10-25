@@ -50,7 +50,7 @@ This review covers the captured patch only; integration with other target baseli
 <br/>
 
 **Requested model:** unspecified\
-**Observed models:** claude-sonnet-4-6\
+**Observed models:** claude-sonnet-5-5\
 **Requested effort:** high\
 **Observed effort:** unknown (not reported by this headless integration).\
 **Model evidence attempt:** 1\
@@ -81,7 +81,7 @@ This review covers the captured patch only; integration with other target baseli
 <br/>
 
 **Requested model:** opus\
-**Observed models:** claude-opus-4-7\
+**Observed models:** claude-opus-5-5\
 **Requested effort:** high\
 **Observed effort:** unknown (not reported by this headless integration).\
 **Model evidence attempt:** 1\
@@ -102,7 +102,7 @@ This review covers the captured patch only; integration with other target baseli
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus requested; observed `claude-sonnet-4-6`. **Requested effort:** high.
+⚠️ **Model:** Opus requested; observed `claude-sonnet-5-5`. **Requested effort:** high.
 
 This review covers the captured patch only; integration with other target baselines is not covered.
 
@@ -112,7 +112,7 @@ This review covers the captured patch only; integration with other target baseli
 <br/>
 
 **Requested model:** opus\
-**Observed models:** claude-sonnet-4-6\
+**Observed models:** claude-sonnet-5-5\
 **Requested effort:** high\
 **Observed effort:** unknown (not reported by this headless integration).\
 **Model evidence attempt:** 1\
@@ -163,7 +163,7 @@ This review covers the captured patch only; integration with other target baseli
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus requested; observed `claude-haiku-4-5`, `claude-opus-4-7`. **Requested effort:** high.
+⚠️ **Model:** Opus requested; observed `claude-haiku-5-5`, `claude-opus-5-5`. **Requested effort:** high.
 
 This review covers the captured patch only; integration with other target baselines is not covered.
 
@@ -173,7 +173,7 @@ This review covers the captured patch only; integration with other target baseli
 <br/>
 
 **Requested model:** opus\
-**Observed models:** claude-haiku-4-5, claude-opus-4-7\
+**Observed models:** claude-haiku-5-5, claude-opus-5-5\
 **Requested effort:** high\
 **Observed effort:** unknown (not reported by this headless integration).\
 **Model evidence attempt:** 1\

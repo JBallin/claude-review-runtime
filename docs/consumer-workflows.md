@@ -151,9 +151,7 @@ For the selected revision's publication behavior, see the
 
 ## Manual review
 
-Manual invocation depends on the selected runtime revision. See the review
-guide for [this repository's pinned command](review-guide.md#request-a-manual-review)
-before selecting a revision or changing callers.
+Use this caller to accept manual review requests:
 
 ```yaml
 name: Manual Claude review
@@ -178,15 +176,10 @@ jobs:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
 
-For the current pinned self-review callers, post `/claude-review` as the entire comment,
-without whitespace or arguments; matching is case-insensitive. This repository’s
-self-review callers use that same command with their reviewed runtime pin. Any additional manual
-caller gate must match the selected runtime revision.
-
 ### Optional model and effort selection
 
-The reusable manual entrypoint in this source revision accepts these entire
-comment bodies, case-insensitively, with exactly the spaces shown:
+Post one of these entire comment bodies, case-insensitively, with exactly the
+spaces shown:
 
 ```text
 /claude-review
@@ -195,35 +188,32 @@ comment bodies, case-insensitively, with exactly the spaces shown:
 /claude-review opus effort high
 ```
 
-`effort` accepts only `low`, `medium`, `high`, `xhigh`, or `max`. No surrounding
-whitespace, extra arguments, model IDs, CLI flags, or other models are accepted.
-Selection comes only from the trusted comment; there is no reusable-workflow
-model or effort input. Additional caller eligibility gates must allow exactly
-these forms for their chosen Runtime revision. The current self-review pins and
-their plain-command gate remain unchanged; adopting the new contract is separate.
+`effort` accepts `low`, `medium`, `high`, `xhigh`, or `max`. Surrounding whitespace,
+extra arguments and other model choices are rejected. Selection comes from the
+trusted comment, not workflow inputs; any caller eligibility gate must accept
+the same forms as its selected Runtime revision.
 
-Plain invocation supplies neither override and does not guarantee Sonnet.
-`opus` selects Claude Code's alias, whose resolution can change with upstream
-versions and trusted configuration. The preflight rejects a conflicting ambient
-`ANTHROPIC_MODEL` before invoking an explicit Opus review. Authentication and
-model entitlement still depend on the existing OAuth account; selection grants
-no access. Provider failures retain their ordinary incomplete-review behavior.
+Plain `/claude-review` sets neither model nor effort. Claude Code resolves both
+from applicable configuration and account defaults; `opus` requests its Opus
+alias. See [upstream configuration](https://code.claude.com/docs/en/model-config#adjust-effort-level).
+A conflicting `ANTHROPIC_MODEL` prevents an explicit Opus review from starting.
+Model access still depends on the existing account.
 
-Higher effort can increase usage and latency. Existing turn and time limits are
-not a spending cap. The requested level may be limited by the model or account
-policy. The pinned headless integration does not report effective effort, so
-presentation labels effort as **requested** and observed effort as **unknown**.
-No private reasoning text is exposed.
+As of 2026-10-25, [recent reviews](https://github.com/JBallin/claude-review-runtime/actions/runs/40193826343)
+reported Sonnet 5.5. The CLI 2.1.303 catalog and upstream docs give it a default
+effort of medium, but those runs did not report resolved effort. This is an
+operational observation, not a fixed Runtime default.
 
-The comment shows requested overrides and available model evidence only when a
-model or effort override was requested. Plain requests omit selection metadata
-from both the summary and Details; diagnostic evidence remains available. Missing,
-mixed, or different model evidence is informational: it never invalidates an
-otherwise verified review or erases findings. Check Details before deciding
-whether a completed review satisfies your intended model choice. There is no
-additional automatic retry or substitute-model run. Underlying Claude Code may
-perform its own retries or fallbacks; observed models describe the execution
-record, not a guarantee about every internal model call.
+Higher effort can increase usage and latency; turn and time limits are not a
+spending cap. Model/account policy may limit the requested level. Effort is
+labelled **requested** because headless output does not report its resolved
+setting; see [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
+
+Explicit overrides show requested settings and available model evidence in the
+comment; plain requests keep that metadata in diagnostics. Missing or different
+model evidence does not invalidate completed reviews or erase findings. Runtime
+does not add retries or substitution runs for these diagnostics; provider
+failures retain their ordinary incomplete-review behavior.
 
 The runtime resolves the current patch once for each accepted manual request.
 Ordinary issue comments and untrusted requests do not start model execution.

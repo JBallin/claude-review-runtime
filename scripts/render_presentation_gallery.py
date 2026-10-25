@@ -118,12 +118,12 @@ def gallery_samples():
                                             trigger_label="Manual request", completed_at=COMPLETED_AT,
                                             selection=record)
         samples = [
-            GallerySample("plain-selection", "current-completion", "Plain manual request with diagnostic model evidence", selected(["claude-sonnet-4-6"], model="", effort="")),
-            GallerySample("effort-only", "current-completion", "Effort-only request", selected(["claude-sonnet-4-6"], model="")),
-            GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-4-7"])),
-            GallerySample("opus-mismatch", "current-completion", "Completed review with model mismatch", selected(["claude-sonnet-4-6"])),
+            GallerySample("plain-selection", "current-completion", "Plain manual request with diagnostic model evidence", selected(["claude-sonnet-5-5"], model="", effort="")),
+            GallerySample("effort-only", "current-completion", "Effort-only request", selected(["claude-sonnet-5-5"], model="")),
+            GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-5-5"])),
+            GallerySample("opus-mismatch", "current-completion", "Completed review with model mismatch", selected(["claude-sonnet-5-5"])),
             GallerySample("opus-unknown", "current-completion", "Completed review with unknown model", selected([], "unknown", None)),
-            GallerySample("opus-multiple", "current-completion", "Completed review with multiple models", selected(["claude-haiku-4-5", "claude-opus-4-7"], "mixed")),
+            GallerySample("opus-multiple", "current-completion", "Completed review with multiple models", selected(["claude-haiku-5-5", "claude-opus-5-5"], "mixed")),
             GallerySample("current-clean", "current-completion", "Clean completion, matching baseline", status("success")),
             GallerySample(FINDINGS_SAMPLE, "current-completion", "Current findings completion, matching baseline", status("action_required")),
             GallerySample("baseline-clean", "baseline-completion", "Clean completion, changed target branch", status(
