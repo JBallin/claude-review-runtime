@@ -515,6 +515,142 @@ def write_output(name, value):
             handle.write(f"{name}={value}\n")
 
 
+SELECTION_PREFIX = "<!-- claude-review-runtime:selection:"
+EFFORTS = ("low", "medium", "high", "xhigh", "max")
+MANUAL_COMMANDS = {"/claude-review": ("", ""), "/claude-review opus": ("opus", "")}
+for _effort in EFFORTS:
+    MANUAL_COMMANDS[f"/claude-review effort {_effort}"] = ("", _effort)
+    MANUAL_COMMANDS[f"/claude-review opus effort {_effort}"] = ("opus", _effort)
+
+
+def manual_selection(body):
+    if not isinstance(body, str) or body.lower() not in MANUAL_COMMANDS:
+        raise ValueError("unsupported manual command")
+    model, effort = MANUAL_COMMANDS[body.lower()]
+    return {"requested_model": model, "requested_effort": effort}
+
+
+def cmd_selection(metadata=None):
+    """Only allowlisted constants can reach the action's argument parser."""
+    try:
+        selection = manual_selection(env("TRIGGER_COMMENT"))
+        if metadata:
+            with open(metadata, encoding="utf-8") as source:
+                captured = json.load(source, object_pairs_hook=unique_json_object)
+            if (manual_selection(captured.get("trigger_comment")) != selection
+                    or any(captured.get(k) != v for k, v in selection.items())):
+                raise ValueError("captured selection disagrees with the accepted request")
+            if selection["requested_model"] and env("ANTHROPIC_MODEL") not in ("", "opus"):
+                raise ValueError("ANTHROPIC_MODEL conflicts with the requested Opus override")
+        for key, value in selection.items():
+            write_output(key, value)
+        write_output("model_args", "--model opus" if selection["requested_model"] else "")
+        effort = selection["requested_effort"]
+        write_output("effort_args", "--effort " + effort if effort else "")
+        return 0
+    except (OSError, ValueError, TypeError) as error:
+        print(f"::error::Cannot select review configuration: {error}")
+        return 1
+
+
+def selection_record(owner, execution=None):
+    if not owner or owner["kind"] == "automatic":
+        return None
+    requested = manual_selection(env("TRIGGER_COMMENT"))
+    record = {**requested, "generation": owner["generation"], "models": [],
+              "execution_attempt": None, "model_evidence": "unknown"}
+    if execution:
+        try:
+            with open(execution, encoding="utf-8") as source:
+                stream = json.load(source, object_pairs_hook=unique_json_object)
+            init = [m for m in stream if m.get("type") == "system" and m.get("subtype") == "init"]
+            turns = [m for m in stream if m.get("type") == "assistant" and not m.get("error")]
+            results = [m for m in stream if m.get("type") == "result"]
+            sessions = {m.get("session_id") for m in [*init, *turns, *results]}
+            models = {m.get("message", {}).get("model") for m in turns}
+            usage = results[0].get("modelUsage", {}) if len(results) == 1 else {}
+            if (len(init) != 1 or not turns or len(results) != 1 or len(sessions) != 1
+                    or not all(isinstance(x, str) and x for x in sessions)
+                    or not models or not isinstance(usage, dict) or not usage
+                    or any(not isinstance(x, str) or not re.fullmatch(r"claude-[a-z0-9-]{1,100}", x)
+                           for x in models | set(usage))):
+                raise ValueError("unknown execution model")
+            if any(not isinstance(v, dict) or not any(type(v.get(k)) is int and v[k] > 0
+                   for k in ("inputTokens", "outputTokens", "cacheReadInputTokens", "cacheCreationInputTokens"))
+                   for v in usage.values()):
+                raise ValueError("no positive model usage")
+            # Usage covers auxiliary calls too. Never hide additional models or
+            # treat a pricing canonicalModel as the serving model identity.
+            record["models"] = sorted(models | set(usage))
+            if len(record["models"]) > 8:
+                raise ValueError("too many models")
+            record["model_evidence"] = "observed" if models == set(usage) else "mixed"
+            record["execution_attempt"] = int(env("GITHUB_RUN_ATTEMPT"))
+        except (OSError, ValueError, TypeError, KeyError, AttributeError):
+            record.update(models=[], execution_attempt=None, model_evidence="unknown")
+    return record
+
+
+def valid_selection(record, owner):
+    if (not isinstance(record, dict) or not owner or owner["kind"] == "automatic"
+            or set(record) != {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
+            or record["generation"] != owner["generation"]
+            or record["requested_model"] not in ("", "opus")
+            or record["requested_effort"] not in ("", *EFFORTS)
+            or record["model_evidence"] not in ("unknown", "observed", "mixed")
+            or not isinstance(record["models"], list) or len(record["models"]) > 8
+            or any(not isinstance(m, str) or not re.fullmatch(r"claude-[a-z0-9-]{1,100}", m) for m in record["models"])
+            or record["models"] != sorted(set(record["models"]))):
+        return None
+    attempt = record["execution_attempt"]
+    if attempt is not None and (type(attempt) is not int or attempt <= 0):
+        return None
+    if bool(record["models"]) != (attempt is not None) or (record["model_evidence"] == "unknown") != (attempt is None):
+        return None
+    return record
+
+
+def current_selection_from_env():
+    try:
+        return current_selection(validate_owner(json.loads(env("PRESENTATION_OWNER"))))
+    except (ValueError, TypeError):
+        return None
+
+
+def current_selection(owner, comment=None):
+    try:
+        if env("SELECTION_EVIDENCE"):
+            return valid_selection(json.loads(env("SELECTION_EVIDENCE"), object_pairs_hook=unique_json_object), owner)
+        if env("TRIGGER_COMMENT"):
+            return selection_record(owner)
+        if comment:
+            body = comment.get("body", "")
+            matches = re.findall(re.escape(SELECTION_PREFIX) + r"(.*?) -->", body)
+            if body.count(SELECTION_PREFIX) == 1 and len(matches) == 1:
+                return valid_selection(json.loads(unquote(matches[0]), object_pairs_hook=unique_json_object), owner)
+    except (ValueError, TypeError):
+        pass
+    return None
+
+
+def selection_notice(record):
+    if not record:
+        return []
+    models = record["models"]
+    if record["requested_model"]:
+        if record["model_evidence"] == "observed" and models and all(m.startswith("claude-opus-") for m in models):
+            line = "**Model:** Opus requested; Opus observed."
+        elif models:
+            line = "⚠️ **Model:** Opus requested; observed " + ", ".join(inline_code(m) for m in models) + "."
+        else:
+            line = "**Model:** Opus requested; execution model unknown."
+    else:
+        line = "**Model:** No override requested."
+    if record["requested_effort"]:
+        line += " **Requested effort:** " + record["requested_effort"] + "."
+    return [line] if record["requested_model"] or record["requested_effort"] else []
+
+
 def inline_code(value):
     ticks = "`" * (max((len(run) for run in re.findall(r"`+", value)), default=0) + 1)
     padding = " " if "`" in value else ""
@@ -699,7 +835,7 @@ def incomplete_status_reason(owner):
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
                         last_review_details=None, base_sha=None, trigger_label=None,
                         owner=None, owner_running=None, reason=None, completed_at=None,
-                        completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL):
+                        completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL, selection=None):
     """Render trusted informational state without affecting Check authority."""
     messages = {
         "in_progress": "Claude is reviewing this commit.",
@@ -751,12 +887,15 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                 f"⚠️ This review was against {inline_code(last_review[1])}. "
                 f"It does not cover the PR’s current target {inline_code(base_ref)}."
             )
+    selection = valid_selection(selection, owner)
     lines = [
         STATUS_MARKER,
         f"{STATUS_HEAD_PREFIX}{head_sha} -->",
         f"{STATUS_BASE_REF_PREFIX}{quote(base_ref, safe='')} -->",
         f"{STATUS_STATE_PREFIX}{state} -->",
     ]
+    if selection:
+        lines.append(SELECTION_PREFIX + quote(json.dumps(selection, sort_keys=True, separators=(",", ":")), safe="") + " -->")
     if attempt_trigger is _TRIGGER_FROM_LABEL:
         attempt_trigger = review_trigger(trigger_label, owner) if state != "stale" else None
     else:
@@ -826,6 +965,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     commit_label = "Reviewed commit" if show_review else "Attempt commit" if owner else "PR commit"
     lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
+    lines += ["", *selection_notice(selection)] if selection_notice(selection) else []
     if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
         lines += ["", messages[state]]
     manual_scope = last_review and owner and owner["kind"] != "automatic"
@@ -862,6 +1002,13 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             lines += ["-->"]
         lines += [""]
     metadata = ["**Current attempt**"] if history_in_details else []
+    if selection:
+        metadata += ["**Requested model:** " + (selection["requested_model"] or "unspecified"),
+                     "**Observed models:** " + (", ".join(selection["models"]) or "unknown"),
+                     "**Requested effort:** " + (selection["requested_effort"] or "unspecified"),
+                     "**Observed effort:** unknown (not reported by this headless integration)."]
+        if selection["execution_attempt"]:
+            metadata += ["**Model evidence attempt:** " + str(selection["execution_attempt"])]
     if state == "success" or (base_advanced and last_review[2] == "success"):
         metadata += ["**Result:** No findings."]
     row_ref = last_review[1] if show_review else owner["base_ref"] if owner else base_ref
@@ -1527,7 +1674,8 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             trigger_label=trigger_label, owner=owner,
             owner_running=status_owner_running(existing) if stale else acquiring_running if state == "stale" else None,
             reason=reason, completed_at=completed_at,
-            completed_owner_verified=completed_owner_verified, attempt_trigger=attempt_trigger)}
+            completed_owner_verified=completed_owner_verified, attempt_trigger=attempt_trigger,
+            selection=current_selection(owner, existing))}
         published = False
         try:
             if existing:
@@ -2062,6 +2210,7 @@ def cmd_finalize():
         "action_conclusion": action_conclusion,
         "completion_verified": completion_verified,
         "completion_reason": completion_reason or None,
+        "selection": current_selection_from_env(),
         "finding_publication": publication,
         "same_diff_findings_recorded": bool(scoped_ids or prior_ids),
         "new_finding_comment_ids": new_ids,
@@ -2244,7 +2393,20 @@ def main(argv=None):
     sub.add_parser("discover-target")
     sub.add_parser("refresh-target")
     sub.add_parser("admit-manual")
+    selection = sub.add_parser("selection")
+    selection.add_argument("--metadata")
+    observation = sub.add_parser("observe-selection")
+    observation.add_argument("--execution", required=True)
     args = parser.parse_args(argv)
+    if args.command == "selection":
+        return cmd_selection(args.metadata)
+    if args.command == "observe-selection":
+        try:
+            owner = validate_owner(json.loads(env("PRESENTATION_OWNER")))
+            write_output("selection_evidence", json.dumps(selection_record(owner, args.execution), separators=(",", ":")))
+        except (ValueError, TypeError):
+            pass
+        return 0
     if args.command == "create":
         return cmd_create()
     if args.command == "snapshot":

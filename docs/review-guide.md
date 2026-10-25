@@ -37,6 +37,12 @@ comments and untrusted requests do not start model execution. The eligibility
 job has read-only PR access and performs no checkout before calling the pinned
 runtime. The runtime resolves the current patch once for each accepted request.
 
+New Runtime source supports [optional Opus and requested effort](consumer-workflows.md#optional-model-and-effort-selection).
+The pinned callers described above still accept only the plain command.
+Model evidence is diagnostic, independent of completion and finding verification;
+an Opus request with an observed different model produces a visible notice.
+Unknown model or effort evidence must not be inferred from the request.
+
 The command deliberately avoids a Claude mention. `@claude review` can invoke
 Anthropic's separate managed review service and does not invoke this checkout's
 manual entrypoint or this repository’s callers.

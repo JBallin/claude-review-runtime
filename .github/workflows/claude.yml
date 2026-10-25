@@ -36,7 +36,7 @@ concurrency:
   group: >-
     ${{
     ((github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-    github.event.comment.body == '/claude-review' &&
+    contains(fromJSON('["/claude-review","/claude-review opus","/claude-review effort low","/claude-review effort medium","/claude-review effort high","/claude-review effort xhigh","/claude-review effort max","/claude-review opus effort low","/claude-review opus effort medium","/claude-review opus effort high","/claude-review opus effort xhigh","/claude-review opus effort max"]'), github.event.comment.body) &&
     contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
     github.event.comment.author_association) &&
     (github.event_name == 'pull_request_review_comment' ||
@@ -57,7 +57,7 @@ jobs:
     # checks: write.
     if: >-
       (github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-      github.event.comment.body == '/claude-review' &&
+      contains(fromJSON('["/claude-review","/claude-review opus","/claude-review effort low","/claude-review effort medium","/claude-review effort high","/claude-review effort xhigh","/claude-review effort max","/claude-review opus effort low","/claude-review opus effort medium","/claude-review opus effort high","/claude-review opus effort xhigh","/claude-review opus effort max"]'), github.event.comment.body) &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
       github.event.comment.author_association) &&
       (github.event_name == 'pull_request_review_comment' ||
@@ -72,6 +72,8 @@ jobs:
       checks: write
       issues: write
     outputs:
+      requested_model: ${{ steps.select.outputs.requested_model }}
+      requested_effort: ${{ steps.select.outputs.requested_effort }}
       head_sha: ${{ steps.resolve.outputs.head_sha }}
       base_sha: ${{ steps.resolve.outputs.base_sha }}
       base_ref: ${{ steps.resolve.outputs.base_ref }}
@@ -140,6 +142,12 @@ jobs:
         uses: $/actions/review-helper
         with:
           command: create
+      - name: Select review configuration
+        id: select
+        env:
+          REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
+          TRIGGER_COMMENT: ${{ github.event.comment.body }}
+        run: python3 "$REVIEW_HELPER" selection
       - name: Validate manual patch authority
         # Validate the captured head/ref against direct branch authority without
         # replacing the captured comparison base when the target tip differs.
@@ -181,6 +189,7 @@ jobs:
           TRIGGER_KIND: ${{ github.event_name }}
           TRIGGER_COMMENT_ID: ${{ github.event.comment.id }}
           PR_REACTION_MODE: manual
+          TRIGGER_COMMENT: ${{ github.event.comment.body }}
           TRIGGER_LABEL: Manual request
           DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           EXTERNAL_ID: ${{ github.workflow }}/${{ github.run_id }}/${{ github.run_attempt }}
@@ -206,6 +215,8 @@ jobs:
           HEAD_SHA: ${{ steps.resolve.outputs.head_sha }}
           BASE_REF: ${{ steps.resolve.outputs.base_ref }}
           TRIGGER_COMMENT: ${{ github.event.comment.body }}
+          REQUESTED_MODEL: ${{ steps.select.outputs.requested_model }}
+          REQUESTED_EFFORT: ${{ steps.select.outputs.requested_effort }}
         run: |
           gh api "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA" \
             -H "Accept: application/vnd.github.v3.diff" \
@@ -214,7 +225,8 @@ jobs:
           MERGE_BASE_SHA=$(gh api "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA?per_page=1" \
             --jq '.merge_base_commit.sha')
 
-          jq --arg comment "$TRIGGER_COMMENT" \
+          jq --arg requested_model "$REQUESTED_MODEL" --arg requested_effort "$REQUESTED_EFFORT" \
+             --arg comment "$TRIGGER_COMMENT" \
              --arg base_ref "$BASE_REF" \
              --arg base_sha "$BASE_SHA" \
              --arg runtime_repository "$RUNTIME_REPOSITORY" \
@@ -222,7 +234,7 @@ jobs:
              --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" \
              --arg head_sha "$HEAD_SHA" \
              --argjson diff_line_count "$DIFF_LINE_COUNT" \
-             '{number, title, body, base_ref: $base_ref, base_sha: $base_sha, head_sha: $head_sha, diff_line_count: $diff_line_count, trigger_comment: $comment, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}' \
+             '{number, title, body, base_ref: $base_ref, base_sha: $base_sha, head_sha: $head_sha, diff_line_count: $diff_line_count, trigger_comment: $comment, requested_model: $requested_model, requested_effort: $requested_effort, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}' \
              "$RUNNER_TEMP/pr-review/pr-raw.json" > "$RUNNER_TEMP/pr-review/request.json"
           rm "$RUNNER_TEMP/pr-review/pr-raw.json"
 
@@ -273,6 +285,7 @@ jobs:
       completion_verified: ${{ steps.verify.outputs.completion_verified }}
       completion_reason: ${{ steps.verify.outputs.completion_reason }}
       finding_publication: ${{ steps.verify.outputs.finding_publication }}
+      selection_evidence: ${{ steps.verify.outputs.selection_evidence }}
     steps:
       - name: Check out repository
         # v7.0.1
@@ -293,6 +306,17 @@ jobs:
         with:
           name: pr-review-snapshot
           path: ${{ runner.temp }}/pr-review
+      - name: Prepare selection validator
+        id: selection-helper
+        uses: $/actions/review-helper
+        with:
+          command: selection
+      - name: Validate captured selection
+        id: selection
+        env:
+          REVIEW_HELPER: ${{ steps.selection-helper.outputs.helper-path }}
+          TRIGGER_COMMENT: ${{ github.event.comment.body }}
+        run: python3 "$REVIEW_HELPER" selection --metadata "${{ runner.temp }}/pr-review/request.json"
       - name: Validate model authentication
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -391,6 +415,8 @@ jobs:
           # A built-in the CLI cannot remove, such as EndConversation, may still
           # be offered, so the verifier below rejects any unexpected tool use.
           claude_args: >-
+            ${{ steps.selection.outputs.model_args }}
+            ${{ steps.selection.outputs.effort_args }}
             --max-turns 30
             --setting-sources user
             --strict-mcp-config
@@ -413,6 +439,9 @@ jobs:
         # leave this job; the transcript is never uploaded or published.
         id: verify
         env:
+          REVIEW_HELPER: ${{ steps.selection-helper.outputs.helper-path }}
+          TRIGGER_COMMENT: ${{ github.event.comment.body }}
+          PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
           REVIEW_HEAD_SHA: ${{ needs.start-check.outputs.head_sha }}
           REVIEW_METADATA_FILE: ${{ runner.temp }}/pr-review/request.json
@@ -663,6 +692,10 @@ jobs:
             fi
           fi
 
+          if [ -n "${REVIEW_HELPER:-}" ]; then
+            python3 "$REVIEW_HELPER" observe-selection --execution "$EXECUTION_FILE" || echo "::warning::Selection metadata unavailable."
+          fi
+
   publish-status:
     name: Publish status
     needs: [start-check, review]
@@ -726,11 +759,13 @@ jobs:
           START_RESULT: ${{ needs.start-check.result }}
           REVIEW_RESULT: ${{ needs.review.result }}
           ACTION_CONCLUSION: ${{ needs.review.outputs.conclusion }}
+          SELECTION_EVIDENCE: ${{ needs.review.outputs.selection_evidence }}
           COMPLETION_VERIFIED: ${{ needs.review.outputs.completion_verified }}
           COMPLETION_REASON: ${{ needs.review.outputs.completion_reason }}
           FINDING_PUBLICATION: ${{ needs.review.outputs.finding_publication }}
           BEFORE_IDS_FILE: ${{ runner.temp }}/claude-review-evidence/before-comment-ids.json
           EXTERNAL_ID: ${{ github.workflow }}/${{ github.run_id }}/${{ github.run_attempt }}
+          TRIGGER_COMMENT: ${{ github.event.comment.body }}
           TRIGGER_LABEL: Manual request
           DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python3 "$REVIEW_HELPER" finalize
@@ -757,6 +792,7 @@ jobs:
           MERGE_BASE_SHA: ${{ needs.start-check.outputs.merge_base_sha }}
           STATUS_COMMENT_ID: ${{ needs.start-check.outputs.status_comment_id }}
           EXTERNAL_ID: ${{ github.workflow }}/${{ github.run_id }}/${{ github.run_attempt }}
+          TRIGGER_COMMENT: ${{ github.event.comment.body }}
           TRIGGER_LABEL: Manual request
           DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |

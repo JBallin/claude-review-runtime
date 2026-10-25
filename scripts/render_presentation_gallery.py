@@ -109,7 +109,19 @@ def gallery_samples():
             "reason": check.STATUS_REASONS["stale"],
             "completed_owner_verified": True,
         }
+        manual_owner = fixtures.presentation_owner(kind="issue_comment", target=12, started=STARTED)
+        def selected(models, evidence="observed", attempt=1):
+            record = {"generation": manual_owner["generation"], "requested_model": "opus",
+                      "requested_effort": "high", "models": models,
+                      "model_evidence": evidence, "execution_attempt": attempt}
+            return check.status_comment_body(fixtures.HEAD, "main", "success", owner=manual_owner,
+                                            trigger_label="Manual request", completed_at=COMPLETED_AT,
+                                            selection=record)
         samples = [
+            GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-4-7"])),
+            GallerySample("opus-mismatch", "current-completion", "Completed review with model mismatch", selected(["claude-sonnet-4-6"])),
+            GallerySample("opus-unknown", "current-completion", "Completed review with unknown model", selected([], "unknown", None)),
+            GallerySample("opus-multiple", "current-completion", "Completed review with multiple models", selected(["claude-haiku-4-5", "claude-opus-4-7"], "mixed")),
             GallerySample("current-clean", "current-completion", "Clean completion, matching baseline", status("success")),
             GallerySample(FINDINGS_SAMPLE, "current-completion", "Current findings completion, matching baseline", status("action_required")),
             GallerySample("baseline-clean", "baseline-completion", "Clean completion, changed target branch", status(

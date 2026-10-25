@@ -20,7 +20,7 @@ runs:
       run: |
         set -eu
         case "$HELPER_COMMAND" in
-          create|finalize|stale|discover-target|refresh-target) ;;
+          create|finalize|stale|discover-target|refresh-target|selection) ;;
           *) echo "::error::Unsupported helper preparation command"; exit 1 ;;
         esac
         helper="$ACTION_PATH/claude_review_check.py"
