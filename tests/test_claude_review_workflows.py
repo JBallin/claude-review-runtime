@@ -960,6 +960,9 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     "runtime_repository": "example/review-runtime",
                     "runtime_sha": "f" * 40,
                     "runtime_workflow_path": ".github/workflows/claude-review.yml",
+                    "recovery": {"run_id": 5, "run_attempt": 1,
+                                 "check_conclusion": "failure", "reason": "tooling_unavailable",
+                                 "retained_evidence_scope": "none"},
                 })
 
     def test_known_head_fallback_publishes_failure_without_a_pr_number(self):
