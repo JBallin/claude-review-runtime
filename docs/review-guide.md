@@ -360,6 +360,22 @@ Opus. Verify its input coverage and exact revision, record the results, and obta
 explicit acceptance under the applicable review policy. This does not make the
 failed automated Check pass or bypass branch protection.
 
+### Unexpected tool use
+
+`unexpected_tool` means the execution record contains a tool-use name outside
+the configured review allowlist. The workflow may log a best-effort
+`Claude review unexpected-tool diagnostic` for the first such call. It emits
+only the fixed labels `Agent`, `EndConversation`, `ScheduleWakeup`, or `Bash`,
+with `other` for unrecognized strings and `malformed` for missing or non-string
+names. `other` does not identify the tool. Arguments, outputs, raw unknown names,
+and transcripts are excluded from this diagnostic.
+
+Availability depends on the executing Runtime revision and diagnostic parsing;
+an absent diagnostic proves nothing about tool use. A label identifies a recorded
+name, not why it was called or whether it executed successfully. Diagnostics do
+not change the failed verification result or recover a historical rejection's
+cause when its execution evidence is unavailable.
+
 ### Unexpected Check grouping
 
 GitHub may group `Claude Review` under another workflow name, such as

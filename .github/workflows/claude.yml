@@ -597,6 +597,33 @@ jobs:
           # Diagnostics are optional: the verdict is already written, and a
           # five-second subprocess deadline bounds generation. Emit only fixed
           # labels/enums, bounded integers/ranges and flags; never raw content.
+          if [ "${reason:-}" = unexpected_tool ]; then
+            if diagnostics=$(python3 -c '
+          import subprocess
+          import sys
+
+          try:
+              result = subprocess.run(sys.argv[1:], stdout=subprocess.PIPE,
+                                      stderr=subprocess.DEVNULL, timeout=5, check=True)
+              sys.stdout.buffer.write(result.stdout)
+          except (OSError, subprocess.SubprocessError):
+              sys.exit(1)
+          ' jq -c --argjson allowed "$ALLOWED_TOOLS" '
+              def blocks: (.message.content? // []) | if type == "array" then . else [] end;
+              first(.[] | select(.type == "assistant") | blocks[]
+                | select(.type == "tool_use")
+                | select(.name as $name | $allowed | index($name) | not))
+              | .name as $name
+              | {tool: (if ($name | type) != "string" then "malformed"
+                        elif $name == "Agent" then "Agent"
+                        elif $name == "EndConversation" then "EndConversation"
+                        elif $name == "ScheduleWakeup" then "ScheduleWakeup"
+                        elif $name == "Bash" then "Bash"
+                        else "other" end)}
+              ' "$EXECUTION_FILE" 2> /dev/null) && [ -n "$diagnostics" ]; then
+              printf 'Claude review unexpected-tool diagnostic: %s\n' "$diagnostics" || :
+            fi
+          fi
           if [ "${reason:-}" = captured_inputs_not_read ] || [ "${reason:-}" = verified ]; then
             if diagnostics=$(python3 -c '
           import subprocess

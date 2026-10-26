@@ -327,7 +327,8 @@ class ReadCoverageDiagnosticsTests(unittest.TestCase):
         # would restore the quadratic work even when small fixtures pass.
         for path in (workflows.MANUAL, workflows.AUTOMATIC):
             script = workflows.run_block(workflows.steps(workflows.job(path, "review"))[workflows.VERIFY_STEP])
-            diagnostics = script.split("if diagnostics=", 1)[1]
+            coverage = script.split('if [ "${reason:-}" = captured_inputs_not_read ]', 1)[1]
+            diagnostics = coverage.split("if diagnostics=", 1)[1]
             self.assertNotIn("| index(", diagnostics)
             self.assertNotIn("parsed_numbers", diagnostics)
             self.assertNotIn("range(0; $index)", diagnostics)
