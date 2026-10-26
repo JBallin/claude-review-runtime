@@ -1217,9 +1217,16 @@ jobs:
             exit 1
           fi
           summary=$(printf '**Reviewed commit:** `%s`\n\nThe review outcome could not be published because the review tooling was unavailable; treat this commit as not reviewed.\n\n[Workflow run](%s)' "$HEAD_SHA" "$DETAILS_URL")
+          recovery=$(jq -cn --arg run "${GITHUB_RUN_ID:-}" --arg attempt "${GITHUB_RUN_ATTEMPT:-}" '
+            def positive_id:
+              if test("^[1-9][0-9]{0,15}$") then tonumber
+                | if . <= 9007199254740991 then . else null end
+              else null end;
+            {run_id: ($run | positive_id), run_attempt: ($attempt | positive_id),
+             check_conclusion: "failure", reason: "tooling_unavailable", retained_evidence_scope: "none"}')
           evidence=$(jq -n --arg head "$HEAD_SHA" --arg pr "$PR_NUMBER" --arg base "$BASE_SHA" --arg base_ref "$BASE_REF" --arg merge_base "$MERGE_BASE_SHA" \
-            --arg runtime_repository "$RUNTIME_REPOSITORY" --arg runtime_sha "$RUNTIME_SHA" --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" \
-            '{reviewed_sha: $head, pr_number: ($pr | tonumber? // null), base_sha: $base, base_ref: $base_ref, merge_base_sha: $merge_base, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}')
+            --arg runtime_repository "$RUNTIME_REPOSITORY" --arg runtime_sha "$RUNTIME_SHA" --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" --argjson recovery "$recovery" \
+            '{reviewed_sha: $head, pr_number: ($pr | tonumber? // null), base_sha: $base, base_ref: $base_ref, merge_base_sha: $merge_base, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path, recovery: $recovery}')
           # A partial rerun may reuse a Check that already retained findings.
           # If its evidence cannot be verified, fail without replacing output.
           if [ -n "$CHECK_RUN_ID" ]; then
@@ -1235,7 +1242,7 @@ jobs:
               return result
           try:
               run = json.load(sys.stdin, object_pairs_hook=unique_object)
-              check_id, head, pr, merge_base = sys.argv[1:]
+              check_id, head, pr, merge_base, recovery = sys.argv[1:]
               if (not isinstance(run, dict) or type(run.get("id")) is not int
                       or str(run["id"]) != check_id or run.get("name") != "Claude Review"
                       or (run.get("app") or {}).get("slug") != "github-actions"
@@ -1264,13 +1271,16 @@ jobs:
               if (run.get("conclusion") == "action_required" or evidence.get("same_diff_findings_recorded") is True
                       or evidence.get("new_finding_comment_ids") or evidence.get("claude_finding_comment_ids")):
                   evidence["same_diff_findings_recorded"] = True
+              # Existing execution fields describe retained history, not this
+              # recovery. Replace the envelope rather than nesting prior repairs.
+              evidence["recovery"] = {**json.loads(recovery), "retained_evidence_scope": "historical"}
               encoded = json.dumps(evidence, separators=(",", ":"), ensure_ascii=False)
               if len(encoded.encode("utf-8")) > 60000:
                   raise ValueError("unbounded retained evidence")
               print(encoded)
           except (ValueError, TypeError, KeyError, AttributeError):
               sys.exit(1)
-          ' "$CHECK_RUN_ID" "$HEAD_SHA" "$PR_NUMBER" "$MERGE_BASE_SHA"); then
+          ' "$CHECK_RUN_ID" "$HEAD_SHA" "$PR_NUMBER" "$MERGE_BASE_SHA" "$recovery"); then
               if [ -n "$retained_evidence" ]; then
                 evidence=$retained_evidence
               fi
