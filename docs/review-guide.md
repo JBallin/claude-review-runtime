@@ -82,9 +82,9 @@ resolved target branch tip. It validates repository/ref authority and unchanged
 head and target ref across PR reads surrounding the direct-ref lookup. Valid
 comparison-base projections and target tips may differ from the captured base;
 missing, malformed, foreign, ambiguous, or inconsistent authority still rejects
-the request, including a manual fork request. Admission does not require an
-ancestry relationship between valid tips on the same ref. The reviewed patch
-remains the captured `compare/base...head` payload, with its captured merge base
+the request. Admission does not require an ancestry relationship between valid
+tips on the same ref. The reviewed patch remains the captured
+`compare/base...head` payload, with its captured merge base
 and runtime provenance; admission never replaces that baseline or synthesizes a
 merge. Automatic reviews retain the triggering event's immutable head/base and
 historical Check identity.
@@ -259,10 +259,17 @@ transcripts are not uploaded as artifacts. Dependency actions are pinned, but
 this does not make their transitive runtime dependencies immutable.
 
 The reusable automatic entrypoint excludes drafts, fork pull requests, and
-Dependabot-triggered runs. Its manual entrypoint supports top-level fork requests
-with best-effort Check publication limits; this repository's additional caller
-gate excludes forks. Fork behavior remains unvalidated in this prototype. The
-status entrypoint refreshes existing presentation after head changes, base-ref
+Dependabot-triggered runs. The Dependabot exclusion reflects [GitHub's Actions
+secret restrictions for Dependabot-triggered workflows](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-on-actions).
+The actor triggering the run is distinct from the PR author: a new trusted human
+`/claude-review` comment on an open, non-draft, same-repository Dependabot PR can
+pass this repository's manual caller gate. Re-running a Dependabot-triggered
+run does not change its secret restrictions. The manual caller rejects fork PRs
+regardless of commenter trust. The generic reusable manual entrypoint has a
+broader top-level PR-comment path for forks, with best-effort Check publication;
+that path remains unvalidated and does not establish supported fork operation.
+
+The status entrypoint refreshes existing presentation after head changes, base-ref
 retargeting, or target-branch pushes forwarded by its caller; it never initiates
 a model review. This repository's pinned status caller has not adopted push
 refreshes. Consumers need a separate [caller update](consumer-workflows.md#stale-presentation-refresh)
