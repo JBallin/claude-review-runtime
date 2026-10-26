@@ -199,10 +199,6 @@ alias. See [upstream configuration](https://code.claude.com/docs/en/model-config
 A conflicting `ANTHROPIC_MODEL` prevents an explicit Opus review from starting.
 Model access still depends on the existing account.
 
-Dated execution and deployment observations are recorded in
-[Runtime observations](runtime-observations.md); they do not define defaults or
-replace checking the deployed caller’s command contract.
-
 Higher effort can increase usage and latency; turn and time limits are not a
 spending cap. Model/account policy may limit the requested level. The displayed effort is the requested setting; headless output does not report
 the resolved setting. See [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
