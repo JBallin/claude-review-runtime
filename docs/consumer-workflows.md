@@ -199,10 +199,9 @@ alias. See [upstream configuration](https://code.claude.com/docs/en/model-config
 A conflicting `ANTHROPIC_MODEL` prevents an explicit Opus review from starting.
 Model access still depends on the existing account.
 
-As of 2026-10-25, [recent reviews](https://github.com/JBallin/claude-review-runtime/actions/runs/40193826343)
-reported Sonnet 5.5. The CLI 2.1.303 catalog and upstream docs give it a default
-effort of medium, but those runs did not report resolved effort. This is an
-operational observation, not a fixed Runtime default.
+Dated execution and deployment observations are recorded in
+[Runtime observations](runtime-observations.md); they do not define defaults or
+replace checking the deployed caller’s command contract.
 
 Higher effort can increase usage and latency; turn and time limits are not a
 spending cap. Model/account policy may limit the requested level. The displayed effort is the requested setting; headless output does not report

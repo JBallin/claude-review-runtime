@@ -39,20 +39,13 @@ runtime. The runtime resolves the current patch once for each accepted request.
 
 Manual requests support [optional Opus and effort selection](consumer-workflows.md#optional-model-and-effort-selection).
 Model evidence is diagnostic: a different observed model produces a notice,
-without changing completion or finding verification. Requested settings do not
-establish observed model or effort.
+without changing completion or finding verification.
 
 The command deliberately avoids a Claude mention. `@claude review` can invoke
 Anthropic's separate managed review service and does not invoke this checkout's
 manual entrypoint or this repository’s callers.
 Provider-bot reactions on comments are preserved and are not this runtime's
 progress or completion signals.
-
-### Pinned callers
-
-This repository's deployed self-review callers currently accept only plain
-`/claude-review`. Updating their Runtime revision must keep the caller's manual
-eligibility gate consistent with that revision's command contract.
 
 ## Read the result
 
@@ -303,6 +296,10 @@ caller may skip model execution even when Actions orchestration is green; the
 trusted `Claude Review` Check remains incomplete or failed, and required review
 remains unsatisfied. This condition does not mean every first run fails or every
 PR changing a workflow is unreviewable.
+
+Related upstream proposal: [claude-code-action #1879](https://github.com/anthropics/claude-code-action/pull/1879)
+would expose an explicit workflow-validation skip as an action output. It is
+an open proposal, not an available fix or a Runtime dependency.
 
 An incomplete review may flag changes to its caller or Runtime workflow as
 context, not a confirmed cause. The warning reflects that attempt's captured
