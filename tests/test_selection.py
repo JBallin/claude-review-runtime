@@ -72,9 +72,13 @@ class SelectionTests(unittest.TestCase):
             self.assertEqual(check.valid_selection(record, owner), record)
             body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
             self.assertIn('**Completed**', body)
-            self.assertIn('**Requested effort:** high', body)
-            self.assertIn('**Observed effort:** unknown', body)
-            self.assertIn('Opus requested', body)
+            self.assertIn('**Effort:** high', body)
+            self.assertNotIn('**Observed effort:**', body)
+            self.assertIn('**Model:** Opus', body)
+            if evidence == 'observed' and models == ('claude-opus-4-7',):
+                self.assertIn('**Model:** Opus · **Effort:** high', body)
+            else:
+                self.assertIn('Opus requested', body)
             if models == ('claude-sonnet-4-6',):
                 self.assertIn('⚠️ **Model:**', body)
             with mock.patch.dict(os.environ, {}, clear=True):
@@ -105,7 +109,7 @@ class SelectionTests(unittest.TestCase):
     def test_malformed_receipts_are_not_rendered(self):
         owner, record = self.record()
         for changes in ({'execution_attempt':True}, {'models':['<script>']}, {'requested_effort':'ultra'},
-                        {'generation':'other'}, {'model_evidence':'unknown'}, {'extra':'value'}):
+                        {'generation':'other'}, {'model_evidence':'unknown'}, {'observed_effort':'high'}, {'extra':'value'}):
             candidate = {**record, **changes}
             self.assertIsNone(check.valid_selection(candidate, owner))
 
@@ -122,8 +126,26 @@ class SelectionTests(unittest.TestCase):
     def test_effort_only_confirmation_has_no_model_line(self):
         owner, record = self.record(requested_model='')
         body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
-        self.assertEqual(check.selection_notice(record), ['**Requested effort:** high.'])
+        self.assertEqual(check.selection_notice(record), ['**Effort:** high'])
         self.assertNotIn('No override requested', body)
         self.assertNotIn('**Model:**', body)
-        self.assertIn('**Observed models:** claude-opus-4-7', body)
-        self.assertIn('**Observed effort:** unknown', body)
+        self.assertNotIn('**Observed models:**', body)
+        self.assertEqual(check.current_selection(owner, {'body': body}), record)
+        self.assertNotIn('**Observed effort:**', body)
+
+    def test_lifecycle_selection_once_and_structured_attribution(self):
+        owner, record = self.record()
+        for state in ('in_progress', 'success', 'action_required', 'failure'):
+            body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=record)
+            main, details = body.split('<details>')
+            self.assertEqual(main.count('**Model:**'), 1)
+            self.assertEqual(main.count('**Effort:**'), 1)
+            for label in ('**Model:', '**Effort:', '**Requested', '**Observed', '**Model evidence attempt:', '**Result:** No findings.'):
+                self.assertNotIn(label, details)
+            self.assertEqual(check.current_selection(owner, {'body': body}), record)
+        mixed = {**record, 'models': ['claude-haiku-5-5', 'claude-opus-5-5'], 'model_evidence': 'mixed'}
+        notice = check.selection_notice(mixed)[0]
+        self.assertNotIn('⚠️', notice)
+        self.assertIn('Haiku 5.5, Opus 5.5', notice)
+        unusual = {**record, 'models': ['claude-custom'], 'model_evidence': 'observed'}
+        self.assertIn('`claude-custom`', check.selection_notice(unusual)[0])

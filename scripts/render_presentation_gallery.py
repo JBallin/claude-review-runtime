@@ -24,7 +24,7 @@ fixtures = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(fixtures)
 check = fixtures.check
 
-HEADING = "SAMPLE ONLY — visual QA gallery, not actual review results"
+HEADING = "SAMPLE ONLY — Claude Review gallery"
 GALLERY = ROOT / "docs" / "review-presentation-gallery.md"
 REGENERATE = "python3 -B scripts/render_presentation_gallery.py --write"
 FINDINGS_SAMPLE = "current-findings"
@@ -110,22 +110,26 @@ def gallery_samples():
             "completed_owner_verified": True,
         }
         manual_owner = fixtures.presentation_owner(kind="issue_comment", target=12, started=STARTED)
-        def selected(models, evidence="observed", attempt=1, model="opus", effort="high"):
+        def selected(models, evidence="observed", attempt=1, model="opus", effort="high", state="success", **options):
             record = {"generation": manual_owner["generation"], "requested_model": model,
                       "requested_effort": effort, "models": models,
-                      "model_evidence": evidence, "execution_attempt": attempt}
-            return check.status_comment_body(fixtures.HEAD, "main", "success", owner=manual_owner,
+                      "model_evidence": evidence, "execution_attempt": attempt, "observed_effort": None}
+            return check.status_comment_body(fixtures.HEAD, "main", state, owner=manual_owner,
                                             trigger_label="Manual request", completed_at=COMPLETED_AT,
-                                            selection=record)
+                                            selection=record, **options)
         samples = [
-            GallerySample("plain-selection", "current-completion", "Plain manual request with diagnostic model evidence", selected(["claude-sonnet-5-5"], model="", effort="")),
+            GallerySample("selection-running", "current-completion", "Running with explicit selection", selected([], "unknown", None, state="in_progress")),
+            GallerySample("selection-findings", "current-completion", "Findings with explicit selection", selected(["claude-opus-5-5"], state="action_required")),
+            GallerySample("selection-tooling-unavailable", "current-completion", "Review tooling unavailable with explicit selection", selected([], "unknown", None, state="failure", reason=check.STATUS_REASONS["tooling_unavailable"])),
+            GallerySample("selection-incomplete", "current-completion", "Incomplete with explicit selection", selected([], "unknown", None, state="failure")),
+            GallerySample("plain-selection", "current-completion", "Plain manual request", selected(["claude-sonnet-5-5"], model="", effort="")),
             GallerySample("effort-only", "current-completion", "Effort-only request", selected(["claude-sonnet-5-5"], model="")),
             GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-5-5"])),
             GallerySample("opus-mismatch", "current-completion", "Completed review with model mismatch", selected(["claude-sonnet-5-5"])),
             GallerySample("opus-unknown", "current-completion", "Completed review with unknown model", selected([], "unknown", None)),
             GallerySample("opus-multiple", "current-completion", "Completed review with multiple models", selected(["claude-haiku-5-5", "claude-opus-5-5"], "mixed")),
-            GallerySample("current-clean", "current-completion", "Clean completion, matching baseline", status("success")),
-            GallerySample(FINDINGS_SAMPLE, "current-completion", "Current findings completion, matching baseline", status("action_required")),
+            GallerySample("current-clean", "current-completion", "Completed review", status("success")),
+            GallerySample(FINDINGS_SAMPLE, "current-completion", "Review with findings", status("action_required")),
             GallerySample("baseline-clean", "baseline-completion", "Clean completion, changed target branch", status(
                 "stale", last_review=history("success"), base_sha=fixtures.OTHER,
                 **stale_options)),
@@ -237,25 +241,31 @@ def gallery_samples():
         grouped = {group: [] for group in GROUP_ORDER}
         for case in samples:
             grouped[case.group].append(case)
-        return [case for group in GROUP_ORDER for case in grouped[group]]
+        ordered = [case for group in GROUP_ORDER for case in grouped[group]]
+        first = ("current-clean", "plain-selection", "effort-only", "opus-observed",
+                 "opus-mismatch", "opus-unknown", "opus-multiple", "current-findings",
+                 "selection-findings", "selection-running", "selection-incomplete",
+                 "selection-tooling-unavailable")
+        by_id = {case.case_id: case for case in ordered}
+        return [*[by_id[key] for key in first], *[case for case in ordered if case.case_id not in first]]
 
 
 def sample_markdown(body):
     """Preserve rendered hard breaks without trailing whitespace in Git diffs."""
-    return strip_operational_markers(body).replace("  \n", "\\\n")
+    return body.replace("  \n", "\\\n")
 
 
 def render_gallery():
     sections = ["\n\n".join([
         f"# {HEADING}",
         "All sample repository, commit, run, and timestamp identities are synthetic. "
-        "Sample links may intentionally have no live destination. Operational Runtime "
-        "markers are omitted; these samples are not review records.",
+        "Sample links may intentionally have no live destination. The raw Markdown "
+        "retains complete synthetic production metadata for auditing.",
         f"Generated with `{REGENERATE}`. Edit the generator or sample inputs, then regenerate.",
     ])]
     for number, case in enumerate(gallery_samples(), start=1):
         sample_body = sample_markdown(case.body)
-        sections.append(f'<a id="{case.case_id}"></a>\n\n### {number} — {case.title}\n\n{sample_body}')
+        sections.append(f'<a id="{case.case_id}"></a>\n\n### {number} — {case.title.replace(": in_progress", ": running").replace(": failure", ": incomplete").replace(": publication_incomplete", ": publication unavailable")}\n\n{sample_body}')
         if case.case_id == FINDINGS_SAMPLE:
             # Findings live in inline threads, outside the status renderer.
             sections[-1] += ("\n\n**Synthetic inline finding context (separate from the status comment):**\n\n"

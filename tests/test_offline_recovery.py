@@ -385,7 +385,8 @@ class OfflineRecoveryTests(unittest.TestCase):
                 evidence = evidence_of(completed)
                 self.assertEqual((evidence["reviewed_sha"], evidence["base_sha"], evidence["base_ref"],
                                   evidence["merge_base_sha"]), (HEAD, BASE_TIP, "main", MERGE_BASE))
-                self.assertIn("captured patch", completed["output"]["summary"])
+                self.assertIn(f"**Captured baseline:** `main` at `{BASE_TIP}`", completed["output"]["summary"])
+                self.assertNotIn(check.CAPTURED_PATCH_SCOPE, completed["output"]["summary"])
                 self.assertEqual(check.status_state(state["status"]), "stale")
                 self.assertFalse(check.status_owner_running(state["status"]))
                 self.assertEqual(check.status_owner(state["status"]), owner)

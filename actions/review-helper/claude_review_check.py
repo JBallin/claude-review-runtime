@@ -558,7 +558,7 @@ def selection_record(owner, execution=None):
         return None
     requested = manual_selection(env("TRIGGER_COMMENT"))
     record = {**requested, "generation": owner["generation"], "models": [],
-              "execution_attempt": None, "model_evidence": "unknown"}
+              "execution_attempt": None, "model_evidence": "unknown", "observed_effort": None}
     if execution:
         try:
             with open(execution, encoding="utf-8") as source:
@@ -593,7 +593,8 @@ def selection_record(owner, execution=None):
 
 def valid_selection(record, owner):
     if (not isinstance(record, dict) or not owner or owner["kind"] == "automatic"
-            or set(record) != {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
+            or set(record) - {"observed_effort"} != {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
+            or record.get("observed_effort") is not None
             or record["generation"] != owner["generation"]
             or record["requested_model"] not in ("", "opus")
             or record["requested_effort"] not in ("", *EFFORTS)
@@ -636,19 +637,26 @@ def current_selection(owner, comment=None):
 def selection_notice(record):
     if not record:
         return []
+    parts = []
     models = record["models"]
     if record["requested_model"]:
-        if record["model_evidence"] == "observed" and models and all(m.startswith("claude-opus-") for m in models):
-            line = "**Model:** Opus requested; Opus observed."
-        elif models:
-            line = "⚠️ **Model:** Opus requested; observed " + ", ".join(inline_code(m) for m in models) + "."
+        opus = [m for m in models if m.startswith("claude-opus-")]
+        def label(model):
+            match = re.fullmatch(r"claude-(opus|sonnet|haiku)-(\d+)-(\d+)", model)
+            return (match[1].title() + " " + match[2] + "." + match[3]) if match else inline_code(model)
+        if not models:
+            value = "Opus requested; execution model unknown"
+        elif len(models) > 1:
+            value = "Opus requested; observed " + ", ".join(label(m) for m in models)
+        elif not opus:
+            value = "Opus requested; " + label(models[0]) + " observed"
         else:
-            line = "**Model:** Opus requested; execution model unknown."
-    else:
-        line = ""
+            value = "Opus"
+        prefix = "⚠️ " if models and not opus else ""
+        parts.append(prefix + "**Model:** " + value)
     if record["requested_effort"]:
-        line += " **Requested effort:** " + record["requested_effort"] + "."
-    return [line.strip()] if record["requested_model"] or record["requested_effort"] else []
+        parts.append("**Effort:** " + record["requested_effort"])
+    return [" · ".join(parts)] if parts else []
 
 
 def inline_code(value):
@@ -968,9 +976,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     lines += ["", *selection_notice(selection)] if selection_notice(selection) else []
     if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
         lines += ["", messages[state]]
-    manual_scope = last_review and owner and owner["kind"] != "automatic"
-    if manual_scope and not current_attempt:
-        lines += ["", CAPTURED_PATCH_SCOPE]
     if state == "stale" and show_review and last_review[2] == "action_required":
         lines += ["", messages["action_required"]]
     if base_advanced:
@@ -1002,15 +1007,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             lines += ["-->"]
         lines += [""]
     metadata = ["**Current attempt**"] if history_in_details else []
-    if selection and (selection["requested_model"] or selection["requested_effort"]):
-        metadata += ["**Requested model:** " + (selection["requested_model"] or "unspecified"),
-                     "**Observed models:** " + (", ".join(selection["models"]) or "unknown"),
-                     "**Requested effort:** " + (selection["requested_effort"] or "unspecified"),
-                     "**Observed effort:** unknown (not reported by this headless integration)."]
-        if selection["execution_attempt"]:
-            metadata += ["**Model evidence attempt:** " + str(selection["execution_attempt"])]
-    if state == "success" or (base_advanced and last_review[2] == "success"):
-        metadata += ["**Result:** No findings."]
     row_ref = last_review[1] if show_review else owner["base_ref"] if owner else base_ref
     if (head_sha, base_ref) != (row_commit, row_ref):
         metadata += [f"**PR commit:** {commit_link(head_sha, repo)} on {inline_code(base_ref)}" +
@@ -1079,8 +1075,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if metadata:
         lines += ["  \n".join(metadata), ""]
     if previous:
-        if manual_scope:
-            previous += [CAPTURED_PATCH_SCOPE]
         lines += ["  \n".join(previous), ""]
     lines += ["</details>"]
     return "\n".join(lines)
@@ -1852,8 +1846,7 @@ def summary_lines(head_sha, sentence, *, completed_at=None):
         sentence,
     ]
     if env("BASE_REF") and re.fullmatch(r"[0-9a-f]{40}", env("BASE_SHA")):
-        lines += ["", f"**Captured baseline:** {inline_code(env('BASE_REF'))} at `{env('BASE_SHA')}`",
-                  CAPTURED_PATCH_SCOPE]
+        lines += ["", f"**Captured baseline:** {inline_code(env('BASE_REF'))} at `{env('BASE_SHA')}`"]
     if completed := valid_review_timestamp(completed_at):
         lines += ["", f"**Completed:** {relative_time(completed)}"]
     if env("DETAILS_URL"):

@@ -205,12 +205,12 @@ effort of medium, but those runs did not report resolved effort. This is an
 operational observation, not a fixed Runtime default.
 
 Higher effort can increase usage and latency; turn and time limits are not a
-spending cap. Model/account policy may limit the requested level. Effort is
-labelled **requested** because headless output does not report its resolved
-setting; see [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
+spending cap. Model/account policy may limit the requested level. The displayed effort is the requested setting; headless output does not report
+the resolved setting. See [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
 
-Explicit overrides show requested settings and available model evidence in the
-comment; plain requests keep that metadata in diagnostics. Missing or different
+Explicit model requests show a compact Model line; effort requests show Effort.
+Inherited model evidence stays in diagnostic metadata, including effort-only
+requests. Missing or different
 model evidence does not invalidate completed reviews or erase findings. Runtime
 does not add retries or substitution runs for these diagnostics; provider
 failures retain their ordinary incomplete-review behavior.

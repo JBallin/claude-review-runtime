@@ -1111,6 +1111,37 @@ jobs:
                 captured_line="$captured_line"$'\n'"$historical_lines"
               fi
             fi
+            # Only the admitted current comment supplies requested settings.
+            # Never recover model observations from the previous status body.
+            selection_payload=$(python3 - <<'PY_SELECTION'
+          import json, os
+          from urllib.parse import quote
+          owner = json.loads(os.environ["PRESENTATION_OWNER"])
+          body = os.environ.get("TRIGGER_COMMENT", "").lower()
+          commands = {"/claude-review": ("", ""), "/claude-review opus": ("opus", "")}
+          for effort in ("low", "medium", "high", "xhigh", "max"):
+              commands[f"/claude-review effort {effort}"] = ("", effort)
+              commands[f"/claude-review opus effort {effort}"] = ("opus", effort)
+          if owner["kind"] not in ("issue_comment", "pull_request_review_comment") or body not in commands:
+              raise SystemExit(0)
+          model, effort = commands[body]
+          record = {"requested_model": model, "requested_effort": effort,
+                    "generation": owner["generation"], "models": [],
+                    "execution_attempt": None, "model_evidence": "unknown", "observed_effort": None}
+          marker = "<!-- claude-review-runtime:selection:" + quote(json.dumps(record, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+          parts = []
+          if model:
+              parts.append("**Model:** Opus requested; execution model unknown")
+          if effort:
+              parts.append("**Effort:** " + effort)
+          print(json.dumps({"marker": marker, "notice": " · ".join(parts)}))
+          PY_SELECTION
+            ) || return 0
+            if [ -n "$selection_payload" ]; then
+              reviewed_markers="$reviewed_markers"$(printf '%s' "$selection_payload" | jq -r '.marker')$'\n'
+              selection_notice=$(printf '%s' "$selection_payload" | jq -r '.notice')
+              [ -z "$selection_notice" ] || message="$message"$'\n\n'"$selection_notice"
+            fi
             metadata="**Current commit:** \`${display_head:0:7}\`$trigger_line$captured_line"
             metadata=${metadata//$'\n'/$'  \n'}
             rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n%s %s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n**Reason:** %s\n\n%s\n\n</details>' \

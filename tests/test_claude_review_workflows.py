@@ -1134,6 +1134,33 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("Check", body)
 
+    def test_manual_fallback_retains_only_current_requested_selection(self):
+        from test_claude_review_check import presentation_owner
+        owner = presentation_owner(repo=REPO, kind="issue_comment", target=12)
+        owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
+                 "body": check.STATUS_MARKER}
+        for command, expected in (("/claude-review opus effort high", "**Effort:** high"),
+                                  ("/claude-review", None),
+                                  ("/claude-review opus; echo bad", None)):
+            result, calls = self.run_fallback(MANUAL,
+                {"GET": [{"stdout": pr_identity()}, {"stdout": json.dumps(owned)}]},
+                OWNER_FIXTURE=owner, STATUS_COMMENT_ID="55", PR_NUMBER="7",
+                TRIGGER_COMMENT=command)
+            self.assertEqual(result.returncode, 1)
+            repaired = next(c for c in calls if c["method"] == "PATCH"
+                            and any("issues/comments/55" in arg for arg in c["args"]))
+            body = repaired["body"]["body"]
+            self.assertEqual(check.status_owner({"body": body}), owner)
+            if expected:
+                self.assertIn(expected, body.split("<details>")[0])
+                record = check.current_selection(owner, {"body": body})
+                self.assertEqual(record["requested_model"], "opus")
+                self.assertEqual(record["models"], [])
+                self.assertIsNone(record["execution_attempt"])
+            else:
+                self.assertNotIn("**Model:**", body)
+                self.assertNotIn("**Effort:**", body)
+
     def test_fallback_records_an_encoded_base_ref(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
                  "body": "<!-- claude-review-runtime:claude-review-status -->"}
