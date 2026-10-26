@@ -19,7 +19,7 @@ the executing runtime's repository, SHA, and workflow path.
 | Caller | Events | Eligibility and behavior |
 | --- | --- | --- |
 | [Automatic](../.github/workflows/self-review-automatic.yml) | PR `opened`, `ready_for_review` | Open, non-draft, same-repository PRs; Dependabot-triggered runs are excluded. |
-| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted exact `/claude-review` command followed by a read-only check for an open, non-draft, same-repository PR. |
+| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted exact [manual command](#request-a-manual-review), including optional Opus/effort selection, followed by a read-only check for an open, non-draft, same-repository PR. |
 | [Status](../.github/workflows/self-review-status.yml) | PR `synchronize`, `edited` | Open, same-repository PRs; refreshes existing presentation after head changes or base-ref retargeting. |
 
 Stacked PRs are eligible; the callers do not restrict the base branch. The pinned
@@ -29,8 +29,8 @@ diff changes, and assess whether a changed base invalidates previous evidence.
 
 ## Request a manual review
 
-Post `/claude-review` as the entire top-level or inline PR comment, without
-surrounding whitespace, quotes, or unrelated text. Matching is
+Post `/claude-review` or one of its optional forms as the entire top-level or
+inline PR comment, without surrounding whitespace, quotes, or unrelated text. Matching is
 case-insensitive. The commenter must have an owner, member, or collaborator
 association; the action also checks actor/access eligibility. Ordinary issue
 comments and untrusted requests do not start model execution. The eligibility

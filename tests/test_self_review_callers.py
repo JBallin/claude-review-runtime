@@ -10,10 +10,16 @@ from pathlib import Path
 
 import test_claude_review_workflows as w
 
-PIN = "23727a9addb3f0875125eb00ba2c6a02218f19b1"
+PIN = "fdb26f96afb3ffbee64186561a15b8e9c3f41919"
 AUTOMATIC = w.WORKFLOWS / "self-review-automatic.yml"
 MANUAL = w.WORKFLOWS / "self-review-manual.yml"
 STATUS = w.WORKFLOWS / "self-review-status.yml"
+# Complete grammar adopted from the selected immutable Runtime revision.
+MANUAL_COMMANDS = {"/claude-review", "/claude-review opus"}
+for effort in ("low", "medium", "high", "xhigh", "max"):
+    MANUAL_COMMANDS.add(f"/claude-review effort {effort}")
+    MANUAL_COMMANDS.add(f"/claude-review opus effort {effort}")
+
 CALLERS = ((AUTOMATIC, "review", "claude-review.yml"),
            (MANUAL, "review", "claude.yml"),
            (STATUS, "status", "claude-review-status.yml"))
@@ -86,15 +92,30 @@ class CallerBoundaryTests(unittest.TestCase):
 
     def test_manual_requires_trusted_exact_command_on_pr_comments(self):
         gate = w.folded(w.job(MANUAL, "eligibility"), "if", 4)
+        declared = re.search(r"contains\(fromJSON\('([^']+)'\), github.event.comment.body\)", gate)
+        self.assertIsNotNone(declared)
+        commands = json.loads(declared.group(1))
+        self.assertEqual(len(commands), len(MANUAL_COMMANDS))
+        self.assertEqual(set(commands), MANUAL_COMMANDS)
+        accepted = sorted(MANUAL_COMMANDS | {body.upper() for body in MANUAL_COMMANDS}
+                          | {body.title() for body in MANUAL_COMMANDS})
+        rejected = [variant for body in sorted(MANUAL_COMMANDS) for variant in (
+            " " + body, body + " ", body + "\n", "\t" + body, "`" + body + "`",
+            "> " + body, body + " now", body.replace(" ", "  ")) if variant != body]
+        rejected += ["/claude-review effort ultra", "/claude-review sonnet",
+                     "/claude-review effort high opus", "/claude-review opus effort",
+                     "/claude-review opus effort $(id)", "/claude-review opus; echo bad",
+                     "@claude review", "Please @CLAUDE review this", "ordinary text", "", None]
         for factory in (w.issue_comment_event, w.review_comment_event):
-            for association in ("OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR", "NONE", "FIRST_TIMER"):
-                for body in ("/claude-review", "/CLAUDE-REVIEW", " /claude-review", "/claude-review\n",
-                             "/claude-review now", "`/claude-review`", "> /claude-review",
-                             "@claude review", "Please @CLAUDE review this", "ordinary text"):
+            for association in ("OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR", "NONE",
+                                "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR"):
+                for body in accepted + rejected:
                     with self.subTest(event=factory.__name__, association=association, body=body):
-                        expected = association in ("OWNER", "MEMBER", "COLLABORATOR") and body.lower() == "/claude-review"
+                        expected = (association in ("OWNER", "MEMBER", "COLLABORATOR")
+                                    and isinstance(body, str) and body.lower() in MANUAL_COMMANDS)
                         self.assertEqual(bool(w.evaluate(gate, factory(body=body, association=association))), expected)
-        self.assertFalse(w.evaluate(gate, w.issue_comment_event(body="/claude-review", on_pr=False)))
+        for body in accepted:
+            self.assertFalse(w.evaluate(gate, w.issue_comment_event(body=body, on_pr=False)))
         review = w.scalar(w.job(MANUAL, "review"), "if", 4)
         for result in ("true", "false", "", None):
             self.assertEqual(w.Evaluator(review, {"needs": {"eligibility": {
