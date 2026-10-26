@@ -15,17 +15,22 @@ Supports both Claude account tokens and Anthropic API keys; follow the
 
 Reviews run automatically when a PR becomes ready for review. Authorized users
 can also comment `/claude-review` on a PR to request an on-demand review.
+Manual requests also support [Opus and effort selection](docs/consumer-workflows.md#optional-model-and-effort-selection).
 
 A standing status comment is updated as automatic and manual reviews progress.
 👀 and 👍 reactions appear on the PR and on manual review request
 comments. Manual reviews post a completion comment on success.
+Incomplete reviews include an explanation and recovery guidance.
 The review format and flow were inspired by
 [OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
 See the [review guide](docs/review-guide.md) for more details.
 
 ## Examples and Alternatives
 
-For a working example, see Ballin’s
+Browse the [review presentation gallery](docs/review-presentation-gallery.md) for
+complete synthetic examples of review statuses and completion comments.
+
+For actual usage, see Ballin’s
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
 and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 

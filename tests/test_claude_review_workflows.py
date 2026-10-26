@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import textwrap
 import unittest
@@ -320,9 +321,10 @@ def start_check_predicate(path):
 
 
 def concurrency_group(path):
-    lines = block(lines_of(path), "concurrency", 0)
-    value = scalar(lines, "group", 2)
-    return folded(lines, "group", 2) if value == ">-" else value
+    indent = 4 if path == STALE else 0
+    lines = block(job(path, "refresh-status") if path == STALE else lines_of(path), "concurrency", indent)
+    value = scalar(lines, "group", indent + 2)
+    return folded(lines, "group", indent + 2) if value == ">-" else value
 
 
 class EligibilityPredicateTests(unittest.TestCase):
@@ -469,6 +471,7 @@ class JobStructureTests(unittest.TestCase):
                 "Resolve PR under review",
                 "Capture presentation start",
                 "Check review tooling",
+                "Select review configuration",
                 "Validate manual patch authority",
                 "Start Claude Review check",
                 "Capture PR review snapshot",
@@ -483,7 +486,7 @@ class JobStructureTests(unittest.TestCase):
 
     def test_fork_evidence_failures_cannot_skip_the_manual_review(self):
         named = steps(job(MANUAL, "start-check"))
-        required = ["Resolve PR under review", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
+        required = ["Resolve PR under review", "Select review configuration", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
         evidence_only = [
             "Check review tooling",
             "Start Claude Review check",
@@ -622,7 +625,7 @@ class JobStructureTests(unittest.TestCase):
                 allowed = json.loads(scalar(verify, "ALLOWED_TOOLS", 10).strip("'"))
                 args = folded(named["Review pull request"], "claude_args", 10)
                 self.assertIn(f'--allowedTools "{",".join(allowed)}"', args)
-                scripts.add(run_block(verify))
+                scripts.add(run_block(verify).split('if [ -n "${REVIEW_HELPER:-}" ]; then')[0].rstrip())
         self.assertEqual(len(scripts), 1)
 
     def test_only_verdict_and_bounded_receipts_flow_from_review_to_publication(self):
@@ -632,7 +635,7 @@ class JobStructureTests(unittest.TestCase):
                 self.assertIn("      completion_verified: ${{ steps.verify.outputs.completion_verified }}", outputs)
                 self.assertIn("      completion_reason: ${{ steps.verify.outputs.completion_reason }}", outputs)
                 self.assertIn("      finding_publication: ${{ steps.verify.outputs.finding_publication }}", outputs)
-                self.assertEqual(len([line for line in outputs if line.strip()]), 4)
+                self.assertEqual(len([line for line in outputs if line.strip()]), 5 if path == MANUAL else 4)
                 publish = steps(job(path, "publish-status"))["Publish Claude Review result"]
                 self.assertEqual(
                     scalar(publish, "COMPLETION_VERIFIED", 10), "${{ needs.review.outputs.completion_verified }}"
@@ -765,6 +768,8 @@ STUB_GH = textwrap.dedent(
             key = "REF"
         elif any("/comments/42" in arg for arg in args):
             key = "TRIGGER"
+        elif any("/check-runs/" in arg for arg in args):
+            key = "CHECK"
     responses = json.loads(os.environ.get("GH_STUB_RESPONSES", "{}")).get(
         key, [{"stdout": "[]"}] if reaction_get else [{"stdout": "{}"}]
     )
@@ -776,7 +781,8 @@ STUB_GH = textwrap.dedent(
              "STATUS" if any("/issues/comments/55" in arg for arg in c["args"]) else
              "PR" if any(arg.endswith("/pulls/7") for arg in c["args"]) else
              "REF" if any("/git/ref/heads/" in arg for arg in c["args"]) else
-             "TRIGGER" if any("/comments/42" in arg for arg in c["args"]) else "GET") == key))
+             "TRIGGER" if any("/comments/42" in arg for arg in c["args"]) else
+             "CHECK" if any("/check-runs/" in arg for arg in c["args"]) else "GET") == key))
     )
     response = responses[min(seen, len(responses) - 1)]
     if response.get("hang"):
@@ -850,6 +856,13 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         default_status = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"},
                           "body": check.status_comment_body(HEAD, owner["base_ref"], "in_progress", owner=owner)}
         responses.setdefault("STATUS", statuses or [{"stdout": json.dumps(default_status)}])
+        # Direct retention reads are separate from history discovery and PR reads.
+        # Recovered-run fixtures use ID 77; ordinary starts use ID 99.
+        check_id = int(overrides.get("CHECK_RUN_ID", "99") or 77)
+        responses.setdefault("CHECK", [{"stdout": json.dumps({
+            "id": check_id, "name": "Claude Review", "app": {"slug": "github-actions"},
+            "head_sha": overrides.get("HEAD_SHA", HEAD), "status": "in_progress",
+            "conclusion": None, "output": {}})}])
         with tempfile.TemporaryDirectory() as tmp:
             stub = Path(tmp) / "gh"
             stub.write_text(STUB_GH)
@@ -887,9 +900,15 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             calls = [json.loads(line) for line in log.read_text().splitlines()] if log.exists() else []
         return result, calls
 
+    def check_patch(self, calls):
+        return next(call for call in calls if call["method"] == "PATCH"
+                    and any("/check-runs/" in arg for arg in call["args"]))
+
     def methods(self, calls):
+        # Ignore auxiliary reads; retention read behavior has dedicated tests.
         return [call["method"] for call in calls
-                if not (call["method"] == "GET" and any("/reactions" in arg for arg in call["args"]))]
+                if not (call["method"] == "GET" and any(
+                    "/reactions" in arg or "/check-runs/" in arg for arg in call["args"]))]
 
     def test_unavailable_bundled_helper_routes_to_failure_publication(self):
         for path in (AUTOMATIC, MANUAL):
@@ -907,7 +926,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertIs(Evaluator(fallback.removeprefix("always() && "), context).evaluate(), True)
                         result, calls = self.run_fallback(path, STATUS_COMMENT_ID="")
                         self.assertEqual(result.returncode, 1)
-                        self.assertEqual(calls[0]["body"]["conclusion"], "failure")
+                        self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
                     else:
                         create = steps(job(path, name))["Start Claude Review check"]
                         self.assertNotIn("pull_request.head", "\n".join(readiness))
@@ -925,15 +944,15 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 result, calls = self.run_fallback(path)
                 self.assertEqual(result.returncode, 1)
                 self.assertEqual(self.methods(calls), ["PATCH"])
-                self.assertIn(f"repos/{REPO}/check-runs/99", calls[0]["args"])
-                self.assertEqual((calls[0]["body"]["status"], calls[0]["body"]["conclusion"]), ("completed", "failure"))
+                self.assertIn(f"repos/{REPO}/check-runs/99", self.check_patch(calls)["args"])
+                self.assertEqual((self.check_patch(calls)["body"]["status"], self.check_patch(calls)["body"]["conclusion"]), ("completed", "failure"))
 
     def test_fallback_failure_evidence_retains_the_runtime_and_diff_identity(self):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
                 result, calls = self.run_fallback(path, PR_NUMBER="7")
                 self.assertEqual(result.returncode, 1, result.stderr)
-                text = calls[0]["body"]["output"]["text"]
+                text = self.check_patch(calls)["body"]["output"]["text"]
                 evidence = json.loads(text.removeprefix("```json\n").removesuffix("\n```"))
                 self.assertEqual(evidence, {
                     "reviewed_sha": HEAD, "pr_number": 7,
@@ -941,6 +960,9 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     "runtime_repository": "example/review-runtime",
                     "runtime_sha": "f" * 40,
                     "runtime_workflow_path": ".github/workflows/claude-review.yml",
+                    "recovery": {"run_id": 5, "run_attempt": 1,
+                                 "check_conclusion": "failure", "reason": "tooling_unavailable",
+                                 "retained_evidence_scope": "none"},
                 })
 
     def test_known_head_fallback_publishes_failure_without_a_pr_number(self):
@@ -949,7 +971,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 result, calls = self.run_fallback(path)
                 self.assertEqual(result.returncode, 1, result.stderr)
                 self.assertEqual(self.methods(calls), ["PATCH"])
-                body = calls[0]["body"]
+                body = self.check_patch(calls)["body"]
                 self.assertEqual(body["conclusion"], "failure")
                 text = body["output"]["text"]
                 evidence = json.loads(text.removeprefix("```json\n").removesuffix("\n```"))
@@ -966,8 +988,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertEqual(self.methods(calls), ["GET", "PATCH"])
                 self.assertIn("filter=all", calls[0]["args"][-1])
                 self.assertIn("--paginate", calls[0]["args"])
-                self.assertIn(f"repos/{REPO}/check-runs/77", calls[1]["args"])
-                self.assertEqual(calls[1]["body"]["conclusion"], "failure")
+                self.assertIn(f"repos/{REPO}/check-runs/77", self.check_patch(calls)["args"])
+                self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
 
     def test_failed_lookup_is_retried_rather_than_followed_by_a_post(self):
         responses = {
@@ -976,7 +998,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         result, calls = self.run_fallback(MANUAL, responses, CHECK_RUN_ID="")
         self.assertEqual(result.returncode, 1)
         self.assertEqual(self.methods(calls), ["GET", "GET", "PATCH"])
-        self.assertIn(f"repos/{REPO}/check-runs/77", calls[2]["args"])
+        self.assertIn(f"repos/{REPO}/check-runs/77", self.check_patch(calls)["args"])
 
     def test_unresolved_lookup_publishes_nothing(self):
         result, calls = self.run_fallback(AUTOMATIC, {"GET": [{"fail": True}]}, CHECK_RUN_ID="")
@@ -1065,7 +1087,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         result, calls = self.run_fallback(MANUAL, responses, CHECK_RUN_ID="")
         self.assertEqual(result.returncode, 1)
         self.assertEqual(self.methods(calls), ["GET", "GET", "PATCH"])
-        self.assertIn(f"repos/{REPO}/check-runs/77", calls[2]["args"])
+        self.assertIn(f"repos/{REPO}/check-runs/77", self.check_patch(calls)["args"])
 
     def test_a_lookup_that_always_hangs_publishes_nothing(self):
         result, calls = self.run_fallback(AUTOMATIC, {"GET": [{"hang": True}]}, CHECK_RUN_ID="")
@@ -1083,8 +1105,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             with self.subTest(workflow=path.name):
                 script = run_block(steps(job(path, "publish-status"))[FALLBACK_STEP])
                 code = "\n".join(line for line in script.splitlines() if not line.lstrip().startswith("#"))
-                self.assertEqual(code.count("gh api"), 3)
-                self.assertEqual(code.count('timeout "$attempt_timeout" gh api'), 2)
+                self.assertEqual(code.count("gh api"), 4)
+                self.assertEqual(code.count('timeout "$attempt_timeout" gh api'), 3)
                 self.assertIn('timeout "$remaining" gh api "$@"', code)
                 self.assertIn("presentation_deadline=$((SECONDS + 120))", code)
 
@@ -1106,14 +1128,42 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertIn("### Claude Review\n", visible)
                 self.assertIn(HEAD, body)
                 self.assertNotIn("**Reason:**", visible)
+                self.assertIn("https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md"
+                              "#installation-and-incomplete-reviews", visible)
                 self.assertIn("<summary>ℹ️ Details</summary>\n\n<br/>\n\n", details)
                 self.assertEqual(body.count("<br/>"), 1)
                 reason = "**Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably."
-                note = "**Note:** " + check.INCOMPLETE_NOTE
                 metadata = f"**Current commit:** `{HEAD[:7]}`  \n**Trigger:** Not recorded  \n"
-                self.assertIn(reason + "\n" + note + "\n\n" + metadata, details)
+                self.assertIn(reason + "\n\n" + metadata, details)
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("Check", body)
+
+    def test_manual_fallback_retains_only_current_requested_selection(self):
+        from test_claude_review_check import presentation_owner
+        owner = presentation_owner(repo=REPO, kind="issue_comment", target=12)
+        owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
+                 "body": check.STATUS_MARKER}
+        for command, expected in (("/claude-review opus effort high", "**Effort:** high"),
+                                  ("/claude-review", None),
+                                  ("/claude-review opus; echo bad", None)):
+            result, calls = self.run_fallback(MANUAL,
+                {"GET": [{"stdout": pr_identity()}, {"stdout": json.dumps(owned)}]},
+                OWNER_FIXTURE=owner, STATUS_COMMENT_ID="55", PR_NUMBER="7",
+                TRIGGER_COMMENT=command)
+            self.assertEqual(result.returncode, 1)
+            repaired = next(c for c in calls if c["method"] == "PATCH"
+                            and any("issues/comments/55" in arg for arg in c["args"]))
+            body = repaired["body"]["body"]
+            self.assertEqual(check.status_owner({"body": body}), owner)
+            if expected:
+                self.assertIn(expected, body.split("<details>")[0])
+                record = check.current_selection(owner, {"body": body})
+                self.assertEqual(record["requested_model"], "opus")
+                self.assertEqual(record["models"], [])
+                self.assertIsNone(record["execution_attempt"])
+            else:
+                self.assertNotIn("**Model:**", body)
+                self.assertNotIn("**Effort:**", body)
 
     def test_fallback_records_an_encoded_base_ref(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
@@ -1228,7 +1278,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 1)
         self.assertEqual(self.methods(calls), ["PATCH", "GET"])
-        self.assertEqual(calls[0]["body"]["conclusion"], "failure")
+        self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
 
     def test_fallback_marks_owned_moved_head_stale_and_skips_unverifiable_authority(self):
         for response in ({"stdout": pr_identity("b" * 40)},
@@ -1248,11 +1298,11 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertEqual(check.status_head({"body": repaired}), "b" * 40)
                         self.assertIn(f"**Captured commit:** `{HEAD}`", repaired)
                         self.assertIn("**Reason:**", repaired)
-                        self.assertIn("**Note:** " + check.INCOMPLETE_NOTE, repaired)
+                        self.assertNotIn("**Note:**", repaired)
                         self.assertNotIn("**Reason:**", repaired.split("<details>", 1)[0])
                     else:
                         self.assertEqual(len(patches), 1)
-                    self.assertEqual(calls[0]["body"]["conclusion"], "failure")
+                    self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
 
     def test_unpublishable_check_repairs_known_comment_as_incomplete(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
@@ -1285,7 +1335,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 step_seconds = int(scalar(step, "timeout-minutes", 8)) * 60
                 # Lookup and write phases, then known-comment repair and
                 # best-effort removal of two obsolete reactions.
-                self.assertLessEqual(2 * per_phase + check.PRESENTATION_SECONDS, step_seconds)
+                self.assertLessEqual(2 * per_phase + attempt + check.PRESENTATION_SECONDS, step_seconds)
 
     def test_fork_without_a_matching_run_is_not_given_a_new_one(self):
         result, calls = self.run_fallback(MANUAL, {"GET": [{"stdout": history()}]}, CHECK_RUN_ID="", IS_FORK="true")
@@ -1362,7 +1412,7 @@ class CompletionVerifierTests(unittest.TestCase):
     """Runs the verifier step's actual shell against execution-stream fixtures."""
 
     def verify(self, stream=None, *, raw=None, path=AUTOMATIC, execution_file=None,
-               metadata=METADATA_CONTENT, diff=DIFF_CONTENT):
+               metadata=METADATA_CONTENT, diff=DIFF_CONTENT, diagnostic_fault=None):
         step = steps(job(path, "review"))[VERIFY_STEP]
         script = run_block(step)
         with tempfile.TemporaryDirectory() as tmp:
@@ -1388,12 +1438,40 @@ class CompletionVerifierTests(unittest.TestCase):
                 "REVIEW_METADATA_FILE": str(metadata_file),
                 "REVIEW_DIFF_FILE": str(diff_file),
             }
+            if diagnostic_fault is not None:
+                real_jq = shutil.which("jq")
+                self.assertIsNotNone(real_jq)
+                shim = Path(tmp) / "jq"
+                shim.write_text(f"""#!{sys.executable}
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+args = sys.argv[1:]
+fault = {diagnostic_fault!r}
+if args[:2] == ["-c", "--argjson"]:
+    if fault in ("error", "timeout"):
+        print("private diagnostic stdout")
+        print("private diagnostic stderr", file=sys.stderr)
+        if fault == "timeout":
+            time.sleep(10)
+        sys.exit(1)
+elif args[0] == "-r" and fault == "malformed":
+    completed = subprocess.run([{real_jq!r}] + args)
+    Path(args[-1]).write_text("private malformed execution input")
+    sys.exit(completed.returncode)
+os.execv({real_jq!r}, [{real_jq!r}] + args)
+""")
+                shim.chmod(0o755)
+                environment["PATH"] = str(tmp) + os.pathsep + environment["PATH"]
             completed = subprocess.run(
                 ["bash", "-eo", "pipefail", "-c", script], env=environment, capture_output=True, text=True
             )
             self.assertEqual(completed.returncode, 0, completed.stderr)
             values = dict(line.split("=", 1) for line in output.read_text().splitlines())
         self.last_stdout = completed.stdout
+        self.last_stderr = completed.stderr
         self.last_outputs = values
         return values["completion_verified"], values["completion_reason"]
 
@@ -1591,6 +1669,63 @@ class CompletionVerifierTests(unittest.TestCase):
                 stream = clean_stream()
                 stream[1:3] = [tool_use("t1", name), tool_result("t1")]
                 self.assertRejected(stream, "unexpected_tool")
+
+    def test_unexpected_tool_diagnostic_emits_only_fixed_labels_in_call_order(self):
+        prefix = "Claude review unexpected-tool diagnostic: "
+        for path in (AUTOMATIC, MANUAL):
+            for name in ("Agent", "EndConversation", "ScheduleWakeup", "Bash",
+                         "mcp__github_ci__get_ci_status", "Agent\n::warning::private-name",
+                         "$(private-command)", "private-name" * 1000, None, 42, False, {}):
+                with self.subTest(workflow=path.name, name=name):
+                    stream = clean_stream()
+                    # Allowed calls come first; the second unexpected call must
+                    # not replace the first or cause more content to be logged.
+                    stream[7:7] = [tool_use("u1", name, secret="private argument"),
+                                   tool_result("u1", content="private output"),
+                                   tool_use("u2", "EndConversation"), tool_result("u2")]
+                    self.assertRejected(stream, "unexpected_tool", path=path)
+                    expected = name if name in ("Agent", "EndConversation", "ScheduleWakeup", "Bash") else (
+                        "other" if isinstance(name, str) else "malformed")
+                    self.assertEqual(self.last_stdout.splitlines(), [
+                        "Claude review completion verified: false (unexpected_tool)",
+                        prefix + json.dumps({"tool": expected}, separators=(",", ":")),
+                    ])
+                    self.assertEqual(self.last_outputs, {
+                        "completion_verified": "false", "completion_reason": "unexpected_tool"})
+                    self.assertEqual(self.last_stderr, "")
+            stream = clean_stream()
+            call = tool_use("missing", "private-name")
+            del call["message"]["content"][0]["name"]
+            stream[7:7] = [call, tool_result("missing")]
+            self.assertRejected(stream, "unexpected_tool", path=path)
+            self.assertIn(prefix + '{"tool":"malformed"}', self.last_stdout)
+
+    def test_unexpected_tool_diagnostic_faults_preserve_verdict_and_suppress_content(self):
+        for path in (AUTOMATIC, MANUAL):
+            for fault in ("error", "timeout", "malformed"):
+                with self.subTest(workflow=path.name, fault=fault):
+                    stream = clean_stream()
+                    stream[7:7] = [tool_use("u1", "Bash"), tool_result("u1")]
+                    self.assertRejected(stream, "unexpected_tool", path=path, diagnostic_fault=fault)
+                    self.assertEqual(self.last_stdout,
+                                     "Claude review completion verified: false (unexpected_tool)\n")
+                    self.assertEqual(self.last_stderr, "")
+                    self.assertEqual(self.last_outputs, {
+                        "completion_verified": "false", "completion_reason": "unexpected_tool"})
+
+    def test_other_verdicts_have_no_unexpected_tool_diagnostic(self):
+        for path in (AUTOMATIC, MANUAL):
+            for stream, expected in ((clean_stream(), ("true", "verified")),
+                                     ([init_message(), final_text(), result()],
+                                      ("false", "captured_inputs_not_read")),
+                                     ([init_message(), result()], ("false", "unfinished_tool_use"))):
+                self.assertEqual(self.verify(stream, path=path), expected)
+                self.assertNotIn("unexpected-tool diagnostic", self.last_stdout)
+            stream = clean_stream()
+            stream[7:7] = [tool_use("u1", "Bash"), tool_result("u1")]
+            stream[-1] = result("error_during_execution", True)
+            self.assertRejected(stream, "no_clean_terminal_result", path=path)
+            self.assertNotIn("unexpected-tool diagnostic", self.last_stdout)
 
     def test_unfinished_tool_activity_is_not_verified(self):
         unanswered = clean_stream()

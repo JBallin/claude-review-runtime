@@ -68,7 +68,7 @@ class BundledHelperTests(unittest.TestCase):
             return result, written, str(action_path / "claude_review_check.py")
 
     def test_preparation_selects_the_bundle_for_every_supported_command(self):
-        for command in ("create", "finalize", "stale"):
+        for command in ("create", "finalize", "stale", "discover-target", "refresh-target"):
             with self.subTest(command=command):
                 result, written, helper = self.run_preparation(command)
                 self.assertEqual(result.returncode, 0, result.stderr)

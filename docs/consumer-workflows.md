@@ -151,9 +151,7 @@ For the selected revision's publication behavior, see the
 
 ## Manual review
 
-Manual invocation depends on the selected runtime revision. See the review
-guide for [this repository's pinned command](review-guide.md#request-a-manual-review)
-before selecting a revision or changing callers.
+Use this caller to accept manual review requests:
 
 ```yaml
 name: Manual Claude review
@@ -178,10 +176,39 @@ jobs:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
 
-For the current reusable entrypoint, post `/claude-review` as the entire comment,
-without whitespace or arguments; matching is case-insensitive. This repository’s
-self-review callers use that same command with their reviewed runtime pin. Any additional manual
-caller gate must match the selected runtime revision.
+### Optional model and effort selection
+
+Post one of these entire comment bodies, case-insensitively, with exactly the
+spaces shown:
+
+```text
+/claude-review
+/claude-review opus
+/claude-review effort high
+/claude-review opus effort high
+```
+
+`effort` accepts `low`, `medium`, `high`, `xhigh`, or `max`. Surrounding whitespace,
+extra arguments and other model choices are rejected. Selection comes from the
+trusted comment, not workflow inputs; any caller eligibility gate must accept
+the same forms as its selected Runtime revision.
+
+Plain `/claude-review` sets neither model nor effort. Claude Code resolves both
+from applicable configuration and account defaults; `opus` requests its Opus
+alias. See [upstream configuration](https://code.claude.com/docs/en/model-config#adjust-effort-level).
+A conflicting `ANTHROPIC_MODEL` prevents an explicit Opus review from starting.
+Model access still depends on the existing account.
+
+Higher effort can increase usage and latency; turn and time limits are not a
+spending cap. Model/account policy may limit the requested level. The displayed effort is the requested setting; headless output does not report
+the resolved setting. See [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
+
+Explicit model requests show a compact Model line; effort requests show Effort.
+Inherited model evidence stays in diagnostic metadata, including effort-only
+requests. Missing or different
+model evidence does not invalidate completed reviews or erase findings. Runtime
+does not add retries or substitution runs for these diagnostics; provider
+failures retain their ordinary incomplete-review behavior.
 
 The runtime resolves the current patch once for each accepted manual request.
 Ordinary issue comments and untrusted requests do not start model execution.
@@ -193,6 +220,8 @@ name: Claude review status
 on:
   pull_request:
     types: [synchronize, edited]
+  push:
+    branches: ["**"]
 
 permissions: {}
 
@@ -207,7 +236,23 @@ jobs:
 
 This entrypoint needs no model secret, OIDC permission, or Check write permission.
 It refreshes existing presentation after head changes and qualifying base
-retargeting edits; it does not create a review when none exists.
+retargeting edits and pushes to their target branch. It does not create a review
+when none exists or rerun Claude. Completed review evidence and exact-patch Checks
+remain unchanged; the existing status explains coverage of the newer baseline.
+
+Target pushes discover only open PRs with that exact base branch, including
+stacked PRs on non-default branches. Discovery is read-only and bounded to 100
+pages of 100 PRs and 120 seconds. More than 256 affected PRs or incomplete discovery
+fails without emitting a partial job matrix. At most four refresh jobs run in
+parallel, each sharing its PR's review queue. Delayed pushes, closed or retargeted
+PRs, and changed presentation owners are rechecked before publication. Status API
+failures remain best effort and appear as workflow warnings; they never change a
+Check verdict. A later qualifying event can retry a missed refresh.
+
+Existing consumers must separately update their status caller to include the
+`push` trigger and select a reviewed runtime revision. Updating a runtime pin
+alone cannot add caller events. This repository's pinned self-review callers
+also require separate adoption; this implementation does not repin them.
 
 ## Permission and failure boundaries
 

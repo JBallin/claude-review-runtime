@@ -132,7 +132,7 @@ def check_run(
         "conclusion": conclusion,
         "app": {"slug": slug},
     }
-    if not legacy:
+    if not legacy and status == "completed":
         run["output"] = {"text": evidence_text(pr=pr, merge_base=merge_base)}
     return run
 
@@ -252,7 +252,7 @@ class PureLogicTests(unittest.TestCase):
                 {**check_run(9, "failure"), "output": {"text": "not json"}},
             ]
         }
-        self.assertEqual(check.prior_finding_evidence([page], HEAD, 6, "7", MERGE_BASE)[0], [1, 7])
+        self.assertEqual(check.prior_finding_evidence([page], HEAD, 6, "7", MERGE_BASE)[0], [1, 6, 7])
 
     def test_sticky_history_is_scoped_to_the_pr_and_reviewed_diff(self):
         page = {
@@ -286,7 +286,7 @@ class PureLogicTests(unittest.TestCase):
         ]
         self.assertEqual(
             check.prior_finding_evidence([{"check_runs": runs}], HEAD, 99, "7", MERGE_BASE),
-            ([1], {10}, {20}),
+            ([1, 99], {10, 60}, {20}),
         )
 
 
@@ -307,6 +307,13 @@ class ScriptTestCase(unittest.TestCase):
 
     def run_script(self, command, rules, *, step_script=None, **extra_env):
         scenario = self.dir / "scenario.json"
+        current_path = f"repos/{REPO}/check-runs/{extra_env.get('CHECK_RUN_ID') or 99}"
+        if command[0] == "finalize" and not any(rule["method"] == "GET" and rule["path"] == current_path
+                                               for rule in rules):
+            # History and the direct resource can fail independently. Existing
+            # fixtures start with a fresh Check unless they override this read.
+            rules = [*rules, {"method": "GET", "path": current_path,
+                             "responses": [ok(json.dumps(check_run(99, None, status="in_progress")))]}]
         if (extra_env.get("STATUS_COMMENTS_ENABLED") == "true" and command[0] != "stale"
                 and not any(rule["path"] == f"repos/{REPO}/pulls/7" for rule in rules)):
             rules = [pr_head_rule(live_head(extra_env.get("HEAD_SHA", HEAD))), *rules]
@@ -484,7 +491,9 @@ class FinalizeTests(ScriptTestCase):
                     self.assertEqual(body["conclusion"], "failure")
                     self.assertEqual(evidence_of(body)["new_finding_comment_ids"], [9] if findings else [])
                     self.assertEqual(evidence_of(body)["same_diff_findings_recorded"], bool(findings))
-                    self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), check.ATTEMPTS)
+                    self.assertEqual(len([call for call in self.calls("GET") if "/commits/" in call["path"]]), check.ATTEMPTS)
+                    self.assertEqual(len([call for call in self.calls("GET")
+                                          if call["path"] == f"repos/{REPO}/check-runs/99"]), 1)
                     self.assertFalse(self.calls("POST"))
 
     def test_history_retry_reads_a_complete_listing_after_pagination_movement(self):
@@ -533,7 +542,9 @@ class FinalizeTests(ScriptTestCase):
                     self.assertEqual(evidence["new_finding_comment_ids"], [9] if findings else [])
                     self.assertEqual(evidence["same_diff_findings_recorded"], bool(findings))
                     self.assertIn("malformed or incomplete", evidence["evidence_errors"][0])
-                    self.assertEqual(len([call for call in self.calls("GET") if "/check-runs" in call["path"]]), check.ATTEMPTS)
+                    self.assertEqual(len([call for call in self.calls("GET") if "/commits/" in call["path"]]), check.ATTEMPTS)
+                    self.assertEqual(len([call for call in self.calls("GET")
+                                          if call["path"] == f"repos/{REPO}/check-runs/99"]), 1)
                     self.assertFalse(self.calls("POST"))
 
     def test_nullable_untrusted_apps_do_not_hide_trusted_sticky_findings(self):
@@ -588,7 +599,8 @@ class FinalizeTests(ScriptTestCase):
         self.assertIn(f'"reviewed_sha": "{HEAD}"', body["output"]["text"])
 
     def test_missing_or_unverified_completion_publishes_failure(self):
-        for verdict, reason in (("", ""), ("false", "background_task_activity"), ("TRUE", "verified")):
+        for verdict, reason in (("", ""), ("false", "background_task_activity"), ("TRUE", "verified"),
+                                ("true", "captured_inputs_not_read"), ("true", "missing_execution_file")):
             with self.subTest(verdict=verdict):
                 self.log.unlink(missing_ok=True)
                 result = self.finalize(
@@ -600,7 +612,8 @@ class FinalizeTests(ScriptTestCase):
                 body = self.published()
                 self.assertEqual(body["conclusion"], "failure")
                 self.assertEqual(body["output"]["title"], "Review completion could not be verified")
-                self.assertIs(evidence_of(body)["completion_verified"], False)
+                # Preserve raw verifier evidence even when its fields conflict.
+                self.assertIs(evidence_of(body)["completion_verified"], verdict == "true")
                 self.assertNotIn("**Completed:**", body["output"]["summary"])
 
     def test_rejected_tool_or_input_evidence_cannot_publish_a_clean_check(self):
@@ -615,7 +628,8 @@ class FinalizeTests(ScriptTestCase):
                 self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
                 body = self.published()
                 self.assertEqual(body["conclusion"], "failure")
-                self.assertEqual(body["output"]["title"], "Review completion could not be verified")
+                self.assertEqual(body["output"]["title"], "Review inputs were not fully read"
+                                 if reason == "captured_inputs_not_read" else "Review completion could not be verified")
                 evidence = evidence_of(body)
                 self.assertEqual(evidence["start_check_result"], "success")
                 self.assertEqual(evidence["review_job_result"], "success")
@@ -623,7 +637,8 @@ class FinalizeTests(ScriptTestCase):
                 self.assertIs(evidence["completion_verified"], False)
                 self.assertEqual(evidence["completion_reason"], reason)
                 self.assertEqual(evidence["claude_finding_comment_ids"], [])
-                self.assertIn(reason, body["output"]["summary"])
+                self.assertIn(check.STATUS_REASONS["unread_inputs"] if reason == "captured_inputs_not_read"
+                              else reason, body["output"]["summary"])
 
     def test_findings_from_an_unverified_run_are_recorded_and_stay_sticky(self):
         first = self.finalize(
@@ -1279,6 +1294,8 @@ class WorstCaseModelTests(ScriptTestCase):
         rules = [
             # Lookup fails twice, then finds the run; the history read then fails throughout.
             history_rule(FAIL, FAIL, found, FAIL, FAIL, FAIL),
+            {"method": "GET", "path": f"repos/{REPO}/check-runs/99",
+             "responses": [FAIL, FAIL, ok(json.dumps(check_run(99, None, status="in_progress")))]},
             comments_rule(FAIL),
             patch_rule(FAIL),
         ]
@@ -1608,7 +1625,7 @@ class StatusCommentTests(ScriptTestCase):
 
     def test_final_status_projects_clean_findings_sticky_and_failure(self):
         cases = [
-            ([], [], "success", "**Result:** No findings.", {}),
+            ([], [], "success", "✅ **Completed**", {}),
             ([comment(9)], [], "action_required", "inline review threads", {}),
             ([], [check_run(41, "action_required")], "action_required", "inline review threads", {}),
             ([], [], "failure", "**Reason:** " + check.STATUS_REASONS["incomplete"], {"REVIEW_RESULT": "failure"}),
@@ -1639,7 +1656,7 @@ class StatusCommentTests(ScriptTestCase):
                 self.assertIn(phrase, body)
                 if expected == "failure":
                     self.assertNotIn("**Reason:**", body.split("<details>", 1)[0])
-                    self.assertIn("**Note:** " + check.INCOMPLETE_NOTE, body)
+                    self.assertNotIn("**Note:**", body)
                 else:
                     self.assertNotIn("**Note:**", body)
                 self.assertIn(HEAD, body)
@@ -1667,7 +1684,7 @@ class StatusCommentTests(ScriptTestCase):
                 status = {"body": body}
                 self.assertEqual(check.status_state(status), "publication_incomplete")
                 self.assertIn("**Reason:** " + check.STATUS_REASONS["check_publication_failed"], body)
-                self.assertIn("**Note:** " + check.INCOMPLETE_NOTE, body)
+                self.assertNotIn("**Note:**", body)
                 self.assertNotIn(check.STATUS_REASONS["incomplete"], body)
                 self.assertFalse(check.status_owner_running(status))
                 self.assertEqual(check.status_owner(status), presentation_owner())

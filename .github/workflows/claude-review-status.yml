@@ -1,8 +1,8 @@
 name: Refresh Claude Review status
 
-# A new PR head or base ref invalidates an older conversation summary. This
-# workflow only updates an existing informational comment; it never starts a review or
-# changes the authoritative exact-SHA Claude Review Check.
+# Head changes, base retargets, and target pushes refresh existing presentation.
+# This workflow never starts a review or changes the authoritative captured-patch
+# Claude Review Check.
 on:
   workflow_call:
 
@@ -11,19 +11,16 @@ permissions:
   pull-requests: write
   issues: write
 
-# Share the review queue so status writes on one PR cannot race. A delayed
-# PR event checks the live head/base ref and the comment's recorded identity.
-concurrency:
-  group: ${{ format('claude-review-state-{0}-{1}', github.repository, github.event.pull_request.number) }}
-  cancel-in-progress: false
-  queue: max
-
 jobs:
   refresh-status:
     if: >-
       github.event_name == 'pull_request' &&
       (github.event.action == 'synchronize' ||
       (github.event.action == 'edited' && github.event.changes.base.ref.from != ''))
+    concurrency:
+      group: ${{ format('claude-review-state-{0}-{1}', github.repository, github.event.pull_request.number) }}
+      cancel-in-progress: false
+      queue: max
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -46,3 +43,61 @@ jobs:
           STATUS_COMMENTS_ENABLED: "true"
           PR_REACTION_MODE: stale
         run: python3 "$REVIEW_HELPER" stale
+
+  discover-target:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/') && github.event.deleted == false
+    permissions:
+      contents: read
+      pull-requests: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      prs: ${{ steps.discover.outputs.prs }}
+    steps:
+      - name: Check discovery tooling
+        id: tooling-ready
+        uses: $/actions/review-helper
+        with:
+          command: discover-target
+      - name: Discover affected open PRs
+        id: discover
+        env:
+          REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PUSH_REF: ${{ github.ref_name }}
+          PUSH_SHA: ${{ github.event.after }}
+        run: python3 "$REVIEW_HELPER" discover-target
+
+  refresh-target:
+    needs: discover-target
+    if: needs.discover-target.outputs.prs != '[]'
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        pr: ${{ fromJSON(needs.discover-target.outputs.prs) }}
+    # Share the exact review queue for each PR, including head-event refreshes.
+    concurrency:
+      group: ${{ format('claude-review-state-{0}-{1}', github.repository, matrix.pr) }}
+      cancel-in-progress: false
+      queue: max
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check refresh tooling
+        id: tooling-ready
+        uses: $/actions/review-helper
+        with:
+          command: refresh-target
+      - name: Refresh existing target-branch status
+        env:
+          REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ matrix.pr }}
+          PUSH_REF: ${{ github.ref_name }}
+          PUSH_SHA: ${{ github.event.after }}
+          STATUS_COMMENTS_ENABLED: "true"
+          PR_REACTION_MODE: stale
+        run: python3 "$REVIEW_HELPER" refresh-target

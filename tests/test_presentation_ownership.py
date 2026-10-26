@@ -802,7 +802,7 @@ class OwnershipTests(unittest.TestCase):
                             self.assertEqual(check.status_owner(self.api.status), owner)
                             self.assertFalse(check.status_owner_running(self.api.status))
                             self.assertEqual(self.api.status["body"].count("**Reason:**"),1)
-                            self.assertEqual(self.api.status["body"].count("**Note:** " + check.INCOMPLETE_NOTE),1)
+                            self.assertNotIn("**Note:**", self.api.status["body"])
                             self.assertEqual(self.api.status["body"].count(check.STATUS_REASONS["stale"]),1)
                     self.assertEqual(self.owned(self.opening), [])
                     self.assertEqual(len([call for call in self.writes() if call[0] == "POST"
@@ -838,7 +838,10 @@ class OwnershipTests(unittest.TestCase):
                             check.cmd_stale()
                             self.assertEqual(check.terminal_status_reason(self.api.status,owner),expected)
                             self.assertEqual(self.api.status["body"].count(check.STATUS_REASONS["stale"]),1)
-                            self.assertEqual(self.api.status["body"].count(check.STATUS_REASONS[reason_key]),1)
+                            visible, details = self.api.status["body"].split("<details>", 1)
+                            self.assertEqual(visible.count(check.STATUS_REASONS[reason_key]), 1)
+                            self.assertEqual(details.count("**Reason:**"), 1)
+                            self.assertIn(check.STATUS_REASONS[reason_key], details)
                             self.assertEqual(check.status_owner(self.api.status),owner)
                             self.assertFalse(check.status_owner_running(self.api.status))
                     self.assertEqual(self.owned(self.opening),[])
@@ -1156,14 +1159,18 @@ class EmergencyOwnershipTests(unittest.TestCase):
             self.assertIsNotNone(check.status_owner({"body": body}))
 
     def test_emergency_partial_rerun_cannot_claim_ownership(self):
+        from test_claude_review_workflows import REPO as workflow_repo
         result, calls = self.fallback(PR_NUMBER="7", STATUS_COMMENT_ID="55", GITHUB_RUN_ATTEMPT="2")
         self.assertEqual(result.returncode, 1)
-        self.assertEqual([call["method"] for call in calls], ["PATCH"])
+        self.assertEqual([call["method"] for call in calls], ["GET", "PATCH"])
+        self.assertTrue(all(f"repos/{workflow_repo}/check-runs/99" in call["args"] for call in calls))
 
     def test_missing_emergency_owner_cannot_bootstrap_or_clear(self):
+        from test_claude_review_workflows import REPO as workflow_repo
         result, calls = self.fallback(PR_NUMBER="7", STATUS_COMMENT_ID="55", PRESENTATION_OWNER="")
         self.assertEqual(result.returncode, 1)
-        self.assertEqual([call["method"] for call in calls], ["PATCH"])
+        self.assertEqual([call["method"] for call in calls], ["GET", "PATCH"])
+        self.assertTrue(all(f"repos/{workflow_repo}/check-runs/99" in call["args"] for call in calls))
 
     def test_legacy_emergency_status_cannot_authorize_repair(self):
         legacy = {"id":55, "user":{"login":check.STATUS_AUTHOR,"type":"Bot"}, "body":check.STATUS_MARKER}

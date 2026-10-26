@@ -22,28 +22,30 @@ the executing runtime's repository, SHA, and workflow path.
 | [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted exact `/claude-review` command followed by a read-only check for an open, non-draft, same-repository PR. |
 | [Status](../.github/workflows/self-review-status.yml) | PR `synchronize`, `edited` | Open, same-repository PRs; refreshes existing presentation after head changes or base-ref retargeting. |
 
-Stacked PRs are eligible; the callers do not restrict the base branch. Status
-refresh does not run Claude, change the authoritative exact-head Check, or
+Stacked PRs are eligible; the callers do not restrict the base branch. The pinned
+status caller does not run Claude, change the authoritative exact-head Check, or
 watch base-tip advancement on the same branch. Request a new review when the
 diff changes, and assess whether a changed base invalidates previous evidence.
 
 ## Request a manual review
 
 Post `/claude-review` as the entire top-level or inline PR comment, without
-surrounding whitespace, arguments, quotes, or other text. Matching is
+surrounding whitespace, quotes, or unrelated text. Matching is
 case-insensitive. The commenter must have an owner, member, or collaborator
 association; the action also checks actor/access eligibility. Ordinary issue
 comments and untrusted requests do not start model execution. The eligibility
 job has read-only PR access and performs no checkout before calling the pinned
 runtime. The runtime resolves the current patch once for each accepted request.
 
+Manual requests support [optional Opus and effort selection](consumer-workflows.md#optional-model-and-effort-selection).
+Model evidence is diagnostic: a different observed model produces a notice,
+without changing completion or finding verification.
+
 The command deliberately avoids a Claude mention. `@claude review` can invoke
 Anthropic's separate managed review service and does not invoke this checkout's
 manual entrypoint or this repository’s callers.
 Provider-bot reactions on comments are preserved and are not this runtime's
-progress or completion signals. The caller installation shape stays the same,
-but a revision update must keep its manual gate and documented command consistent
-with that revision.
+progress or completion signals.
 
 ## Read the result
 
@@ -51,10 +53,10 @@ The exact-SHA `Claude Review` Check is authoritative. The stable workflow-owned
 status comment and opening-post reactions present progress, clean completion,
 findings, failure, and stale state. One shared status comment shows the latest
 accepted attempt, including its captured head/base and workflow run. Checks and
-workflow runs retain earlier attempts. Incomplete and cancelled reviews include
-a reason inside Details. An incomplete presentation also includes the general
-workflow-change note; it is context about a known validation limitation, not a
-diagnosis of that attempt. A comment API or permission failure is reported in
+workflow runs retain earlier attempts. Incomplete and cancelled reviews show
+a concise explanation and recovery link above Details. Verified unread inputs
+take precedence over workflow-change context. Details retain the reason receipt
+and captured attempt identity. A comment API or permission failure is reported in
 the Check/run when publication is possible. Accepted manual requests also receive
 runtime reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
@@ -80,9 +82,9 @@ resolved target branch tip. It validates repository/ref authority and unchanged
 head and target ref across PR reads surrounding the direct-ref lookup. Valid
 comparison-base projections and target tips may differ from the captured base;
 missing, malformed, foreign, ambiguous, or inconsistent authority still rejects
-the request, including a manual fork request. Admission does not require an
-ancestry relationship between valid tips on the same ref. The reviewed patch
-remains the captured `compare/base...head` payload, with its captured merge base
+the request. Admission does not require an ancestry relationship between valid
+tips on the same ref. The reviewed patch remains the captured
+`compare/base...head` payload, with its captured merge base
 and runtime provenance; admission never replaces that baseline or synthesizes a
 merge. Automatic reviews retain the triggering event's immutable head/base and
 historical Check identity.
@@ -220,10 +222,10 @@ Status-only refresh can retain a historical 👍 but cannot recreate a removed o
 Freshness checks read the exact encoded branch ref directly and validate its
 ref name, commit type, and full SHA, with PR identity reads around that lookup.
 A status refresh can observe this movement
-even if the PR API still reports the old comparison base. This is not a watcher
-for base-branch pushes, and separate API reads and writes are not atomic:
-movement after the last read remains possible. Unavailable branch authority
-suppresses new clean presentation rather than strengthening the Check result.
+even if the PR API still reports the old comparison base. Separate API reads
+and writes are not atomic: movement after the last read remains possible.
+Unavailable branch authority suppresses new clean presentation rather than
+strengthening the Check result.
 Stale refresh preserves ownership metadata and
 affects only current PR presentation. Reaction and status publication are best-effort: API failures or
 unverifiable ownership can leave stale or missing reactions. Consult the current
@@ -236,9 +238,19 @@ captured head SHA, and errored responses reject completion even if the model
 reports success.
 
 Findings remain sticky for the same PR, head, and merge base through trusted
-Check evidence. Captured target-ref evidence is additive; legacy Check records
-without it remain readable and require no migration. Findings attributed only to
-another diff do not carry across a base retarget; unknown attribution fails closed.
+Check evidence, including when a partial rerun reuses an existing Check or
+recovery records a failure. If that Check's evidence cannot be verified safely,
+the attempt fails without replacing it; inspect the failed workflow alongside
+the retained historical result. Emergency Check evidence includes a `recovery`
+record identifying the publishing run/attempt and failure. Its
+`retained_evidence_scope: historical` labels the other evidence fields as retained
+history, including execution verdicts and model observations; they do not verify
+the recovery attempt. `none` means no historical evidence was reused. Recovery
+does not fill missing legacy execution provenance.
+Captured target-ref evidence is additive; legacy
+Check records without it remain readable and require no migration. Findings
+attributed only to another diff do not carry across a base retarget; unknown
+attribution fails closed.
 Check evidence retains bounded ID samples and diagnostic counts/hashes, plus
 durable same-diff finding presence.
 Hashes cannot establish individual ID membership: rediscovered IDs omitted from
@@ -247,13 +259,22 @@ transcripts are not uploaded as artifacts. Dependency actions are pinned, but
 this does not make their transitive runtime dependencies immutable.
 
 The reusable automatic entrypoint excludes drafts, fork pull requests, and
-Dependabot-triggered runs. Its manual entrypoint supports top-level fork requests
-with best-effort Check publication limits; this repository's additional caller
-gate excludes forks. Fork behavior remains unvalidated in this prototype. The
-status entrypoint refreshes existing presentation after head changes or base-ref
-retargeting; it does not initiate a model review or watch base-tip advancement
-on the same branch. Consumers must assess whether a changed base invalidates
-previous review evidence.
+Dependabot-triggered runs. The Dependabot exclusion reflects [GitHub's Actions
+secret restrictions for Dependabot-triggered workflows](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-on-actions).
+The actor triggering the run is distinct from the PR author: a new trusted human
+`/claude-review` comment on an open, non-draft, same-repository Dependabot PR can
+pass this repository's manual caller gate. Re-running a Dependabot-triggered
+run does not change its secret restrictions. The manual caller rejects fork PRs
+regardless of commenter trust. The generic reusable manual entrypoint has a
+broader top-level PR-comment path for forks, with best-effort Check publication;
+that path remains unvalidated and does not establish supported fork operation.
+
+The status entrypoint refreshes existing presentation after head changes, base-ref
+retargeting, or target-branch pushes forwarded by its caller; it never initiates
+a model review. This repository's pinned status caller has not adopted push
+refreshes. Consumers need a separate [caller update](consumer-workflows.md#stale-presentation-refresh)
+to enable them and must assess whether a changed base invalidates previous review
+evidence.
 
 ## Finding publication
 
@@ -289,6 +310,15 @@ trusted `Claude Review` Check remains incomplete or failed, and required review
 remains unsatisfied. This condition does not mean every first run fails or every
 PR changing a workflow is unreviewable.
 
+Related upstream proposal: [claude-code-action #1879](https://github.com/anthropics/claude-code-action/pull/1879)
+would expose an explicit workflow-validation skip as an action output. It is
+an open proposal, not an available fix or a Runtime dependency.
+
+An incomplete review may flag changes to its caller or Runtime workflow as
+context, not a confirmed cause. The warning reflects that attempt's captured
+patch; unrelated changes don't trigger it. If the relevant evidence is
+unavailable or ambiguous, the explanation stays generic.
+
 Reconcile the automatic review's Check and workflow run before requesting
 recovery. After a confirmed caller-validation rejection, use the already deployed
 trusted manual caller only when no applicable review request is completed or
@@ -296,6 +326,15 @@ pending. Follow its documented command and verify the captured head, base, and
 executing Runtime revision in the resulting Check and workflow run. A pin update
 alone does not require manual review; this recovery applies to the confirmed
 rejection, not every caller change.
+
+Distinguish the PR's proposed pin from the caller and Runtime actually executing
+each attempt. Inspect the linked run's caller and referenced workflows, then
+the Check's `runtime_repository`, `runtime_sha`, and `runtime_workflow_path`.
+A deployed manual caller can execute its previously installed Runtime while
+reviewing the proposed patch. A clean review through that older revision does
+not establish live adoption of the proposed pin. Automatic and manual attempts
+can execute different revisions; neither recovery nor use of the old revision
+is guaranteed for every pin change or authentication setup.
 
 A skipped action or successful workflow without verified model completion is
 not a Claude review. Do not suppress the incomplete Check or bypass it. Keep an
@@ -333,6 +372,22 @@ incomplete, consider a separately run independent Claude review, such as local
 Opus. Verify its input coverage and exact revision, record the results, and obtain
 explicit acceptance under the applicable review policy. This does not make the
 failed automated Check pass or bypass branch protection.
+
+### Unexpected tool use
+
+`unexpected_tool` means the execution record contains a tool-use name outside
+the configured review allowlist. The workflow may log a best-effort
+`Claude review unexpected-tool diagnostic` for the first such call. It emits
+only the fixed labels `Agent`, `EndConversation`, `ScheduleWakeup`, or `Bash`,
+with `other` for unrecognized strings and `malformed` for missing or non-string
+names. `other` does not identify the tool. Arguments, outputs, raw unknown names,
+and transcripts are excluded from this diagnostic.
+
+Availability depends on the executing Runtime revision and diagnostic parsing;
+an absent diagnostic proves nothing about tool use. A label identifies a recorded
+name, not why it was called or whether it executed successfully. Diagnostics do
+not change the failed verification result or recover a historical rejection's
+cause when its execution evidence is unavailable.
 
 ### Unexpected Check grouping
 

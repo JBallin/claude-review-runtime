@@ -53,16 +53,21 @@ class DurableAPI(PresentationAPI):
                 result = super().call(args, body)
             else:
                 self.calls.append((method, path, copy.deepcopy(body)))
-                if self.outage and method == "GET" and "/check-runs" in path:
+                if self.outage and method == "GET" and "/commits/" in path:
                     raise check.GhError("synthetic history outage")
                 if "/check-runs" in path:
                     if method == "GET":
-                        head = path.split("/commits/", 1)[1].split("/", 1)[0]
-                        runs = [run for run in self.checks if run["head_sha"] == head]
-                        if self.drift:
+                        if "/commits/" not in path:
+                            result = json.dumps(next(run for run in self.checks
+                                                     if str(run["id"]) == path.rsplit("/", 1)[1]))
+                        elif self.drift:
+                            head = path.split("/commits/", 1)[1].split("/", 1)[0]
+                            runs = [run for run in self.checks if run["head_sha"] == head]
                             self.drift = False
                             result = json.dumps({"total_count": len(runs) + 1, "check_runs": runs})
                         else:
+                            head = path.split("/commits/", 1)[1].split("/", 1)[0]
+                            runs = [run for run in self.checks if run["head_sha"] == head]
                             result = json.dumps({"total_count": len(runs), "check_runs": runs})
                     elif method == "PATCH":
                         run = next(run for run in self.checks if str(run["id"]) == path.rsplit("/", 1)[1])
@@ -380,7 +385,8 @@ class OfflineRecoveryTests(unittest.TestCase):
                 evidence = evidence_of(completed)
                 self.assertEqual((evidence["reviewed_sha"], evidence["base_sha"], evidence["base_ref"],
                                   evidence["merge_base_sha"]), (HEAD, BASE_TIP, "main", MERGE_BASE))
-                self.assertIn("captured patch", completed["output"]["summary"])
+                self.assertIn(f"**Captured baseline:** `main` at `{BASE_TIP}`", completed["output"]["summary"])
+                self.assertNotIn(check.CAPTURED_PATCH_SCOPE, completed["output"]["summary"])
                 self.assertEqual(check.status_state(state["status"]), "stale")
                 self.assertFalse(check.status_owner_running(state["status"]))
                 self.assertEqual(check.status_owner(state["status"]), owner)
@@ -518,8 +524,10 @@ class OfflineRecoveryTests(unittest.TestCase):
         self.run_worker("finish", 1)
         failed = self.state()
         self.assertEqual(failed["checks"][0]["conclusion"], "failure")
-        history_calls = [call for call in failed["calls"] if call[0] == "GET" and "/check-runs" in call[1]]
+        history_calls = [call for call in failed["calls"] if call[0] == "GET" and "/commits/" in call[1]]
         self.assertEqual(len(history_calls), check.ATTEMPTS)
+        self.assertEqual(len([call for call in failed["calls"]
+                              if call[:2] == ["GET", f"repos/{REPO}/check-runs/99"]]), 1)
         self.update(outage=False, checks=[*failed["checks"], check_run(100, None, status="in_progress")])
         self.env["CHECK_RUN_ID"] = "100"
         self.before.write_text("[12]")
@@ -687,7 +695,7 @@ class OfflineRecoveryTests(unittest.TestCase):
                 self.assertTrue(evidence_of(failed)["same_diff_findings_recorded"])
                 self.assertEqual(evidence_of(failed)["new_finding_comment_ids"], [12])
                 self.assertEqual(len([call for call in self.state()["calls"]
-                                     if call[0] == "GET" and "/check-runs" in call[1]]), check.ATTEMPTS)
+                                     if call[0] == "GET" and "/check-runs" in call[1]]), check.ATTEMPTS + 1)
                 # The next attempt sees no surviving comment. Only the failed
                 # Check can retain this finding's captured-diff attribution.
                 self.update(findings=[], outage=False, drift=True,

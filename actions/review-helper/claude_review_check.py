@@ -8,7 +8,9 @@ Subcommands (configured through environment variables set by the workflow):
   create    open an in_progress check run for HEAD_SHA
   snapshot  record Claude's review-comment IDs on HEAD_SHA before the review
   finalize  map the review outcome to a conclusion and complete the check run
-  stale     refresh an existing status comment for a new PR head
+  stale     refresh an existing status comment for a changed PR snapshot
+  discover-target  list bounded open PRs targeting a pushed branch
+  refresh-target   refresh one affected PR without executing a review
   admit-manual  validate a manual snapshot without replacing its captured baseline
 """
 
@@ -48,6 +50,8 @@ STATUS_REASONS = {
     "cancelled": "The review was cancelled before verified completion.",
     "preparation_failed": "Review preparation failed; Claude did not complete this review.",
     "incomplete": "The review did not complete with reliable execution and finding evidence.",
+    "unread_inputs": "Required review inputs were not fully read.",
+    "workflow_changed": "The captured patch changes the review workflow; the cause of the incomplete review is unknown.",
     "check_publication_failed": "The authoritative Check result could not be published.",
     "tooling_unavailable": "Trusted review tooling was unavailable; the review could not be finalized reliably.",
     "stale": "The captured head or base was superseded; the current patch is not reviewed by this attempt.",
@@ -56,7 +60,10 @@ STATUS_REASONS = {
 }
 LEGACY_BASE_ADVANCED_REASON = "The target branch advanced; integration with the current baseline has not been reviewed."
 CAPTURED_PATCH_SCOPE = "This review covers the captured patch only; integration with other target baselines is not covered."
-INCOMPLETE_NOTE = "If this PR changes Claude’s review workflow, including Runtime pins, an incomplete review is expected."
+# Recovery guidance follows main; captured review evidence stays immutable.
+RECOVERY_GUIDE = "https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md"
+INCOMPLETE_RECOVERY = RECOVERY_GUIDE + "#installation-and-incomplete-reviews"
+UNREAD_RECOVERY = RECOVERY_GUIDE + "#incomplete-captured-input-reads"
 TARGET_TIP_WARNING = "⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed."
 PRESENTATION_SECONDS = 120
 PRESENTATION_DEADLINE = None
@@ -85,14 +92,15 @@ EVIDENCE_ID_FIELDS = (
 # of the same duration, reset before any authoritative Check work. Each call is
 # capped at GH_TIMEOUT_SECONDS and each retried operation adds its backoff.
 # create's retries each add a reconciliation lookup before POSTing again;
-# finalize may look up an unreported run, then read history and comments and
-# PATCH the result and its fallback. The tests check the implementation against
+# finalize may look up an unreported run, read history and a retained Check
+# independently, then read comments and PATCH the result and its fallback.
+# The tests check the implementation against
 # this model and the start-check and publish-status job timeouts against the
 # budget it implies, so publication is not cut off by a job timeout.
 WORST_CASE = {
     "create": (1 + 2 * (ATTEMPTS - 1), 1),
     "snapshot": (ATTEMPTS, 1),
-    "finalize": (5 * ATTEMPTS, 5),
+    "finalize": (6 * ATTEMPTS, 6),
     # Dedup discovery, two owner listings, and three live identity reads may
     # retry. The completion POST is attempted once; a lost response is ambiguous.
     "completion": (6 * ATTEMPTS + 1, 6),
@@ -104,8 +112,8 @@ class GhError(Exception):
     pass
 
 
-def gh_api(args, body=None):
-    timeout = GH_TIMEOUT_SECONDS
+def gh_api(args, body=None, *, timeout_seconds=GH_TIMEOUT_SECONDS):
+    timeout = min(GH_TIMEOUT_SECONDS, timeout_seconds)
     if PRESENTATION_DEADLINE is not None:
         timeout = min(timeout, PRESENTATION_DEADLINE - time.monotonic())
         if timeout <= 0:
@@ -230,7 +238,8 @@ def prior_finding_evidence(pages, head_sha, current_check_run_id, pr_number, mer
     base. Only completed trusted Check evidence can attribute earlier comment
     IDs to this diff or to another diff of the same PR/head. Failed runs also
     preserve any findings they recorded. Keep recorded IDs even when the
-    corresponding comments have since been deleted.
+    corresponding comments have since been deleted. A completed current Check
+    is also history when a partial rerun reuses the start job's Check ID.
     """
     if not pr_number or not merge_base_sha:
         return [], set(), set()
@@ -242,7 +251,6 @@ def prior_finding_evidence(pages, head_sha, current_check_run_id, pr_number, mer
                 run.get("name") == CHECK_NAME
                 and (run.get("app") or {}).get("slug") == CHECK_APP_SLUG
                 and run.get("head_sha") == head_sha
-                and str(run.get("id")) != str(current_check_run_id)
                 and run.get("status") == "completed"
                 and str(evidence.get("pr_number")) == str(pr_number)
                 and evidence.get("merge_base_sha")
@@ -332,7 +340,47 @@ def fetch_prior_finding_evidence(repo, head_sha, current_check_run_id, pr_number
         lambda: check_run_history(repo, head_sha, required_check_run_id=current_check_run_id),
         "Listing Claude Review check history"
     )
+    current = next(run for page in history for run in page["check_runs"]
+                   if str(run["id"]) == str(current_check_run_id))
+    validate_retained_check(current, head_sha, current_check_run_id, pr_number, merge_base_sha)
     return history, prior_finding_evidence(history, head_sha, current_check_run_id, pr_number, merge_base_sha)
+
+
+def validate_retained_check(run, head_sha, check_run_id, pr_number, merge_base_sha):
+    """Validate the record whose evidence finalization would replace.
+
+    An initial in-progress Check has no evidence yet. Completed legacy evidence
+    remains readable without new provenance keys, but ambiguous or foreign data
+    must not be overwritten as if it established an empty finding history.
+    """
+    try:
+        if (not isinstance(run, dict) or not positive_comment_id(run.get("id"))
+                or str(run["id"]) != str(check_run_id) or run.get("name") != CHECK_NAME
+                or (run.get("app") or {}).get("slug") != CHECK_APP_SLUG
+                or run.get("head_sha") != head_sha
+                or run.get("status") not in ("in_progress", "completed")):
+            raise ValueError("invalid Check identity")
+        text = (run.get("output") or {}).get("text") or ""
+        if not text and run["status"] == "in_progress" and run.get("conclusion") is None:
+            return
+        if (run["status"] != "completed" or not isinstance(text, str) or text.count("```json\n") != 1
+                or not text.endswith("\n```")):
+            raise ValueError("missing or ambiguous Check evidence")
+        evidence = json.loads(text.split("```json\n", 1)[1][:-4], object_pairs_hook=unique_json_object)
+        if (not isinstance(evidence, dict)
+                or str(evidence.get("pr_number")) != str(pr_number)
+                or evidence.get("merge_base_sha") != merge_base_sha
+                or not re.fullmatch(r"[0-9a-f]{40}", merge_base_sha or "")
+                or evidence.get("reviewed_sha", head_sha) != head_sha):
+            raise ValueError("Check evidence differs from the captured diff")
+        for field in ("new_finding_comment_ids", "claude_finding_comment_ids"):
+            if field in evidence and not valid_comment_id_list(evidence[field]):
+                raise ValueError("invalid retained finding IDs")
+        if ("same_diff_findings_recorded" in evidence
+                and type(evidence["same_diff_findings_recorded"]) is not bool):
+            raise ValueError("invalid retained finding presence")
+    except (ValueError, TypeError, KeyError, AttributeError) as error:
+        raise GhError("the existing Check's finding evidence cannot be safely replaced") from error
 
 
 def completed_check_timestamp(history, check_run_id, head_sha, conclusion):
@@ -418,7 +466,17 @@ def decide(
             "Review did not complete",
             f"Claude Code reported execution conclusion `{action_conclusion or 'missing'}`.{kept}{notes}",
         )
+    if completion_verified and completion_reason not in ("", "verified"):
+        return (
+            "failure", "Review completion could not be verified",
+            f"Trusted completion evidence is contradictory; review completion is unknown.{kept}{notes}",
+        )
     if not completion_verified:
+        if completion_reason == "captured_inputs_not_read":
+            return (
+                "failure", "Review inputs were not fully read",
+                STATUS_REASONS["unread_inputs"] + f" [Recovery guidance]({UNREAD_RECOVERY}).{kept}{notes}",
+            )
         return (
             "failure",
             "Review completion could not be verified",
@@ -455,6 +513,150 @@ def write_output(name, value):
     if output:
         with open(output, "a", encoding="utf-8") as handle:
             handle.write(f"{name}={value}\n")
+
+
+SELECTION_PREFIX = "<!-- claude-review-runtime:selection:"
+EFFORTS = ("low", "medium", "high", "xhigh", "max")
+MANUAL_COMMANDS = {"/claude-review": ("", ""), "/claude-review opus": ("opus", "")}
+for _effort in EFFORTS:
+    MANUAL_COMMANDS[f"/claude-review effort {_effort}"] = ("", _effort)
+    MANUAL_COMMANDS[f"/claude-review opus effort {_effort}"] = ("opus", _effort)
+
+
+def manual_selection(body):
+    if not isinstance(body, str) or body.lower() not in MANUAL_COMMANDS:
+        raise ValueError("unsupported manual command")
+    model, effort = MANUAL_COMMANDS[body.lower()]
+    return {"requested_model": model, "requested_effort": effort}
+
+
+def cmd_selection(metadata=None):
+    """Only allowlisted constants can reach the action's argument parser."""
+    try:
+        selection = manual_selection(env("TRIGGER_COMMENT"))
+        if metadata:
+            with open(metadata, encoding="utf-8") as source:
+                captured = json.load(source, object_pairs_hook=unique_json_object)
+            if (manual_selection(captured.get("trigger_comment")) != selection
+                    or any(captured.get(k) != v for k, v in selection.items())):
+                raise ValueError("captured selection disagrees with the accepted request")
+            if selection["requested_model"] and env("ANTHROPIC_MODEL") not in ("", "opus"):
+                raise ValueError("ANTHROPIC_MODEL conflicts with the requested Opus override")
+        for key, value in selection.items():
+            write_output(key, value)
+        write_output("model_args", "--model opus" if selection["requested_model"] else "")
+        effort = selection["requested_effort"]
+        write_output("effort_args", "--effort " + effort if effort else "")
+        return 0
+    except (OSError, ValueError, TypeError) as error:
+        print(f"::error::Cannot select review configuration: {error}")
+        return 1
+
+
+def selection_record(owner, execution=None):
+    if not owner or owner["kind"] == "automatic":
+        return None
+    requested = manual_selection(env("TRIGGER_COMMENT"))
+    record = {**requested, "generation": owner["generation"], "models": [],
+              "execution_attempt": None, "model_evidence": "unknown", "observed_effort": None}
+    if execution:
+        try:
+            with open(execution, encoding="utf-8") as source:
+                stream = json.load(source, object_pairs_hook=unique_json_object)
+            init = [m for m in stream if m.get("type") == "system" and m.get("subtype") == "init"]
+            turns = [m for m in stream if m.get("type") == "assistant" and not m.get("error")]
+            results = [m for m in stream if m.get("type") == "result"]
+            sessions = {m.get("session_id") for m in [*init, *turns, *results]}
+            models = {m.get("message", {}).get("model") for m in turns}
+            usage = results[0].get("modelUsage", {}) if len(results) == 1 else {}
+            if (len(init) != 1 or not turns or len(results) != 1 or len(sessions) != 1
+                    or not all(isinstance(x, str) and x for x in sessions)
+                    or not models or not isinstance(usage, dict) or not usage
+                    or any(not isinstance(x, str) or not re.fullmatch(r"claude-[a-z0-9-]{1,100}", x)
+                           for x in models | set(usage))):
+                raise ValueError("unknown execution model")
+            if any(not isinstance(v, dict) or not any(type(v.get(k)) is int and v[k] > 0
+                   for k in ("inputTokens", "outputTokens", "cacheReadInputTokens", "cacheCreationInputTokens"))
+                   for v in usage.values()):
+                raise ValueError("no positive model usage")
+            # Usage covers auxiliary calls too. Never hide additional models or
+            # treat a pricing canonicalModel as the serving model identity.
+            record["models"] = sorted(models | set(usage))
+            if len(record["models"]) > 8:
+                raise ValueError("too many models")
+            record["model_evidence"] = "observed" if models == set(usage) else "mixed"
+            record["execution_attempt"] = int(env("GITHUB_RUN_ATTEMPT"))
+        except (OSError, ValueError, TypeError, KeyError, AttributeError):
+            record.update(models=[], execution_attempt=None, model_evidence="unknown")
+    return record
+
+
+def valid_selection(record, owner):
+    if (not isinstance(record, dict) or not owner or owner["kind"] == "automatic"
+            or set(record) - {"observed_effort"} != {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
+            or record.get("observed_effort") is not None
+            or record["generation"] != owner["generation"]
+            or record["requested_model"] not in ("", "opus")
+            or record["requested_effort"] not in ("", *EFFORTS)
+            or record["model_evidence"] not in ("unknown", "observed", "mixed")
+            or not isinstance(record["models"], list) or len(record["models"]) > 8
+            or any(not isinstance(m, str) or not re.fullmatch(r"claude-[a-z0-9-]{1,100}", m) for m in record["models"])
+            or record["models"] != sorted(set(record["models"]))):
+        return None
+    attempt = record["execution_attempt"]
+    if attempt is not None and (type(attempt) is not int or attempt <= 0):
+        return None
+    if bool(record["models"]) != (attempt is not None) or (record["model_evidence"] == "unknown") != (attempt is None):
+        return None
+    return record
+
+
+def current_selection_from_env():
+    try:
+        return current_selection(validate_owner(json.loads(env("PRESENTATION_OWNER"))))
+    except (ValueError, TypeError):
+        return None
+
+
+def current_selection(owner, comment=None):
+    try:
+        if env("SELECTION_EVIDENCE"):
+            return valid_selection(json.loads(env("SELECTION_EVIDENCE"), object_pairs_hook=unique_json_object), owner)
+        if env("TRIGGER_COMMENT"):
+            return selection_record(owner)
+        if comment:
+            body = comment.get("body", "")
+            matches = re.findall(re.escape(SELECTION_PREFIX) + r"(.*?) -->", body)
+            if body.count(SELECTION_PREFIX) == 1 and len(matches) == 1:
+                return valid_selection(json.loads(unquote(matches[0]), object_pairs_hook=unique_json_object), owner)
+    except (ValueError, TypeError):
+        pass
+    return None
+
+
+def selection_notice(record):
+    if not record:
+        return []
+    parts = []
+    models = record["models"]
+    if record["requested_model"]:
+        opus = [m for m in models if m.startswith("claude-opus-")]
+        def label(model):
+            match = re.fullmatch(r"claude-(opus|sonnet|haiku)-(\d+)-(\d+)", model)
+            return (match[1].title() + " " + match[2] + "." + match[3]) if match else inline_code(model)
+        if not models:
+            value = "Opus requested; execution model unknown"
+        elif len(models) > 1:
+            value = "Opus requested; observed " + ", ".join(label(m) for m in models)
+        elif not opus:
+            value = "Opus requested; " + label(models[0]) + " observed"
+        else:
+            value = "Opus"
+        prefix = "⚠️ " if models and not opus else ""
+        parts.append(prefix + "**Model:** " + value)
+    if record["requested_effort"]:
+        parts.append("**Effort:** " + record["requested_effort"])
+    return [" · ".join(parts)] if parts else []
 
 
 def inline_code(value):
@@ -527,10 +729,121 @@ def status_attempt_trigger(comment, owner):
     return None
 
 
+REPOSITORY = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*/(?!\.{1,2}$)[A-Za-z0-9_.-]+")
+SHA = re.compile(r"[0-9a-f]{40}")
+WORKFLOW = re.compile(r"\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml")
+FILE_LIMIT = 300  # GitHub's compare endpoint returns at most 300 changed files.
+
+
+def workflow_path(value):
+    """Accept a repository workflow path, optionally qualified by a run ref."""
+    if not isinstance(value, str):
+        return None
+    path, separator, ref = value.partition("@")
+    if separator and (not ref or any(c in ref for c in "\r\n\x00")):
+        return None
+    return path if WORKFLOW.fullmatch(path) else None
+
+
+def workflow_changed(owner, runtime_repository, runtime_workflow_path, api):
+    """Return True, False, or None (unknown) using at most two API reads.
+
+    ``owner`` is the trusted captured presentation owner. ``api`` accepts one
+    gh-api argument list and returns UTF-8 JSON, like the publication helper's
+    gh_api. No retries or pagination consume the enclosing presentation budget.
+    All malformed, unavailable, or potentially truncated data stays unknown.
+    Call only for incomplete attempts; unread-input evidence takes precedence.
+    """
+    try:
+        repo, head, base = (owner[key] for key in ("repo", "head", "base"))
+        run_id, attempt = (owner[key] for key in ("run", "attempt"))
+        if (not isinstance(repo, str) or not REPOSITORY.fullmatch(repo)
+                or not isinstance(head, str) or not SHA.fullmatch(head)
+                or not isinstance(base, str) or not SHA.fullmatch(base)
+                or type(run_id) is not int or run_id <= 0
+                or type(attempt) is not int or attempt <= 0
+                or not isinstance(runtime_repository, str)
+                or not REPOSITORY.fullmatch(runtime_repository)
+                or not workflow_path(runtime_workflow_path)):
+            return None
+        run = json.loads(api([f"repos/{repo}/actions/runs/{run_id}/attempts/{attempt}"]))
+        if (not isinstance(run, dict) or type(run.get("id")) is not int
+                or run["id"] != run_id or type(run.get("run_attempt")) is not int
+                or run["run_attempt"] != attempt
+                or not isinstance(run.get("repository"), dict)
+                or run["repository"].get("full_name") != repo):
+            return None
+        caller = workflow_path(run.get("path"))
+        if not caller:
+            return None
+        # referenced_workflows is run-wide, not the review invocation graph:
+        # unrelated reusable lint/test jobs must never trigger this warning.
+        paths = {caller}
+        if runtime_repository == repo:
+            paths.add(workflow_path(runtime_workflow_path))
+        comparison = json.loads(api([f"repos/{repo}/compare/{base}...{head}"]))
+        if not isinstance(comparison, dict):
+            return None
+        files = comparison.get("files")
+        if not isinstance(files, list) or len(files) >= FILE_LIMIT:
+            return None
+        changed = set()
+        for item in files:
+            if not isinstance(item, dict) or not isinstance(item.get("filename"), str):
+                return None
+            for key in ("filename", "previous_filename"):
+                value = item.get(key)
+                if value is not None:
+                    if (not isinstance(value, str) or not value or value.startswith("/")
+                            or any(part in ("", ".", "..") for part in value.split("/"))
+                            or any(c in value for c in "\r\n\x00")):
+                        return None
+                    changed.add(value)
+        return bool(paths & changed)
+    except Exception:
+        # This optional diagnostic must not prevent authoritative publication.
+        # In particular, an API outage is not evidence of workflow rejection.
+        return None
+
+
+def incomplete_explanation(reason, owner):
+    """Render fixed, owner-bound diagnostics; never infer a provider rejection."""
+    if reason and reason.startswith(STATUS_REASONS["stale"] + " "):
+        reason = reason[len(STATUS_REASONS["stale"]) + 1:]
+    if reason == STATUS_REASONS["unread_inputs"]:
+        return reason + f" [Recovery guidance]({UNREAD_RECOVERY})."
+    if reason == STATUS_REASONS["workflow_changed"] and owner:
+        run = f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}/attempts/{owner['attempt']}"
+        return ("⚠️ The captured patch changes the review workflow, which may prevent the review from starting. "
+                f"Check the [workflow run]({run}) for a validation rejection. "
+                f"[Recovery guidance]({INCOMPLETE_RECOVERY}).")
+    if reason not in STATUS_REASONS.values() or reason == STATUS_REASONS["workflow_changed"]:
+        reason = STATUS_REASONS["incomplete"]
+    return reason + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
+
+
+def incomplete_status_reason(owner):
+    """Use verifier outputs first; changed paths supply context, never a cause."""
+    verdict = env("COMPLETION_REASON")
+    if verdict == "captured_inputs_not_read":
+        if (env("COMPLETION_VERIFIED") == "false" and env("START_RESULT", "success") == "success"
+                and env("REVIEW_RESULT") == "success" and env("ACTION_CONCLUSION") == "success"):
+            return STATUS_REASONS["unread_inputs"]
+        # Conflicting execution evidence is unknown, not a pre-start rejection.
+        return STATUS_REASONS["incomplete"]
+    if env("COMPLETION_VERIFIED") == "true" or verdict not in ("", "missing_execution_file"):
+        return STATUS_REASONS["incomplete"]
+    # Optional context gets at most ten seconds of the shared presentation
+    # budget, with no retries; reserve time for ownership checks and publication.
+    changed = workflow_changed(owner, env("RUNTIME_REPOSITORY"), env("RUNTIME_WORKFLOW_PATH"),
+                               lambda args: gh_api(args, timeout_seconds=5))
+    return STATUS_REASONS["workflow_changed"] if changed is True else STATUS_REASONS["incomplete"]
+
+
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
                         last_review_details=None, base_sha=None, trigger_label=None,
                         owner=None, owner_running=None, reason=None, completed_at=None,
-                        completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL):
+                        completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL, selection=None):
     """Render trusted informational state without affecting Check authority."""
     messages = {
         "in_progress": "Claude is reviewing this commit.",
@@ -582,12 +895,15 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                 f"⚠️ This review was against {inline_code(last_review[1])}. "
                 f"It does not cover the PR’s current target {inline_code(base_ref)}."
             )
+    selection = valid_selection(selection, owner)
     lines = [
         STATUS_MARKER,
         f"{STATUS_HEAD_PREFIX}{head_sha} -->",
         f"{STATUS_BASE_REF_PREFIX}{quote(base_ref, safe='')} -->",
         f"{STATUS_STATE_PREFIX}{state} -->",
     ]
+    if selection:
+        lines.append(SELECTION_PREFIX + quote(json.dumps(selection, sort_keys=True, separators=(",", ":")), safe="") + " -->")
     if attempt_trigger is _TRIGGER_FROM_LABEL:
         attempt_trigger = review_trigger(trigger_label, owner) if state != "stale" else None
     else:
@@ -635,8 +951,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if state == "stale" and owner_running:
         lines += [f"Claude is reviewing captured commit {commit_link(owner['head'] if owner else head_sha, owner['repo'] if owner else None)}. "
                   "Review coverage of the current head and baseline is not established.", ""]
-    if adverse and not ((state == "in_progress" and check_available)
-                        or (state == "failure" and specific_reason)):
+    if state == "in_progress" and not check_available:
         lines += [messages[state], ""]
     if show_review:
         if state == "stale" and not (base_advanced or superseded_review):
@@ -658,15 +973,19 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     commit_label = "Reviewed commit" if show_review else "Attempt commit" if owner else "PR commit"
     lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
+    lines += ["", *selection_notice(selection)] if selection_notice(selection) else []
     if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
         lines += ["", messages[state]]
-    manual_scope = last_review and owner and owner["kind"] != "automatic"
-    if manual_scope and not current_attempt:
-        lines += ["", CAPTURED_PATCH_SCOPE]
     if state == "stale" and show_review and last_review[2] == "action_required":
         lines += ["", messages["action_required"]]
     if base_advanced:
         lines += ["", TARGET_TIP_WARNING]
+    if incomplete and not active:
+        if state == "publication_incomplete" or state == "failure" and not specific_reason:
+            explanation = messages[state] + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
+        else:
+            explanation = incomplete_explanation(reason, owner)
+        lines += ["", explanation]
     attempt_url = (env("DETAILS_URL") if not owner else
                    f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
     historical = last_review is not None and state not in ("success", "action_required")
@@ -686,12 +1005,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines += [f"**Reason:** {reason}"]
         if base_advanced or superseded_review:
             lines += ["-->"]
-        if incomplete:
-            lines += [f"**Note:** {INCOMPLETE_NOTE}"]
         lines += [""]
     metadata = ["**Current attempt**"] if history_in_details else []
-    if state == "success" or (base_advanced and last_review[2] == "success"):
-        metadata += ["**Result:** No findings."]
     row_ref = last_review[1] if show_review else owner["base_ref"] if owner else base_ref
     if (head_sha, base_ref) != (row_commit, row_ref):
         metadata += [f"**PR commit:** {commit_link(head_sha, repo)} on {inline_code(base_ref)}" +
@@ -760,8 +1075,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if metadata:
         lines += ["  \n".join(metadata), ""]
     if previous:
-        if manual_scope:
-            previous += [CAPTURED_PATCH_SCOPE]
         lines += ["  \n".join(previous), ""]
     lines += ["</details>"]
     return "\n".join(lines)
@@ -1081,6 +1394,8 @@ def live_pr_projection(repo, pr_number):
     base_sha = pr["base"]["sha"]
     if not isinstance(base_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", base_sha):
         raise ValueError("the live PR comparison base SHA is invalid")
+    if env("PUSH_REF") and (pr.get("state") != "open" or base_ref != env("PUSH_REF")):
+        raise ValueError("the PR is closed or no longer targets the pushed branch")
     return head_sha, base_ref, base_sha
 
 
@@ -1188,9 +1503,12 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
         existing = find_status_comment(repo, pr_number)
         prior = status_owner(existing)
         def live_identity(*, require_projection_match=False):
-            return live_pr_identity(repo, pr_number, include_base_sha=True,
-                                    require_projection_match=require_projection_match,
-                                    allow_projection_change=owner["kind"] != "automatic")
+            identity = live_pr_identity(repo, pr_number, include_base_sha=True,
+                                        require_projection_match=require_projection_match,
+                                        allow_projection_change=owner["kind"] != "automatic")
+            if env("PUSH_REF") and identity[2] != env("PUSH_SHA"):
+                raise ValueError("the target push was superseded")
+            return identity
         if stale:
             if not prior or (prior["repo"], str(prior["pr"])) != (repo, pr_number):
                 raise ValueError("stale refresh has no verified owner")
@@ -1241,7 +1559,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             elif acquire or env("START_RESULT", "success") != "success":
                 reason = STATUS_REASONS["preparation_failed"]
             else:
-                reason = STATUS_REASONS["incomplete"]
+                reason = incomplete_status_reason(owner)
         elif state == "publication_incomplete":
             reason = STATUS_REASONS["check_publication_failed"]
         manual = owner["kind"] != "automatic"
@@ -1350,7 +1668,8 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             trigger_label=trigger_label, owner=owner,
             owner_running=status_owner_running(existing) if stale else acquiring_running if state == "stale" else None,
             reason=reason, completed_at=completed_at,
-            completed_owner_verified=completed_owner_verified, attempt_trigger=attempt_trigger)}
+            completed_owner_verified=completed_owner_verified, attempt_trigger=attempt_trigger,
+            selection=current_selection(owner, existing))}
         published = False
         try:
             if existing:
@@ -1527,8 +1846,7 @@ def summary_lines(head_sha, sentence, *, completed_at=None):
         sentence,
     ]
     if env("BASE_REF") and re.fullmatch(r"[0-9a-f]{40}", env("BASE_SHA")):
-        lines += ["", f"**Captured baseline:** {inline_code(env('BASE_REF'))} at `{env('BASE_SHA')}`",
-                  CAPTURED_PATCH_SCOPE]
+        lines += ["", f"**Captured baseline:** {inline_code(env('BASE_REF'))} at `{env('BASE_SHA')}`"]
     if completed := valid_review_timestamp(completed_at):
         lines += ["", f"**Completed:** {relative_time(completed)}"]
     if env("DETAILS_URL"):
@@ -1783,6 +2101,7 @@ def cmd_finalize():
         and review_result == "success"
         and action_conclusion == "success"
         and completion_verified
+        and completion_reason in ("", "verified")
     )
     merge_base_sha = env("MERGE_BASE_SHA")
 
@@ -1791,6 +2110,7 @@ def cmd_finalize():
     # preexisting comments. A raw head SHA alone cannot identify their diff.
     errors = []
     history = []
+    retained_check_unavailable = False
     try:
         history, (prior_ids, recorded_ids, other_diff_ids) = fetch_prior_finding_evidence(
             repo, head_sha, check_run_id, pr_number, merge_base_sha
@@ -1798,6 +2118,17 @@ def cmd_finalize():
     except GhError as error:
         prior_ids, recorded_ids, other_diff_ids = [], set(), set()
         errors.append(f"earlier Claude Review history is unavailable ({error})")
+        # A history outage cannot authorize erasing this Check's old findings.
+        # A direct read can still preserve them while the review remains failed.
+        try:
+            current = with_retries(lambda: json.loads(gh_api([
+                f"repos/{repo}/check-runs/{check_run_id}"]), object_pairs_hook=unique_json_object),
+                "Reading the existing Claude Review Check")
+            validate_retained_check(current, head_sha, check_run_id, pr_number, merge_base_sha)
+            prior_ids, recorded_ids, other_diff_ids = prior_finding_evidence(
+                [{"check_runs": [current]}], head_sha, check_run_id, pr_number, merge_base_sha)
+        except (GhError, ValueError, TypeError, KeyError):
+            retained_check_unavailable = True
 
     observed_ids = None
     try:
@@ -1872,6 +2203,7 @@ def cmd_finalize():
         "action_conclusion": action_conclusion,
         "completion_verified": completion_verified,
         "completion_reason": completion_reason or None,
+        "selection": current_selection_from_env(),
         "finding_publication": publication,
         "same_diff_findings_recorded": bool(scoped_ids or prior_ids),
         "new_finding_comment_ids": new_ids,
@@ -1898,6 +2230,12 @@ def cmd_finalize():
             "text": evidence_text(evidence),
         },
     }
+    if retained_check_unavailable:
+        # Even the old action_required conclusion can be the only durable
+        # finding receipt. Do not replace it when its evidence is unknown.
+        best_effort_status(head_sha, "publication_incomplete")
+        print("::error::Existing Check evidence was unavailable; the Check was not changed.")
+        return 1
     try:
         patch_check_run(repo, check_run_id, body, "Publishing the Claude Review result")
     except GhError:
@@ -1943,6 +2281,81 @@ def cmd_finalize():
     return 0
 
 
+# GitHub matrices allow 256 jobs. Refuse overflow rather than silently omit PRs.
+TARGET_PR_LIMIT = 256
+TARGET_PAGE_LIMIT = 100
+
+
+def target_push_is_current():
+    ref, sha = env("PUSH_REF"), env("PUSH_SHA")
+    if (not ref or len(ref) > 255 or not re.fullmatch(r"[0-9a-f]{40}", sha)
+            or sha == "0" * 40):
+        raise ValueError("a branch push ref and non-deletion SHA are required")
+    return direct_base_tip(env("REPO"), ref) == sha
+
+
+def cmd_discover_target():
+    """Read-only, bounded discovery; never emit a partial matrix on failure."""
+    global PRESENTATION_DEADLINE
+    PRESENTATION_DEADLINE = time.monotonic() + PRESENTATION_SECONDS
+    try:
+        if not target_push_is_current():
+            write_output("prs", "[]")
+            return 0
+        numbers = set()
+        for page in range(1, TARGET_PAGE_LIMIT + 1):
+            query = urlencode({"state": "open", "base": env("PUSH_REF"),
+                               "per_page": 100, "page": page})
+            raw = with_retries(lambda: gh_api([f"repos/{env('REPO')}/pulls?{query}"]),
+                               "Discovering affected open PRs")
+            items = json.loads(raw, object_pairs_hook=unique_json_object)
+            if not isinstance(items, list) or len(items) > 100:
+                raise ValueError("invalid open PR page")
+            for pr in items:
+                number = pr["number"]
+                if type(number) is not int or number <= 0:
+                    raise ValueError("invalid PR number")
+                # Do not trust the API filter alone, including prefix-like refs.
+                if (pr["state"] == "open" and pr["base"]["ref"] == env("PUSH_REF")
+                        and pr["base"]["repo"]["full_name"] == env("REPO")):
+                    numbers.add(number)
+                if len(numbers) > TARGET_PR_LIMIT:
+                    raise ValueError("affected PR fan-out exceeds 256; no refresh jobs emitted")
+            if len(items) < 100:
+                break
+        else:
+            raise ValueError("open PR pagination exceeded its bound; no refresh jobs emitted")
+        # Another push during discovery makes this event obsolete.
+        write_output("prs", json.dumps(sorted(numbers)) if target_push_is_current() else "[]")
+        return 0
+    except (GhError, ValueError, KeyError, TypeError) as error:
+        print(f"::error::Could not discover target-branch refreshes: {error}")
+        return 1
+    finally:
+        PRESENTATION_DEADLINE = None
+
+
+def cmd_refresh_target():
+    """Resolve the queued PR live; existing ownership guards handle publication."""
+    global PRESENTATION_DEADLINE
+    PRESENTATION_DEADLINE = time.monotonic() + PRESENTATION_SECONDS
+    try:
+        number = env("PR_NUMBER")
+        if not number.isdigit() or int(number) <= 0:
+            raise ValueError("invalid PR number")
+        if not target_push_is_current():
+            print("::notice::Target push was superseded; skipping status refresh.")
+            return 0
+        head, base, _ = live_pr_projection(env("REPO"), number)
+        os.environ.update(HEAD_SHA=head, BASE_REF=base)
+    except (GhError, ValueError, KeyError, TypeError) as error:
+        print(f"::warning::Could not admit target-branch refresh: {error}")
+        return 0
+    finally:
+        PRESENTATION_DEADLINE = None
+    return cmd_stale()
+
+
 def cmd_stale():
     head_sha, base_ref = env("HEAD_SHA"), env("BASE_REF")
     if not re.fullmatch(r"[0-9a-f]{40}", head_sha) or not base_ref or not env("PR_NUMBER"):
@@ -1970,8 +2383,23 @@ def main(argv=None):
     snapshot.add_argument("--output", required=True)
     sub.add_parser("finalize")
     sub.add_parser("stale")
+    sub.add_parser("discover-target")
+    sub.add_parser("refresh-target")
     sub.add_parser("admit-manual")
+    selection = sub.add_parser("selection")
+    selection.add_argument("--metadata")
+    observation = sub.add_parser("observe-selection")
+    observation.add_argument("--execution", required=True)
     args = parser.parse_args(argv)
+    if args.command == "selection":
+        return cmd_selection(args.metadata)
+    if args.command == "observe-selection":
+        try:
+            owner = validate_owner(json.loads(env("PRESENTATION_OWNER")))
+            write_output("selection_evidence", json.dumps(selection_record(owner, args.execution), separators=(",", ":")))
+        except (ValueError, TypeError):
+            pass
+        return 0
     if args.command == "create":
         return cmd_create()
     if args.command == "snapshot":
@@ -1980,6 +2408,10 @@ def main(argv=None):
         except GhError as error:
             print(f"::error::Could not record existing Claude review comments: {error}")
             return 1
+    if args.command == "discover-target":
+        return cmd_discover_target()
+    if args.command == "refresh-target":
+        return cmd_refresh_target()
     if args.command == "stale":
         return cmd_stale()
     if args.command == "admit-manual":
