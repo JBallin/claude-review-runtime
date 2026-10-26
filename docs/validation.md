@@ -59,3 +59,10 @@ can also skip model execution while Actions succeeds. Missing execution alone
 does not identify the cause, and a skipped or incomplete run does not satisfy
 required review. Use the [incomplete-review guidance](review-guide.md#installation-and-incomplete-reviews)
 to investigate; keep independent review and merge requirements in place.
+
+## Selection evidence
+
+Offline tests cover selection admission, safe CLI arguments and attempt-bound
+model reporting. Model metadata does not determine review completion. These
+tests do not verify account access, live model selection or fallback, or
+effective effort.

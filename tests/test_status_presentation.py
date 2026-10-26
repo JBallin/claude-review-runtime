@@ -74,7 +74,7 @@ class StatusPresentationTests(unittest.TestCase):
                         if has_history:
                             current, previous = details.split('**Previous completed review**')
                             self.assertNotIn(check.CAPTURED_PATCH_SCOPE, current)
-                            self.assertEqual(previous.count(check.CAPTURED_PATCH_SCOPE), 1)
+                            self.assertNotIn(check.CAPTURED_PATCH_SCOPE, previous)
                             self.assertIn(check.commit_link(OTHER), previous)
                             self.assertIn('[Reviewed](https://github.com/owner/repo/actions/runs/5)', previous)
                             self.assertIn('[Attempt](https://github.com/owner/repo/actions/runs/6)', current)
@@ -256,7 +256,7 @@ class StatusPresentationTests(unittest.TestCase):
             self.assertNotIn('Last completed review', visible)
             if state == 'success':
                 self.assertNotIn('no findings', visible.lower())
-                self.assertIn('**Result:** No findings.', body.split('<details>')[1])
+                self.assertNotIn('**Result:** No findings.', body.split('<details>')[1])
             else:
                 self.assertIn('inline review threads', visible)
 
@@ -354,7 +354,7 @@ class DetailsProvenanceTests(unittest.TestCase):
         self.assertNotIn('**Started:**', details)
         self.assertIn(f'**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`{owner["base"][:7]}`]'
                       f'(https://github.com/owner/repo/commit/{owner["base"]}) on `main`', details)
-        self.assertIn('**Result:** No findings.  \n**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**', details)
+        self.assertNotIn('**Result:** No findings.', details)
         self.assertNotIn('workflow run]', details)
         self.assertEqual(check.status_state({'body': body}), 'success')
 

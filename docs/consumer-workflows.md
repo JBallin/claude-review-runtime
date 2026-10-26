@@ -151,9 +151,7 @@ For the selected revision's publication behavior, see the
 
 ## Manual review
 
-Manual invocation depends on the selected runtime revision. See the review
-guide for [this repository's pinned command](review-guide.md#request-a-manual-review)
-before selecting a revision or changing callers.
+Use this caller to accept manual review requests:
 
 ```yaml
 name: Manual Claude review
@@ -178,10 +176,39 @@ jobs:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
 
-For the current reusable entrypoint, post `/claude-review` as the entire comment,
-without whitespace or arguments; matching is case-insensitive. This repository’s
-self-review callers use that same command with their reviewed runtime pin. Any additional manual
-caller gate must match the selected runtime revision.
+### Optional model and effort selection
+
+Post one of these entire comment bodies, case-insensitively, with exactly the
+spaces shown:
+
+```text
+/claude-review
+/claude-review opus
+/claude-review effort high
+/claude-review opus effort high
+```
+
+`effort` accepts `low`, `medium`, `high`, `xhigh`, or `max`. Surrounding whitespace,
+extra arguments and other model choices are rejected. Selection comes from the
+trusted comment, not workflow inputs; any caller eligibility gate must accept
+the same forms as its selected Runtime revision.
+
+Plain `/claude-review` sets neither model nor effort. Claude Code resolves both
+from applicable configuration and account defaults; `opus` requests its Opus
+alias. See [upstream configuration](https://code.claude.com/docs/en/model-config#adjust-effort-level).
+A conflicting `ANTHROPIC_MODEL` prevents an explicit Opus review from starting.
+Model access still depends on the existing account.
+
+Higher effort can increase usage and latency; turn and time limits are not a
+spending cap. Model/account policy may limit the requested level. The displayed effort is the requested setting; headless output does not report
+the resolved setting. See [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
+
+Explicit model requests show a compact Model line; effort requests show Effort.
+Inherited model evidence stays in diagnostic metadata, including effort-only
+requests. Missing or different
+model evidence does not invalidate completed reviews or erase findings. Runtime
+does not add retries or substitution runs for these diagnostics; provider
+failures retain their ordinary incomplete-review behavior.
 
 The runtime resolves the current patch once for each accepted manual request.
 Ordinary issue comments and untrusted requests do not start model execution.

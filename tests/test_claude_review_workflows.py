@@ -471,6 +471,7 @@ class JobStructureTests(unittest.TestCase):
                 "Resolve PR under review",
                 "Capture presentation start",
                 "Check review tooling",
+                "Select review configuration",
                 "Validate manual patch authority",
                 "Start Claude Review check",
                 "Capture PR review snapshot",
@@ -485,7 +486,7 @@ class JobStructureTests(unittest.TestCase):
 
     def test_fork_evidence_failures_cannot_skip_the_manual_review(self):
         named = steps(job(MANUAL, "start-check"))
-        required = ["Resolve PR under review", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
+        required = ["Resolve PR under review", "Select review configuration", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
         evidence_only = [
             "Check review tooling",
             "Start Claude Review check",
@@ -624,7 +625,7 @@ class JobStructureTests(unittest.TestCase):
                 allowed = json.loads(scalar(verify, "ALLOWED_TOOLS", 10).strip("'"))
                 args = folded(named["Review pull request"], "claude_args", 10)
                 self.assertIn(f'--allowedTools "{",".join(allowed)}"', args)
-                scripts.add(run_block(verify))
+                scripts.add(run_block(verify).split('if [ -n "${REVIEW_HELPER:-}" ]; then')[0].rstrip())
         self.assertEqual(len(scripts), 1)
 
     def test_only_verdict_and_bounded_receipts_flow_from_review_to_publication(self):
@@ -634,7 +635,7 @@ class JobStructureTests(unittest.TestCase):
                 self.assertIn("      completion_verified: ${{ steps.verify.outputs.completion_verified }}", outputs)
                 self.assertIn("      completion_reason: ${{ steps.verify.outputs.completion_reason }}", outputs)
                 self.assertIn("      finding_publication: ${{ steps.verify.outputs.finding_publication }}", outputs)
-                self.assertEqual(len([line for line in outputs if line.strip()]), 4)
+                self.assertEqual(len([line for line in outputs if line.strip()]), 5 if path == MANUAL else 4)
                 publish = steps(job(path, "publish-status"))["Publish Claude Review result"]
                 self.assertEqual(
                     scalar(publish, "COMPLETION_VERIFIED", 10), "${{ needs.review.outputs.completion_verified }}"
@@ -1133,6 +1134,33 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertIn(reason + "\n\n" + metadata, details)
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("Check", body)
+
+    def test_manual_fallback_retains_only_current_requested_selection(self):
+        from test_claude_review_check import presentation_owner
+        owner = presentation_owner(repo=REPO, kind="issue_comment", target=12)
+        owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
+                 "body": check.STATUS_MARKER}
+        for command, expected in (("/claude-review opus effort high", "**Effort:** high"),
+                                  ("/claude-review", None),
+                                  ("/claude-review opus; echo bad", None)):
+            result, calls = self.run_fallback(MANUAL,
+                {"GET": [{"stdout": pr_identity()}, {"stdout": json.dumps(owned)}]},
+                OWNER_FIXTURE=owner, STATUS_COMMENT_ID="55", PR_NUMBER="7",
+                TRIGGER_COMMENT=command)
+            self.assertEqual(result.returncode, 1)
+            repaired = next(c for c in calls if c["method"] == "PATCH"
+                            and any("issues/comments/55" in arg for arg in c["args"]))
+            body = repaired["body"]["body"]
+            self.assertEqual(check.status_owner({"body": body}), owner)
+            if expected:
+                self.assertIn(expected, body.split("<details>")[0])
+                record = check.current_selection(owner, {"body": body})
+                self.assertEqual(record["requested_model"], "opus")
+                self.assertEqual(record["models"], [])
+                self.assertIsNone(record["execution_attempt"])
+            else:
+                self.assertNotIn("**Model:**", body)
+                self.assertNotIn("**Effort:**", body)
 
     def test_fallback_records_an_encoded_base_ref(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},

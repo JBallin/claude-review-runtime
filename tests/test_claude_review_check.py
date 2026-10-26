@@ -1625,7 +1625,7 @@ class StatusCommentTests(ScriptTestCase):
 
     def test_final_status_projects_clean_findings_sticky_and_failure(self):
         cases = [
-            ([], [], "success", "**Result:** No findings.", {}),
+            ([], [], "success", "✅ **Completed**", {}),
             ([comment(9)], [], "action_required", "inline review threads", {}),
             ([], [check_run(41, "action_required")], "action_required", "inline review threads", {}),
             ([], [], "failure", "**Reason:** " + check.STATUS_REASONS["incomplete"], {"REVIEW_RESULT": "failure"}),

@@ -33,11 +33,11 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 38)
+        self.assertEqual(len(gallery.gallery_samples()), 48)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 39)))
-        # Keep conservative byte headroom below GitHub's 65,536-character limit.
-        self.assertLess(len(body.encode("utf-8")), 60_000)
+                         list(range(1, 49)))
+        # This committed audit file is not posted as one GitHub comment.
+        self.assertLess(len(body.encode("utf-8")), 200_000)
 
     def test_semantic_anchors_are_unique_and_independent_of_group_order(self):
         samples = gallery.gallery_samples()
@@ -62,7 +62,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 40)))
+                         list(range(1, 50)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [case.case_id for case in changed_order])
 
@@ -91,12 +91,12 @@ class PresentationGalleryTests(unittest.TestCase):
             start = case_ids.index(related[0])
             self.assertEqual(case_ids[start:start + len(related)], related)
 
-    def test_each_sample_reuses_helper_output_with_only_markers_and_hard_breaks_normalized(self):
+    def test_each_sample_preserves_helper_metadata_and_normalizes_hard_breaks(self):
         check = gallery.check
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 36)
+        self.assertEqual(status.call_count, 46)
         self.assertEqual(completion.call_count, 2)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
@@ -139,16 +139,15 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn("src/cache.py:42", gallery.SYNTHETIC_FINDING)
         self.assertIn("[P2]", gallery.SYNTHETIC_FINDING)
 
-    def test_gallery_cannot_be_treated_as_an_owned_record_even_for_bot_author(self):
+    def test_raw_gallery_retains_complete_synthetic_metadata(self):
         body = gallery.render_gallery()
-        self.assertNotIn("claude-review-runtime:", body)
+        self.assertIn(gallery.check.STATUS_MARKER, body)
+        self.assertIn(gallery.check.COMPLETION_PREFIX, body)
+        for case in gallery.gallery_samples():
+            self.assertIn(gallery.sample_markdown(case.body), body)
+        self.assertEqual(gallery.gallery_samples()[0].case_id, "current-clean")
         self.assertNotIn("@claude", body)
         self.assertNotIn("@codex", body)
-        comment = {"body": body, "user": {"login": gallery.check.STATUS_AUTHOR, "type": "Bot"}}
-        self.assertFalse(gallery.check.owned_status(comment))
-        self.assertIsNone(gallery.check.status_owner(comment))
-        self.assertIsNone(gallery.check.status_head(comment))
-        self.assertNotIn(gallery.check.COMPLETION_PREFIX, body)
 
     def test_strip_only_operational_comments_preserves_visible_copy_and_reason(self):
         reason = "<!--\n**Reason:** " + gallery.check.STATUS_REASONS["base_advanced"] + "\n-->"
@@ -158,7 +157,7 @@ class PresentationGalleryTests(unittest.TestCase):
 
     def test_hard_break_normalization_preserves_lines_without_trailing_whitespace(self):
         raw = gallery.check.STATUS_MARKER + "\nfirst  \nsecond\n"
-        self.assertEqual(gallery.sample_markdown(raw), "first\\\nsecond\n")
+        self.assertEqual(gallery.sample_markdown(raw), gallery.check.STATUS_MARKER + "\nfirst\\\nsecond\n")
         self.assertTrue(all(line == line.rstrip() for line in gallery.render_gallery().splitlines()))
 
     def test_real_samples_keep_legacy_reason_hidden_and_label_identity_roles(self):
@@ -228,7 +227,7 @@ class PresentationGalleryTests(unittest.TestCase):
             with self.subTest(case_id=case_id):
                 current, previous = body.split("**Previous completed review**")
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, current)
-                self.assertEqual(previous.count(gallery.check.CAPTURED_PATCH_SCOPE), 1)
+                self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, previous)
                 self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", previous)
                 self.assertIn("**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:**", current)
 
@@ -241,7 +240,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertNotIn("\n\n[", details)
                     self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", details)
                     if case_id in ("current-clean", "baseline-clean"):
-                        self.assertIn("**Result:** No findings.  \n**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", details)
+                        self.assertNotIn("**Result:** No findings.", details)
                     if case_id in ("compact-clean", "compact-differing-baseline"):
                         self.assertNotIn("captured patch only", body)
                         self.assertNotIn("merge approval", body)
@@ -265,6 +264,9 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
                     self.assertNotIn(reviewed, current)
                     self.assertNotIn(attempt, previous)
+                elif case_id in ("selection-running", "selection-incomplete", "selection-tooling-unavailable"):
+                    self.assertIn(f"**[Attempt]({reviewed}) baseline:**", details)
+                    self.assertNotIn("[Reviewed]", details)
                 elif case_id.startswith(("publication-incomplete-", "publication-unavailable-", "unread-", "workflow-changed")) or case_id == "incomplete-unknown":
                     url = reviewed if case_id in ("incomplete-unknown", "unread-automatic",
                                                    "workflow-changed", "workflow-changed-superseded") else attempt

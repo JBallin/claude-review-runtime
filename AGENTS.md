@@ -50,8 +50,8 @@ python3 -B scripts/render_presentation_gallery.py --check
 The generator uses actual presentation helpers and fixed synthetic fixtures,
 without network, browser, or model calls. CI checks exact bytes and fails on
 missing or stale output; it never regenerates the committed file. Keep behavioral
-regression tests alongside freshness checks. Operational markers are omitted;
-hidden legacy Reason receipts remain for rendering checks. Markdown hard breaks
+regression tests alongside freshness checks. Complete synthetic production metadata is retained in the raw gallery; rendered
+HTML comments remain hidden. Markdown hard breaks
 use equivalent backslashes to avoid trailing whitespace in Git diffs. Edit the
 renderer or sample inputs, then regenerate; keep observations out of the generated
 file.
@@ -59,8 +59,8 @@ file.
 Review the gallery diff and inspect affected rendered states. When metadata,
 operational markers, or their generation paths change, verify the intended
 semantics against source and focused tests, including evidence not visible in
-the gallery. The gallery deliberately omits operational markers and cannot
-validate them. Focus on the changes; a full audit of unchanged metadata is not
+the gallery. The raw gallery retains operational markers for audit; verify their contracts
+against the production helpers and focused tests. Focus on the changes; a full audit of unchanged metadata is not
 required for every PR.
 
 When a change adds or materially alters a rendered state, add or update
