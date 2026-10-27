@@ -254,6 +254,11 @@ Existing consumers must separately update their status caller to include the
 alone cannot add caller events. This repository's pinned self-review callers
 also require separate adoption; this implementation does not repin them.
 
+For push events, [GitHub selects the workflow from the event's commit/ref](https://docs.github.com/en/actions/concepts/workflows-and-actions/workflows#workflow-triggers).
+The updated status caller must be present on each target branch whose pushes
+should trigger refreshes. Merging it into the default branch does not update
+existing non-default target branches that still contain an older caller.
+
 ## Permission and failure boundaries
 
 The calling review jobs grant the permission envelope required by the reusable
