@@ -349,6 +349,9 @@ class PresentationGalleryTests(unittest.TestCase):
         for case_id, expected in expectations.items():
             with self.subTest(case_id=case_id):
                 self.assertIn(expected, cases[case_id].split("<details>")[0])
+        for case_id in ("stale-running-head", "stale-running-base", "stale-running-ref", "stale-manual"):
+            receipt = "**Reason:** " + check.STATUS_REASONS["stale"]
+            self.assertIn("<!--\n" + receipt + "\n-->", cases[case_id])
         for case_id in ("workflow-changed", "workflow-changed-superseded"):
             body = cases[case_id]
             self.assertIn("The cause of this incomplete review is unknown.", body.split("<details>")[0])

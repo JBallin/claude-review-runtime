@@ -1015,10 +1015,11 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if reason:
         # Existing parsers recover this exact receipt from the raw Markdown.
         # Do not add hard-break whitespace to the Reason line.
-        if base_advanced or superseded_review:
+        hide_receipt = base_advanced or superseded_review or (state == "stale" and owner_running and reason == STATUS_REASONS["stale"])
+        if hide_receipt:
             lines += ["<!--"]
         lines += [f"**Reason:** {reason}"]
-        if base_advanced or superseded_review:
+        if hide_receipt:
             lines += ["-->"]
         lines += [""]
     metadata = ["**Current attempt**"] if history_in_details else []

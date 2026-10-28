@@ -1771,7 +1771,9 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <br/>
 
+<!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
+-->
 
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
@@ -1804,7 +1806,9 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <br/>
 
+<!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
+-->
 
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`
@@ -1837,7 +1841,9 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <br/>
 
+<!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
+-->
 
 **PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed against this target\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -1879,7 +1885,9 @@ Claude is reviewing captured commit [`bbbbbbb`](https://github.com/owner/repo/co
 
 <br/>
 
+<!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
+-->
 
 **Current attempt**\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`
