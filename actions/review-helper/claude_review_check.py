@@ -814,7 +814,7 @@ def incomplete_explanation(reason, owner):
         return reason + f" [Recovery guidance]({UNREAD_RECOVERY})."
     if reason == STATUS_REASONS["workflow_changed"] and owner:
         run = f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}/attempts/{owner['attempt']}"
-        return ("⚠️ The captured patch changes the review workflow, which may prevent the review from starting. "
+        return ("⚠️ The captured patch changed the review workflow. The cause of this incomplete review is unknown. "
                 f"Check the [workflow run]({run}) for a validation rejection. "
                 f"[Recovery guidance]({INCOMPLETE_RECOVERY}).")
     if reason not in STATUS_REASONS.values() or reason == STATUS_REASONS["workflow_changed"]:
@@ -847,7 +847,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     """Render trusted informational state without affecting Check authority."""
     messages = {
         "in_progress": "Claude is reviewing this commit.",
-        "action_required": "Assess the recorded findings in the inline review threads.",
+        "action_required": "",
         "failure": "This review did not complete reliably; this commit is not approved by it.",
         "publication_incomplete": "The authoritative Check result could not be published. Treat this commit as not reviewed.",
         "stale": "Current head and base coverage is not established by this attempt.",
@@ -949,8 +949,25 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     lines += ["## Claude Review", ""]
     specific_reason = reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
     if state == "stale" and owner_running:
-        lines += [f"Claude is reviewing captured commit {commit_link(owner['head'] if owner else head_sha, owner['repo'] if owner else None)}. "
-                  "Review coverage of the current head and baseline is not established.", ""]
+        repo = owner["repo"] if owner else None
+        explanation = f"Claude is reviewing captured commit {commit_link(owner['head'] if owner else head_sha, repo)}. "
+        if owner and owner["head"] != head_sha:
+            explanation += f"The current PR commit {commit_link(head_sha, repo)} is not covered by this attempt."
+        elif owner and owner["base_ref"] != base_ref:
+            explanation += (f"This attempt targets {inline_code(owner['base_ref'])}; "
+                            f"the PR now targets {inline_code(base_ref)}.")
+        elif owner and isinstance(base_sha, str) and re.fullmatch(r"[0-9a-f]{40}", base_sha) and owner["base"] != base_sha:
+            explanation += (f"Its captured baseline is {commit_link(owner['base'], repo)} on {inline_code(base_ref)}; "
+                            f"the current target commit is {commit_link(base_sha, repo)}.")
+        else:
+            explanation += "This attempt's coverage of the current PR cannot be confirmed."
+        lines += [explanation, ""]
+    elif (state == "stale" and owner and owner["head"] != head_sha
+          and reason == stale_status_reason(STATUS_REASONS["workflow_changed"])):
+        messages["stale"] = (f"The review of {commit_link(owner['head'], owner['repo'])} did not complete. "
+                             f"The PR is now at {commit_link(head_sha, owner['repo'])}, which this attempt hasn’t reviewed.")
+    elif state == "stale" and show_review and not (base_advanced or superseded_review):
+        messages["stale"] = "The applicability of this completed review to the current PR cannot be confirmed."
     if state == "in_progress" and not check_available:
         lines += [messages[state], ""]
     if show_review:
@@ -976,8 +993,6 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     lines += ["", *selection_notice(selection)] if selection_notice(selection) else []
     if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
         lines += ["", messages[state]]
-    if state == "stale" and show_review and last_review[2] == "action_required":
-        lines += ["", messages["action_required"]]
     if base_advanced:
         lines += ["", TARGET_TIP_WARNING]
     if incomplete and not active:
@@ -1009,8 +1024,11 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     metadata = ["**Current attempt**"] if history_in_details else []
     row_ref = last_review[1] if show_review else owner["base_ref"] if owner else base_ref
     if (head_sha, base_ref) != (row_commit, row_ref):
+        coverage = ""
+        if state == "stale":
+            coverage = " — not reviewed against this target" if row_ref != base_ref else " — not reviewed"
         metadata += [f"**PR commit:** {commit_link(head_sha, repo)} on {inline_code(base_ref)}" +
-                     (" — not reviewed" if state == "stale" else "")]
+                     coverage]
     elif not show_review and not owner:
         metadata += [f"**PR target:** {inline_code(base_ref)}" +
                      (" — not reviewed" if state == "stale" else "")]

@@ -123,7 +123,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn(check.commit_link(gallery.fixtures.HEAD, gallery.fixtures.REPO), visible)
         self.assertIn("PR opened for review", visible)
         self.assertIn(gallery.COMPLETED_AT, visible)
-        self.assertIn("Assess the recorded findings in the inline review threads.", visible)
+        self.assertNotIn("Assess the recorded findings in the inline review threads.", visible)
         self.assertNotIn("No findings", raw)
         self.assertNotIn("Previous completed review", raw)
         self.assertEqual(check.status_state({"body": raw}), "action_required")
@@ -294,7 +294,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertIn("#incomplete-captured-input-reads", visible)
                     self.assertNotIn("validation rejection", body)
                 else:
-                    self.assertIn("may prevent the review from starting", visible)
+                    self.assertIn("The cause of this incomplete review is unknown.", visible)
                     self.assertIn("/actions/runs/5/attempts/1", visible)
                     self.assertIn("cause of the incomplete review is unknown", details)
 
@@ -333,6 +333,26 @@ class PresentationGalleryTests(unittest.TestCase):
             self.assertIn("| " + label + " |", body.split("<details>")[0])
             if case_id == "stale-manual":
                 self.assertIn("**Review trigger:** PR opened for review", body)
+
+    def test_stale_explanations_identify_only_known_comparisons(self):
+        cases = dict(sample_items())
+        check = gallery.check
+        commit = lambda sha: check.commit_link(sha, gallery.fixtures.REPO)
+        expectations = {
+            "stale-running-head": f"The current PR commit {commit(gallery.fixtures.OTHER)} is not covered by this attempt.",
+            "stale-running-base": f"Its captured baseline is {commit(gallery.fixtures.BASE_TIP)} on `main`; the current target commit is {commit(gallery.fixtures.OTHER)}.",
+            "stale-running-ref": "This attempt targets `main`; the PR now targets `release`.",
+            "stale-manual": "This attempt's coverage of the current PR cannot be confirmed.",
+            "legacy-history-run": "The applicability of this completed review to the current PR cannot be confirmed.",
+            "workflow-changed-superseded": f"The review of {commit(gallery.fixtures.HEAD)} did not complete. The PR is now at {commit(gallery.fixtures.OTHER)}, which this attempt hasn’t reviewed.",
+        }
+        for case_id, expected in expectations.items():
+            with self.subTest(case_id=case_id):
+                self.assertIn(expected, cases[case_id].split("<details>")[0])
+        for case_id in ("workflow-changed", "workflow-changed-superseded"):
+            body = cases[case_id]
+            self.assertIn("The cause of this incomplete review is unknown.", body.split("<details>")[0])
+            self.assertIn("**Reason:** ", body.split("<details>")[1])
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):
         original = os.environ.copy()
