@@ -8,6 +8,8 @@ Built on [Anthropic’s Claude Code Action](https://github.com/anthropics/claude
 Claude Review Runtime helps you see which commits Claude reviewed, whether the
 review completed, and whether the results are still current.
 
+New to software reviews? Read the [plain-language introduction](docs/what-is-claude-review-runtime.md).
+
 ## Usage
 
 Supports both Claude account tokens and Anthropic API keys; follow the
