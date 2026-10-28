@@ -1143,7 +1143,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         owner = presentation_owner(repo=REPO, kind="issue_comment", target=12)
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
                  "body": check.STATUS_MARKER}
-        for command, expected in (("/claude-review opus effort high", "**Effort:** high"),
+        for command, expected in (("/claude-review opus effort high", "**Effort requested:** high"),
                                   ("/claude-review", None),
                                   ("/claude-review opus; echo bad", None)):
             result, calls = self.run_fallback(MANUAL,
@@ -1163,7 +1163,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertIsNone(record["execution_attempt"])
             else:
                 self.assertNotIn("**Model:**", body)
-                self.assertNotIn("**Effort:**", body)
+                self.assertNotIn("**Effort requested:**", body)
 
     def test_fallback_records_an_encoded_base_ref(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},

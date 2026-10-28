@@ -655,7 +655,7 @@ def selection_notice(record):
         prefix = "⚠️ " if models and not opus else ""
         parts.append(prefix + "**Model:** " + value)
     if record["requested_effort"]:
-        parts.append("**Effort:** " + record["requested_effort"])
+        parts.append("**Effort requested:** " + record["requested_effort"])
     return [" · ".join(parts)] if parts else []
 
 

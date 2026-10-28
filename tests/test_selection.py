@@ -72,11 +72,11 @@ class SelectionTests(unittest.TestCase):
             self.assertEqual(check.valid_selection(record, owner), record)
             body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
             self.assertIn('**Completed**', body)
-            self.assertIn('**Effort:** high', body)
+            self.assertIn('**Effort requested:** high', body)
             self.assertNotIn('**Observed effort:**', body)
             self.assertIn('**Model:** Opus', body)
             if evidence == 'observed' and models == ('claude-opus-4-7',):
-                self.assertIn('**Model:** Opus · **Effort:** high', body)
+                self.assertIn('**Model:** Opus · **Effort requested:** high', body)
             else:
                 self.assertIn('Opus requested', body)
             if models == ('claude-sonnet-4-6',):
@@ -126,7 +126,7 @@ class SelectionTests(unittest.TestCase):
     def test_effort_only_confirmation_has_no_model_line(self):
         owner, record = self.record(requested_model='')
         body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
-        self.assertEqual(check.selection_notice(record), ['**Effort:** high'])
+        self.assertEqual(check.selection_notice(record), ['**Effort requested:** high'])
         self.assertNotIn('No override requested', body)
         self.assertNotIn('**Model:**', body)
         self.assertNotIn('**Observed models:**', body)
@@ -139,8 +139,8 @@ class SelectionTests(unittest.TestCase):
             body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=record)
             main, details = body.split('<details>')
             self.assertEqual(main.count('**Model:**'), 1)
-            self.assertEqual(main.count('**Effort:**'), 1)
-            for label in ('**Model:', '**Effort:', '**Requested', '**Observed', '**Model evidence attempt:', '**Result:** No findings.'):
+            self.assertEqual(main.count('**Effort requested:**'), 1)
+            for label in ('**Model:', '**Effort requested:', '**Requested', '**Observed', '**Model evidence attempt:', '**Result:** No findings.'):
                 self.assertNotIn(label, details)
             self.assertEqual(check.current_selection(owner, {'body': body}), record)
         mixed = {**record, 'models': ['claude-haiku-5-5', 'claude-opus-5-5'], 'model_evidence': 'mixed'}

@@ -105,7 +105,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-**Effort:** high
+**Effort requested:** high
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -144,7 +144,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-**Model:** Opus · **Effort:** high
+**Model:** Opus · **Effort requested:** high
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -183,7 +183,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus requested; Sonnet 5.5 observed · **Effort:** high
+⚠️ **Model:** Opus requested; Sonnet 5.5 observed · **Effort requested:** high
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -222,7 +222,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-**Model:** Opus requested; execution model unknown · **Effort:** high
+**Model:** Opus requested; execution model unknown · **Effort requested:** high
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -261,7 +261,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-**Model:** Opus requested; observed Haiku 5.5, Opus 5.5 · **Effort:** high
+**Model:** Opus requested; observed Haiku 5.5, Opus 5.5 · **Effort requested:** high
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -340,7 +340,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-**Model:** Opus · **Effort:** high
+**Model:** Opus · **Effort requested:** high
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -371,7 +371,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-**Model:** Opus requested; execution model unknown · **Effort:** high
+**Model:** Opus requested; execution model unknown · **Effort requested:** high
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -402,7 +402,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-**Model:** Opus requested; execution model unknown · **Effort:** high
+**Model:** Opus requested; execution model unknown · **Effort requested:** high
 
 This review did not complete reliably; this commit is not approved by it. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -436,7 +436,7 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-**Model:** Opus requested; execution model unknown · **Effort:** high
+**Model:** Opus requested; execution model unknown · **Effort requested:** high
 
 Trusted review tooling was unavailable; the review could not be finalized reliably. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
