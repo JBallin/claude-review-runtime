@@ -8,7 +8,7 @@ responsible for the software has clearer information when deciding what to
 accept.
 
 ```mermaid
-flowchart LR
+flowchart TB
     A[Proposed code change] --> B[Automated review by Claude]
     B --> C[Track the version reviewed]
     C --> D[Show the review result and status]
