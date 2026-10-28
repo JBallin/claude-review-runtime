@@ -1160,7 +1160,7 @@ jobs:
           if model:
               parts.append("**Model:** Opus requested; execution model unknown")
           if effort:
-              parts.append("**Effort requested:** " + effort)
+              parts.append("**Effort:** " + effort)
           print(json.dumps({"marker": marker, "notice": " · ".join(parts)}))
           PY_SELECTION
             ) || return 0
