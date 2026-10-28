@@ -7,14 +7,6 @@ problems. Runtime coordinates the review and reports its status, so the person
 responsible for the software has clearer information when deciding what to
 accept.
 
-```mermaid
-flowchart TB
-    A[Proposed code change] --> B[Automated review by Claude]
-    B --> C[Track the version reviewed]
-    C --> D[Show the review result and status]
-    D --> E[A person decides what to accept]
-```
-
 The project grew out of work to add Claude reviews to Ballin, a tool for
 maintaining a Mac. Making the review workflow reusable lets other software
 projects use it too.
