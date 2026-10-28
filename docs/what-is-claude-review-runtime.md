@@ -1,5 +1,12 @@
 # What is Claude Review Runtime?
 
+Claude Review Runtime helps people keep track of automated reviews of proposed
+software changes: updates suggested for a software project before they are
+accepted. Claude, an AI assistant, examines a change and can point out potential
+problems. Runtime coordinates the review and reports its status, so the person
+responsible for the software has clearer information when deciding what to
+accept.
+
 ```mermaid
 flowchart LR
     A[Proposed code change] --> B[Automated review by Claude]
@@ -7,12 +14,6 @@ flowchart LR
     C --> D[Show the review result and status]
     D --> E[A person decides what to accept]
 ```
-
-Claude Review Runtime helps people keep track of automated reviews of proposed
-software changes. Claude, an AI assistant, examines the change and can point
-out potential problems. Runtime coordinates the review and reports its status,
-so the person responsible for the software has clearer information when
-deciding what to accept.
 
 The project grew out of work to add Claude reviews to Ballin, a tool for
 maintaining a Mac. Making the review workflow reusable lets other software
@@ -27,18 +28,18 @@ a chance to spot concerns and ask for corrections.
 
 An automated review can help with that work. But the review itself is only
 part of the story: people also need to know whether it finished and which
-version of the proposed change it examined. Runtime was built to make that
-tracking and status easier to understand, reducing the work of keeping track
-by hand.
+version of the proposed change it examined. Runtime makes that tracking and
+status easier to understand, reducing the work of keeping track by hand.
 
 ## Why does the version matter?
 
-Imagine a developer proposes a fix. Claude reviews that version and points out
-a possible problem. The developer then changes the fix. The earlier review is
-still useful history, but it does not tell us whether Claude reviewed the new
-version. A new review can examine the revised change. Runtime records the
-version a review covered and helps show when an earlier result may no longer
-apply. It also reports when a review is still running or did not finish.
+Imagine a shopping-list app sometimes loses saved items. A developer proposes
+a fix, and Claude's review points out that the fix might also erase items
+already checked off. The developer revises the fix to keep those items. The
+earlier review is still useful history, but it does not tell us whether Claude
+reviewed the new version. A new review can examine the revised change. Runtime
+records the version a review covered and helps show when an earlier result may
+no longer apply. It also reports when a review is still running or did not finish.
 
 Even a completed review with no reported problems does not guarantee that the
 software is bug-free. The person deciding what to accept still needs to use
