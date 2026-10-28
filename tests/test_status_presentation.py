@@ -52,7 +52,7 @@ class StatusPresentationTests(unittest.TestCase):
                         else:
                             self.assertNotIn(' started ', visible)
                         if state == 'stale':
-                            self.assertIn('Review coverage of the current head and baseline is not established.', visible)
+                            self.assertIn("This attempt's coverage of the current PR cannot be confirmed.", visible)
 
     def test_manual_scope_follows_completed_history_not_unfinished_attempt(self):
         from test_claude_review_check import presentation_owner, BASE_TIP, NEWER
@@ -123,7 +123,7 @@ class StatusPresentationTests(unittest.TestCase):
                 self.assertEqual(check.status_state(self.api.status), 'stale')
                 self.assertEqual(check.last_completed_review(self.api.status), (HEAD, 'main', result))
                 if result == 'action_required':
-                    self.assertIn('inline review threads', visible)
+                    self.assertNotIn('Assess the recorded findings', visible)
                     self.assertNotIn('Claude Review passed', visible)
 
     def test_latest_failed_or_running_attempt_precedes_old_clean_result(self):
@@ -157,12 +157,12 @@ class StatusPresentationTests(unittest.TestCase):
                 else:
                     self.assertIn('## Claude Review', visible)
                     self.assertIn(f'Claude is reviewing captured commit {check.commit_link(HEAD)}.', visible)
-                    self.assertIn('Review coverage of the current head and baseline is not established.', visible)
+                    self.assertIn(f'The current PR commit {check.commit_link(OTHER)} is not covered by this attempt.', visible)
                     self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
                     self.assertEqual(check.status_state(self.api.status), 'stale')
                     self.assertTrue(check.status_owner_running(self.api.status))
                     self.assertEqual(visible.count('Running'), 1)
-                    self.assertEqual(visible.count('coverage'), 1)
+                    self.assertEqual(visible.count('not covered by this attempt'), 1)
 
     def test_running_copy_is_compact_but_unavailable_check_warning_remains(self):
         for history in (None, (OTHER, 'main', 'success')):
@@ -234,12 +234,12 @@ class StatusPresentationTests(unittest.TestCase):
         visible = self.visible(self.api.status['body'])
         self.assertIn('## Claude Review', visible)
         self.assertIn(f'captured commit {check.commit_link(HEAD)}', visible)
-        self.assertIn('current head and baseline is not established', visible)
+        self.assertIn(f'The current PR commit {check.commit_link(OTHER)} is not covered by this attempt.', visible)
         self.assertNotIn('**Last completed review**', visible)
         started = check.relative_time(check.owner_start_time(check.status_owner(self.api.status)))
         self.assertIn(f'| 🔄 **Running** started {started} | {check.commit_link(HEAD)} | Not recorded |', visible)
         self.assertNotIn('Not reviewed', visible)
-        self.assertEqual(visible.count('coverage'), 1)
+        self.assertEqual(visible.count('not covered by this attempt'), 1)
         self.assertEqual(check.status_state(self.api.status), 'stale')
         self.assertTrue(check.status_owner_running(self.api.status))
 
@@ -258,7 +258,7 @@ class StatusPresentationTests(unittest.TestCase):
                 self.assertNotIn('no findings', visible.lower())
                 self.assertNotIn('**Result:** No findings.', body.split('<details>')[1])
             else:
-                self.assertIn('inline review threads', visible)
+                self.assertNotIn('Assess the recorded findings', visible)
 
     def test_uncompleted_status_labels_are_bold(self):
         for state, label in (('in_progress', '🔄 **Running**'),
