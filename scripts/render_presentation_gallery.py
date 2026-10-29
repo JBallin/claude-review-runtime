@@ -154,6 +154,16 @@ def gallery_samples():
                 "https://github.com/owner/repo/actions/runs/5",
                 observed_base_sha=fixtures.OTHER)),
         ]
+        for count, label in ((1, "partial"), (0, "zero"), (None, "unknown-count")):
+            samples.append(GallerySample(f"inline-tool-{label}", "incomplete",
+                f"Inline-comment tool failure: {label}", status(
+                    "failure", reason=check.STATUS_REASONS["inline_tool_failed"],
+                    inline_failure={"generation": owner["generation"], "check_run_id": 99, "posted_count": count})))
+        samples.append(GallerySample("inline-tool-stale", "incomplete",
+            "Inline-comment tool failure after the PR commit changes", status(
+                "stale", head=fixtures.OTHER, owner_running=False,
+                reason=check.stale_status_reason(check.STATUS_REASONS["inline_tool_failed"]),
+                inline_failure={"generation": owner["generation"], "check_run_id": 99, "posted_count": 1})))
         newer_owner = fixtures.presentation_owner(
             head=fixtures.OTHER, base=fixtures.NEWER, run=6,
             started=STARTED + 600_000_000_000,

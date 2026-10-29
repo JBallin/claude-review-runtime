@@ -638,7 +638,73 @@ class FinalizeTests(ScriptTestCase):
                 self.assertEqual(evidence["completion_reason"], reason)
                 self.assertEqual(evidence["claude_finding_comment_ids"], [])
                 self.assertIn(check.STATUS_REASONS["unread_inputs"] if reason == "captured_inputs_not_read"
-                              else reason, body["output"]["summary"])
+                              else check.STATUS_REASONS["inline_tool_failed"], body["output"]["summary"])
+
+    def test_inline_failure_summary_counts_only_complete_discovery_and_retains_findings(self):
+        for ids in ([], [9], [9, 10]):
+            with self.subTest(ids=ids):
+                self.log.unlink(missing_ok=True)
+                result = self.finalize(
+                    [history_rule(current_run_only()), comments_rule(ok(pages([comment(i) for i in ids]))),
+                     patch_rule(ok("{}"))],
+                    COMPLETION_VERIFIED="false", COMPLETION_REASON="errored_inline_tool_result")
+                self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+                body = self.published()
+                self.assertEqual(body["conclusion"], "failure")
+                self.assertIn(check.inline_failure_explanation(len(ids)), body["output"]["summary"])
+                self.assertEqual(evidence_of(body)["new_finding_comment_ids"], ids)
+                self.assertIs(evidence_of(body)["same_diff_findings_recorded"], bool(ids))
+                self.assertNotIn("**Completed:**", body["output"]["summary"])
+                if ids:
+                    rerun = self.rerun_after(body)
+                    self.assertEqual(rerun.returncode, 0, rerun.stderr + rerun.stdout)
+                    self.assertEqual(self.published()["conclusion"], "action_required")
+
+    def test_inline_failure_status_uses_finalizer_count_and_published_check(self):
+        for snapshot in ("[]", "invalid", None):
+            with self.subTest(snapshot=snapshot):
+                self.log.unlink(missing_ok=True)
+                if snapshot is None:
+                    self.before.unlink(missing_ok=True)
+                else:
+                    self.before.write_text(snapshot)
+                result = self.run_script(["finalize"],
+                    [history_rule(current_run_only()), comments_rule(ok(pages([comment(9)]))),
+                     patch_rule(ok("{}")), status_list_rule(ok(pages([status_comment(HEAD)]))),
+                     status_patch_rule(ok("{}"))],
+                    CHECK_RUN_ID="99", REVIEW_RESULT="success", ACTION_CONCLUSION="success",
+                    BEFORE_IDS_FILE=str(self.before), STATUS_COMMENTS_ENABLED="true",
+                    COMPLETION_VERIFIED="false", COMPLETION_REASON="errored_inline_tool_result")
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                patches = self.calls("PATCH")
+                check_body = next(c["body"] for c in patches if c["path"].endswith("/check-runs/99"))
+                status = next(c["body"]["body"] for c in patches if c["path"].endswith("/issues/comments/55"))
+                expected_count = 1 if snapshot == "[]" else None
+                self.assertIn(check.inline_failure_explanation(expected_count), check_body["output"]["summary"])
+                self.assertIn(check.inline_failure_explanation(expected_count), status)
+                self.assertIn("/pull/7/checks?check_run_id=99", status)
+                self.assertEqual(check.status_state({"body": status}), "failure")
+                self.assertEqual(check_body["conclusion"], "failure")
+                self.assertNotIn("manual-clean-completion", status)
+
+    def test_inline_failure_missing_verifier_flag_keeps_generic_check_explanation(self):
+        result = self.finalize(
+            [history_rule(current_run_only()), comments_rule(ok(pages([]))), patch_rule(ok("{}"))],
+            COMPLETION_VERIFIED="", COMPLETION_REASON="errored_inline_tool_result")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn(check.STATUS_REASONS["inline_tool_failed"], self.published()["output"]["summary"])
+        self.assertEqual(self.published()["conclusion"], "failure")
+
+    def test_inline_failure_unavailable_discovery_does_not_claim_zero_findings(self):
+        result = self.finalize(
+            [history_rule(current_run_only()), comments_rule(FAIL), patch_rule(ok("{}"))],
+            COMPLETION_VERIFIED="false", COMPLETION_REASON="errored_inline_tool_result")
+        self.assertEqual(result.returncode, 0, result.stderr + result.stdout)
+        body = self.published()
+        self.assertEqual(body["conclusion"], "failure")
+        self.assertIn(check.inline_failure_explanation(None), body["output"]["summary"])
+        self.assertNotIn("No findings were posted", body["output"]["summary"])
+        self.assertTrue(evidence_of(body)["evidence_errors"])
 
     def test_findings_from_an_unverified_run_are_recorded_and_stay_sticky(self):
         first = self.finalize(
