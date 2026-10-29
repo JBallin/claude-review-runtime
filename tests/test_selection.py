@@ -2,6 +2,7 @@
 import copy
 import json
 import os
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -47,11 +48,13 @@ class SelectionTests(unittest.TestCase):
                     path.write_text(json.dumps(dict(trigger_comment=body, **{**selected, 'requested_effort': 'bad'})))
                     self.assertEqual(check.cmd_selection(str(path)), 1)
 
-    def record(self, models=('claude-opus-4-7',), usage=None, **changes):
+    def record(self, models=('claude-opus-4-7',), usage=None, transform=None, **changes):
         owner = presentation_owner(kind='issue_comment', target=12)
-        stream = [{'type': 'system', 'subtype': 'init', 'session_id': 'session'},
+        stream = [{'type': 'system', 'subtype': 'init', 'session_id': 'session', 'model': models[0] if models else None},
                   *[{'type':'assistant','session_id':'session','message':{'model':m}} for m in models],
                   {'type':'result','session_id':'session','modelUsage':usage if usage is not None else {m:{'inputTokens':1} for m in models}}]
+        if transform:
+            transform(stream)
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'execution.json'
             path.write_text(json.dumps(stream))
@@ -75,10 +78,10 @@ class SelectionTests(unittest.TestCase):
             self.assertIn('**Effort:** high', body)
             self.assertNotIn('**Observed effort:**', body)
             self.assertIn('**Model:** Opus', body)
-            if evidence == 'observed' and models == ('claude-opus-4-7',):
+            if models == ('claude-opus-4-7',):
                 self.assertIn('**Model:** Opus · **Effort:** high', body)
             else:
-                self.assertIn('Opus requested', body)
+                self.assertIn('Opus selected', body)
             if models == ('claude-sonnet-4-6',):
                 self.assertIn('⚠️ **Model:**', body)
             with mock.patch.dict(os.environ, {}, clear=True):
@@ -100,6 +103,7 @@ class SelectionTests(unittest.TestCase):
                 self.assertEqual(fresh['requested_model'], 'opus')
                 self.assertEqual(fresh['models'], [])
                 self.assertIsNone(fresh['execution_attempt'])
+                self.assertIsNone(fresh['primary_model_evidence'])
         # A publisher-only rerun can retain an earlier execution only through
         # the explicit trusted review-job output, never ambient comment state.
         with mock.patch.dict(os.environ, {'SELECTION_EVIDENCE':json.dumps(record),
@@ -112,6 +116,80 @@ class SelectionTests(unittest.TestCase):
                         {'generation':'other'}, {'model_evidence':'unknown'}, {'observed_effort':'high'}, {'extra':'value'}):
             candidate = {**record, **changes}
             self.assertIsNone(check.valid_selection(candidate, owner))
+
+    def test_primary_evidence_ignores_auxiliary_usage_but_retains_provenance(self):
+        usage = {'claude-opus-5-5': {'inputTokens': 1}, 'claude-haiku-4-5': {'outputTokens': 1}}
+        owner, record = self.record(models=('claude-opus-5-5',), usage=usage)
+        self.assertEqual(record['models'], sorted(usage))
+        self.assertEqual(record['model_evidence'], 'mixed')
+        self.assertEqual(record['primary_model_evidence'], {
+            'initialization': 'claude-opus-5-5', 'assistant': ['claude-opus-5-5'], 'attempt': 2})
+        self.assertIsNone(record['observed_effort'])
+        body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
+        visible = re.sub(r'<!--.*?-->', '', body.split('<details>')[0])
+        self.assertIn('**Model:** Opus · **Effort:** high', visible)
+        self.assertNotIn('Haiku', visible)
+        self.assertNotIn('requested', visible)
+        self.assertEqual(check.current_selection(owner, {'body': body}), record)
+
+    def test_primary_fallback_and_conflicting_sources_are_visible(self):
+        for models, transform, expected in (
+                (('claude-sonnet-4-6',), None, 'primary model mismatch (Sonnet 4.6 observed)'),
+                (('claude-opus-5-5',), lambda s: s[0].update(model='claude-sonnet-4-6'),
+                 'primary model evidence ambiguous (Opus 5.5, Sonnet 4.6)'),
+                (('claude-opus-5-5', 'claude-sonnet-4-6'), None,
+                 'primary model evidence ambiguous (Opus 5.5, Sonnet 4.6)')):
+            with self.subTest(expected=expected):
+                owner, record = self.record(models=models, transform=transform)
+                for running in (False, True):
+                    notice = check.selection_notice(record, running=running)[0]
+                    self.assertIn('⚠️ **Model:** Opus selected; ' + expected, notice)
+
+    def test_missing_or_invalid_primary_sources_never_confirm_usage_bag(self):
+        for transform in (
+                lambda s: s[0].update(model='opus'),
+                lambda s: s[1].update(session_id='other'),
+                lambda s: s[1].update(error='failure'),
+                lambda s: s.append(dict(s[0])),
+                lambda s: s.pop(1),
+                lambda s: s.pop(),
+                lambda s: s[1]['message'].update(model=None)):
+            owner, record = self.record(transform=transform)
+            self.assertIsNone(record['primary_model_evidence'])
+            self.assertEqual(check.valid_selection(record, owner), record)
+            self.assertIn('⚠️ **Model:** Opus selected; primary model evidence missing',
+                          check.selection_notice(record)[0])
+        # Historical global usage records cannot establish a primary model.
+        owner, record = self.record()
+        del record['primary_model_evidence']
+        self.assertEqual(check.valid_selection(record, owner), record)
+        self.assertIn('primary model evidence missing', check.selection_notice(record)[0])
+
+    def test_assistant_source_without_initialization_model_and_nested_auxiliary_turn(self):
+        def transform(stream):
+            stream[0].pop('model')
+            stream.insert(2, {'type': 'assistant', 'session_id': 'subagent',
+                              'parent_tool_use_id': 'tool', 'message': {'model': 'claude-haiku-4-5'}})
+        owner, record = self.record(transform=transform)
+        self.assertEqual(record['primary_model_evidence']['assistant'], ['claude-opus-4-7'])
+        self.assertIsNone(record['primary_model_evidence']['initialization'])
+        self.assertEqual(check.selection_notice(record), ['**Model:** Opus · **Effort:** high'])
+        self.assertEqual(check.valid_selection(record, owner), record)
+
+    def test_primary_receipt_validation_and_running_selection(self):
+        owner, record = self.record()
+        for primary in ({}, {'initialization': None, 'assistant': [], 'attempt': 2},
+                        {**record['primary_model_evidence'], 'attempt': True},
+                        {**record['primary_model_evidence'], 'attempt': 3},
+                        {**record['primary_model_evidence'], 'initialization': '<bad>'}):
+            self.assertIsNone(check.valid_selection({**record, 'primary_model_evidence': primary}, owner))
+        with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': '/claude-review opus effort high'}, clear=True):
+            running = check.selection_record(owner)
+        for state, extra in (('in_progress', {}), ('stale', {'owner_running': True})):
+            body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=running, **extra)
+            self.assertIn('**Model:** Opus · **Effort:** high', body)
+            self.assertNotIn('primary model evidence missing', body)
+        self.assertIn('primary model evidence missing', check.selection_notice(running)[0])
 
     def test_plain_comment_is_quiet_but_preserves_diagnostics(self):
         owner, record = self.record(requested_model='', requested_effort='')
@@ -146,6 +224,6 @@ class SelectionTests(unittest.TestCase):
         mixed = {**record, 'models': ['claude-haiku-5-5', 'claude-opus-5-5'], 'model_evidence': 'mixed'}
         notice = check.selection_notice(mixed)[0]
         self.assertNotIn('⚠️', notice)
-        self.assertIn('Haiku 5.5, Opus 5.5', notice)
-        unusual = {**record, 'models': ['claude-custom'], 'model_evidence': 'observed'}
+        self.assertEqual(notice, '**Model:** Opus · **Effort:** high')
+        _, unusual = self.record(models=('claude-custom',))
         self.assertIn('`claude-custom`', check.selection_notice(unusual)[0])

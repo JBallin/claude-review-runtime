@@ -203,10 +203,16 @@ Higher effort can increase usage and latency; turn and time limits are not a
 spending cap. Model/account policy may limit the requested level. The displayed effort is the requested setting; headless output does not report
 the resolved setting. See [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
 
-Explicit model requests show a compact Model line; effort requests show Effort.
+While a manual review runs, explicit selections appear compactly, for example
+“Model: Opus · Effort: high”. The standing status and historical clean-completion
+receipt retain that line when the primary review model is confirmed as Opus.
+Conflicting primary evidence, a different primary model, or missing evidence
+produces a visible warning. Auxiliary model usage stays in diagnostic metadata;
+it does not establish the primary model. Legacy records without separate primary
+evidence show a missing-evidence warning rather than confirming from usage.
+Effort remains the configured request, not an observed or effective value.
 Inherited model evidence stays in diagnostic metadata, including effort-only
-requests. Missing or different
-model evidence does not invalidate completed reviews or erase findings. Runtime
+requests. Model diagnostics do not invalidate completed reviews or erase findings. Runtime
 does not add retries or substitution runs for these diagnostics; provider
 failures retain their ordinary incomplete-review behavior.
 
