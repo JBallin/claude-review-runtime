@@ -2,8 +2,9 @@
 
 Imagine proposing a change to an app and having Claude automatically look over
 its code. Claude can flag potential problems before anyone accepts the change.
-Claude Review Runtime helps make that possible: Claude examines the change,
-while Runtime coordinates the review and reports what happened.
+The Claude Code Action already offers code review; Claude Review Runtime builds
+on it to coordinate reviews and make their progress and results easier to
+understand.
 
 ## Did Claude review this version?
 
