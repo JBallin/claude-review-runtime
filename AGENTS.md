@@ -90,7 +90,12 @@ Inspect the rendered committed gallery at desktop (about 1280 px) and narrow
 spacing, tables, warnings, identity labels, link targets, and hidden-receipt
 suppression. Record observed results, actual widths, and inspected revision in
 the PR description. Markdown generation alone does not complete visual QA.
-Agent browser inspection needs scoped UI authorization; report any blocked
+Routine read-only QA of this repository's local or public synthetic gallery is
+included in an already authorized engineering task: desktop/narrow sizing,
+opening and closing Details, and screenshots do not need repeated separate
+approval. Continue to follow platform and assistant approval controls. This
+scope does not authorize other sites or browser interactions, sign-in or account
+settings, external publication, or access/permission changes. Report any blocked
 browser access or sizing check precisely instead of claiming visual QA passed.
 
 Include representative desktop and narrow screenshots of changed rendered views
