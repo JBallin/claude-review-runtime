@@ -5,6 +5,8 @@ problems before they are accepted. Claude Review Runtime builds on Claude’s
 existing review tools, giving developers a reusable way to run those reviews in
 their GitHub projects and follow the results.
 
+![Code change, Claude review, and feedback](assets/claude-review-flow.png)
+
 As the code changes, Runtime keeps track of which version Claude reviewed and
 whether the review is running, finished, or failed. Developers can see whether
 the review covers the latest changes without piecing together the review
