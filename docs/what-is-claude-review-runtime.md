@@ -1,25 +1,23 @@
 # What is Claude Review Runtime?
 
-Claude Review Runtime helps people keep track of automated reviews of proposed
-code changes. It makes review progress and results easier to understand, so the
-person deciding what to accept has clearer information and less to track by hand.
+Imagine proposing a change to an app and having Claude automatically look over
+its code. Claude can flag potential problems before anyone accepts the change.
+Claude Review Runtime helps make that possible: Claude examines the change,
+while Runtime coordinates the review and reports what happened.
 
-## The problem
+## Did Claude review this version?
 
-Reviewing a proposed change can uncover problems before it is accepted. But a
-review takes time, and the proposal can change along the way. A result for an
-earlier version doesn't tell someone whether the revised change was reviewed.
+A developer might revise a fix after Claude reviews it. The earlier review is
+still useful, but it doesn't cover the revised change. Runtime keeps track of
+which version a review was for and helps show when its result may no longer
+apply. It also shows whether the review is still running, finished, or failed.
 
-## What it does
+That gives the person deciding what to accept clearer information and less to
+track by hand. They can use it to consider Claude's feedback or decide whether
+another review is needed.
 
-Claude, an AI assistant, examines the proposed change and can flag potential
-problems. Runtime coordinates the review, shows whether it is running,
-completed, or failed, and identifies the version the review was for. It helps
-people see when an earlier result may no longer apply and a new review may be
-needed.
-
-A completed review with no reported problems does not guarantee bug-free
-software or replace the judgment of the person deciding what to accept.
+A completed review with no reported problems doesn't guarantee bug-free
+software or replace human judgment.
 
 ## See it in action
 
