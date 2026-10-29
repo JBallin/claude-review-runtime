@@ -1,23 +1,14 @@
 # What is Claude Review Runtime?
 
-Developers can add Claude Review Runtime to a GitHub project to have Claude
-automatically review proposed code changes. Claude can flag potential problems
-before anyone accepts a change.
+Claude can automatically review proposed code changes and flag potential
+problems before they are accepted. Claude Review Runtime builds on Claude’s
+existing review tools, giving developers a reusable way to run those reviews in
+their GitHub projects and follow the results.
 
-Claude can already review code using existing tools. Runtime builds on those
-tools to coordinate reviews and make their progress and results easier to
-understand.
+As the code changes, Runtime keeps track of which version Claude reviewed and
+whether the review is running, finished, or failed. Developers can see whether
+the feedback applies to the latest changes without piecing together the review
+history themselves.
 
-## Did Claude review this version?
-
-When code changes after a review, the earlier result may no longer apply.
-Runtime shows which version a review was for and whether the review is running,
-finished, or failed.
-
-That gives the person deciding what to accept clearer information and less to
-track by hand.
-
-## See it in action
-
-The [review presentation gallery](review-presentation-gallery.md) shows
-illustrative, made-up examples of review statuses and results.
+See the [review presentation gallery](review-presentation-gallery.md) for
+illustrative examples of review progress and results.
