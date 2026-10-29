@@ -1781,18 +1781,17 @@ def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_
 
 
 def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url, *, observed_base_sha=None):
+    # A fixed receipt describes this captured review; live drift belongs in the aggregate status.
     reviewed = f"[Reviewed]({details_url})" if details_url else "Reviewed"
-    warning = ""
     observed_tip = ""
     if observed_base_sha and observed_base_sha != base_sha:
-        warning = f"{TARGET_TIP_WARNING}\n\n"
         observed_tip = (f"  \n**Observed target commit:** {commit_link(observed_base_sha, repo)} "
-                        f"on {inline_code(base_ref)}")
+                        f"on {inline_code(base_ref)}\n\n"
+                        "The observed target differed from the reviewed baseline.")
     return (
         f"{marker}\n"
         "Claude Review: No findings. 🎉\n\n"
         f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha})\n\n"
-        f"{warning}"
         "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
         f"**{reviewed} against:** [`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) "
         f"on {inline_code(base_ref)}{observed_tip}\n\n</details>"

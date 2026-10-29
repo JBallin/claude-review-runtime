@@ -776,8 +776,6 @@ Claude Review: No findings. 🎉
 
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
 
-⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed.
-
 <details>
 <summary>ℹ️ Details</summary>
 
@@ -785,6 +783,8 @@ Claude Review: No findings. 🎉
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Observed target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`
+
+The observed target differed from the reviewed baseline.
 
 </details>
 
