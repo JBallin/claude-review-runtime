@@ -2306,7 +2306,10 @@ class ManualCompletionTests(ScriptTestCase):
             f"**Reviewed commit:** [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})\n\n"
             "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
             f"**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** "
-            f"[`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`\n\n</details>"
+            f"[`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`\n\n"
+            "**Runtime used:** [`example/review-runtime@fffffff`]"
+            f"(https://github.com/example/review-runtime/blob/{'f' * 40}/.github/workflows/claude-review.yml)"
+            "\n\n</details>"
         ))
         visible, details = body.split("<details>", 1)
         self.assertIn(f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})", visible)

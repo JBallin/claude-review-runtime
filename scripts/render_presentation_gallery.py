@@ -65,6 +65,9 @@ def fixture_environment():
         "BASE_SHA": fixtures.BASE_TIP,
         "DETAILS_URL": "https://github.com/owner/repo/actions/runs/5",
         "GITHUB_SERVER_URL": "https://github.com",
+        "RUNTIME_REPOSITORY": "owner/runtime",
+        "RUNTIME_SHA": "f" * 40,
+        "RUNTIME_WORKFLOW_PATH": ".github/workflows/claude.yml",
     })
     try:
         yield
@@ -194,7 +197,7 @@ def gallery_samples():
             GallerySample("unread-manual", "incomplete", "Required inputs unread, manual attempt with workflow changes", status(
                 "failure", head=fixtures.OTHER, owner=manual_owner, trigger_label="Manual request",
                 reason=check.STATUS_REASONS["unread_inputs"])),
-            GallerySample("workflow-changed", "incomplete", "Relevant review workflow changed, cause unknown", status(
+            GallerySample("workflow-changed", "incomplete", "Relevant review workflow changed, likely cause unconfirmed", status(
                 "failure", reason=check.STATUS_REASONS["workflow_changed"])),
             GallerySample("workflow-changed-superseded", "incomplete", "Workflow-change context retained for a superseded attempt", status(
                 "stale", head=fixtures.OTHER, owner_running=False,

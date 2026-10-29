@@ -173,12 +173,14 @@ class IncompletePresentationTests(unittest.TestCase):
                     self.assertIn(context.STATUS_REASONS["unread_inputs"], visible)
                     self.assertIn(context.UNREAD_RECOVERY, visible)
                     self.assertNotIn("validation rejection", visible)
+                    self.assertNotIn("likely caused", visible)
+                    self.assertNotIn("`/claude-review`", visible)
                     self.assertIn("**Reason:** " + context.STATUS_REASONS["unread_inputs"], details)
                     self.assertEqual(context.status_owner(self.api.status), owner)
                     self.assertEqual(context.status_state(self.api.status), "failure")
 
     def test_bounded_context_warns_only_for_incomplete_relevant_paths(self):
-        for kind in ("automatic", "issue_comment"):
+        for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
             for changed in (True, False, None):
                 with self.subTest(kind=kind, changed=changed):
                     self.api.status = None
@@ -192,12 +194,19 @@ class IncompletePresentationTests(unittest.TestCase):
                         context.best_effort_status(CAPTURED_HEAD, "failure")
                     paths.assert_called_once()
                     visible = self.api.status["body"].split("<details>", 1)[0]
-                    self.assertEqual("validation rejection" in visible, changed is True)
+                    self.assertEqual("likely caused" in visible, changed is True)
+                    self.assertEqual("`/claude-review`" in visible, changed is True)
                     self.assertIn(context.INCOMPLETE_RECOVERY, visible)
                     self.assertNotIn("expected", visible)
                     if changed:
-                        self.assertIn("The cause of this incomplete review is unknown.", visible)
+                        self.assertIn("to confirm.", visible)
+                        self.assertIn("If this repository has the supported trusted manual caller", visible)
+                        self.assertIn("an authorized user", visible)
+                        self.assertIn("an eligible PR", visible)
+                        self.assertIn("no applicable review is pending or complete", visible)
                         self.assertIn("/actions/runs/5/attempts/1", visible)
+                        self.assertIn("**Reason:** " + context.STATUS_REASONS["workflow_changed"],
+                                      self.api.status["body"])
 
     def test_conflicting_or_unavailable_skip_signal_never_claims_rejection(self):
         for changes in ({"COMPLETION_VERIFIED": "true", "COMPLETION_REASON": "captured_inputs_not_read"},
@@ -214,6 +223,8 @@ class IncompletePresentationTests(unittest.TestCase):
             visible = self.api.status["body"].split("<details>", 1)[0]
             self.assertIn(context.STATUS_REASONS["incomplete"], visible)
             self.assertNotIn("validation rejection", visible)
+            self.assertNotIn("likely caused", visible)
+            self.assertNotIn("`/claude-review`", visible)
             self.assertNotIn(context.STATUS_REASONS["unread_inputs"], visible)
 
     def test_success_findings_running_and_publication_failure_do_not_inspect_paths(self):
@@ -224,6 +235,8 @@ class IncompletePresentationTests(unittest.TestCase):
                 context.best_effort_status(CAPTURED_HEAD, state)
             paths.assert_not_called()
             self.assertNotIn("validation rejection", self.api.status["body"])
+            self.assertNotIn("likely caused", self.api.status["body"])
+            self.assertNotIn("`/claude-review`", self.api.status["body"])
 
     def test_stale_refresh_retains_only_the_same_owners_reason_without_new_inspection(self):
         for key in ("unread_inputs", "workflow_changed", "incomplete"):
@@ -244,7 +257,8 @@ class IncompletePresentationTests(unittest.TestCase):
             self.assertIn(context.commit_link(CAPTURED_HEAD), visible)
             self.assertIn("| ❌ **Incomplete**", visible)
             self.assertIn("**Reason:** " + context.STATUS_REASONS["stale"] + " " + context.STATUS_REASONS[key], body)
-            self.assertEqual("validation rejection" in visible, key == "workflow_changed")
+            self.assertEqual("likely caused" in visible, key == "workflow_changed")
+            self.assertNotIn("`/claude-review`", visible)
 
     def test_unread_check_summary_remains_failed_and_retains_findings(self):
         conclusion, _, sentence = context.decide("success", "success", [12], [13], [14],

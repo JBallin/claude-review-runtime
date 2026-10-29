@@ -183,6 +183,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn("target commit:**", raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
+                self.assertIn("**Runtime used:** [`owner/runtime@fffffff`]", raw.split("<details>")[1])
             elif case_id == "compact-differing-baseline":
                 visible, details = raw.split("<details>", 1)
                 self.assertNotIn("The observed target differed", visible)
@@ -298,7 +299,8 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertIn("#incomplete-captured-input-reads", visible)
                     self.assertNotIn("validation rejection", body)
                 else:
-                    self.assertIn("The cause of this incomplete review is unknown.", visible)
+                    self.assertIn("likely caused this incomplete review", visible)
+                    self.assertIn("to confirm.", visible)
                     self.assertIn("/actions/runs/5/attempts/1", visible)
                     self.assertIn("cause of the incomplete review is unknown", details)
 
@@ -358,7 +360,9 @@ class PresentationGalleryTests(unittest.TestCase):
             self.assertIn("<!--\n" + receipt + "\n-->", cases[case_id])
         for case_id in ("workflow-changed", "workflow-changed-superseded"):
             body = cases[case_id]
-            self.assertIn("The cause of this incomplete review is unknown.", body.split("<details>")[0])
+            self.assertIn("likely caused this incomplete review", body.split("<details>")[0])
+            self.assertIn("to confirm.", body.split("<details>")[0])
+            self.assertEqual("`/claude-review`" in body, case_id == "workflow-changed")
             self.assertIn("**Reason:** ", body.split("<details>")[1])
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):

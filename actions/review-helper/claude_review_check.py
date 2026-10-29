@@ -808,15 +808,18 @@ def workflow_changed(owner, runtime_repository, runtime_workflow_path, api):
 
 def incomplete_explanation(reason, owner):
     """Render fixed, owner-bound diagnostics; never infer a provider rejection."""
-    if reason and reason.startswith(STATUS_REASONS["stale"] + " "):
+    stale = reason and reason.startswith(STATUS_REASONS["stale"] + " ")
+    if stale:
         reason = reason[len(STATUS_REASONS["stale"]) + 1:]
     if reason == STATUS_REASONS["unread_inputs"]:
         return reason + f" [Recovery guidance]({UNREAD_RECOVERY})."
     if reason == STATUS_REASONS["workflow_changed"] and owner:
         run = f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}/attempts/{owner['attempt']}"
-        return ("⚠️ The captured patch changed the review workflow. The cause of this incomplete review is unknown. "
-                f"Check the [workflow run]({run}) for a validation rejection. "
-                f"[Recovery guidance]({INCOMPLETE_RECOVERY}).")
+        manual = ("If this repository has the supported trusted manual caller, an authorized user can post "
+                  "`/claude-review` on an eligible PR when no applicable review is pending or complete. ") if not stale else ""
+        return ("⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. "
+                f"[Check this attempt’s logs]({run}) to confirm. "
+                f"{manual}[Recovery guidance]({INCOMPLETE_RECOVERY}).")
     if reason not in STATUS_REASONS.values() or reason == STATUS_REASONS["workflow_changed"]:
         reason = STATUS_REASONS["incomplete"]
     return reason + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
@@ -1788,13 +1791,19 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
         observed_tip = (f"  \n**Observed target commit:** {commit_link(observed_base_sha, repo)} "
                         f"on {inline_code(base_ref)}\n\n"
                         "The observed target differed from the reviewed baseline.")
+    runtime_repo, runtime_sha = env("RUNTIME_REPOSITORY"), env("RUNTIME_SHA")
+    runtime_path = workflow_path(env("RUNTIME_WORKFLOW_PATH"))
+    runtime_used = ""
+    if REPOSITORY.fullmatch(runtime_repo) and SHA.fullmatch(runtime_sha) and runtime_path:
+        runtime_used = (f"\n\n**Runtime used:** [{inline_code(runtime_repo + '@' + runtime_sha[:7])}]"
+                        f"(https://github.com/{runtime_repo}/blob/{runtime_sha}/{runtime_path})")
     return (
         f"{marker}\n"
         "Claude Review: No findings. 🎉\n\n"
         f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha})\n\n"
         "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
         f"**{reviewed} against:** [`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) "
-        f"on {inline_code(base_ref)}{observed_tip}\n\n</details>"
+        f"on {inline_code(base_ref)}{observed_tip}{runtime_used}\n\n</details>"
     )
 
 
