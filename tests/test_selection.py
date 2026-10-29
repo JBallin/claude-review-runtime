@@ -154,6 +154,24 @@ class SelectionTests(unittest.TestCase):
                 self.assertNotIn('requested', visible)
         self.assertEqual(check.current_selection(owner, {'body': body}), record)
 
+    def test_primary_evidence_survives_unavailable_aggregate_usage(self):
+        for usage in ({}, [], {'claude-opus-5-5': None},
+                      {'<invalid>': {'inputTokens': 1}},
+                      {'claude-opus-5-5': {'inputTokens': 0}},
+                      {f'claude-auxiliary-{i}': {'inputTokens': 1} for i in range(9)}):
+            with self.subTest(usage=usage):
+                owner, record = self.record(models=('claude-opus-5-5',), usage=usage)
+                self.assertEqual(record['primary_model_evidence'], {
+                    'initialization': 'claude-opus-5-5',
+                    'assistant': ['claude-opus-5-5'], 'attempt': 2})
+                self.assertEqual(record['models'], [])
+                self.assertIsNone(record['execution_attempt'])
+                self.assertEqual(record['model_evidence'], 'unknown')
+                self.assertIsNone(record['observed_effort'])
+                self.assertEqual(check.valid_selection(record, owner), record)
+                self.assertEqual(check.selection_notice(record),
+                                 ['**Model:** Opus · **Effort:** High'])
+
     def test_primary_fallback_and_conflicting_sources_are_visible(self):
         for models, transform, expected in (
                 (('claude-sonnet-4-6',), None, 'primary model mismatch (Sonnet 4.6 observed)'),
