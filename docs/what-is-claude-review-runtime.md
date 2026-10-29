@@ -1,10 +1,10 @@
 # What is Claude Review Runtime?
 
-Imagine proposing a change to an app and having Claude automatically look over
-its code. Claude can flag potential problems before anyone accepts the change.
-The Claude Code Action already offers code review; Claude Review Runtime builds
-on it to coordinate reviews and make their progress and results easier to
-understand.
+Developers can add Claude Review Runtime to a GitHub project to have Claude
+automatically review proposed code changes. Claude can flag potential problems
+before anyone accepts a change. The Claude Code Action already offers code
+review; Runtime builds on it to coordinate reviews and make their progress and
+results easier to understand.
 
 ## Did Claude review this version?
 
