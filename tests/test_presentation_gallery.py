@@ -184,7 +184,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn("This is not merge approval.", raw)
             elif case_id == "compact-differing-baseline":
                 self.assertIn("Claude Review: No findings. 🎉", raw)
-                self.assertIn(gallery.check.TARGET_TIP_WARNING, raw.split("<details>")[0])
+                self.assertNotIn(gallery.check.TARGET_TIP_WARNING, raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
                 self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** " + gallery.check.commit_link(gallery.fixtures.BASE_TIP, gallery.fixtures.REPO), raw)

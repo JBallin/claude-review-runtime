@@ -2427,7 +2427,7 @@ class ManualCompletionTests(ScriptTestCase):
                 self.assertFalse(self.calls("POST"))
                 self.assertIn("superseded review snapshot", result.stdout)
 
-    def test_direct_base_difference_preserves_check_and_qualifies_clean_notice(self):
+    def test_direct_base_difference_preserves_check_and_clean_receipt_provenance(self):
         rules = self.clean_rules()
         rules.append(base_tip_rule("main", OTHER))
         result = self.run_manual(rules)
@@ -2438,7 +2438,7 @@ class ManualCompletionTests(ScriptTestCase):
         body = self.calls("POST")[0]["body"]["body"]
         self.assertIn(f"/commit/{BASE_TIP}", body)
         self.assertIn(f"/commit/{OTHER}", body)
-        self.assertIn(check.TARGET_TIP_WARNING, body)
+        self.assertNotIn(check.TARGET_TIP_WARNING, body)
         self.assertIn("**Observed target commit:** " + check.commit_link(OTHER, REPO), body)
         self.assertNotIn(check.CAPTURED_PATCH_SCOPE, body)
 

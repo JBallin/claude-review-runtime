@@ -776,8 +776,6 @@ Claude Review: No findings. 🎉
 
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
 
-⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed.
-
 <details>
 <summary>ℹ️ Details</summary>
 

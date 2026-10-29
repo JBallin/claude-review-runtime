@@ -93,9 +93,10 @@ After a verified clean manual review and successful Check publication, trusted
 finalization may add 👍 and a completion notice even when the validated target
 tip differs from the captured baseline. The notice identifies its captured head,
 base commit, and workflow run. When the observed target differs from the reviewed
-baseline, the notice also warns that integration with that target has not been
-reviewed. Matching-baseline notices omit that warning. Automatic
-reviews update the shared status comment without adding a separate completion notice.
+baseline, the notice records that target snapshot in Details. The shared status
+comment carries the warning that integration with the current target has not been
+reviewed. Automatic reviews update the shared status comment without adding a
+separate completion notice.
 Reserve this runtime's namespaced comment markers for its trusted publication jobs.
 
 Completion notices are historical information, not review authority or merge

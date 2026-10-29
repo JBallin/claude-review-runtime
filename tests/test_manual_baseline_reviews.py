@@ -108,12 +108,41 @@ class ManualBaselineTests(unittest.TestCase):
                 self.assertIn(HEAD, body)
                 self.assertIn(MERGE_BASE, body)
                 self.assertEqual(self.api.base_tip, OTHER)
-                warning = ("⚠️ The target branch differs from the reviewed baseline. "
-                           "Integration with its current version hasn’t been reviewed.")
+                self.assertIn(check.TARGET_TIP_WARNING, self.api.status["body"].split("<details>")[0])
+                self.assertNotIn(check.TARGET_TIP_WARNING, body)
+                self.assertIn("Claude Review: No findings. 🎉", body)
+                self.assertIn("**Reviewed commit:** " + check.commit_link(HEAD, REPO), body)
+                self.assertIn("**Observed target commit:** " + check.commit_link(OTHER, REPO), body)
+                self.assertNotIn("**Current target commit:**", body)
                 for rendered in (self.api.status["body"], body):
-                    self.assertIn(warning, rendered.split("<details>")[0])
                     self.assertNotIn("has changed since this review", rendered)
                 self.assertNotIn("approved", body.lower())
+
+    def test_refresh_and_repeat_leave_historical_receipts_unchanged(self):
+        for kind in ("issue_comment", "pull_request_review_comment"):
+            for legacy in (False, True):
+                with self.subTest(kind=kind, legacy=legacy):
+                    self.reset_manual(kind)
+                    owner = self.start()
+                    self.api.base_tip = OTHER
+                    self.finish()
+                    self.notice()
+                    if legacy:
+                        # Simulate an already-published receipt from the previous renderer.
+                        self.api.notices[0]["body"] = self.api.notices[0]["body"].replace(
+                            "<details>", check.TARGET_TIP_WARNING + "\n\n<details>", 1)
+                    original = copy.deepcopy(self.api.notices)
+                    self.api.base_tip = NEWER
+                    self.api.calls.clear()
+                    check.cmd_stale()
+                    self.assert_qualified_completion(owner)
+                    self.finish(when=LATER)
+                    self.notice()
+                    self.assertEqual(self.api.notices, original)
+                    self.assertFalse(any(method == "POST" and path.endswith("/issues/7/comments")
+                                         for method, path, _ in self.api.calls))
+                    self.assertFalse(any(method == "PATCH" and path.endswith("/comments/88")
+                                         for method, path, _ in self.api.calls))
 
     def test_projection_catching_up_during_direct_lookup_preserves_captured_patch(self):
         owner = self.start()
