@@ -196,7 +196,7 @@ class IncompletePresentationTests(unittest.TestCase):
                     self.assertIn(context.INCOMPLETE_RECOVERY, visible)
                     self.assertNotIn("expected", visible)
                     if changed:
-                        self.assertIn("may prevent", visible)
+                        self.assertIn("The cause of this incomplete review is unknown.", visible)
                         self.assertIn("/actions/runs/5/attempts/1", visible)
 
     def test_conflicting_or_unavailable_skip_signal_never_claims_rejection(self):
