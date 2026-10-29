@@ -93,10 +93,13 @@ the Files changed diff into PR comments or the description. Keep all samples
 synthetic and free of reviewer invocation text.
 
 For that GitHub-rendered check, inspect the gallery at desktop (about 1280 px)
-and narrow (about 390 px) widths with every Details section collapsed and expanded. Check
-spacing, tables, warnings, identity labels, link targets, and hidden-receipt
-suppression. Record observed results, actual widths, and inspected revision in
-the PR description. Markdown generation alone does not complete visual QA.
+and narrow (about 390 px) widths. Check Details collapsed and expanded for changed
+or affected states plus representative unchanged cases. Check every section when
+a shared renderer or layout change could affect the whole gallery. Check spacing,
+tables, warnings, identity labels, link targets, and hidden-receipt suppression.
+Record the inspected scenarios, coverage rationale, observed results, actual
+widths, and inspected revision in the PR description. Markdown generation alone
+does not complete visual QA.
 Routine read-only QA of this repository's local or public synthetic gallery is
 included in an already authorized engineering task: desktop/narrow sizing,
 opening and closing Details, and screenshots do not need repeated separate
