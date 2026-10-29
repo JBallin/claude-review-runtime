@@ -215,14 +215,14 @@ class ManualBaselineTests(unittest.TestCase):
 
     def test_selection_survives_standing_status_receipt_and_stale_refresh(self):
         for model, expected in (
-                ('claude-opus-5-5', '**Model:** Opus · **Effort:** high'),
+                ('claude-opus-5-5', '**Model:** Opus · **Effort:** High'),
                 ('claude-sonnet-4-6', 'primary model mismatch (Sonnet 4.6 observed)'),
                 (None, 'primary model evidence missing')):
             with self.subTest(model=model):
                 self.reset_manual()
                 os.environ['TRIGGER_COMMENT'] = '/claude-review opus effort high'
                 owner = self.start()
-                self.assertIn('**Model:** Opus · **Effort:** high', self.api.status['body'])
+                self.assertIn('**Model:** Opus · **Effort:** High', self.api.status['body'])
                 record = check.selection_record(owner)
                 if model:
                     record.update(models=sorted(['claude-haiku-4-5', model]),

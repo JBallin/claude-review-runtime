@@ -114,7 +114,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 with self.subTest(case_id=case_id, multiline_comment=bool(hidden)):
                     visible = re.sub(r'<!--.*?-->', '', (hidden + cases[case_id]).split('<details>')[0],
                                      flags=re.DOTALL)
-                    self.assertIn('**Model:** Opus · **Effort:** high', visible)
+                    self.assertIn('**Model:** Opus · **Effort:** High', visible)
                     self.assertNotIn('Haiku', visible)
                     self.assertNotIn('evidence', visible)
         for case_id, exception in (('opus-mismatch', 'primary model mismatch'),
@@ -132,7 +132,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIsNone(mixed['observed_effort'])
         receipt = cases['selection-receipt'].split('<details>')[0]
         self.assertIn('**Reviewed commit:** ' + gallery.check.commit_link(gallery.fixtures.HEAD,
-                      gallery.fixtures.REPO) + '\n\n**Model:** Opus · **Effort:** high\n\n', receipt)
+                      gallery.fixtures.REPO) + '\n\n**Model:** Opus · **Effort:** High\n\n', receipt)
 
     def test_current_findings_completion_has_current_commit_run_and_evidence(self):
         check = gallery.check

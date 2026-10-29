@@ -698,7 +698,7 @@ def selection_notice(record, *, running=False):
         prefix = "⚠️ " if value != "Opus" else ""
         parts.append(prefix + "**Model:** " + value)
     if record["requested_effort"]:
-        parts.append("**Effort:** " + record["requested_effort"])
+        parts.append("**Effort:** " + record["requested_effort"].capitalize())
     return [" · ".join(parts)] if parts else []
 
 

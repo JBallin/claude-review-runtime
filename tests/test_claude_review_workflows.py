@@ -1143,9 +1143,11 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         owner = presentation_owner(repo=REPO, kind="issue_comment", target=12)
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
                  "body": check.STATUS_MARKER}
-        for command, expected in (("/claude-review opus effort high", "**Effort:** high"),
-                                  ("/claude-review", None),
-                                  ("/claude-review opus; echo bad", None)):
+        cases = [("/claude-review opus effort " + effort, "**Effort:** " + display)
+                 for effort, display in (("low", "Low"), ("medium", "Medium"),
+                                         ("high", "High"), ("xhigh", "Xhigh"), ("max", "Max"))]
+        for command, expected in cases + [("/claude-review", None),
+                                           ("/claude-review opus; echo bad", None)]:
             result, calls = self.run_fallback(MANUAL,
                 {"GET": [{"stdout": pr_identity()}, {"stdout": json.dumps(owned)}]},
                 OWNER_FIXTURE=owner, STATUS_COMMENT_ID="55", PR_NUMBER="7",
@@ -1159,6 +1161,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertIn(expected, body.split("<details>")[0])
                 record = check.current_selection(owner, {"body": body})
                 self.assertEqual(record["requested_model"], "opus")
+                self.assertEqual(record["requested_effort"], command.rsplit(" ", 1)[1])
+                self.assertIsNone(record["observed_effort"])
                 self.assertEqual(record["models"], [])
                 self.assertIsNone(record["execution_attempt"])
             else:
