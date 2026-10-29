@@ -126,10 +126,12 @@ class SelectionTests(unittest.TestCase):
             'initialization': 'claude-opus-5-5', 'assistant': ['claude-opus-5-5'], 'attempt': 2})
         self.assertIsNone(record['observed_effort'])
         body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
-        visible = re.sub(r'<!--.*?-->', '', body.split('<details>')[0])
-        self.assertIn('**Model:** Opus · **Effort:** high', visible)
-        self.assertNotIn('Haiku', visible)
-        self.assertNotIn('requested', visible)
+        for hidden in ('', '<!--\nHaiku requested by an auxiliary call\n-->\n'):
+            with self.subTest(multiline_comment=bool(hidden)):
+                visible = re.sub(r'<!--.*?-->', '', (hidden + body).split('<details>')[0], flags=re.DOTALL)
+                self.assertIn('**Model:** Opus · **Effort:** high', visible)
+                self.assertNotIn('Haiku', visible)
+                self.assertNotIn('requested', visible)
         self.assertEqual(check.current_selection(owner, {'body': body}), record)
 
     def test_primary_fallback_and_conflicting_sources_are_visible(self):

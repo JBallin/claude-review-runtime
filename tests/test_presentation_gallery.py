@@ -110,16 +110,19 @@ class PresentationGalleryTests(unittest.TestCase):
     def test_selected_model_views_distinguish_primary_evidence_from_usage(self):
         cases = dict(sample_items())
         for case_id in ('selection-running', 'opus-observed', 'opus-multiple', 'selection-receipt'):
-            visible = re.sub(r'<!--.*?-->', '', cases[case_id].split('<details>')[0])
-            self.assertIn('**Model:** Opus · **Effort:** high', visible)
-            self.assertNotIn('Haiku', visible)
-            self.assertNotIn('evidence', visible)
+            for hidden in ('', '<!--\nAuxiliary Haiku model evidence\n-->\n'):
+                with self.subTest(case_id=case_id, multiline_comment=bool(hidden)):
+                    visible = re.sub(r'<!--.*?-->', '', (hidden + cases[case_id]).split('<details>')[0],
+                                     flags=re.DOTALL)
+                    self.assertIn('**Model:** Opus · **Effort:** high', visible)
+                    self.assertNotIn('Haiku', visible)
+                    self.assertNotIn('evidence', visible)
         for case_id, exception in (('opus-mismatch', 'primary model mismatch'),
                                    ('selection-receipt-mismatch', 'primary model mismatch'),
                                    ('opus-unknown', 'primary model evidence missing'),
                                    ('opus-legacy', 'primary model evidence missing'),
                                    ('opus-ambiguous', 'primary model evidence ambiguous')):
-            visible = re.sub(r'<!--.*?-->', '', cases[case_id].split('<details>')[0])
+            visible = re.sub(r'<!--.*?-->', '', cases[case_id].split('<details>')[0], flags=re.DOTALL)
             self.assertIn('⚠️ **Model:** Opus selected; ' + exception, visible)
         mixed = gallery.check.current_selection(
             gallery.fixtures.presentation_owner(kind='issue_comment', target=12, started=gallery.STARTED),
