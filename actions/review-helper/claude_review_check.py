@@ -1786,7 +1786,8 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     observed_tip = ""
     if observed_base_sha and observed_base_sha != base_sha:
         observed_tip = (f"  \n**Observed target commit:** {commit_link(observed_base_sha, repo)} "
-                        f"on {inline_code(base_ref)}")
+                        f"on {inline_code(base_ref)}\n\n"
+                        "The observed target differed from the reviewed baseline.")
     return (
         f"{marker}\n"
         "Claude Review: No findings. 🎉\n\n"

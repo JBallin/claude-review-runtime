@@ -110,6 +110,9 @@ class ManualBaselineTests(unittest.TestCase):
                 self.assertEqual(self.api.base_tip, OTHER)
                 self.assertIn(check.TARGET_TIP_WARNING, self.api.status["body"].split("<details>")[0])
                 self.assertNotIn(check.TARGET_TIP_WARNING, body)
+                visible, details = body.split("<details>", 1)
+                self.assertNotIn("The observed target differed", visible)
+                self.assertIn("The observed target differed from the reviewed baseline.", details)
                 self.assertIn("Claude Review: No findings. 🎉", body)
                 self.assertIn("**Reviewed commit:** " + check.commit_link(HEAD, REPO), body)
                 self.assertIn("**Observed target commit:** " + check.commit_link(OTHER, REPO), body)
@@ -120,15 +123,19 @@ class ManualBaselineTests(unittest.TestCase):
 
     def test_refresh_and_repeat_leave_historical_receipts_unchanged(self):
         for kind in ("issue_comment", "pull_request_review_comment"):
-            for legacy in (False, True):
-                with self.subTest(kind=kind, legacy=legacy):
+            for receipt_format in ("current", "without_note", "legacy_warning"):
+                with self.subTest(kind=kind, receipt_format=receipt_format):
                     self.reset_manual(kind)
                     owner = self.start()
                     self.api.base_tip = OTHER
                     self.finish()
                     self.notice()
-                    if legacy:
-                        # Simulate an already-published receipt from the previous renderer.
+                    if receipt_format != "current":
+                        # Earlier receipts did not have the historical Details note.
+                        self.api.notices[0]["body"] = self.api.notices[0]["body"].replace(
+                            "\n\nThe observed target differed from the reviewed baseline.", "")
+                    if receipt_format == "legacy_warning":
+                        # Simulate an already-published receipt from the original renderer.
                         self.api.notices[0]["body"] = self.api.notices[0]["body"].replace(
                             "<details>", check.TARGET_TIP_WARNING + "\n\n<details>", 1)
                     original = copy.deepcopy(self.api.notices)
@@ -172,6 +179,29 @@ class ManualBaselineTests(unittest.TestCase):
                     self.assert_qualified_completion(owner, state)
                     self.assertIn("Findings", self.api.status["body"])
                     self.assertNotIn("reviewed clean", self.api.status["body"])
+
+    def test_receipt_baseline_note_is_conditional_and_details_only(self):
+        note = "The observed target differed from the reviewed baseline."
+        marker = check.completion_marker(REPO, 7, HEAD, "main", BASE_TIP, MERGE_BASE)
+        for observed in (None, "", BASE_TIP, OTHER, NEWER, MERGE_BASE):
+            with self.subTest(observed=observed):
+                body = check.completion_comment_body(
+                    REPO, HEAD, "main", BASE_TIP, marker, os.environ["DETAILS_URL"],
+                    observed_base_sha=observed)
+                visible, details = body.split("<details>", 1)
+                self.assertEqual(visible, marker + "\nClaude Review: No findings. 🎉\n\n"
+                                 + "**Reviewed commit:** " + check.commit_link(HEAD, REPO) + "\n\n")
+                self.assertNotIn(check.TARGET_TIP_WARNING, body)
+                self.assertNotIn("**Current target commit:**", body)
+                self.assertIn("**[Reviewed](" + os.environ["DETAILS_URL"] + ") against:** "
+                              + check.commit_link(BASE_TIP, REPO), details)
+                if observed and observed != BASE_TIP:
+                    self.assertEqual(body.count(note), 1)
+                    self.assertIn("**Observed target commit:** " + check.commit_link(observed, REPO)
+                                  + " on `main`\n\n" + note + "\n\n</details>", details)
+                else:
+                    self.assertNotIn(note, body)
+                    self.assertNotIn("**Observed target commit:**", body)
 
     def test_matching_baseline_notice_links_immutable_patch_without_generic_qualification(self):
         self.start()

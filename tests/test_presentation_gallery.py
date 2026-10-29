@@ -176,6 +176,7 @@ class PresentationGalleryTests(unittest.TestCase):
             elif case_id == "incomplete-unknown":
                 self.assertIn("| Attempt commit |", raw)
             elif case_id == "compact-clean":
+                self.assertNotIn("The observed target differed from the reviewed baseline.", raw)
                 self.assertIn("Claude Review: No findings. 🎉", raw)
                 self.assertIn("**Reviewed commit:**", raw)
                 self.assertNotIn(gallery.check.TARGET_TIP_WARNING, raw)
@@ -183,6 +184,9 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
             elif case_id == "compact-differing-baseline":
+                visible, details = raw.split("<details>", 1)
+                self.assertNotIn("The observed target differed", visible)
+                self.assertEqual(details.count("The observed target differed from the reviewed baseline."), 1)
                 self.assertIn("Claude Review: No findings. 🎉", raw)
                 self.assertNotIn(gallery.check.TARGET_TIP_WARNING, raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
