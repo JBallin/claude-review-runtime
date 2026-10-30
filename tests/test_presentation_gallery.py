@@ -33,9 +33,9 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 52)
+        self.assertEqual(len(gallery.gallery_samples()), 56)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 53)))
+                         list(range(1, 57)))
         # This committed audit file is not posted as one GitHub comment.
         self.assertLess(len(body.encode("utf-8")), 200_000)
 
@@ -62,7 +62,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 54)))
+                         list(range(1, 58)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [case.case_id for case in changed_order])
 
@@ -97,16 +97,43 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 50)
-        self.assertEqual(completion.call_count, 2)
+        self.assertEqual(status.call_count, 52)
+        self.assertEqual(completion.call_count, 4)
         self.assertEqual([call.kwargs["observed_base_sha"] for call in completion.call_args_list],
-                         [gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
+                         [gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER])
         body = gallery.render_gallery()
         for case in samples:
             case_id, raw = case.case_id, case.body
             with self.subTest(case_id=case_id):
                 self.assertIn(gallery.sample_markdown(raw), body)
                 self.assertTrue("claude-review-runtime:" in raw)
+
+    def test_selected_model_views_distinguish_primary_evidence_from_usage(self):
+        cases = dict(sample_items())
+        for case_id in ('selection-running', 'opus-observed', 'opus-multiple', 'selection-receipt'):
+            for hidden in ('', '<!--\nAuxiliary Haiku model evidence\n-->\n'):
+                with self.subTest(case_id=case_id, multiline_comment=bool(hidden)):
+                    visible = re.sub(r'<!--.*?-->', '', (hidden + cases[case_id]).split('<details>')[0],
+                                     flags=re.DOTALL)
+                    self.assertIn('**Model:** Opus · **Effort:** High', visible)
+                    self.assertNotIn('Haiku', visible)
+                    self.assertNotIn('evidence', visible)
+        for case_id, exception in (('opus-mismatch', 'primary model mismatch'),
+                                   ('selection-receipt-mismatch', 'primary model mismatch'),
+                                   ('opus-unknown', 'primary model evidence missing'),
+                                   ('opus-legacy', 'primary model evidence missing'),
+                                   ('opus-ambiguous', 'primary model evidence ambiguous')):
+            visible = re.sub(r'<!--.*?-->', '', cases[case_id].split('<details>')[0], flags=re.DOTALL)
+            self.assertIn('⚠️ **Model:** Opus selected; ' + exception, visible)
+        mixed = gallery.check.current_selection(
+            gallery.fixtures.presentation_owner(kind='issue_comment', target=12, started=gallery.STARTED),
+            {'body': cases['opus-multiple']})
+        self.assertEqual(mixed['models'], ['claude-haiku-4-5', 'claude-opus-5-5'])
+        self.assertEqual(mixed['primary_model_evidence']['assistant'], ['claude-opus-5-5'])
+        self.assertIsNone(mixed['observed_effort'])
+        receipt = cases['selection-receipt'].split('<details>')[0]
+        self.assertIn('**Reviewed commit:** ' + gallery.check.commit_link(gallery.fixtures.HEAD,
+                      gallery.fixtures.REPO) + '\n\n**Model:** Opus · **Effort:** High\n\n', receipt)
 
     def test_current_findings_completion_has_current_commit_run_and_evidence(self):
         check = gallery.check
