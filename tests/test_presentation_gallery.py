@@ -33,9 +33,9 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 62)
+        self.assertEqual(len(gallery.gallery_samples()), 63)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 63)))
+                         list(range(1, 64)))
         # This committed audit file is not posted as one GitHub comment.
         self.assertLess(len(body.encode("utf-8")), 200_000)
 
@@ -62,7 +62,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 64)))
+                         list(range(1, 65)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [case.case_id for case in changed_order])
 
@@ -97,7 +97,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 57)
+        self.assertEqual(status.call_count, 58)
         self.assertEqual(completion.call_count, 5)
         self.assertEqual([call.kwargs.get("observed_base_sha") for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER, None])
@@ -162,6 +162,20 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn('primary model evidence missing', main)
         self.assertIn('**Effort:** High', details)
         self.assertNotIn('**Model:**', details)
+
+    def test_inherited_model_conflict_stays_in_receipts_without_a_visible_model_warning(self):
+        raw = dict(sample_items())['inherited-model-ambiguous']
+        main, details = raw.split('<details>', 1)
+        visible = re.sub(r'<!--.*?-->', '', main, flags=re.DOTALL)
+        self.assertNotIn('**Model:**', visible + details)
+        self.assertNotIn('primary model evidence ambiguous', visible)
+        self.assertNotIn('**Effort:**', visible)
+        self.assertIn('**Effort:** High', details)
+        with mock.patch.dict(os.environ, {}, clear=True):
+            comment = {'body': raw, 'user': {'login': 'github-actions[bot]', 'type': 'Bot'}}
+            record = gallery.check.current_selection(gallery.check.status_owner(comment), comment)
+        self.assertEqual(record['primary_model_evidence']['assistant'],
+                         ['claude-opus-5-5', 'claude-sonnet-5-5'])
 
     def test_current_and_previous_settings_remain_bound_to_their_generations(self):
         raw = dict(sample_items())['running-history-clean']

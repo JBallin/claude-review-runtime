@@ -158,6 +158,8 @@ def gallery_samples():
             GallerySample("selection-incomplete", "current-completion", "Incomplete with explicit selection", selected([], "unknown", None, state="failure")),
             GallerySample("plain-selection", "current-completion", "Plain manual request", selected(["claude-sonnet-5-5"], model="", effort="")),
             GallerySample("effort-only", "current-completion", "Effort-only request", selected(["claude-sonnet-5-5"], model="")),
+            GallerySample("inherited-model-ambiguous", "current-completion", "Effort-only request with conflicting inherited model evidence", selected(
+                ["claude-opus-5-5", "claude-sonnet-5-5"], model="")),
             GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-5-5"])),
             GallerySample("opus-mismatch", "current-completion", "Completed review with model mismatch", selected(["claude-sonnet-5-5"])),
             GallerySample("opus-unknown", "current-completion", "Completed review with unknown model", selected([], "unknown", None)),

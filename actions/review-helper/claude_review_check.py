@@ -823,7 +823,7 @@ def selection_notice(record, *, running=False):
     prefix = selected.title() + " selected; " if selected else ""
     if not models and selected and not running:
         value = prefix + "primary model evidence missing"
-    elif len(models) > 1:
+    elif len(models) > 1 and selected:
         value = prefix + "primary model evidence ambiguous (" + ", ".join(model_label(m) for m in models) + ")"
     elif models and selected and not models[0].startswith("claude-" + selected + "-"):
         value = prefix + "primary model mismatch (" + model_label(models[0]) + " observed)"

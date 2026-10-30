@@ -248,6 +248,63 @@ class RepositoryConfigurationTests(unittest.TestCase):
         self.assertIn("**Model:** Sonnet 5.5", details)
         self.assertNotIn("**Effort:**", body)
 
+    def test_conflicting_inherited_model_evidence_stays_quiet_without_losing_effort(self):
+        for body, default_effort, effort in (
+                (None, "", ""), (None, "medium", "medium"),
+                ("/claude-review", "", ""), ("/claude-review", "medium", "medium"),
+                ("/claude-review effort high", "", "high"),
+                ("/claude-review effort high", "medium", "high")):
+            with self.subTest(body=body, default_effort=default_effort):
+                automatic = body is None
+                owner = presentation_owner() if automatic else presentation_owner(kind="issue_comment", target=12)
+                config = check.resolve_configuration(body, "", default_effort, automatic=automatic)
+                record = self.record(config, owner=owner, model="claude-opus-5-5")
+                models = ["claude-opus-5-5", "claude-sonnet-5-5"]
+                record["models"] = models
+                record["primary_model_evidence"]["assistant"] = models
+                original = copy.deepcopy(record)
+                self.assertEqual(check.valid_selection(record, owner), record)
+                self.assertEqual(check.primary_selection_models(record), models)
+                for running in (False, True):
+                    self.assertEqual(check.selection_notice(record, running=running), [])
+                self.assertEqual(check.selection_details(record),
+                                 ["**Effort:** " + effort.capitalize()] if effort else [])
+                for state in ("in_progress", "success"):
+                    rendered = check.status_comment_body(HEAD, "main", state, owner=owner, selection=record)
+                    main, details = rendered.split("<details>", 1)
+                    self.assertNotIn("**Model:**", main + details)
+                    self.assertNotIn("primary model evidence ambiguous", main)
+                    self.assertNotIn("**Effort:**", main)
+                    if effort:
+                        self.assertIn("**Effort:** " + effort.capitalize(), details)
+                    else:
+                        self.assertNotIn("**Effort:**", details)
+                    self.assertEqual(check.current_selection(owner, {"body": rendered}), original)
+                if not automatic:
+                    receipt = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, "", "", selection=record)
+                    self.assertNotIn("**Model:**", receipt)
+                    self.assertNotIn("primary model evidence ambiguous", receipt)
+                    if effort:
+                        self.assertIn("**Effort:** " + effort.capitalize(), receipt.split("<details>", 1)[1])
+                self.assertEqual(record, original)
+
+    def test_repository_and_manual_model_selections_still_warn_on_primary_conflict(self):
+        for body, default_model in ((None, "sonnet"), ("/claude-review", "sonnet"),
+                                    ("/claude-review opus", "")):
+            with self.subTest(body=body, default_model=default_model):
+                automatic = body is None
+                owner = presentation_owner() if automatic else presentation_owner(kind="issue_comment", target=12)
+                config = check.resolve_configuration(body, default_model, "high", automatic=automatic)
+                record = self.record(config, owner=owner, model="claude-opus-5-5")
+                record["models"] = ["claude-opus-5-5", "claude-sonnet-5-5"]
+                record["primary_model_evidence"]["assistant"] = list(record["models"])
+                warning = config["requested_model"].title() + " selected; primary model evidence ambiguous"
+                for running in (False, True):
+                    self.assertIn(warning, check.selection_notice(record, running=running)[0])
+                rendered = check.status_comment_body(HEAD, "main", "success", owner=owner, selection=record)
+                self.assertIn(warning, rendered.split("<details>", 1)[0])
+                self.assertIn("**Completed**", rendered)
+
     def test_alias_version_advancement_is_valid_but_primary_mismatch_stays_visible(self):
         config = check.resolve_configuration(None, "haiku", "max", automatic=True)
         owner = presentation_owner()
