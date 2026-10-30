@@ -49,7 +49,7 @@ class GallerySample(NamedTuple):
 # Reading order is separate from stable case identities and display numbers.
 GROUP_ORDER = (
     "current-completion", "baseline-completion", "changed-head", "incomplete",
-    "compact-completion", "running-history", "incomplete-history", "retargeted",
+    "compact-completion", "manual-recovery", "running-history", "incomplete-history", "retargeted",
     "publication-incomplete", "publication-unavailable", "running-unavailable",
     "shared-run", "legacy-history", "stale-running",
 )
@@ -65,7 +65,7 @@ def fixture_environment():
         "BASE_SHA": fixtures.BASE_TIP,
         "DETAILS_URL": "https://github.com/owner/repo/actions/runs/5",
         "GITHUB_SERVER_URL": "https://github.com",
-        "RUNTIME_REPOSITORY": "owner/runtime",
+        "RUNTIME_REPOSITORY": "JBallin/claude-review-runtime",
         "RUNTIME_SHA": "f" * 40,
         "RUNTIME_WORKFLOW_PATH": ".github/workflows/claude.yml",
     })
@@ -91,6 +91,7 @@ def gallery_samples():
             "completed_at": COMPLETED_AT,
             "trigger": "PR opened for review",
             "generation": owner["generation"],
+            "runtime": check.executing_runtime(),
         }
 
         def status(state, *, head=fixtures.HEAD, base_ref="main", **options):
@@ -99,6 +100,7 @@ def gallery_samples():
                     "owner": owner,
                     "trigger_label": "PR opened for review",
                     "completed_at": COMPLETED_AT,
+                    "runtime": check.executing_runtime() if options.get("owner", owner) else None,
                     **options,
                 }
             )
@@ -119,7 +121,7 @@ def gallery_samples():
                       "model_evidence": evidence, "execution_attempt": attempt, "observed_effort": None}
             return check.status_comment_body(fixtures.HEAD, "main", state, owner=manual_owner,
                                             trigger_label="Manual request", completed_at=COMPLETED_AT,
-                                            selection=record, **options)
+                                            selection=record, runtime=check.executing_runtime(), **options)
         samples = [
             GallerySample("selection-running", "current-completion", "Running with explicit selection", selected([], "unknown", None, state="in_progress")),
             GallerySample("selection-findings", "current-completion", "Findings with explicit selection", selected(["claude-opus-5-5"], state="action_required")),
@@ -157,6 +159,17 @@ def gallery_samples():
                 "https://github.com/owner/repo/actions/runs/5",
                 observed_base_sha=fixtures.OTHER)),
         ]
+        # This fixture explicitly supplies the pin-change context. Generic manual
+        # receipts know the executed Runtime, but cannot infer a proposed pin.
+        samples.append(GallerySample(
+            "manual-pin-recovery", "manual-recovery", "Manual recovery after a Runtime pin change (synthetic)",
+            "**Synthetic recovery context:** The captured caller changes its Runtime pin "
+            "from `fffffff` to `9999999`. This review used the deployed Runtime; "
+            "it did not execute the proposed pin.\n\n" + check.completion_comment_body(
+                fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
+                check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
+                                        fixtures.BASE_TIP, fixtures.MERGE_BASE),
+                "https://github.com/owner/repo/actions/runs/5")))
         newer_owner = fixtures.presentation_owner(
             head=fixtures.OTHER, base=fixtures.NEWER, run=6,
             started=STARTED + 600_000_000_000,
@@ -261,7 +274,8 @@ def sample_markdown(body):
 def render_gallery():
     sections = ["\n\n".join([
         f"# {HEADING}",
-        "All sample repository, commit, run, and timestamp identities are synthetic. "
+        "All sample revisions, runs, timestamps, and consumer repositories are synthetic. "
+        "Runtime repository names identify this project; their sample revisions are synthetic. "
         "Sample links may intentionally have no live destination. The raw Markdown "
         "retains complete synthetic production metadata for auditing.",
         f"Generated with `{REGENERATE}`. Edit the generator or sample inputs, then regenerate.",

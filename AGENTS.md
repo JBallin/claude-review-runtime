@@ -100,6 +100,7 @@ tables, warnings, identity labels, link targets, and hidden-receipt suppression.
 Record the inspected scenarios, coverage rationale, observed results, actual
 widths, and inspected revision in the PR description. Markdown generation alone
 does not complete visual QA.
+
 Routine read-only QA of this repository's local or public synthetic gallery is
 included in an already authorized engineering task: desktop/narrow sizing,
 opening and closing Details, and screenshots do not need repeated separate

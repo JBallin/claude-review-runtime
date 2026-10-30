@@ -745,6 +745,46 @@ def workflow_path(value):
     return path if WORKFLOW.fullmatch(path) else None
 
 
+def runtime_provenance(repository, sha, path):
+    path = workflow_path(path)
+    if (isinstance(repository, str) and REPOSITORY.fullmatch(repository)
+            and isinstance(sha, str) and SHA.fullmatch(sha) and path):
+        return {"runtime_repository": repository, "runtime_sha": sha, "runtime_workflow_path": path}
+    return None
+
+
+def executing_runtime():
+    return runtime_provenance(env("RUNTIME_REPOSITORY"), env("RUNTIME_SHA"), env("RUNTIME_WORKFLOW_PATH"))
+
+
+def runtime_used_line(runtime):
+    if not isinstance(runtime, dict):
+        return None
+    runtime = runtime_provenance(runtime.get("runtime_repository"), runtime.get("runtime_sha"),
+                                 runtime.get("runtime_workflow_path"))
+    if not runtime:
+        return None
+    repo, sha, path = (runtime[key] for key in ("runtime_repository", "runtime_sha", "runtime_workflow_path"))
+    return f"**Runtime used:** [{inline_code(repo + '@' + sha[:7])}](https://github.com/{repo}/blob/{sha}/{path})"
+
+
+def rendered_runtime(body):
+    """Read one canonical provenance line only from an already trusted status section."""
+    lines = [line for line in body.splitlines() if line.startswith("**Runtime used:**")]
+    if len(lines) != 1:
+        return None
+    match = re.fullmatch(r"\*\*Runtime used:\*\* \[.*\]\(https://github.com/([^/]+/[^/]+)/blob/([0-9a-f]{40})/(.+)\)", lines[0])
+    runtime = runtime_provenance(*match.groups()) if match else None
+    return runtime if runtime_used_line(runtime) == lines[0] else None
+
+
+def status_runtime(comment, owner, *, previous=False):
+    if not owner or not owned_status(comment or {}) or status_owner(comment) != owner:
+        return None
+    sections = (comment.get("body") or "").split("\n**Previous completed review**", 1)
+    return rendered_runtime(sections[1] if previous and len(sections) == 2 else "" if previous else sections[0])
+
+
 def workflow_changed(owner, runtime_repository, runtime_workflow_path, api):
     """Return True, False, or None (unknown) using at most two API reads.
 
@@ -815,11 +855,10 @@ def incomplete_explanation(reason, owner):
         return reason + f" [Recovery guidance]({UNREAD_RECOVERY})."
     if reason == STATUS_REASONS["workflow_changed"] and owner:
         run = f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}/attempts/{owner['attempt']}"
-        manual = ("If this repository has the supported trusted manual caller, an authorized user can post "
-                  "`/claude-review` on an eligible PR when no applicable review is pending or complete. ") if not stale else ""
+        manual = "Retry with `/claude-review` where supported. " if not stale else ""
         return ("⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. "
                 f"[Check this attempt’s logs]({run}) to confirm. "
-                f"{manual}[Recovery guidance]({INCOMPLETE_RECOVERY}).")
+                f"{manual}[See recovery guidance]({INCOMPLETE_RECOVERY}).")
     if reason not in STATUS_REASONS.values() or reason == STATUS_REASONS["workflow_changed"]:
         reason = STATUS_REASONS["incomplete"]
     return reason + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
@@ -846,7 +885,7 @@ def incomplete_status_reason(owner):
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
                         last_review_details=None, base_sha=None, trigger_label=None,
                         owner=None, owner_running=None, reason=None, completed_at=None,
-                        completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL, selection=None):
+                        completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL, selection=None, runtime=None):
     """Render trusted informational state without affecting Check authority."""
     messages = {
         "in_progress": "Claude is reviewing this commit.",
@@ -866,7 +905,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         last_review_details = {"base_sha": env("BASE_SHA"), "run_url": env("DETAILS_URL"),
                                "completed_at": completed_at,
                                "trigger": review_trigger(trigger_label, owner),
-                               "generation": owner["generation"] if owner else None}
+                               "generation": owner["generation"] if owner else None, "runtime": runtime}
     last_review_details = last_review_details or {}
     base_advanced = (
         state == "stale" and check_available and completed_owner_verified and owner and not owner_running
@@ -1092,6 +1131,10 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                 # Legacy history may retain a different attempt URL but no
                 # trusted attempt timing or baseline. Do not invent either.
                 metadata.insert(0, f"**[Attempt]({attempt_link}) status:** Not recorded")
+    if not show_review and runtime_used_line(runtime):
+        metadata.append(runtime_used_line(runtime))
+    if last_review and runtime_used_line(last_review_details.get("runtime")):
+        review_metadata.append(runtime_used_line(last_review_details["runtime"]))
     if metadata == ["**Current attempt**"]:
         metadata = []
     if metadata:
@@ -1195,6 +1238,10 @@ def last_completed_review_details(comment):
                 and not status_owner_running(comment)
                 and last_completed_review(comment) == (owner["head"], owner["base_ref"], state)):
             details["generation"] = owner["generation"]
+    if owned_status(comment or {}) and owner and details.get("generation"):
+        runtime = status_runtime(comment, owner, previous=details["generation"] != owner["generation"])
+        if runtime:
+            details["runtime"] = runtime
     return details
 
 
@@ -1570,6 +1617,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 write_output("presentation_outcome", "acquired")
                 return
             expected_patch = (head_sha, base_ref, env("BASE_SHA"))
+        runtime = status_runtime(existing, owner) if stale else executing_runtime()
         # A refresh has no execution verdict of its own. Preserve only this
         # owner's allowlisted terminal reason; acquisition starts a new lifecycle.
         reason = terminal_status_reason(existing, owner) if stale else None
@@ -1634,7 +1682,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 last_review = (head_sha, base_ref, state)
                 last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL"),
                                        "completed_at": completed_at, "generation": owner["generation"],
-                                       "trigger": review_trigger(trigger_label, owner)}
+                                       "trigger": review_trigger(trigger_label, owner), "runtime": runtime}
             state = "stale"
             reason = stale_status_reason(reason)
             head_sha, base_ref = live[:2]
@@ -1671,7 +1719,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                     last_review = (owner["head"], owner["base_ref"], state)
                     last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL"),
                                            "completed_at": completed_at, "generation": owner["generation"],
-                                           "trigger": review_trigger(trigger_label, owner)}
+                                           "trigger": review_trigger(trigger_label, owner), "runtime": runtime}
                 state = "stale"
                 reason = stale_status_reason(reason)
                 head_sha, base_ref = publication_patch[:2]
@@ -1691,7 +1739,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             owner_running=status_owner_running(existing) if stale else acquiring_running if state == "stale" else None,
             reason=reason, completed_at=completed_at,
             completed_owner_verified=completed_owner_verified, attempt_trigger=attempt_trigger,
-            selection=current_selection(owner, existing))}
+            selection=current_selection(owner, existing), runtime=runtime)}
         published = False
         try:
             if existing:
@@ -1791,12 +1839,8 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
         observed_tip = (f"  \n**Observed target commit:** {commit_link(observed_base_sha, repo)} "
                         f"on {inline_code(base_ref)}\n\n"
                         "The observed target differed from the reviewed baseline.")
-    runtime_repo, runtime_sha = env("RUNTIME_REPOSITORY"), env("RUNTIME_SHA")
-    runtime_path = workflow_path(env("RUNTIME_WORKFLOW_PATH"))
-    runtime_used = ""
-    if REPOSITORY.fullmatch(runtime_repo) and SHA.fullmatch(runtime_sha) and runtime_path:
-        runtime_used = (f"\n\n**Runtime used:** [{inline_code(runtime_repo + '@' + runtime_sha[:7])}]"
-                        f"(https://github.com/{runtime_repo}/blob/{runtime_sha}/{runtime_path})")
+    runtime_line = runtime_used_line(executing_runtime())
+    runtime_used = "\n\n" + runtime_line if runtime_line else ""
     return (
         f"{marker}\n"
         "Claude Review: No findings. 🎉\n\n"

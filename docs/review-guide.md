@@ -331,9 +331,15 @@ Runtime revision in the resulting Check and workflow run. A pin update alone
 does not require manual review, and a manual request is not guaranteed to succeed.
 
 Distinguish the PR's proposed pin from the caller and Runtime actually executing
-each attempt. Manual receipt Details link the exact **Runtime used**; the Check's
+each attempt. Status and manual receipt Details link the exact **Runtime used** when trusted
+provenance is available; unknown provenance is omitted. Status refreshes retain
+the recorded attempt’s Runtime rather than substituting the refresher’s revision. The Check's
 `runtime_repository`, `runtime_sha`, and `runtime_workflow_path` retain the same
 provenance. Inspect the linked run's caller and referenced workflows as needed.
+Runtime metadata alone does not identify a pin-change recovery. Compare the
+captured pin change with that attempt's executed revision before concluding
+that the deployed Runtime ran instead of the proposed pin. Generic manual
+receipts do not make this inference.
 A deployed manual caller can execute its previously installed Runtime while
 reviewing the proposed patch. A clean review through that older revision does
 not establish live adoption of the proposed pin. Automatic and manual attempts

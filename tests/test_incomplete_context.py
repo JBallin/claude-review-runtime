@@ -200,10 +200,10 @@ class IncompletePresentationTests(unittest.TestCase):
                     self.assertNotIn("expected", visible)
                     if changed:
                         self.assertIn("to confirm.", visible)
-                        self.assertIn("If this repository has the supported trusted manual caller", visible)
-                        self.assertIn("an authorized user", visible)
-                        self.assertIn("an eligible PR", visible)
-                        self.assertIn("no applicable review is pending or complete", visible)
+                        self.assertIn("Retry with `/claude-review` where supported.", visible)
+                        self.assertIn("[See recovery guidance]", visible)
+                        self.assertNotIn("an authorized user", visible)
+                        self.assertNotIn("no applicable review", visible)
                         self.assertIn("/actions/runs/5/attempts/1", visible)
                         self.assertIn("**Reason:** " + context.STATUS_REASONS["workflow_changed"],
                                       self.api.status["body"])
