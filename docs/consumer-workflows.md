@@ -247,8 +247,16 @@ Any supported model alias can be followed by `effort` and one of `low`, `medium`
 comes from the trusted comment; any caller eligibility gate must accept the
 same forms as its selected Runtime revision. Full model IDs, context suffixes,
 and routing modes are not supported model values. Callers with an older
-Opus-only allowlist must separately expand that gate when adopting this Runtime;
-a pin update alone cannot expand caller-side filters.
+Opus-only allowlist need a caller update as well as a new Runtime pin. Update
+`uses:` to the reviewed Runtime revision, then replace the old model-specific
+comment-body filter with the [manual caller template above](#manual-review).
+That template delegates command recognition to Runtime, so it admits all three
+aliases and lets malformed options reach the warning-and-fallback parser.
+Preserve any additional access restrictions you require; do not remove
+permissions or author checks to broaden access. Runtime still checks the event,
+PR context, trusted commenter association, and captured patch authority before
+execution. Review and merge this caller change through the normal consumer
+adoption process; a pin update alone cannot change its filters.
 
 Plain `/claude-review` uses both [workflow defaults](#workflow-model-and-effort-defaults),
 falling back to Sonnet / Medium. A model-only command retains the resolved effort

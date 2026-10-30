@@ -251,7 +251,14 @@ class ReusableBoundaryTests(unittest.TestCase):
             self.assertEqual(re.findall(r"^      ([A-Z_]+):", rendered, re.MULTILINE),
                              [MODEL_AUTH[0]])
             self.assertNotIn("secrets: inherit", rendered)
+            self.assertIn("    with:\n      model: opus\n      effort: high", rendered)
             self.assertIn(f"{path.name}@<full-reviewed-runtime-sha>", rendered)
+            if path == w.MANUAL:
+                # The copied caller delegates recognition, including malformed
+                # option recovery, rather than retaining an Opus-only filter.
+                self.assertNotRegex(rendered, r"(?m)^\s+if:")
+                self.assertIn("issue_comment:\n    types: [created]", rendered)
+                self.assertIn("pull_request_review_comment:\n    types: [created]", rendered)
         status = next(block for block in blocks if f"/{w.STALE.name}@" in block)
         self.assertNotIn("secrets:", status)
         self.assertNotIn("secrets:", w.STALE.read_text())
