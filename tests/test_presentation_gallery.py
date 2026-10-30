@@ -141,11 +141,11 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn('**Model:**', receipt)
         self.assertIn('**Model:** Opus · **Effort:** High', cases['selection-receipt'].split('<details>')[1])
 
-    def test_repository_configuration_views_keep_known_fields_inside_details(self):
+    def test_workflow_configuration_views_keep_known_fields_inside_details(self):
         cases = dict(sample_items())
         for case_id, line in (
-                ('repository-default-running', '**Model:** Sonnet · **Effort:** Medium'),
-                ('repository-default-observed', '**Model:** Sonnet · **Effort:** Medium'),
+                ('workflow-default-running', '**Model:** Sonnet · **Effort:** Medium'),
+                ('workflow-default-observed', '**Model:** Sonnet · **Effort:** Medium'),
                 ('inherited-model-observed', '**Model:** Sonnet · **Effort:** Medium'),
                 ('manual-partial-default', '**Model:** Haiku · **Effort:** Medium')):
             with self.subTest(case_id=case_id):
@@ -155,9 +155,15 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn('**Effort:**', main)
                 self.assertNotIn('⚠️', main)
                 self.assertIn(line, details)
-        main, details = cases['repository-invalid-setting'].split('<details>', 1)
+                if case_id.startswith('workflow-default-'):
+                    with mock.patch.dict(os.environ, {}, clear=True):
+                        record = gallery.check.current_selection(gallery.check.status_owner({'body': cases[case_id]}),
+                                                                  {'body': cases[case_id]})
+                    self.assertEqual(record['configuration']['model_source'], 'workflow')
+                    self.assertEqual(record['configuration']['effort_source'], 'workflow')
+        main, details = cases['workflow-invalid-setting'].split('<details>', 1)
         self.assertIn('⚠️ **Review configuration:**', main)
-        self.assertIn('model', main)
+        self.assertIn('Invalid workflow model; using Sonnet (Runtime).', main)
         self.assertNotIn('primary model evidence missing', main)
         self.assertIn('**Model:** Sonnet · **Effort:** High', details)
         self.assertIn('✅ **Completed**', main)
@@ -235,6 +241,8 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(current_record['generation'], owner['generation'])
         self.assertNotEqual(historical['generation'], owner['generation'])
         self.assertEqual(historical['configuration']['requested_model'], 'sonnet')
+        self.assertEqual(historical['configuration']['model_source'], 'repository')
+        self.assertEqual(historical['configuration']['effort_source'], 'repository')
 
     def test_current_findings_completion_has_current_commit_run_and_evidence(self):
         check = gallery.check
@@ -429,7 +437,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
                     self.assertNotIn(reviewed, current)
                     self.assertNotIn(attempt, previous)
-                elif case_id.startswith("inline-tool-") or case_id in ("selection-running", "selection-incomplete", "selection-tooling-unavailable", "repository-default-running"):
+                elif case_id.startswith("inline-tool-") or case_id in ("selection-running", "selection-incomplete", "selection-tooling-unavailable", "workflow-default-running"):
                     self.assertIn(f"**[Attempt]({reviewed}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
                 elif case_id.startswith(("publication-incomplete-", "publication-unavailable-", "unread-", "workflow-changed")) or case_id == "incomplete-unknown":

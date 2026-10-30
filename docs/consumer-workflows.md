@@ -138,6 +138,9 @@ jobs:
       issues: write
       id-token: write
     uses: JBallin/claude-review-runtime/.github/workflows/claude-review.yml@<full-reviewed-runtime-sha>
+    with:
+      model: opus
+      effort: high
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
@@ -149,42 +152,52 @@ review to a later patch.
 For the selected revision's publication behavior, see the
 [finding-publication contract](review-guide.md#finding-publication).
 
-## Repository model and effort defaults
+## Workflow model and effort defaults
 
-To choose defaults for automatic and manual reviews, add Actions configuration
-variables in the **consumer repository's Settings → Secrets and variables →
-Actions → Variables**:
+Set the optional `model` and `effort` inputs on each reusable-workflow caller.
+The automatic and manual examples above and below use literal `opus` / `high`
+values; choose the values you want and keep both callers consistent if they
+should share defaults:
 
-| Variable | Supported values |
-| --- | --- |
-| `CLAUDE_REVIEW_MODEL` | `opus`, `sonnet`, `haiku` |
-| `CLAUDE_REVIEW_EFFORT` | `low`, `medium`, `high`, `xhigh`, `max` |
+```yaml
+with:
+  model: opus
+  effort: high
+```
 
-For example, set `CLAUDE_REVIEW_MODEL` to `opus` and `CLAUDE_REVIEW_EFFORT` to
-`high` if those are the defaults you want. Values are case-insensitive and
-surrounding whitespace is ignored. Unset or blank fields use Runtime’s explicit
-**Sonnet / Medium** defaults.
+| Input | Supported values | Runtime fallback |
+| --- | --- | --- |
+| `model` | `opus`, `sonnet`, `haiku` | `sonnet` |
+| `effort` | `low`, `medium`, `high`, `xhigh`, `max` | `medium` |
 
-Each field resolves independently: a valid [manual selection](#optional-model-and-effort-selection)
-overrides a valid repository setting; otherwise Runtime uses `sonnet` for model
-and `medium` for effort. Runtime passes both resolved values to execution. An
-invalid manual option or an invalid repository setting needed for resolution
-produces a warning and falls back for that field only, retaining any
-independently valid selection. The warning identifies the setting and the
-replacement; diagnostic metadata records where the invalid setting came from.
-Correct the named variable or use a valid manual override on a later request.
+Values are case-insensitive and surrounding whitespace is ignored. Each field
+resolves independently: a valid [manual selection](#optional-model-and-effort-selection)
+overrides a valid workflow input, then Runtime falls back to **Sonnet / Medium**.
+Runtime passes both resolved values to execution. An invalid manual option or an
+invalid workflow input needed for resolution produces a warning and falls back
+for that field only, retaining any independently valid selection. The warning
+identifies the setting and replacement; diagnostic metadata records its source.
+Correct the caller input or use a valid manual override on a later request.
 
-The pinned Runtime reads these owner-managed variables directly; it does not
-read defaults from PR files or caller workflow inputs. For reusable workflows,
-[GitHub uses the caller repository's variables](https://docs.github.com/en/actions/reference/workflows-and-actions/variables#configuration-variable-precedence),
-including permitted organization variables when no repository value overrides
-them. Defaults are captured with each review attempt, so later variable changes
-do not rewrite its settings or historical results.
+Use literal owner-reviewed values in the caller, rather than expressions from
+PR content. Runtime validates the resolved values; it cannot distinguish a
+literal from a caller expression. It accepts only supported model and effort
+values as execution arguments; inputs cannot configure prompts, tools, helper paths, credentials,
+or review eligibility. Actions configuration variables are not consulted.
+Settings are captured with each attempt, so later caller changes do not rewrite
+its settings or historical results.
 
-These settings require callers pinned to a Runtime revision that supports them.
+Default Anthropic App/OIDC validation can reject a new or modified caller
+workflow until matching content exists on the default branch. A rejected caller
+may skip model execution even when Actions orchestration is green; Runtime
+requires verified completion and reports the review as Incomplete. See
+[installation and incomplete reviews](review-guide.md#installation-and-incomplete-reviews)
+for diagnosis and recovery.
+
+These inputs require callers pinned to a Runtime revision that supports them.
 Existing pins retain their prior behavior. Adopting this feature changes reviews
-without configured defaults to explicit Sonnet / Medium; choose repository
-settings before adoption if you want a different default.
+without configured defaults to explicit Sonnet / Medium; set caller inputs before
+adoption if you want a different default.
 
 ## Manual review
 
@@ -209,6 +222,9 @@ jobs:
       issues: write
       id-token: write
     uses: JBallin/claude-review-runtime/.github/workflows/claude.yml@<full-reviewed-runtime-sha>
+    with:
+      model: opus
+      effort: high
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
@@ -230,14 +246,16 @@ Any supported model alias can be followed by `effort` and one of `low`, `medium`
 `high`, `xhigh`, or `max`, such as `/claude-review sonnet effort high`. Selection
 comes from the trusted comment; any caller eligibility gate must accept the
 same forms as its selected Runtime revision. Full model IDs, context suffixes,
-and routing modes are not supported model values.
+and routing modes are not supported model values. Callers with an older
+Opus-only allowlist must separately expand that gate when adopting this Runtime;
+a pin update alone cannot expand caller-side filters.
 
-Plain `/claude-review` uses both [repository defaults](#repository-model-and-effort-defaults),
+Plain `/claude-review` uses both [workflow defaults](#workflow-model-and-effort-defaults),
 falling back to Sonnet / Medium. A model-only command retains the resolved effort
 default; an effort-only command retains the resolved model default.
 
 For a recognized review command, an invalid model or effort value warns and
-falls back to the valid repository setting, then the Runtime default, for that
+falls back to the valid workflow input, then the Runtime default, for that
 field. Missing or malformed option values also show usage guidance. A malformed
 option does not consume a following valid option, and independently valid
 settings are retained. This recovery applies to configuration options, not
@@ -245,7 +263,7 @@ authorization checks, conflicting ambient configuration, or execution failures.
 Explicit `model` / `--model` and `effort` / `--effort` option names are also
 recognized, with a space or `=` before the value. For example,
 `/claude-review --model --effort high` warns about the missing model value,
-uses the repository model or Sonnet, and keeps High effort. Duplicate options
+uses the workflow model or Sonnet, and keeps High effort. Duplicate options
 fall back for that field and show usage guidance. Keep requests on one line,
 without leading whitespace. Repeated or trailing spaces are accepted;
 multiline comments, tabs, and unrelated extra text are not review requests.

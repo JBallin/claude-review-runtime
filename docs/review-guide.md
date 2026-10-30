@@ -39,7 +39,7 @@ runtime. The runtime resolves the current patch once for each accepted request.
 
 This repository's pinned manual caller accepts optional Opus and effort
 selection. The current Runtime source also supports Sonnet, Haiku, and
-[repository defaults](consumer-workflows.md#repository-model-and-effort-defaults);
+[workflow defaults](consumer-workflows.md#workflow-model-and-effort-defaults);
 using those capabilities requires a supporting Runtime pin and a caller gate
 that accepts its [manual command forms](consumer-workflows.md#optional-model-and-effort-selection).
 Model evidence is diagnostic: a different primary model produces a notice,
@@ -65,7 +65,7 @@ Details alongside Runtime provenance. Model labels use Sonnet, Opus, or Haiku;
 full execution identifiers stay in the recorded metadata. Each current or
 previous attempt retains its own settings; a status refresh does not apply
 today’s defaults to an older review, and missing historical settings are not filled in. New attempts resolve
-each field from a valid manual override, then a valid repository setting, then
+each field from a valid manual override, then a valid workflow input, then
 Runtime’s Sonnet / Medium defaults. Invalid or malformed configuration options
 warn and fall back only for the affected field; independently valid settings
 remain in use. Missing, conflicting, or mismatched primary-model evidence remains

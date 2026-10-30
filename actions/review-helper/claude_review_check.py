@@ -541,7 +541,9 @@ for _effort in EFFORTS:
 
 RUNTIME_DEFAULTS = {"model": "sonnet", "effort": "medium"}
 DIAGNOSTIC_FIELDS = ("model", "effort")
-DIAGNOSTIC_SOURCES = ("manual", "repository")
+# Repository sources remain readable in immutable receipts from the prior interface.
+# New attempts resolve only workflow inputs; Actions variables are never consulted.
+DIAGNOSTIC_SOURCES = ("manual", "repository", "workflow")
 DIAGNOSTIC_REASONS = ("invalid", "missing", "duplicate")
 MANUAL_USAGE = "Use `/claude-review [opus|sonnet|haiku] [effort low|medium|high|xhigh|max]`."
 
@@ -615,11 +617,11 @@ def resolve_configuration(body, model="", effort="", *, automatic=False):
         if manual.get(key):
             value, source = manual[key], "manual"
         elif default in allowed:
-            value, source = default, "repository"
+            value, source = default, "workflow"
         else:
             value, source = RUNTIME_DEFAULTS[name], "runtime"
             if default != "":
-                config["diagnostics"].append({"field": name, "source": "repository", "reason": "invalid"})
+                config["diagnostics"].append({"field": name, "source": "workflow", "reason": "invalid"})
         config[key], config[name + "_source"] = value, source
     config["diagnostics"].sort(key=diagnostic_key)
     config["errors"] = [name for name in DIAGNOSTIC_FIELDS
@@ -643,7 +645,7 @@ def valid_configuration(config):
                 or any(not isinstance(item, dict) or set(item) != {"field", "source", "reason"}
                        or item["field"] not in DIAGNOSTIC_FIELDS or item["source"] not in DIAGNOSTIC_SOURCES
                        or item["reason"] not in DIAGNOSTIC_REASONS
-                       or item["source"] == "repository" and item["reason"] != "invalid"
+                       or item["source"] in ("repository", "workflow") and item["reason"] != "invalid"
                        for item in diagnostics)
                 or diagnostics != sorted(diagnostics, key=diagnostic_key)
                 or len({(item["field"], item["source"], item["reason"]) for item in diagnostics}) != len(diagnostics)
@@ -653,7 +655,7 @@ def valid_configuration(config):
     for name, allowed in (("model", MODELS), ("effort", EFFORTS)):
         value, source = config["requested_" + name], config[name + "_source"]
         if version == 2:
-            if (value not in allowed or source not in ("manual", "repository", "runtime")
+            if (value not in allowed or source not in ("manual", "repository", "workflow", "runtime")
                     or source == "runtime" and value != RUNTIME_DEFAULTS[name]
                     or any(item["field"] == name and (item["source"] == source or source == "manual")
                            for item in config["diagnostics"])):
@@ -695,7 +697,7 @@ def configuration_from_env(owner=None):
             raise ValueError("captured review configuration is invalid")
         return config
     return resolve_configuration(
-        env("TRIGGER_COMMENT"), env("REPOSITORY_REVIEW_MODEL"), env("REPOSITORY_REVIEW_EFFORT"),
+        env("TRIGGER_COMMENT"), env("WORKFLOW_REVIEW_MODEL"), env("WORKFLOW_REVIEW_EFFORT"),
         automatic=(owner["kind"] == "automatic" if owner else
                    env("TRIGGER_KIND") == "automatic" or not env("TRIGGER_COMMENT")))
 

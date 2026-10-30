@@ -556,19 +556,24 @@ class JobStructureTests(unittest.TestCase):
             with self.subTest(step=name):
                 self.assertIsNone(scalar(lines, "continue-on-error", 8))
 
-    def test_configuration_is_captured_once_from_trusted_repository_variables(self):
+    def test_configuration_is_captured_once_from_reusable_workflow_inputs(self):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
                 named = steps(job(path, "start-check"))
                 selected = named["Select review configuration"]
                 config_env = block(selected, "env", 8)
-                self.assertEqual(scalar(config_env, "REPOSITORY_REVIEW_MODEL", 10),
-                                 "${{ vars.CLAUDE_REVIEW_MODEL }}")
-                self.assertEqual(scalar(config_env, "REPOSITORY_REVIEW_EFFORT", 10),
-                                 "${{ vars.CLAUDE_REVIEW_EFFORT }}")
-                self.assertEqual(path.read_text().count("vars.CLAUDE_REVIEW_MODEL"), 1)
-                self.assertEqual(path.read_text().count("vars.CLAUDE_REVIEW_EFFORT"), 1)
-                self.assertNotIn("${{ inputs.", "\n".join(selected))
+                self.assertEqual(scalar(config_env, "WORKFLOW_REVIEW_MODEL", 10), "${{ inputs.model }}")
+                self.assertEqual(scalar(config_env, "WORKFLOW_REVIEW_EFFORT", 10), "${{ inputs.effort }}")
+                self.assertEqual(path.read_text().count("inputs.model"), 1)
+                self.assertEqual(path.read_text().count("inputs.effort"), 1)
+                self.assertNotIn("vars.", path.read_text())
+                self.assertNotIn("REPOSITORY_REVIEW_", path.read_text())
+                inputs = block(block(block(lines_of(path), "on", 0), "workflow_call", 2), "inputs", 4)
+                for field in ("model", "effort"):
+                    definition = block(inputs, field, 6)
+                    self.assertEqual(scalar(definition, "type", 8), "string")
+                    self.assertEqual(scalar(definition, "required", 8), "false")
+                    self.assertEqual(scalar(definition, "default", 8), "''")
                 self.assertNotIn("actions/checkout", "\n".join(job(path, "start-check")))
                 self.assertEqual(scalar(block(job(path, "start-check"), "outputs", 4), "selection_config", 6),
                                  "${{ steps.select.outputs.selection_config }}")
@@ -1426,11 +1431,11 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                                        target=None if path == AUTOMATIC else 12)
             cases = [
                 ("sonnet", "medium", "runtime", "runtime", []),
-                ("haiku", "medium", "repository", "runtime", [
+                ("haiku", "medium", "workflow", "runtime", [
                     *([] if path == AUTOMATIC else [{"field": "model", "source": "manual", "reason": "missing"}]),
-                    {"field": "effort", "source": "repository", "reason": "invalid"}]),
-                ("sonnet", "high", "runtime", "repository", [
-                    {"field": "model", "source": "repository", "reason": "invalid"}]),
+                    {"field": "effort", "source": "workflow", "reason": "invalid"}]),
+                ("sonnet", "high", "runtime", "workflow", [
+                    {"field": "model", "source": "workflow", "reason": "invalid"}]),
             ]
             for model, effort, model_source, effort_source, diagnostics in cases:
                 with self.subTest(workflow=path.name, diagnostics=diagnostics):
@@ -1485,6 +1490,10 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 {"field": "model", "source": "manual", "reason": "invalid"}]},
             {"errors": ["model"], "model_source": "repository", "diagnostics": [
                 {"field": "model", "source": "repository", "reason": "invalid"}]},
+            {"errors": ["model"], "diagnostics": [
+                {"field": "model", "source": "workflow", "reason": "missing"}]},
+            {"errors": ["model"], "model_source": "workflow", "diagnostics": [
+                {"field": "model", "source": "workflow", "reason": "invalid"}]},
         )]
         for path in (AUTOMATIC, MANUAL):
             for raw in raws:
@@ -1533,6 +1542,38 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertNotIn("**Model:** Haiku", previous)
                     self.assertNotIn("**Effort:** High", previous)
                     self.assertIn(receipt, after)
+
+    def test_fallback_preserves_v2_repository_history_with_new_workflow_inputs(self):
+        from test_claude_review_check import presentation_owner
+        generation = "1" * 64
+        previous_config = {"version": 2, "requested_model": "sonnet", "requested_effort": "low",
+                           "model_source": "repository", "effort_source": "repository",
+                           "errors": [], "diagnostics": []}
+        prior = {"generation": generation, "requested_model": "sonnet", "requested_effort": "low",
+                 "models": [], "execution_attempt": None, "model_evidence": "unknown",
+                 "configuration": previous_config}
+        prefix = "<!-- claude-review-runtime:claude-review-last-reviewed-selection:"
+        receipt = prefix + quote(json.dumps(prior, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+        current_config = {"version": 2, "requested_model": "haiku", "requested_effort": "high",
+                          "model_source": "workflow", "effort_source": "workflow", "errors": [], "diagnostics": []}
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                owner = presentation_owner(repo=REPO, kind="automatic" if path == AUTOMATIC else "issue_comment",
+                                           target=None if path == AUTOMATIC else 12)
+                before = check.status_comment_body(HEAD, BASE_REF, "in_progress", owner=owner,
+                    last_review=("b" * 40, BASE_REF, "success"),
+                    last_review_details={"base_sha": "d" * 40, "generation": generation}) + "\n" + receipt
+                owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": before}
+                result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
+                    STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner,
+                    SELECTION_CONFIG=json.dumps(current_config))
+                self.assertEqual(result.returncode, 1)
+                after = self.repaired_status(calls)
+                current, previous = after.split("### Previous completed review", 1)
+                self.assertIn("**Model:** Haiku · **Effort:** High", current)
+                self.assertIn("**Model:** Sonnet · **Effort:** Low", previous)
+                self.assertIn(receipt, after)
+                self.assertEqual(check.last_completed_review_details({**owned, "body": after})["selection"], prior)
 
     def test_fallback_omits_ambiguous_or_wrong_generation_historical_selection(self):
         from test_claude_review_check import presentation_owner

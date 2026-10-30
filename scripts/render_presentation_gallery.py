@@ -160,8 +160,10 @@ def gallery_samples():
 
         details["selection"] = configured(
             owner, check.resolve_configuration("", automatic=True), "claude-sonnet-5-5")
-        repository_config = check.resolve_configuration("", "sonnet", "medium", automatic=True)
-        repository_record = configured(owner, repository_config, "claude-sonnet-5-5")
+        workflow_config = check.resolve_configuration("", "sonnet", "medium", automatic=True)
+        workflow_record = configured(owner, workflow_config, "claude-sonnet-5-5")
+        historical_config = {**workflow_config, "model_source": "repository", "effort_source": "repository"}
+        historical_record = configured(owner, historical_config, "claude-sonnet-5-5")
         samples = [
             GallerySample("selection-running", "current-completion", "Running with explicit selection", selected([], "unknown", None, state="in_progress")),
             GallerySample("selection-findings", "current-completion", "Findings with explicit selection", selected(["claude-opus-5-5"], state="action_required")),
@@ -183,13 +185,13 @@ def gallery_samples():
             GallerySample("opus-legacy", "current-completion", "Legacy receipt without primary evidence", selected(["claude-opus-5-5"], legacy=True)),
             GallerySample("current-clean", "current-completion", "Completed review", status("success")),
             GallerySample(FINDINGS_SAMPLE, "current-completion", "Review with findings", status("action_required")),
-            GallerySample("repository-default-running", "current-completion", "Automatic review running with repository defaults", status(
-                "in_progress", selection=configured(owner, repository_config))),
-            GallerySample("repository-default-observed", "current-completion", "Automatic review completed with repository defaults", status(
-                "success", selection=repository_record)),
+            GallerySample("workflow-default-running", "current-completion", "Automatic review running with workflow inputs", status(
+                "in_progress", selection=configured(owner, workflow_config))),
+            GallerySample("workflow-default-observed", "current-completion", "Automatic review completed with workflow inputs", status(
+                "success", selection=workflow_record)),
             GallerySample("inherited-model-observed", "current-completion", "Automatic review with Runtime defaults", status(
                 "success", selection=configured(owner, check.resolve_configuration("", automatic=True), "claude-sonnet-5-5"))),
-            GallerySample("manual-partial-default", "current-completion", "Manual model override retaining repository effort", status(
+            GallerySample("manual-partial-default", "current-completion", "Manual model override retaining workflow effort", status(
                 "success", owner=manual_owner, trigger_label="Manual request",
                 selection=configured(manual_owner, check.resolve_configuration(
                     "/claude-review haiku", "sonnet", "medium"), "claude-haiku-5-5"))),
@@ -254,10 +256,10 @@ def gallery_samples():
                 historical_details = details
                 if state == "in_progress" and result == "success":
                     # Each generation keeps its own settings; the current
-                    # repository default must not replace completed history.
+                    # workflow input must not replace completed history.
                     options["selection"] = configured(newer_owner, check.resolve_configuration(
                         "", "opus", "high", automatic=True))
-                    historical_details = {**details, "selection": repository_record}
+                    historical_details = {**details, "selection": historical_record}
                 samples.append(GallerySample(f"{group}-{label}", group, f"{description}: {label}", status(
                     state, head=fixtures.OTHER, owner=newer_owner, trigger_label="Draft marked ready",
                     last_review=history(result), last_review_details=historical_details, **options)))
@@ -294,10 +296,10 @@ def gallery_samples():
             GallerySample("workflow-changed-superseded", "incomplete", "Workflow-change context retained for a superseded attempt", status(
                 "stale", head=fixtures.OTHER, owner_running=False,
                 reason=check.stale_status_reason(check.STATUS_REASONS["workflow_changed"]))),
-            GallerySample("repository-invalid-setting", "current-completion", "Invalid repository model falls back while retaining valid effort", status(
+            GallerySample("workflow-invalid-setting", "current-completion", "Invalid workflow model falls back while retaining valid effort", status(
                 "success", selection=configured(owner, check.resolve_configuration(
                     "", "unsupported", "high", automatic=True), "claude-sonnet-5-5"))),
-            GallerySample("manual-invalid-model", "current-completion", "Invalid manual model falls back to repository model", status(
+            GallerySample("manual-invalid-model", "current-completion", "Invalid manual model falls back to workflow model", status(
                 "success", owner=request_owner, trigger_label="Manual request",
                 selection=configured(request_owner, check.resolve_configuration(
                     "/claude-review unsupported effort high", "haiku", "low"), "claude-haiku-5-5"))),

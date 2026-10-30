@@ -575,15 +575,15 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 ---
 
-<a id="repository-default-running"></a>
+<a id="workflow-default-running"></a>
 
-### 16 — Automatic review running with repository defaults
+### 16 — Automatic review running with workflow inputs
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:in_progress -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22repository%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22repository%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
+<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22PR%20opened%20for%20review%22%5D -->
 <!-- claude-review-runtime:presentation-owner-phase:running -->
@@ -604,15 +604,15 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 ---
 
-<a id="repository-default-observed"></a>
+<a id="workflow-default-observed"></a>
 
-### 17 — Automatic review completed with repository defaults
+### 17 — Automatic review completed with workflow inputs
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22repository%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22repository%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
+<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22PR%20opened%20for%20review%22%5D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -624,7 +624,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-trigger:PR%20opened%20for%20review -->
 <!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22repository%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22repository%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
+<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
 | Status | Reviewed commit | Review trigger |
@@ -682,13 +682,13 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="manual-partial-default"></a>
 
-### 19 — Manual model override retaining repository effort
+### 19 — Manual model override retaining workflow effort
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22repository%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22manual%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%7D -->
+<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22manual%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -700,7 +700,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-trigger:Manual%20request -->
 <!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22repository%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22manual%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%7D -->
+<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22manual%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%7D -->
 ## Claude Review
 
 | Status | Reviewed commit | Review trigger |
@@ -718,15 +718,15 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 ---
 
-<a id="repository-invalid-setting"></a>
+<a id="workflow-invalid-setting"></a>
 
-### 20 — Invalid repository model falls back while retaining valid effort
+### 20 — Invalid workflow model falls back while retaining valid effort
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22repository%22%7D%5D%2C%22effort_source%22%3A%22repository%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
+<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22workflow%22%7D%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22PR%20opened%20for%20review%22%5D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -738,14 +738,14 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-trigger:PR%20opened%20for%20review -->
 <!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22repository%22%7D%5D%2C%22effort_source%22%3A%22repository%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
+<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22workflow%22%7D%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
 | Status | Reviewed commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ **Review configuration:** Invalid repository model; using Sonnet (Runtime).
+⚠️ **Review configuration:** Invalid workflow model; using Sonnet (Runtime).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -760,13 +760,13 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="manual-invalid-model"></a>
 
-### 21 — Invalid manual model falls back to repository model
+### 21 — Invalid manual model falls back to workflow model
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22repository%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%7D -->
+<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -778,14 +778,14 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-trigger:Manual%20request -->
 <!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22repository%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%7D -->
+<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%7D -->
 ## Claude Review
 
 | Status | Reviewed commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review configuration:** Invalid manual model; using Haiku (Repository).
+⚠️ **Review configuration:** Invalid manual model; using Haiku (Workflow).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -846,7 +846,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22missing%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22repository%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%7D -->
+<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22missing%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -858,14 +858,14 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-trigger:Manual%20request -->
 <!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22missing%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22repository%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%7D -->
+<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22missing%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%7D -->
 ## Claude Review
 
 | Status | Reviewed commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review configuration:** Missing manual model; using Haiku (Repository).
+⚠️ **Review configuration:** Missing manual model; using Haiku (Workflow).
 Use `/claude-review [opus|sonnet|haiku] [effort low|medium|high|xhigh|max]`.
 
 <details>
@@ -1509,7 +1509,7 @@ This review used the deployed Runtime, not the proposed pin.
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:in_progress -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22repository%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22repository%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
+<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
 <!-- claude-review-runtime:presentation-owner-phase:running -->

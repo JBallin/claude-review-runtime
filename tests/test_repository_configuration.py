@@ -1,4 +1,4 @@
-"""Trusted repository defaults, captured selection, and informational presentation."""
+"""Trusted reusable-workflow settings, captured selection, and informational presentation."""
 
 import copy
 import io
@@ -70,11 +70,29 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 self.assertEqual((config["model_source"], config["effort_source"]), ("runtime", "runtime"))
                 self.assertEqual(config["errors"], [])
 
+    def test_legacy_actions_variable_environments_do_not_supply_execution_settings(self):
+        legacy = {"REPOSITORY_REVIEW_MODEL": "invalid", "REPOSITORY_REVIEW_EFFORT": "invalid"}
+        for environment, expected, sources in (
+                ({"TRIGGER_KIND": "automatic", **legacy}, ("sonnet", "medium"), ("runtime", "runtime")),
+                ({"TRIGGER_COMMENT": "/claude-review effort high", **legacy}, ("sonnet", "high"), ("runtime", "manual")),
+                ({"TRIGGER_KIND": "automatic", **legacy, "WORKFLOW_REVIEW_MODEL": "haiku", "WORKFLOW_REVIEW_EFFORT": "low"},
+                 ("haiku", "low"), ("workflow", "workflow"))):
+            with self.subTest(environment=environment):
+                result, output, message = self.select(environment)
+                self.assertEqual(result, 0)
+                config = json.loads(output["selection_config"])
+                self.assertEqual((config["requested_model"], config["requested_effort"]), expected)
+                self.assertEqual((config["model_source"], config["effort_source"]), sources)
+                self.assertEqual(config["diagnostics"], [])
+                self.assertNotIn("::warning::", message)
+                self.assertEqual((output["model_args"], output["effort_args"]),
+                                 ("--model " + expected[0], "--effort " + expected[1]))
+
     def test_manual_override_resolves_only_its_own_field(self):
         cases = (
-            ("/claude-review", "sonnet", "medium", "repository", "repository"),
-            ("/claude-review opus", "opus", "medium", "manual", "repository"),
-            ("/claude-review effort high", "sonnet", "high", "repository", "manual"),
+            ("/claude-review", "sonnet", "medium", "workflow", "workflow"),
+            ("/claude-review opus", "opus", "medium", "manual", "workflow"),
+            ("/claude-review effort high", "sonnet", "high", "workflow", "manual"),
             ("/claude-review haiku effort low", "haiku", "low", "manual", "manual"),
         )
         for body, model, effort, model_source, effort_source in cases:
@@ -89,7 +107,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
             for effort in ("low", "medium", "high", "xhigh", "max"):
                 with self.subTest(model=model, effort=effort):
                     result, output, _ = self.select({"TRIGGER_KIND": "automatic",
-                        "REPOSITORY_REVIEW_MODEL": model, "REPOSITORY_REVIEW_EFFORT": effort})
+                        "WORKFLOW_REVIEW_MODEL": model, "WORKFLOW_REVIEW_EFFORT": effort})
                     self.assertEqual(result, 0)
                     self.assertEqual(output["model_args"], "--model " + model)
                     self.assertEqual(output["effort_args"], "--effort " + effort)
@@ -97,7 +115,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                     self.assertEqual(check.manual_selection(command.upper()),
                                      {"requested_model": model, "requested_effort": effort})
 
-    def test_repository_normalization_does_not_relax_manual_grammar(self):
+    def test_workflow_normalization_does_not_relax_manual_grammar(self):
         config = check.resolve_configuration("/claude-review", "  SoNnEt\n", "\tHIGH ")
         self.assertEqual((config["requested_model"], config["requested_effort"]), ("sonnet", "high"))
         blank = check.resolve_configuration("/claude-review", " \n", "\t")
@@ -113,14 +131,14 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 ("opus[1m]", "--effort high", ["model", "effort"], ("sonnet", "medium"))):
             with self.subTest(model=model, effort=effort):
                 result, output, message = self.select({"TRIGGER_KIND": "automatic",
-                    "REPOSITORY_REVIEW_MODEL": model, "REPOSITORY_REVIEW_EFFORT": effort})
+                    "WORKFLOW_REVIEW_MODEL": model, "WORKFLOW_REVIEW_EFFORT": effort})
                 self.assertEqual(result, 0)
                 config = json.loads(output["selection_config"])
                 self.assertEqual(config["errors"], errors)
                 self.assertEqual((config["requested_model"], config["requested_effort"]), expected)
                 self.assertEqual(check.valid_configuration(config), config)
                 self.assertEqual(config["diagnostics"], [
-                    {"field": field, "source": "repository", "reason": "invalid"} for field in errors])
+                    {"field": field, "source": "workflow", "reason": "invalid"} for field in errors])
                 self.assertIn("::warning::", message)
                 self.assertEqual((output["model_args"], output["effort_args"]),
                                  ("--model " + expected[0], "--effort " + expected[1]))
@@ -131,15 +149,15 @@ class RepositoryConfigurationTests(unittest.TestCase):
 
     def test_invalid_manual_fields_fall_back_without_losing_valid_sibling(self):
         cases = (
-            ("/claude-review invalid effort high", "haiku", "low", ("haiku", "high"), ("repository", "manual"), ["model"]),
-            ("/claude-review opus effort invalid", "haiku", "low", ("opus", "low"), ("manual", "repository"), ["effort"]),
-            ("/claude-review invalid effort invalid", "haiku", "low", ("haiku", "low"), ("repository", "repository"), ["model", "effort"]),
+            ("/claude-review invalid effort high", "haiku", "low", ("haiku", "high"), ("workflow", "manual"), ["model"]),
+            ("/claude-review opus effort invalid", "haiku", "low", ("opus", "low"), ("manual", "workflow"), ["effort"]),
+            ("/claude-review invalid effort invalid", "haiku", "low", ("haiku", "low"), ("workflow", "workflow"), ["model", "effort"]),
             ("/claude-review invalid effort invalid", "invalid", "invalid", ("sonnet", "medium"), ("runtime", "runtime"), ["model", "effort"]),
         )
         for body, model, effort, expected, sources, errors in cases:
             with self.subTest(body=body, model=model, effort=effort):
                 result, output, message = self.select({"TRIGGER_COMMENT": body,
-                    "REPOSITORY_REVIEW_MODEL": model, "REPOSITORY_REVIEW_EFFORT": effort})
+                    "WORKFLOW_REVIEW_MODEL": model, "WORKFLOW_REVIEW_EFFORT": effort})
                 self.assertEqual(result, 0)
                 config = json.loads(output["selection_config"])
                 self.assertEqual((config["requested_model"], config["requested_effort"]), expected)
@@ -161,8 +179,8 @@ class RepositoryConfigurationTests(unittest.TestCase):
     def test_invalid_setting_content_is_not_copied_into_arguments_or_errors(self):
         hostile = "opus\n--tools Bash; $(id) <script>"
         result, output, message = self.select({"TRIGGER_KIND": "automatic",
-                                              "REPOSITORY_REVIEW_MODEL": hostile,
-                                              "REPOSITORY_REVIEW_EFFORT": "high"})
+                                              "WORKFLOW_REVIEW_MODEL": hostile,
+                                              "WORKFLOW_REVIEW_EFFORT": "high"})
         self.assertEqual(result, 0)
         self.assertEqual(output["model_args"], "--model sonnet")
         self.assertEqual(output["effort_args"], "--effort high")
@@ -186,25 +204,25 @@ class RepositoryConfigurationTests(unittest.TestCase):
                    {"requested_effort": ""}, {"errors": ["effort"]},
                    {"diagnostics": [{"field": "model", "source": "pr", "reason": "invalid"}]},
                    {"diagnostics": [{"field": "model", "source": "manual", "reason": "other"}]},
-                   {"diagnostics": [{"field": "model", "source": "repository", "reason": "missing"}], "errors": ["model"]},
+                   {"diagnostics": [{"field": "model", "source": "workflow", "reason": "missing"}], "errors": ["model"]},
                    {"diagnostics": [{"field": "model", "source": "manual", "reason": "invalid", "raw": "unsafe"}]})
         for change in changes:
             with self.subTest(change=change):
                 self.assertIsNone(check.valid_configuration({**original, **change}))
 
     def test_model_only_and_effort_only_resolve_the_other_runtime_field(self):
-        for values, expected in (({"REPOSITORY_REVIEW_MODEL": "haiku"}, ("--model haiku", "--effort medium")),
-                                 ({"REPOSITORY_REVIEW_EFFORT": "max"}, ("--model sonnet", "--effort max"))):
+        for values, expected in (({"WORKFLOW_REVIEW_MODEL": "haiku"}, ("--model haiku", "--effort medium")),
+                                 ({"WORKFLOW_REVIEW_EFFORT": "max"}, ("--model sonnet", "--effort max"))):
             result, output, _ = self.select({"TRIGGER_KIND": "automatic", **values})
             self.assertEqual(result, 0)
             self.assertEqual((output["model_args"], output["effort_args"]), expected)
 
-    def test_review_uses_captured_configuration_after_repository_values_change(self):
+    def test_review_uses_captured_configuration_after_workflow_inputs_change(self):
         for body, kind in (("/claude-review effort high", "issue_comment"), (None, "automatic")):
             config = check.resolve_configuration(body, "sonnet", "medium", automatic=kind == "automatic")
             captured = {"selection_config": config, "trigger_comment": body}
-            environment = {"TRIGGER_KIND": kind, "REPOSITORY_REVIEW_MODEL": "haiku",
-                           "REPOSITORY_REVIEW_EFFORT": "low"}
+            environment = {"TRIGGER_KIND": kind, "WORKFLOW_REVIEW_MODEL": "haiku",
+                           "WORKFLOW_REVIEW_EFFORT": "low"}
             if body:
                 environment["TRIGGER_COMMENT"] = body
             with self.subTest(kind=kind):
@@ -220,7 +238,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         captured = {"trigger_comment": body, "selection_config": config,
                     "requested_model": "haiku", "requested_effort": "high"}
         result, output, message = self.select({"TRIGGER_KIND": "issue_comment", "TRIGGER_COMMENT": body,
-            "REPOSITORY_REVIEW_MODEL": "opus", "REPOSITORY_REVIEW_EFFORT": "max"}, captured)
+            "WORKFLOW_REVIEW_MODEL": "opus", "WORKFLOW_REVIEW_EFFORT": "max"}, captured)
         self.assertEqual(result, 0)
         self.assertEqual(json.loads(output["selection_config"]), config)
         self.assertEqual((output["model_args"], output["effort_args"]), ("--model haiku", "--effort high"))
@@ -244,8 +262,8 @@ class RepositoryConfigurationTests(unittest.TestCase):
         correct = check.resolve_configuration(body, "sonnet", "medium")
         cases = (
             {**correct, "requested_model": "sonnet"},
-            {**correct, "model_source": "repository"},
-            {**correct, "effort_source": "repository"},
+            {**correct, "model_source": "workflow"},
+            {**correct, "effort_source": "workflow"},
         )
         for config in cases:
             with self.subTest(config=config):
@@ -265,7 +283,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
 
     def test_automatic_capture_cannot_claim_manual_diagnostics(self):
         config = check.resolve_configuration("/claude-review model invalid", "haiku", "low")
-        self.assertEqual((config["model_source"], config["effort_source"]), ("repository", "repository"))
+        self.assertEqual((config["model_source"], config["effort_source"]), ("workflow", "workflow"))
         result, _, message = self.select({"TRIGGER_KIND": "automatic"}, {"selection_config": config})
         self.assertEqual(result, 1)
         self.assertIn("manual override", message)
@@ -395,7 +413,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                         self.assertIn("**Effort:** " + effort.capitalize(), receipt.split("<details>", 1)[1])
                 self.assertEqual(record, original)
 
-    def test_repository_and_manual_model_selections_still_warn_on_primary_conflict(self):
+    def test_workflow_and_manual_model_selections_still_warn_on_primary_conflict(self):
         for body, default_model in ((None, "sonnet"), ("/claude-review", "sonnet"),
                                     ("/claude-review opus", "")):
             with self.subTest(body=body, default_model=default_model):
@@ -429,7 +447,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         owner = presentation_owner(kind="issue_comment", target=12)
         record = self.record(config, owner=owner, model="claude-sonnet-5-5")
         with mock.patch.dict(os.environ, {"SELECTION_CONFIG": json.dumps(config),
-                                          "REPOSITORY_REVIEW_MODEL": "haiku", "REPOSITORY_REVIEW_EFFORT": "max"}):
+                                          "WORKFLOW_REVIEW_MODEL": "haiku", "WORKFLOW_REVIEW_EFFORT": "max"}):
             fresh = check.current_selection(owner)
         self.assertEqual(fresh["configuration"], config)
         self.assertEqual((fresh["requested_model"], fresh["requested_effort"]), ("sonnet", "high"))
@@ -461,6 +479,22 @@ class RepositoryConfigurationTests(unittest.TestCase):
         self.assertNotIn("Haiku", previous_section)
         replay = {**comment, "body": body}
         self.assertEqual(check.last_completed_review_details(replay)["selection"], previous)
+
+    def test_previously_recorded_v2_repository_configuration_stays_historical(self):
+        owner = presentation_owner()
+        config = {"version": 2, "errors": [], "diagnostics": [], "requested_model": "opus",
+                  "requested_effort": "high", "model_source": "repository", "effort_source": "repository"}
+        self.assertEqual(check.valid_configuration(config), config)
+        record = self.record(config, owner=owner, model="claude-opus-5-5")
+        original = copy.deepcopy(record)
+        comment = self.completed_comment(owner, record)
+        current = check.resolve_configuration(None, "haiku", "low", automatic=True)
+        with mock.patch.dict(os.environ, {"SELECTION_CONFIG": json.dumps(current),
+                                         "WORKFLOW_REVIEW_MODEL": "haiku", "WORKFLOW_REVIEW_EFFORT": "low"}):
+            historical = check.last_completed_review_details(comment)
+        self.assertEqual(historical["selection"], original)
+        self.assertEqual(historical["selection"]["configuration"]["model_source"], "repository")
+        self.assertEqual(record, original)
 
     def test_historical_selection_rejects_duplicate_wrong_owner_and_noncanonical_receipts(self):
         owner = presentation_owner()

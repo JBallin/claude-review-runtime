@@ -168,13 +168,21 @@ class CapturedInputTests(unittest.TestCase):
 
 
 class ReusableBoundaryTests(unittest.TestCase):
-    def test_entrypoints_only_expose_workflow_call_and_the_named_secret(self):
+    def test_entrypoints_only_expose_settings_inputs_and_the_named_secret(self):
         for name in ENTRYPOINTS:
             with self.subTest(workflow=name):
                 text = (WORKFLOWS / name).read_text()
                 trigger = text.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
                 self.assertIn("  workflow_call:", trigger)
-                self.assertNotIn("inputs:", trigger)
+                if name == "claude-review-status.yml":
+                    self.assertNotIn("inputs:", trigger)
+                else:
+                    inputs = trigger.split("    inputs:\n", 1)[1].split("    secrets:\n", 1)[0]
+                    self.assertEqual(re.findall(r"^      ([a-z_]+):$", inputs, re.MULTILINE),
+                                     ["model", "effort"])
+                    self.assertEqual(inputs.count("type: string"), 2)
+                    self.assertEqual(inputs.count("required: false"), 2)
+                    self.assertEqual(inputs.count("default: ''"), 2)
                 for event in ("pull_request:", "issue_comment:", "workflow_dispatch:", "push:"):
                     self.assertNotIn(event, trigger)
                 if name == "claude-review-status.yml":

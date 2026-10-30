@@ -12,6 +12,17 @@ name: Claude Review
 # The conversation comment and PR reactions are informational projections.
 on:
   workflow_call:
+    inputs:
+      model:
+        description: Review model alias; blank uses the Runtime default.
+        type: string
+        required: false
+        default: ''
+      effort:
+        description: Review effort; blank uses the Runtime default.
+        type: string
+        required: false
+        default: ''
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN:
         required: true
@@ -84,13 +95,13 @@ jobs:
           command: create
       - name: Select review configuration
         id: select
-        # Capture trusted caller-repository variables once, never PR files/inputs.
+        # Capture caller workflow inputs once; never read configuration from PR files.
         continue-on-error: true
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
           TRIGGER_KIND: automatic
-          REPOSITORY_REVIEW_MODEL: ${{ vars.CLAUDE_REVIEW_MODEL }}
-          REPOSITORY_REVIEW_EFFORT: ${{ vars.CLAUDE_REVIEW_EFFORT }}
+          WORKFLOW_REVIEW_MODEL: ${{ inputs.model }}
+          WORKFLOW_REVIEW_EFFORT: ${{ inputs.effort }}
         run: python3 "$REVIEW_HELPER" selection
       - name: Start Claude Review check
         id: check
@@ -1072,12 +1083,12 @@ jobs:
                   if (not isinstance(diagnostics, list) or len(diagnostics) > 8
                           or any(not isinstance(d, dict) or set(d) != {"field", "source", "reason"}
                               or d["field"] not in ("model", "effort")
-                              or d["source"] not in ("manual", "repository")
+                              or d["source"] not in ("manual", "repository", "workflow")
                               or d["reason"] not in ("invalid", "missing", "duplicate")
-                              or d["source"] == "repository" and d["reason"] != "invalid" for d in diagnostics)):
+                              or d["source"] in ("repository", "workflow") and d["reason"] != "invalid" for d in diagnostics)):
                       raise ValueError("invalid configuration diagnostics")
                   order = [( ("model", "effort").index(d["field"]),
-                             ("manual", "repository").index(d["source"]),
+                             ("manual", "repository", "workflow").index(d["source"]),
                              ("invalid", "missing", "duplicate").index(d["reason"])) for d in diagnostics]
                   if (order != sorted(set(order))
                           or value["errors"] != [f for f in ("model", "effort") if any(d["field"] == f for d in diagnostics)]):
@@ -1090,7 +1101,7 @@ jobs:
                               or field in value["errors"] and (source != "repository" or selected)
                               or source != "inherited" and not selected and field not in value["errors"]):
                           raise ValueError("invalid configuration source")
-                  elif (selected not in allowed or source not in ("manual", "repository", "runtime")
+                  elif (selected not in allowed or source not in ("manual", "repository", "workflow", "runtime")
                           or source == "runtime" and selected != fallback
                           or any(d["field"] == field and (d["source"] == source or source == "manual")
                                  for d in diagnostics)):
