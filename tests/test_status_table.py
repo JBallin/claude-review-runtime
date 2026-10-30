@@ -108,7 +108,7 @@ class StatusTableTests(unittest.TestCase):
                 latest = "🔄 **[Running](https://github.com/owner/repo/actions/runs/6)**" if state == "in_progress" else "❌ **Incomplete**"
                 self.assertIn(latest, self.row())
                 self.assertNotIn("✅ **Completed**", self.visible())
-                self.assertIn("#### Previous completed review", self.api.status["body"].split("<details>")[1])
+                self.assertIn("### Previous completed review", self.api.status["body"].split("<details>")[1])
                 self.assertIn("**Review trigger:** PR opened for review", self.api.status["body"])
                 self.assertTrue(self.row().endswith("| Draft marked ready |"))
                 self.assertNotIn("14:00:00Z", self.row())

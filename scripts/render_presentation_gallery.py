@@ -181,12 +181,12 @@ def gallery_samples():
             check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                     fixtures.BASE_TIP, fixtures.MERGE_BASE),
             "https://github.com/owner/repo/actions/runs/5")
-        pin_context = ("**Synthetic recovery context:** The captured caller changes its Runtime pin "
-                       "from `fffffff` to `9999999`. This review used the deployed Runtime; "
-                       "it did not execute the proposed pin.")
+        pin_context = "This review used the deployed Runtime, not the proposed pin."
+        runtime_line = check.runtime_used_line(check.runtime_provenance(
+            "JBallin/claude-review-runtime", "f" * 40, ".github/workflows/claude.yml"))
         samples.append(GallerySample(
             "manual-pin-recovery", "manual-recovery", "Manual recovery after a Runtime pin change (synthetic)",
-            pin_recovery.replace("\n\n</details>", f"\n\n{pin_context}\n\n</details>")))
+            pin_recovery.replace(runtime_line, runtime_line + "  \n" + pin_context)))
         for count, label in ((1, "partial"), (0, "zero"), (None, "unknown-count")):
             samples.append(GallerySample(f"inline-tool-{label}", "incomplete",
                 f"Inline-comment tool failure: {label}", status(

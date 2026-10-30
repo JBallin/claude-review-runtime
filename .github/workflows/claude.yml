@@ -1186,7 +1186,7 @@ jobs:
                   return ""
               match = re.fullmatch(r"\*\*Runtime used:\*\* \[.*\]\(https://github.com/([^/]+/[^/]+)/blob/([0-9a-f]{40})/(.+)\)", lines[0])
               return lines[0] if match and line(*match.groups()) == lines[0] else ""
-          sections = re.split(r"(?m)^(?:#### Previous completed review|\*\*Previous completed review\*\*)[ \t]*$", comment.get("body") or "", maxsplit=1)
+          sections = re.split(r"(?m)^(?:#{3,4} Previous completed review|\*\*Previous completed review\*\*)[ \t]*$", comment.get("body") or "", maxsplit=1)
           current = recorded(sections[0]) or line(os.environ.get("RUNTIME_REPOSITORY", ""),
               os.environ.get("RUNTIME_SHA", ""), os.environ.get("RUNTIME_WORKFLOW_PATH", ""))
           generations = re.findall(r"<!-- claude-review-runtime:claude-review-last-reviewed-generation:(.*?) -->", sys.argv[2])
@@ -1202,7 +1202,7 @@ jobs:
             fi
             if [ -n "$historical_lines" ]; then
               historical_lines=${historical_lines//$'\n'/$'  \n'}
-              metadata="#### Current attempt"$'\n\n'"$metadata"$'\n\n''#### Previous completed review'$'\n\n'"$historical_lines"
+              metadata="### Current attempt"$'\n'"$metadata"$'\n\n''### Previous completed review'$'\n'"$historical_lines"
               if [ -n "$previous_runtime" ]; then
                 metadata="$metadata"$'  \n'"$previous_runtime"
               fi

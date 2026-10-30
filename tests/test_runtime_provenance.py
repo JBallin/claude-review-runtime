@@ -86,7 +86,7 @@ class RuntimeProvenanceTests(unittest.TestCase):
         check.best_effort_status(OTHER, "in_progress", acquire=True)
         owner = check.status_owner(self.api.status)
         body = self.api.status["body"]
-        attempt, history = body.split("#### Previous completed review", 1)
+        attempt, history = body.split("### Previous completed review", 1)
         self.assertIn(check.runtime_used_line(current), attempt)
         self.assertNotIn(check.runtime_used_line(previous), attempt)
         self.assertIn(check.runtime_used_line(previous), history)
@@ -122,13 +122,14 @@ class RuntimeProvenanceTests(unittest.TestCase):
         owner = check.status_owner(original)
         self.configure("e" * 40)
         self.api.pr["head"]["sha"] = NEWER
-        for legacy in (False, True):
-            with self.subTest(legacy=legacy):
+        for heading_format in ("current", "level-four", "bold"):
+            with self.subTest(heading_format=heading_format):
                 self.api.status = copy.deepcopy(original)
-                if legacy:
+                if heading_format != "current":
                     for label in ("Current attempt", "Previous completed review"):
                         self.api.status["body"] = self.api.status["body"].replace(
-                            "#### " + label + "\n\n", "**" + label + "**  \n")
+                            "### " + label + "\n",
+                            "#### " + label + "\n\n" if heading_format == "level-four" else "**" + label + "**  \n")
                 self.assertEqual(check.status_runtime(self.api.status, owner), current)
                 self.assertEqual(check.status_runtime(self.api.status, owner, previous=True), previous)
                 check.best_effort_status(NEWER, "stale")

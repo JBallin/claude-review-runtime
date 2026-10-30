@@ -835,7 +835,7 @@ def rendered_runtime(body):
 def status_runtime(comment, owner, *, previous=False):
     if not owner or not owned_status(comment or {}) or status_owner(comment) != owner:
         return None
-    sections = re.split(r"(?m)^(?:#### Previous completed review|\*\*Previous completed review\*\*)[ \t]*$",
+    sections = re.split(r"(?m)^(?:#{3,4} Previous completed review|\*\*Previous completed review\*\*)[ \t]*$",
                         comment.get("body") or "", maxsplit=1)
     return rendered_runtime(sections[1] if previous and len(sections) == 2 else "" if previous else sections[0])
 
@@ -1310,10 +1310,10 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         review_metadata.append(runtime_used_line(last_review_details["runtime"]))
     if metadata:
         if history_in_details:
-            lines += ["#### Current attempt", ""]
+            lines += ["### Current attempt"]
         lines += ["  \n".join(metadata), ""]
     if previous:
-        lines += ["#### Previous completed review", "", "  \n".join(previous), ""]
+        lines += ["### Previous completed review", "  \n".join(previous), ""]
     lines += ["</details>"]
     return "\n".join(lines)
 

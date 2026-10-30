@@ -1188,21 +1188,27 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         body = check.status_comment_body(HEAD, BASE_REF, "in_progress", owner=owner, runtime=current,
             last_review=("b" * 40, BASE_REF, "success"),
             last_review_details={"base_sha": "d" * 40, "generation": "1" * 64, "runtime": previous})
-        for label in ("Current attempt", "Previous completed review"):
-            body = body.replace("#### " + label + "\n\n", "**" + label + "**  \n")
-        owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": body}
-        for path in (AUTOMATIC, MANUAL):
-            with self.subTest(workflow=path.name):
-                result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
-                    STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner)
-                self.assertEqual(result.returncode, 1)
-                repaired = next(c["body"]["body"] for c in calls if c["method"] == "PATCH"
-                                and any("issues/comments/55" in a for a in c["args"]))
-                after = {**owned, "body": repaired}
-                self.assertEqual(check.status_runtime(after, owner), current)
-                self.assertEqual(check.last_completed_review_details(after)["runtime"], previous)
-                self.assertIn("#### Current attempt\n\n", repaired)
-                self.assertIn("#### Previous completed review\n\n", repaired)
+        for heading_format in ("current", "level-four", "bold"):
+            recorded = body
+            for label in ("Current attempt", "Previous completed review"):
+                replacement = ("#### " + label + "\n\n" if heading_format == "level-four"
+                               else "**" + label + "**  \n" if heading_format == "bold"
+                               else "### " + label + "\n")
+                recorded = recorded.replace("### " + label + "\n", replacement)
+            owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": recorded}
+            for path in (AUTOMATIC, MANUAL):
+                with self.subTest(workflow=path.name, heading_format=heading_format):
+                    result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
+                        STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner)
+                    self.assertEqual(result.returncode, 1)
+                    repaired = next(c["body"]["body"] for c in calls if c["method"] == "PATCH"
+                                    and any("issues/comments/55" in a for a in c["args"]))
+                    after = {**owned, "body": repaired}
+                    self.assertEqual(check.status_runtime(after, owner), current)
+                    self.assertEqual(check.last_completed_review_details(after)["runtime"], previous)
+                    for label in ("Current attempt", "Previous completed review"):
+                        self.assertIn("### " + label + "\n**", repaired)
+                        self.assertNotIn("### " + label + "\n\n", repaired)
 
     def test_manual_fallback_retains_only_current_requested_selection(self):
         from test_claude_review_check import presentation_owner
