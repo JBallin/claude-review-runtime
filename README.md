@@ -38,10 +38,9 @@ and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 
 ## Alternatives
 
-- Use the [Claude Code GitHub Action](https://code.claude.com/docs/en/github-actions)
-  for a configurable review workflow; Runtime builds on it to track reviewed
-  commits and result freshness.
-- Anthropic’s [managed Code Review](https://code.claude.com/docs/en/code-review)
-  is an Owner-enabled service for eligible Team and Enterprise organizations.
-- [Datadog’s code review action](https://github.com/DataDog/code-review-action)
-  is another reusable GitHub Actions workflow for code review.
+- [Claude Code GitHub Action](https://code.claude.com/docs/en/github-actions):
+  Use the underlying GitHub Action directly.
+- Anthropic’s [managed Code Review](https://code.claude.com/docs/en/code-review):
+  Anthropic-hosted reviews for eligible Team and Enterprise plans.
+- [Datadog’s code review action](https://github.com/DataDog/code-review-action):
+  Another GitHub Actions option.
