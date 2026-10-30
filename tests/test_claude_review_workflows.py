@@ -1130,13 +1130,85 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertNotIn("**Reason:**", visible)
                 self.assertIn("https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md"
                               "#installation-and-incomplete-reviews", visible)
-                self.assertIn("<summary>ℹ️ Details</summary>\n\n<br/>\n\n", details)
-                self.assertEqual(body.count("<br/>"), 1)
+                self.assertIn("<summary>ℹ️ Details</summary>\n\n", details)
+                self.assertEqual(body.count("<br/>"), 0)
                 reason = "**Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably."
                 metadata = f"**Current commit:** `{HEAD[:7]}`  \n**Trigger:** Not recorded  \n"
-                self.assertIn(reason + "\n\n" + metadata, details)
+                self.assertIn("<!--\n" + reason + "\n-->\n\n" + metadata, details)
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("Check", body)
+
+    def test_fallback_keeps_current_and_historical_runtime_provenance(self):
+        from test_claude_review_check import presentation_owner
+        owner = presentation_owner(repo=REPO)
+        current = check.runtime_provenance("JBallin/claude-review-runtime", "f" * 40, ".github/workflows/claude.yml")
+        previous = check.runtime_provenance("JBallin/claude-review-runtime", "e" * 40, ".github/workflows/claude.yml")
+        for path in (AUTOMATIC, MANUAL):
+            for with_history in (False, True):
+                with self.subTest(workflow=path.name, history=with_history):
+                    options = {}
+                    if with_history:
+                        options = {"last_review": ("b" * 40, BASE_REF, "success"),
+                                   "last_review_details": {"base_sha": "d" * 40, "generation": "1" * 64,
+                                                           "runtime": previous}}
+                    body = check.status_comment_body(HEAD, BASE_REF, "in_progress", owner=owner,
+                                                    runtime=current, **options)
+                    owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": body}
+                    result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
+                                                       STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner)
+                    self.assertEqual(result.returncode, 1)
+                    repaired = next(c["body"]["body"] for c in calls if c["method"] == "PATCH"
+                                    and any("issues/comments/55" in a for a in c["args"]))
+                    after = {**owned, "body": repaired}
+                    self.assertEqual(check.status_runtime(after, owner), current)
+                    if with_history:
+                        self.assertEqual(check.last_completed_review_details(after)["runtime"], previous)
+                    self.assertNotIn("**Runtime used:**", repaired.split("<details>")[0])
+
+    def test_fallback_runtime_uses_valid_execution_evidence_and_omits_unknown(self):
+        from test_claude_review_check import presentation_owner
+        owner = presentation_owner(repo=REPO)
+        for path in (AUTOMATIC, MANUAL):
+            for sha in ("f" * 40, "main", ""):
+                with self.subTest(workflow=path.name, sha=sha):
+                    result, calls = self.run_fallback(path, STATUS_COMMENT_ID="55", PR_NUMBER="7", RUNTIME_SHA=sha)
+                    self.assertEqual(result.returncode, 1)
+                    repaired = next(c["body"]["body"] for c in calls if c["method"] == "PATCH"
+                                    and any("issues/comments/55" in a for a in c["args"]))
+                    self.assertEqual("**Runtime used:**" in repaired, bool(sha and sha != "main"))
+                    if sha == "f" * 40:
+                        after = {"user": {"login": "github-actions[bot]", "type": "Bot"}, "body": repaired}
+                        self.assertEqual(check.status_runtime(after, owner)["runtime_sha"], sha)
+
+    def test_fallback_reads_legacy_history_headings_without_swapping_runtime_links(self):
+        from test_claude_review_check import presentation_owner
+        owner = presentation_owner(repo=REPO)
+        current = check.runtime_provenance("JBallin/claude-review-runtime", "c" * 40, ".github/workflows/claude.yml")
+        previous = check.runtime_provenance("JBallin/claude-review-runtime", "e" * 40, ".github/workflows/claude.yml")
+        body = check.status_comment_body(HEAD, BASE_REF, "in_progress", owner=owner, runtime=current,
+            last_review=("b" * 40, BASE_REF, "success"),
+            last_review_details={"base_sha": "d" * 40, "generation": "1" * 64, "runtime": previous})
+        for heading_format in ("current", "level-four", "bold"):
+            recorded = body
+            for label in ("Current attempt", "Previous completed review"):
+                replacement = ("#### " + label + "\n\n" if heading_format == "level-four"
+                               else "**" + label + "**  \n" if heading_format == "bold"
+                               else "### " + label + "\n")
+                recorded = recorded.replace("### " + label + "\n", replacement)
+            owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": recorded}
+            for path in (AUTOMATIC, MANUAL):
+                with self.subTest(workflow=path.name, heading_format=heading_format):
+                    result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
+                        STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner)
+                    self.assertEqual(result.returncode, 1)
+                    repaired = next(c["body"]["body"] for c in calls if c["method"] == "PATCH"
+                                    and any("issues/comments/55" in a for a in c["args"]))
+                    after = {**owned, "body": repaired}
+                    self.assertEqual(check.status_runtime(after, owner), current)
+                    self.assertEqual(check.last_completed_review_details(after)["runtime"], previous)
+                    for label in ("Current attempt", "Previous completed review"):
+                        self.assertIn("### " + label + "\n**", repaired)
+                        self.assertNotIn("### " + label + "\n\n", repaired)
 
     def test_manual_fallback_retains_only_current_requested_selection(self):
         from test_claude_review_check import presentation_owner
