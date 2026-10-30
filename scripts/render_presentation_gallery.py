@@ -115,10 +115,21 @@ def gallery_samples():
             "completed_owner_verified": True,
         }
         manual_owner = fixtures.presentation_owner(kind="issue_comment", target=12, started=STARTED)
-        def selected(models, evidence="observed", attempt=1, model="opus", effort="high", state="success", **options):
+        def selected(models, evidence="observed", attempt=1, model="opus", effort="high", state="success", primary=None, legacy=False, receipt=False, **options):
             record = {"generation": manual_owner["generation"], "requested_model": model,
                       "requested_effort": effort, "models": models,
                       "model_evidence": evidence, "execution_attempt": attempt, "observed_effort": None}
+            if not legacy:
+                primary = primary if primary is not None else models
+                record["primary_model_evidence"] = ({"initialization": primary[0], "assistant": primary,
+                                                     "attempt": attempt} if primary else None)
+            if receipt:
+                return check.completion_comment_body(
+                    fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
+                    check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
+                                            fixtures.BASE_TIP, fixtures.MERGE_BASE),
+                    "https://github.com/owner/repo/actions/runs/5",
+                    observed_base_sha=fixtures.BASE_TIP, selection=record)
             return check.status_comment_body(fixtures.HEAD, "main", state, owner=manual_owner,
                                             trigger_label="Manual request", completed_at=COMPLETED_AT,
                                             selection=record, runtime=check.executing_runtime(), **options)
@@ -132,7 +143,9 @@ def gallery_samples():
             GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-5-5"])),
             GallerySample("opus-mismatch", "current-completion", "Completed review with model mismatch", selected(["claude-sonnet-5-5"])),
             GallerySample("opus-unknown", "current-completion", "Completed review with unknown model", selected([], "unknown", None)),
-            GallerySample("opus-multiple", "current-completion", "Completed review with multiple models", selected(["claude-haiku-5-5", "claude-opus-5-5"], "mixed")),
+            GallerySample("opus-multiple", "current-completion", "Opus primary review with auxiliary Haiku usage", selected(["claude-haiku-4-5", "claude-opus-5-5"], "mixed", primary=["claude-opus-5-5"])),
+            GallerySample("opus-ambiguous", "current-completion", "Completed review with conflicting primary models", selected(["claude-opus-5-5", "claude-sonnet-5-5"])),
+            GallerySample("opus-legacy", "current-completion", "Legacy receipt without primary evidence", selected(["claude-opus-5-5"], legacy=True)),
             GallerySample("current-clean", "current-completion", "Completed review", status("success")),
             GallerySample(FINDINGS_SAMPLE, "current-completion", "Review with findings", status("action_required")),
             GallerySample("baseline-clean", "baseline-completion", "Clean completion, changed target branch", status(
@@ -146,6 +159,8 @@ def gallery_samples():
                 base_sha=fixtures.BASE_TIP, **stale_options)),
             GallerySample("incomplete-unknown", "incomplete", "Incomplete attempt without completed history", status(
                 "failure", reason=check.STATUS_REASONS["incomplete"])),
+            GallerySample("selection-receipt", "compact-completion", "Historical manual receipt with primary Opus and auxiliary Haiku", selected(["claude-haiku-4-5", "claude-opus-5-5"], "mixed", primary=["claude-opus-5-5"], receipt=True)),
+            GallerySample("selection-receipt-mismatch", "compact-completion", "Historical manual receipt with primary model mismatch", selected(["claude-sonnet-5-5"], receipt=True)),
             GallerySample("compact-clean", "compact-completion", "Compact clean completion, matching baseline", check.completion_comment_body(
                 fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
                 check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",

@@ -30,6 +30,22 @@ class RuntimeProvenanceTests(unittest.TestCase):
                 unknown = check.status_comment_body(HEAD, "main", state, owner=owner)
                 self.assertNotIn("**Runtime used:**", unknown)
 
+    def test_manual_settings_and_runtime_provenance_keep_their_own_locations(self):
+        runtime = self.configure()
+        owner = check.captured_owner()
+        selection = {"generation": owner["generation"], "requested_model": "opus", "requested_effort": "high",
+                     "models": ["claude-opus-5-5"], "model_evidence": "observed", "execution_attempt": 1,
+                     "observed_effort": None, "primary_model_evidence": {
+                         "initialization": "claude-opus-5-5", "assistant": ["claude-opus-5-5"], "attempt": 1}}
+        body = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP,
+            check.completion_marker(REPO, 7, HEAD, "main", BASE_TIP, "c" * 40),
+            "https://github.com/owner/repo/actions/runs/5", selection=selection)
+        visible, details = body.split("<details>", 1)
+        reviewed = "**Reviewed commit:** " + check.commit_link(HEAD, REPO)
+        self.assertIn(reviewed + "\n\n**Model:** Opus · **Effort:** High", visible)
+        self.assertNotIn("Runtime used", visible)
+        self.assertEqual(details.count(check.runtime_used_line(runtime)), 1)
+
     def test_stale_refresh_preserves_executed_runtime_not_refresher(self):
         executed = self.configure()
         owner = self.start()

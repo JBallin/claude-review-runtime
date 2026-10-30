@@ -558,11 +558,13 @@ def selection_record(owner, execution=None):
         return None
     requested = manual_selection(env("TRIGGER_COMMENT"))
     record = {**requested, "generation": owner["generation"], "models": [],
-              "execution_attempt": None, "model_evidence": "unknown", "observed_effort": None}
+              "execution_attempt": None, "model_evidence": "unknown", "observed_effort": None,
+              "primary_model_evidence": None}
     if execution:
         try:
             with open(execution, encoding="utf-8") as source:
                 stream = json.load(source, object_pairs_hook=unique_json_object)
+            record["primary_model_evidence"] = primary_model_evidence(stream)
             init = [m for m in stream if m.get("type") == "system" and m.get("subtype") == "init"]
             turns = [m for m in stream if m.get("type") == "assistant" and not m.get("error")]
             results = [m for m in stream if m.get("type") == "result"]
@@ -591,9 +593,43 @@ def selection_record(owner, execution=None):
     return record
 
 
+def primary_model_evidence(stream):
+    """Keep primary session sources separate from aggregate/auxiliary usage."""
+    try:
+        init = [m for m in stream if m.get("type") == "system" and m.get("subtype") == "init"
+                and m.get("parent_tool_use_id") is None]
+        turns = [m for m in stream if m.get("type") == "assistant"
+                 and m.get("parent_tool_use_id") is None]
+        results = [m for m in stream if m.get("type") == "result"
+                   and m.get("parent_tool_use_id") is None]
+        sessions = {m.get("session_id") for m in [*init, *turns, *results]}
+        if (len(init) != 1 or not turns or len(results) != 1 or len(sessions) != 1
+                or not all(isinstance(s, str) and s for s in sessions)
+                or any(m.get("error") for m in turns)):
+            return None
+        evidence = {"initialization": init[0].get("model"),
+                    "assistant": sorted({m.get("message", {}).get("model") for m in turns}),
+                    "attempt": int(env("GITHUB_RUN_ATTEMPT"))}
+        return evidence if valid_primary_model_evidence(evidence) else None
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
+def valid_primary_model_evidence(evidence):
+    if not isinstance(evidence, dict) or set(evidence) != {"initialization", "assistant", "attempt"}:
+        return False
+    models = evidence["assistant"]
+    init = evidence["initialization"]
+    return (type(evidence["attempt"]) is int and evidence["attempt"] > 0
+            and isinstance(models, list) and 0 < len(models) <= 8
+            and all(isinstance(m, str) and re.fullmatch(r"claude-[a-z0-9-]{1,100}", m)
+                    for m in models + ([init] if init is not None else []))
+            and models == sorted(set(models)))
+
+
 def valid_selection(record, owner):
     if (not isinstance(record, dict) or not owner or owner["kind"] == "automatic"
-            or set(record) - {"observed_effort"} != {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
+            or set(record) - {"observed_effort", "primary_model_evidence"} != {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
             or record.get("observed_effort") is not None
             or record["generation"] != owner["generation"]
             or record["requested_model"] not in ("", "opus")
@@ -607,6 +643,10 @@ def valid_selection(record, owner):
     if attempt is not None and (type(attempt) is not int or attempt <= 0):
         return None
     if bool(record["models"]) != (attempt is not None) or (record["model_evidence"] == "unknown") != (attempt is None):
+        return None
+    primary = record.get("primary_model_evidence")
+    if primary is not None and (not valid_primary_model_evidence(primary)
+                               or (attempt is not None and primary["attempt"] != attempt)):
         return None
     return record
 
@@ -634,28 +674,31 @@ def current_selection(owner, comment=None):
     return None
 
 
-def selection_notice(record):
+def selection_notice(record, *, running=False):
     if not record:
         return []
     parts = []
-    models = record["models"]
     if record["requested_model"]:
-        opus = [m for m in models if m.startswith("claude-opus-")]
+        primary = record.get("primary_model_evidence")
+        models = sorted(set(primary["assistant"] + ([primary["initialization"]]
+                        if primary["initialization"] else []))) if primary else []
         def label(model):
             match = re.fullmatch(r"claude-(opus|sonnet|haiku)-(\d+)-(\d+)", model)
             return (match[1].title() + " " + match[2] + "." + match[3]) if match else inline_code(model)
-        if not models:
-            value = "Opus requested; execution model unknown"
+        if not models and running:
+            value = "Opus"
+        elif not models:
+            value = "Opus selected; primary model evidence missing"
         elif len(models) > 1:
-            value = "Opus requested; observed " + ", ".join(label(m) for m in models)
-        elif not opus:
-            value = "Opus requested; " + label(models[0]) + " observed"
+            value = "Opus selected; primary model evidence ambiguous (" + ", ".join(label(m) for m in models) + ")"
+        elif not models[0].startswith("claude-opus-"):
+            value = "Opus selected; primary model mismatch (" + label(models[0]) + " observed)"
         else:
             value = "Opus"
-        prefix = "⚠️ " if models and not opus else ""
+        prefix = "⚠️ " if value != "Opus" else ""
         parts.append(prefix + "**Model:** " + value)
     if record["requested_effort"]:
-        parts.append("**Effort:** " + record["requested_effort"])
+        parts.append("**Effort:** " + record["requested_effort"].capitalize())
     return [" · ".join(parts)] if parts else []
 
 
@@ -1032,7 +1075,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     commit_label = "Reviewed commit" if show_review else "Attempt commit" if owner else "PR commit"
     lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
-    lines += ["", *selection_notice(selection)] if selection_notice(selection) else []
+    notice = selection_notice(selection, running=state == "in_progress" or owner_running is True)
+    lines += ["", *notice] if notice else []
     if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
         lines += ["", messages[state]]
     if base_advanced:
@@ -1831,9 +1875,12 @@ def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_
     return f"{COMPLETION_PREFIX}{encoded} -->"
 
 
-def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url, *, observed_base_sha=None):
+def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url, *, observed_base_sha=None,
+                            selection=None):
     # A fixed receipt describes this captured review; live drift belongs in the aggregate status.
     reviewed = f"[Reviewed]({details_url})" if details_url else "Reviewed"
+    notice = selection_notice(selection)
+    settings = "\n\n" + "\n".join(notice) if notice else ""
     observed_tip = ""
     if observed_base_sha and observed_base_sha != base_sha:
         observed_tip = (f"  \n**Observed target commit:** {commit_link(observed_base_sha, repo)} "
@@ -1844,7 +1891,7 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     return (
         f"{marker}\n"
         "Claude Review: No findings. 🎉\n\n"
-        f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha})\n\n"
+        f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}){settings}\n\n"
         "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
         f"**{reviewed} against:** [`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) "
         f"on {inline_code(base_ref)}{observed_tip}{runtime_used}\n\n</details>"
@@ -1899,7 +1946,7 @@ def best_effort_manual_completion(head_sha):
         if status_publication_identity(find_status_comment(repo, pr_number)) != status_publication_identity(existing):
             raise ValueError("presentation changed before manual completion publication")
         body = completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url,
-                                       observed_base_sha=live[2])
+                                       observed_base_sha=live[2], selection=current_selection(owner, existing))
         # Never retry an ambiguous POST. A subsequent clean rerun can discover
         # a notice that was created despite a failed response.
         gh_api(["--method", "POST", path, "--input", "-"], {"body": body})
