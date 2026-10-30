@@ -329,26 +329,35 @@ trusted `Claude Review` Check remains incomplete or failed, and required review
 remains unsatisfied. This condition does not mean every first run fails or every
 PR changing a workflow is unreviewable.
 
-Related upstream proposal: [claude-code-action #1879](https://github.com/anthropics/claude-code-action/pull/1879)
-would expose an explicit workflow-validation skip as an action output. It is
-an open proposal, not an available fix or a Runtime dependency.
+The pinned action does not expose a structured workflow-validation result, so
+Runtime cannot confirm this cause automatically. [Issue #9](https://github.com/JBallin/claude-review-runtime/issues/9)
+tracks the limitation; [claude-code-action #1879](https://github.com/anthropics/claude-code-action/pull/1879)
+proposes the missing signal and remains open and unmerged.
 
-An incomplete review may flag changes to its caller or Runtime workflow as
-context, not a confirmed cause. The warning reflects that attempt's captured
-patch; unrelated changes don't trigger it. If the relevant evidence is
-unavailable or ambiguous, the explanation stays generic.
+When the captured patch changes a relevant review workflow, the Incomplete
+message identifies that change as a likely cause, not a confirmed rejection.
+Check the linked attempt's logs to confirm. Unrelated workflow changes do not
+trigger this explanation; unavailable or ambiguous evidence stays generic.
 
-Reconcile the automatic review's Check and workflow run before requesting
-recovery. After a confirmed caller-validation rejection, use the already deployed
-trusted manual caller only when no applicable review request is completed or
-pending. Follow its documented command and verify the captured head, base, and
-executing Runtime revision in the resulting Check and workflow run. A pin update
-alone does not require manual review; this recovery applies to the confirmed
-rejection, not every caller change.
+Before requesting recovery, reconcile the authoritative Check and workflow run.
+After checking the attempt's logs, an authorized user can try the trusted manual
+caller already deployed on the default branch, if this repository has one and
+the PR meets its eligibility rules. Post the supported
+[`/claude-review` command](#request-a-manual-review) only when no applicable review
+request is completed or pending. Verify the captured head, base, and executing
+Runtime revision in the resulting Check and workflow run. A pin update alone
+does not require manual review, and a manual request is not guaranteed to succeed.
 
 Distinguish the PR's proposed pin from the caller and Runtime actually executing
-each attempt. Inspect the linked run's caller and referenced workflows, then
-the Check's `runtime_repository`, `runtime_sha`, and `runtime_workflow_path`.
+each attempt. Status and manual receipt Details link the exact **Runtime used** when trusted
+provenance is available; unknown provenance is omitted. Status refreshes retain
+the recorded attempt’s Runtime rather than substituting the refresher’s revision. The Check's
+`runtime_repository`, `runtime_sha`, and `runtime_workflow_path` retain the same
+provenance. Inspect the linked run's caller and referenced workflows as needed.
+Runtime metadata alone does not identify a pin-change recovery. Compare the
+captured pin change with that attempt's executed revision before concluding
+that the deployed Runtime ran instead of the proposed pin. Generic manual
+receipts do not make this inference.
 A deployed manual caller can execute its previously installed Runtime while
 reviewing the proposed patch. A clean review through that older revision does
 not establish live adoption of the proposed pin. Automatic and manual attempts

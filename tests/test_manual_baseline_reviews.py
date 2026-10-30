@@ -213,6 +213,61 @@ class ManualBaselineTests(unittest.TestCase):
         self.assertNotIn("merge approval", self.api.notices[0]["body"].lower())
         self.assertIn(BASE_TIP, self.api.notices[0]["body"])
 
+    def test_manual_receipt_distinguishes_runtime_from_reviewed_patch_and_baseline(self):
+        runtime_sha = "f" * 40
+        for kind in ("issue_comment", "pull_request_review_comment"):
+            with self.subTest(kind=kind):
+                self.reset_manual(kind)
+                os.environ.update(RUNTIME_REPOSITORY="review/runtime", RUNTIME_SHA=runtime_sha,
+                                  RUNTIME_WORKFLOW_PATH=".github/workflows/claude.yml")
+                self.start()
+                self.finish()
+                self.notice()
+                body = self.api.notices[0]["body"]
+                visible, details = body.split("<details>", 1)
+                self.assertNotIn("Runtime used", visible)
+                self.assertIn(check.commit_link(HEAD, REPO), visible)
+                self.assertIn(check.commit_link(BASE_TIP, REPO), details)
+                self.assertEqual(details.count("**Runtime used:**"), 1)
+                self.assertIn("**Runtime used:** [`review/runtime@fffffff`]"
+                              f"(https://github.com/review/runtime/blob/{runtime_sha}/.github/workflows/claude.yml)",
+                              details)
+                self.assertNotIn("current main", body.lower())
+                self.assertIn(check.completion_marker(REPO, 7, HEAD, "main", BASE_TIP, MERGE_BASE), body)
+                identity = check.review_identity(HEAD)
+                self.assertEqual(identity["runtime_sha"], runtime_sha)
+                self.assertEqual(identity["reviewed_sha"], HEAD)
+
+    def test_missing_or_unsafe_runtime_provenance_does_not_invent_a_runtime_link(self):
+        valid = {"RUNTIME_REPOSITORY": "review/runtime", "RUNTIME_SHA": "f" * 40,
+                 "RUNTIME_WORKFLOW_PATH": ".github/workflows/claude.yml"}
+        marker = check.completion_marker(REPO, 7, HEAD, "main", BASE_TIP, MERGE_BASE)
+        for key, value in (("RUNTIME_REPOSITORY", ""), ("RUNTIME_SHA", ""),
+                           ("RUNTIME_WORKFLOW_PATH", ""), ("RUNTIME_REPOSITORY", "evil/repo](https://bad.invalid)"),
+                           ("RUNTIME_SHA", "main"), ("RUNTIME_WORKFLOW_PATH", "../claude.yml")):
+            with self.subTest(key=key, value=value):
+                os.environ.update(valid)
+                os.environ[key] = value
+                body = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, marker,
+                                                     os.environ["DETAILS_URL"])
+                self.assertNotIn("**Runtime used:**", body)
+                self.assertIn(check.commit_link(HEAD, REPO), body)
+
+    def test_later_runtime_does_not_rewrite_or_duplicate_historical_manual_receipt(self):
+        os.environ.update(RUNTIME_REPOSITORY="review/runtime", RUNTIME_SHA="f" * 40,
+                          RUNTIME_WORKFLOW_PATH=".github/workflows/claude.yml")
+        self.start()
+        self.finish()
+        self.notice()
+        original = copy.deepcopy(self.api.notices)
+        self.assertIn("review/runtime@fffffff", original[0]["body"])
+        os.environ["RUNTIME_SHA"] = NEWER
+        self.api.calls.clear()
+        self.notice()
+        self.assertEqual(self.api.notices, original)
+        self.assertFalse(any(method in ("POST", "PATCH") and "comments" in path
+                             for method, path, _ in self.api.calls))
+
     def test_selection_survives_standing_status_receipt_and_stale_refresh(self):
         for model, expected in (
                 ('claude-opus-5-5', '**Model:** Opus · **Effort:** High'),

@@ -49,7 +49,7 @@ class GallerySample(NamedTuple):
 # Reading order is separate from stable case identities and display numbers.
 GROUP_ORDER = (
     "current-completion", "baseline-completion", "changed-head", "incomplete",
-    "compact-completion", "running-history", "incomplete-history", "retargeted",
+    "compact-completion", "manual-recovery", "running-history", "incomplete-history", "retargeted",
     "publication-incomplete", "publication-unavailable", "running-unavailable",
     "shared-run", "legacy-history", "stale-running",
 )
@@ -65,6 +65,9 @@ def fixture_environment():
         "BASE_SHA": fixtures.BASE_TIP,
         "DETAILS_URL": "https://github.com/owner/repo/actions/runs/5",
         "GITHUB_SERVER_URL": "https://github.com",
+        "RUNTIME_REPOSITORY": "JBallin/claude-review-runtime",
+        "RUNTIME_SHA": "f" * 40,
+        "RUNTIME_WORKFLOW_PATH": ".github/workflows/claude.yml",
     })
     try:
         yield
@@ -88,6 +91,7 @@ def gallery_samples():
             "completed_at": COMPLETED_AT,
             "trigger": "PR opened for review",
             "generation": owner["generation"],
+            "runtime": check.executing_runtime(),
         }
 
         def status(state, *, head=fixtures.HEAD, base_ref="main", **options):
@@ -96,6 +100,7 @@ def gallery_samples():
                     "owner": owner,
                     "trigger_label": "PR opened for review",
                     "completed_at": COMPLETED_AT,
+                    "runtime": check.executing_runtime() if options.get("owner", owner) else None,
                     **options,
                 }
             )
@@ -127,7 +132,7 @@ def gallery_samples():
                     observed_base_sha=fixtures.BASE_TIP, selection=record)
             return check.status_comment_body(fixtures.HEAD, "main", state, owner=manual_owner,
                                             trigger_label="Manual request", completed_at=COMPLETED_AT,
-                                            selection=record, **options)
+                                            selection=record, runtime=check.executing_runtime(), **options)
         samples = [
             GallerySample("selection-running", "current-completion", "Running with explicit selection", selected([], "unknown", None, state="in_progress")),
             GallerySample("selection-findings", "current-completion", "Findings with explicit selection", selected(["claude-opus-5-5"], state="action_required")),
@@ -169,6 +174,19 @@ def gallery_samples():
                 "https://github.com/owner/repo/actions/runs/5",
                 observed_base_sha=fixtures.OTHER)),
         ]
+        # This fixture explicitly supplies the pin-change context. Generic manual
+        # receipts know the executed Runtime, but cannot infer a proposed pin.
+        pin_recovery = check.completion_comment_body(
+            fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
+            check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
+                                    fixtures.BASE_TIP, fixtures.MERGE_BASE),
+            "https://github.com/owner/repo/actions/runs/5")
+        pin_context = "This review used the deployed Runtime, not the proposed pin."
+        runtime_line = check.runtime_used_line(check.runtime_provenance(
+            "JBallin/claude-review-runtime", "f" * 40, ".github/workflows/claude.yml"))
+        samples.append(GallerySample(
+            "manual-pin-recovery", "manual-recovery", "Manual recovery after a Runtime pin change (synthetic)",
+            pin_recovery.replace(runtime_line, runtime_line + "  \n" + pin_context)))
         for count, label in ((1, "partial"), (0, "zero"), (None, "unknown-count")):
             samples.append(GallerySample(f"inline-tool-{label}", "incomplete",
                 f"Inline-comment tool failure: {label}", status(
@@ -219,7 +237,7 @@ def gallery_samples():
             GallerySample("unread-manual", "incomplete", "Required inputs unread, manual attempt with workflow changes", status(
                 "failure", head=fixtures.OTHER, owner=manual_owner, trigger_label="Manual request",
                 reason=check.STATUS_REASONS["unread_inputs"])),
-            GallerySample("workflow-changed", "incomplete", "Relevant review workflow changed, cause unknown", status(
+            GallerySample("workflow-changed", "incomplete", "Relevant review workflow changed, likely cause unconfirmed", status(
                 "failure", reason=check.STATUS_REASONS["workflow_changed"])),
             GallerySample("workflow-changed-superseded", "incomplete", "Workflow-change context retained for a superseded attempt", status(
                 "stale", head=fixtures.OTHER, owner_running=False,
@@ -283,7 +301,8 @@ def sample_markdown(body):
 def render_gallery():
     sections = ["\n\n".join([
         f"# {HEADING}",
-        "All sample repository, commit, run, and timestamp identities are synthetic. "
+        "All sample revisions, runs, timestamps, and consumer repositories are synthetic. "
+        "Runtime repository names identify this project; their sample revisions are synthetic. "
         "Sample links may intentionally have no live destination. The raw Markdown "
         "retains complete synthetic production metadata for auditing.",
         f"Generated with `{REGENERATE}`. Edit the generator or sample inputs, then regenerate.",

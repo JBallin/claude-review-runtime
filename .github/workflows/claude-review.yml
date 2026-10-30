@@ -927,7 +927,7 @@ jobs:
               reviewed_markers="$attempt_marker"$'\n'"$reviewed_markers"
             fi
             historical_lines=
-            if [ "$state" = stale ]; then
+            if [ -n "$reviewed_markers" ]; then
               # Historical metadata is informational: validate each field and
               # never fill missing values from the current attempt.
               historical_lines=$(printf '%s' "$reviewed_markers" | python3 -c '
@@ -997,13 +997,49 @@ jobs:
             fi
             if [ "$state" = stale ]; then
               captured_line="$captured_line"$'\n'"**Current baseline:** \`$display_base\` — not reviewed"
-              if [ -n "$historical_lines" ]; then
-                captured_line="$captured_line"$'\n'"$historical_lines"
-              fi
             fi
             metadata="**Current commit:** \`${display_head:0:7}\`$trigger_line$captured_line"
             metadata=${metadata//$'\n'/$'  \n'}
-            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n%s %s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n**Reason:** %s\n\n%s\n\n</details>' \
+            runtime_metadata=$(printf '%s' "$comment" | python3 -c '
+          import json, os, re, sys
+          comment = json.load(sys.stdin)
+          owner = json.loads(sys.argv[1])
+          def line(repo, sha, path):
+              path, sep, ref = path.partition("@")
+              if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*/(?!\.{1,2}$)[A-Za-z0-9_.-]+", repo)
+                      or not re.fullmatch(r"[0-9a-f]{40}", sha)
+                      or not re.fullmatch(r"\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml", path)
+                      or sep and (not ref or any(c in ref for c in "\r\n\x00"))):
+                  return ""
+              return "**Runtime used:** [" + chr(96) + repo + "@" + sha[:7] + chr(96) + "](https://github.com/" + repo + "/blob/" + sha + "/" + path + ")"
+          def recorded(text):
+              lines = [v for v in text.splitlines() if v.startswith("**Runtime used:**")]
+              if len(lines) != 1:
+                  return ""
+              match = re.fullmatch(r"\*\*Runtime used:\*\* \[.*\]\(https://github.com/([^/]+/[^/]+)/blob/([0-9a-f]{40})/(.+)\)", lines[0])
+              return lines[0] if match and line(*match.groups()) == lines[0] else ""
+          sections = re.split(r"(?m)^(?:#{3,4} Previous completed review|\*\*Previous completed review\*\*)[ \t]*$", comment.get("body") or "", maxsplit=1)
+          current = recorded(sections[0]) or line(os.environ.get("RUNTIME_REPOSITORY", ""),
+              os.environ.get("RUNTIME_SHA", ""), os.environ.get("RUNTIME_WORKFLOW_PATH", ""))
+          generations = re.findall(r"<!-- claude-review-runtime:claude-review-last-reviewed-generation:(.*?) -->", sys.argv[2])
+          previous = ""
+          if len(generations) == 1 and re.fullmatch(r"[0-9a-f]{64}", generations[0]):
+              previous = current if generations[0] == owner["generation"] else recorded(sections[1]) if len(sections) == 2 else ""
+          print(json.dumps({"current": current, "previous": previous}))
+          ' "$PRESENTATION_OWNER" "$reviewed_markers") || return 0
+            current_runtime=$(printf '%s' "$runtime_metadata" | jq -r '.current')
+            previous_runtime=$(printf '%s' "$runtime_metadata" | jq -r '.previous')
+            if [ -n "$current_runtime" ]; then
+              metadata="$metadata"$'  \n'"$current_runtime"
+            fi
+            if [ -n "$historical_lines" ]; then
+              historical_lines=${historical_lines//$'\n'/$'  \n'}
+              metadata="### Current attempt"$'\n'"$metadata"$'\n\n''### Previous completed review'$'\n'"$historical_lines"
+              if [ -n "$previous_runtime" ]; then
+                metadata="$metadata"$'  \n'"$previous_runtime"
+              fi
+            fi
+            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n%s %s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<!--\n**Reason:** %s\n-->\n\n%s\n\n</details>' \
               "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "$message" "$reason" "$recovery" "$reason" "$metadata")
             body=$(jq -n --arg body "$rendered" '{body: $body}')
             verify_presentation_owner || return 0
