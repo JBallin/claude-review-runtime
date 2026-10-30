@@ -36,5 +36,10 @@ For actual usage, see Ballin’s
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
 and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 
-Alternatives include using [Claude Code Action](https://github.com/anthropics/claude-code-action)
-directly or [Datadog’s code review action](https://github.com/DataDog/code-review-action).
+Anthropic’s [managed Code Review](https://code.claude.com/docs/en/code-review) is an
+Owner-enabled service for eligible Team and Enterprise organizations; Anthropic
+selects the models. The [Claude Code GitHub Action](https://code.claude.com/docs/en/github-actions)
+runs in your GitHub Actions CI and supports workflow configuration. Claude Review
+Runtime builds on that Action to report which commits were reviewed and whether
+the results are still current. You can also use the Action directly or
+[Datadog’s code review action](https://github.com/DataDog/code-review-action).
