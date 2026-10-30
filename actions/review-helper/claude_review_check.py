@@ -1230,7 +1230,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         if incomplete and not active:
             diagnostic = reason.removeprefix(STATUS_REASONS["stale"] + " ")
             hide_receipt = hide_receipt or diagnostic in explanation or (
-                diagnostic == STATUS_REASONS["workflow_changed"] and owner is not None)
+                diagnostic == STATUS_REASONS["workflow_changed"] and owner is not None) or (
+                state == "publication_incomplete" and diagnostic == STATUS_REASONS["check_publication_failed"])
         if hide_receipt:
             lines += ["<!--"]
         lines += [f"**Reason:** {reason}"]

@@ -395,6 +395,14 @@ class DetailsProvenanceTests(unittest.TestCase):
                 self.assertNotIn('**Reason:**', re.sub(r'<!--.*?-->', '', body, flags=re.S))
                 comment = {'user': {'login': check.STATUS_AUTHOR, 'type': 'Bot'}, 'body': body}
                 self.assertEqual(check.terminal_status_reason(comment, owner), reason)
+        for available in (True, False):
+            with self.subTest(check_available=available):
+                reason = check.STATUS_REASONS['check_publication_failed']
+                body = check.status_comment_body(HEAD, 'main', 'publication_incomplete', owner=owner,
+                                                reason=reason, check_available=available)
+                self.assertNotIn('**Reason:**', re.sub(r'<!--.*?-->', '', body, flags=re.S))
+                comment = {'user': {'login': check.STATUS_AUTHOR, 'type': 'Bot'}, 'body': body}
+                self.assertEqual(check.terminal_status_reason(comment, owner), reason)
         distinct = check.status_comment_body(HEAD, 'main', 'in_progress', owner=owner,
                                             reason=check.STATUS_REASONS['unread_inputs'])
         self.assertIn('**Reason:** ' + check.STATUS_REASONS['unread_inputs'],

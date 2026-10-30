@@ -1657,7 +1657,9 @@ Review completion cannot be established because authoritative Check publication 
 <details>
 <summary>ℹ️ Details</summary>
 
+<!--
 **Reason:** The authoritative Check result could not be published.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -1697,7 +1699,9 @@ Review completion cannot be established because authoritative Check publication 
 <details>
 <summary>ℹ️ Details</summary>
 
+<!--
 **Reason:** The authoritative Check result could not be published.
+-->
 
 #### Current attempt
 
@@ -1748,7 +1752,9 @@ Review completion cannot be established because authoritative Check publication 
 <details>
 <summary>ℹ️ Details</summary>
 
+<!--
 **Reason:** The authoritative Check result could not be published.
+-->
 
 #### Current attempt
 
