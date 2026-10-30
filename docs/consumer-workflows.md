@@ -235,7 +235,7 @@ Post one of these entire comment bodies, case-insensitively:
 /claude-review opus high
 ```
 
-The model may be `opus`, `sonnet`, or `haiku`. Effort may be `low`, `medium`,
+The model may be `haiku`, `sonnet`, or `opus`. Effort may be `low`, `medium`,
 `high`, `xhigh`, or `max`. When both are present, put the model first, such as
 `/claude-review sonnet high`.
 
@@ -251,6 +251,11 @@ reversed model/effort order is ambiguous: Runtime shows usage guidance and uses
 both resolved defaults rather than guessing which field to override. This
 recovery applies to configuration values, not authorization checks, conflicting
 ambient configuration, or execution failures.
+
+Warnings distinguish review-request errors from invalid configured settings,
+and identify the effective value as a configured default, built-in default, or
+value retained from the command. Manual-input warnings include a separate Usage
+line showing the supported command syntax.
 
 Unsupported keyword or flag syntax shows usage guidance and falls back without
 interpreting its values as overrides. Valid selections before the unsupported
@@ -270,7 +275,7 @@ review from starting. Higher effort can increase usage and latency; turn and
 time limits are not a spending cap. See
 [effort support](https://platform.claude.com/docs/en/build-with-claude/effort).
 
-Resolved **Model** and **Effort** settings lead each run’s Details, above its
+Resolved **Model** and **Effort** appear in each run’s Details, above its
 baseline and Runtime provenance, including manual clean-completion receipts.
 Normal model labels show the family name (Sonnet, Opus, or Haiku); full model identifiers
 remain in recorded execution metadata. Historical results retain the settings
@@ -282,7 +287,10 @@ output does not report the resolved setting. See
 For the current attempt, a selected model with missing or conflicting primary
 evidence, or execution by a different model family, produces a warning outside
 Details. A recorded model mismatch from a previous run appears only within its
-Previous completed review section. Auxiliary model usage stays in diagnostic metadata and cannot confirm the primary model.
+Previous completed review section, before its settings. Model warnings use
+family names unless version detail is needed to distinguish conflicting evidence
+from the same family. Auxiliary model usage
+stays in diagnostic metadata and cannot confirm the primary model.
 Legacy records without separate primary evidence retain the missing-evidence
 warning. Model diagnostics do not invalidate completed reviews or erase
 findings. Runtime adds no retries or substitution runs for these diagnostics;

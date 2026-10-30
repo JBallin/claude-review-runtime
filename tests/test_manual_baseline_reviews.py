@@ -271,7 +271,7 @@ class ManualBaselineTests(unittest.TestCase):
     def test_selection_survives_standing_status_receipt_and_stale_refresh(self):
         for model, expected in (
                 ('claude-opus-5-5', '**Model:** Opus · **Effort:** High'),
-                ('claude-sonnet-4-6', 'primary model mismatch (Sonnet 4.6 observed)'),
+                ('claude-sonnet-4-6', 'primary model mismatch (Sonnet observed)'),
                 (None, 'primary model evidence missing')):
             with self.subTest(model=model):
                 self.reset_manual()

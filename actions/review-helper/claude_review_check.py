@@ -545,7 +545,7 @@ DIAGNOSTIC_FIELDS = ("model", "effort", "request")
 # New attempts resolve only workflow inputs; Actions variables are never consulted.
 DIAGNOSTIC_SOURCES = ("manual", "repository", "workflow")
 DIAGNOSTIC_REASONS = ("invalid", "missing", "duplicate", "syntax")
-MANUAL_USAGE = "Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`."
+MANUAL_USAGE = "**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`."
 
 
 def diagnostic_key(item):
@@ -683,23 +683,25 @@ def configuration_notices(config):
     if not config:
         return []
     if config["version"] == 1:
-        return (["⚠️ **Review configuration:** Invalid " + " and ".join(config["errors"])
+        return (["⚠️ **Review configuration:** Invalid configured " + " and ".join(config["errors"])
                  + " setting. See the workflow logs."] if config["errors"] else [])
+    sources = {"manual": "from command", "repository": "configured default",
+               "workflow": "configured default", "runtime": "built-in default"}
     notices = []
     for item in config["diagnostics"]:
         field = item["field"]
+        heading = "Review request" if item["source"] == "manual" else "Review configuration"
         if field == "request":
-            problem = "Unsupported manual syntax" if item["reason"] == "syntax" else "Invalid manual request"
-            notices.append("⚠️ **Review configuration:** " + problem + "; using " + ", ".join(
+            problem = "Unsupported syntax" if item["reason"] == "syntax" else "Invalid request"
+            notices.append("⚠️ **" + heading + ":** " + problem + "; using " + ", ".join(
                 field.title() + ": " + config["requested_" + field].capitalize() + " ("
-                + config[field + "_source"].capitalize() + ")" for field in ("model", "effort")) + ".")
+                + sources[config[field + "_source"]] + ")" for field in ("model", "effort")) + ".")
             continue
-        problem = item["reason"].capitalize() + " " + item["source"] + " " + field
-        notices.append("⚠️ **Review configuration:** " + problem + "; using "
+        problem = item["reason"].capitalize() + " " + ("configured " if item["source"] != "manual" else "") + field
+        notices.append("⚠️ **" + heading + ":** " + problem + "; using "
                        + config["requested_" + field].capitalize() + " ("
-                       + config[field + "_source"].capitalize() + ").")
-    if any(item["field"] == "request" or item["reason"] in ("missing", "duplicate")
-           for item in config["diagnostics"]):
+                       + sources[config[field + "_source"]] + ").")
+    if any(item["source"] == "manual" for item in config["diagnostics"]):
         notices.append(MANUAL_USAGE)
     return notices
 
@@ -921,7 +923,10 @@ def primary_selection_models(record):
                       if primary["initialization"] else []))) if primary else []
 
 
-def model_label(model):
+def model_label(model, *, include_version=False):
+    family = re.match(r"claude-(opus|sonnet|haiku)-", model)
+    if family and not include_version:
+        return family[1].title()
     match = re.fullmatch(r"claude-(opus|sonnet|haiku)-(\d+)-(\d+)", model)
     return (match[1].title() + " " + match[2] + "." + match[3]) if match else inline_code(model)
 
@@ -947,6 +952,7 @@ def selection_notice(record, *, running=False, mismatch_only=False):
     if not record:
         return []
     notices = [] if mismatch_only else configuration_notices(record.get("configuration"))
+    usage = notices.pop() if notices and notices[-1] == MANUAL_USAGE else None
     selected = record["requested_model"]
     models = primary_selection_models(record)
     if mismatch_only and (not selected or len(models) != 1
@@ -956,13 +962,19 @@ def selection_notice(record, *, running=False, mismatch_only=False):
     if not models and selected and not running:
         value = prefix + "primary model evidence missing"
     elif len(models) > 1 and selected:
-        value = prefix + "primary model evidence ambiguous (" + ", ".join(model_label(m) for m in models) + ")"
+        labels = [model_label(model) for model in models]
+        # Versions distinguish contradictory evidence from the same family.
+        labels = [model_label(model, include_version=labels.count(label) > 1)
+                  for model, label in zip(models, labels)]
+        value = prefix + "primary model evidence ambiguous (" + ", ".join(labels) + ")"
     elif models and selected and not models[0].startswith("claude-" + selected + "-"):
         value = prefix + "primary model mismatch (" + model_label(models[0]) + " observed)"
     else:
         value = None
     if value:
         notices.append("⚠️ **Model:** " + value)
+    if usage:
+        notices.append(usage)
     return notices
 
 
@@ -1454,7 +1466,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
     notice = selection_notice(selection, running=state == "in_progress" or owner_running is True)
-    lines += ["", *notice] if notice else []
+    lines += ["", "  \n".join(notice)] if notice else []
     if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
         lines += ["", messages[state]]
     if base_advanced:
@@ -1572,16 +1584,16 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if last_review:
         historical_selection = valid_selection(last_review_details.get("selection"),
                                                {"generation": last_review_details.get("generation")})
-        historical_metadata = selection_details(historical_selection)
-        if history_in_details:
-            historical_metadata += selection_notice(historical_selection, mismatch_only=True)
+        historical_metadata = (selection_notice(historical_selection, mismatch_only=True)
+                               if history_in_details else [])
+        historical_metadata += selection_details(historical_selection)
         review_metadata[0:0] = historical_metadata
     if metadata:
         if history_in_details:
-            lines += ["### Current attempt"]
+            lines += ["**Current attempt**  "]
         lines += ["  \n".join(metadata), ""]
     if previous:
-        lines += ["### Previous completed review", "  \n".join(previous), ""]
+        lines += ["**Previous completed review**  ", "  \n".join(previous), ""]
     lines += ["</details>"]
     return "\n".join(lines)
 
@@ -2305,7 +2317,7 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     # A fixed receipt describes this captured review; live drift belongs in the aggregate status.
     reviewed = f"[Reviewed]({details_url})" if details_url else "Reviewed"
     notice = selection_notice(selection)
-    settings = "\n\n" + "\n".join(notice) if notice else ""
+    settings = "\n\n" + "  \n".join(notice) if notice else ""
     metadata = selection_details(selection) + [
         f"**{reviewed} against:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
     observed_tip = ""

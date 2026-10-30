@@ -190,7 +190,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 self.assertEqual(config["errors"], errors)
                 self.assertIn({"field": "request", "source": "manual", "reason": "invalid"}, config["diagnostics"])
                 self.assertEqual(check.valid_configuration(config), config)
-                self.assertIn("Use `/claude-review", message)
+                self.assertIn("**Usage:** `/claude-review", message)
                 self.assertEqual((output["model_args"], output["effort_args"]),
                                  ("--model " + expected[0], "--effort " + expected[1]))
 
@@ -272,10 +272,54 @@ class RepositoryConfigurationTests(unittest.TestCase):
             rendered = renderer()
             main, details = rendered.split("<details>", 1)
             self.assertIn("request", main.lower())
-            self.assertIn("using Model: Haiku (Workflow), Effort: Low (Workflow)", main)
-            self.assertIn("Use `/claude-review [", main)
+            self.assertIn("using Model: Haiku (configured default), Effort: Low (configured default)", main)
+            self.assertIn("**Usage:** `/claude-review [", main)
             self.assertIn("**Model:** Haiku · **Effort:** Low", details)
         self.assertEqual(record, before)
+
+    def test_notice_sources_and_usage_are_independent_for_each_diagnostic(self):
+        config = check.resolve_configuration("/claude-review invalid invalid", "invalid", "low")
+        original = copy.deepcopy(config)
+        notices = check.configuration_notices(config)
+        self.assertEqual(notices, [
+            "⚠️ **Review request:** Invalid model; using Sonnet (built-in default).",
+            "⚠️ **Review configuration:** Invalid configured model; using Sonnet (built-in default).",
+            "⚠️ **Review request:** Invalid effort; using Low (configured default).",
+            check.MANUAL_USAGE,
+        ])
+        for body, model, effort in (("/claude-review invalid high", "haiku", "low"),
+                                   ("/claude-review haiku invalid", "sonnet", "medium"),
+                                   ("/claude-review invalid", "haiku", "low"),
+                                   ("/claude-review opus --effort", "haiku", "low")):
+            with self.subTest(body=body):
+                resolved = check.resolve_configuration(body, model, effort)
+                messages = check.configuration_notices(resolved)
+                self.assertEqual(messages.count(check.MANUAL_USAGE), 1)
+                self.assertEqual(messages[-1], check.MANUAL_USAGE)
+                self.assertTrue(all("**Review request:**" in line for line in messages[:-1]))
+                self.assertNotRegex(" ".join(messages), r"\((?:Workflow|Runtime|Manual)\)")
+        automatic = check.resolve_configuration(None, "invalid", "high", automatic=True)
+        self.assertEqual(check.configuration_notices(automatic), [
+            "⚠️ **Review configuration:** Invalid configured model; using Sonnet (built-in default)."])
+        retained = check.configuration_notices(check.resolve_configuration("/claude-review opus --effort", "haiku", "low"))
+        self.assertIn("Model: Opus (from command), Effort: Low (configured default)", retained[0])
+        self.assertEqual(config, original)
+
+    def test_usage_is_one_separate_line_after_request_and_model_warnings(self):
+        owner = presentation_owner(kind="issue_comment", target=12)
+        config = check.resolve_configuration("/claude-review opus invalid", "sonnet", "medium")
+        record = self.record(config, owner=owner, model="claude-sonnet-5-5")
+        original = copy.deepcopy(record)
+        for render in (
+                lambda: check.status_comment_body(HEAD, "main", "success", owner=owner, selection=record),
+                lambda: check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, "", "", selection=record)):
+            visible = render().split("<details>", 1)[0]
+            self.assertEqual(visible.count("**Usage:**"), 1)
+            self.assertIn("  \n" + check.MANUAL_USAGE, visible)
+            self.assertLess(visible.index("⚠️ **Review request:**"), visible.index("**Usage:**"))
+            self.assertLess(visible.index("⚠️ **Model:**"), visible.index("**Usage:**"))
+            self.assertIn("[haiku|sonnet|opus] [low|medium|high|xhigh|max]", visible)
+        self.assertEqual(record, original)
 
     def test_unsupported_syntax_capture_continues_with_literal_resolved_settings(self):
         for body, model, effort in (
@@ -301,10 +345,10 @@ class RepositoryConfigurationTests(unittest.TestCase):
                                      ("--model " + model, "--effort " + effort))
                     self.assertEqual(json.loads(output["selection_config"]), config)
                     self.assertIn("::warning::", message)
-                    self.assertIn("Unsupported manual syntax", message)
+                    self.assertIn("Unsupported syntax", message)
                     self.assertIn(model.capitalize(), message)
                     self.assertIn(effort.capitalize(), message)
-                    self.assertIn("Use `/claude-review", message)
+                    self.assertIn("**Usage:** `/claude-review", message)
                 changed = {**config, "diagnostics": [], "errors": []}
                 self.assertEqual(check.valid_configuration(changed), changed)
                 result, _, message = self.select(environment,
@@ -524,7 +568,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         mismatch = self.record(config, owner=owner, model="claude-sonnet-5-5")
         body = check.status_comment_body(HEAD, "main", "success", owner=owner, selection=mismatch)
         main, details = body.split("<details>", 1)
-        self.assertIn("Haiku selected; primary model mismatch (Sonnet 5.5 observed)", main)
+        self.assertIn("Haiku selected; primary model mismatch (Sonnet observed)", main)
         self.assertIn("**Model:** Haiku · **Effort:** Max", details)
 
     def test_record_keeps_captured_source_and_validates_generation_and_attempt(self):
@@ -557,7 +601,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                               owner=current_owner)
         body = check.status_comment_body(OTHER, "main", "in_progress", owner=current_owner, selection=current,
             last_review=(HEAD, "main", "success"), last_review_details=historical, trigger_label="Draft marked ready")
-        current_section, previous_section = body.split("### Current attempt", 1)[1].split("### Previous completed review", 1)
+        current_section, previous_section = body.split("**Current attempt**", 1)[1].split("**Previous completed review**", 1)
         self.assertIn("**Model:** Haiku · **Effort:** Low", current_section)
         self.assertNotIn("Opus", current_section)
         self.assertIn("**Model:** Opus · **Effort:** High", previous_section)
@@ -570,7 +614,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         without_settings.pop("selection")
         missing = check.status_comment_body(OTHER, "main", "in_progress", owner=current_owner, selection=current,
             last_review=(HEAD, "main", "success"), last_review_details=without_settings, trigger_label="Draft marked ready")
-        missing_previous = missing.split("### Previous completed review", 1)[1]
+        missing_previous = missing.split("**Previous completed review**", 1)[1]
         self.assertNotIn("**Model:**", missing_previous)
         self.assertNotIn("**Effort:**", missing_previous)
         self.assertEqual(historical["selection"], previous)
@@ -594,14 +638,14 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 last_review=(HEAD, "main", "success"), last_review_details=details, trigger_label="Draft marked ready")
 
         body = render(historical)
-        top, groups = body.split("### Current attempt", 1)
-        current_section, previous_section = groups.split("### Previous completed review", 1)
-        warning = "⚠️ **Model:** Opus selected; primary model mismatch (Sonnet 5.5 observed)"
+        top, groups = body.split("**Current attempt**", 1)
+        current_section, previous_section = groups.split("**Previous completed review**", 1)
+        warning = "⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)"
         self.assertNotIn("⚠️ **Model:**", top + current_section)
         self.assertIn("**Model:** Sonnet · **Effort:** Medium", current_section)
         self.assertEqual(previous_section.count(warning), 1)
-        self.assertEqual(previous_section.strip().splitlines()[0].rstrip(), "**Model:** Opus · **Effort:** High")
-        self.assertLess(previous_section.index("**Model:** Opus"), previous_section.index(warning))
+        self.assertEqual(previous_section.strip().splitlines()[0].rstrip(), warning)
+        self.assertLess(previous_section.index(warning), previous_section.index("**Model:** Opus"))
         self.assertLess(previous_section.index(warning), previous_section.index("against"))
         self.assertEqual(check.last_completed_review_details({**comment, "body": body})["selection"], original)
         self.assertEqual(previous, original)
@@ -617,12 +661,12 @@ class RepositoryConfigurationTests(unittest.TestCase):
         stale_receipt = {**comment, "body": comment["body"].replace(marker, replacement)}
         stale_details = check.last_completed_review_details(stale_receipt)
         self.assertNotIn("selection", stale_details)
-        stale_previous = render(stale_details).split("### Previous completed review", 1)[1]
+        stale_previous = render(stale_details).split("**Previous completed review**", 1)[1]
         self.assertNotIn("⚠️ **Model:**", stale_previous)
         self.assertNotIn("**Model:**", stale_previous)
         mismatched = copy.deepcopy(historical)
         mismatched["selection"]["generation"] = "f" * 64
-        self.assertNotIn("⚠️ **Model:**", render(mismatched).split("### Previous completed review", 1)[1])
+        self.assertNotIn("⚠️ **Model:**", render(mismatched).split("**Previous completed review**", 1)[1])
         self.assertEqual(previous, original)
 
     def test_previously_recorded_v2_repository_configuration_stays_historical(self):
@@ -689,7 +733,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         body = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, marker,
                                              f"https://github.com/{REPO}/actions/runs/5", selection=record)
         main, details = body.split("<details>", 1)
-        self.assertIn("Sonnet selected; primary model mismatch (Haiku 5.5 observed)", main)
+        self.assertIn("Sonnet selected; primary model mismatch (Haiku observed)", main)
         self.assertNotIn("**Effort:**", main)
         self.assertIn("**Model:** Sonnet · **Effort:** High", details)
         self.assertIn(marker, body)

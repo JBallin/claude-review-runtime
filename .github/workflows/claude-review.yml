@@ -1111,25 +1111,31 @@ jobs:
                           or source == "manual" and any(d["field"] == "request" and d["reason"] == "invalid" for d in diagnostics)):
                       raise ValueError("invalid resolved configuration")
               return value
-          def configuration_notices(value):
-              if value["version"] == 1:
-                  return (["⚠️ **Review configuration:** Invalid " + " and ".join(value["errors"])
-                           + " setting. See the workflow logs."] if value["errors"] else [])
+          MANUAL_USAGE = "**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`."
+          def configuration_notices(config):
+              if not config:
+                  return []
+              if config["version"] == 1:
+                  return (["⚠️ **Review configuration:** Invalid configured " + " and ".join(config["errors"])
+                           + " setting. See the workflow logs."] if config["errors"] else [])
+              sources = {"manual": "from command", "repository": "configured default",
+                         "workflow": "configured default", "runtime": "built-in default"}
               notices = []
-              for diagnostic in value["diagnostics"]:
-                  field = diagnostic["field"]
+              for item in config["diagnostics"]:
+                  field = item["field"]
+                  heading = "Review request" if item["source"] == "manual" else "Review configuration"
                   if field == "request":
-                      problem = "Unsupported manual syntax" if diagnostic["reason"] == "syntax" else "Invalid manual request"
-                      notices.append("⚠️ **Review configuration:** " + problem + "; using Model: "
-                          + value["requested_model"].capitalize() + " (" + value["model_source"].capitalize()
-                          + "), Effort: " + value["requested_effort"].capitalize() + " ("
-                          + value["effort_source"].capitalize() + ").")
+                      problem = "Unsupported syntax" if item["reason"] == "syntax" else "Invalid request"
+                      notices.append("⚠️ **" + heading + ":** " + problem + "; using " + ", ".join(
+                          field.title() + ": " + config["requested_" + field].capitalize() + " ("
+                          + sources[config[field + "_source"]] + ")" for field in ("model", "effort")) + ".")
                       continue
-                  notices.append("⚠️ **Review configuration:** " + diagnostic["reason"].capitalize()
-                      + " " + diagnostic["source"] + " " + field + "; using "
-                      + value["requested_" + field].capitalize() + " (" + value[field + "_source"].capitalize() + ").")
-              if any(d["field"] == "request" or d["reason"] in ("missing", "duplicate") for d in value["diagnostics"]):
-                  notices.append("Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.")
+                  problem = item["reason"].capitalize() + " " + ("configured " if item["source"] != "manual" else "") + field
+                  notices.append("⚠️ **" + heading + ":** " + problem + "; using "
+                                 + config["requested_" + field].capitalize() + " ("
+                                 + sources[config[field + "_source"]] + ").")
+              if any(item["source"] == "manual" for item in config["diagnostics"]):
+                  notices.append(MANUAL_USAGE)
               return notices
           def record(value, generation):
               required = {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
@@ -1188,8 +1194,8 @@ jobs:
               selected = value["requested_model"]
               if len(observed) != 1 or observed[0].startswith("claude-" + selected + "-"):
                   return ""
-              match = re.fullmatch(r"claude-(opus|sonnet|haiku)-(\d+)-(\d+)", observed[0])
-              label = match[1].title() + " " + match[2] + "." + match[3] if match else "`" + observed[0] + "`"
+              match = re.match(r"claude-(opus|sonnet|haiku)-", observed[0])
+              label = match[1].title() if match else "`" + observed[0] + "`"
               return "⚠️ **Model:** " + selected.title() + " selected; primary model mismatch (" + label + " observed)"
           current, marker, warning = None, "", ""
           try:
@@ -1225,7 +1231,10 @@ jobs:
                       warnings.extend(configuration_notices(current["configuration"]))
                   if current["requested_model"]:
                       warnings.append("⚠️ **Model:** " + current["requested_model"].title() + " selected; primary model evidence missing")
-                  warning = "\n\n".join(warnings)
+                  if MANUAL_USAGE in warnings:
+                      warnings.remove(MANUAL_USAGE)
+                      warnings.append(MANUAL_USAGE)
+                  warning = "  \n".join(warnings)
           except (ValueError, TypeError, KeyError):
               current, marker, warning = None, "", ""
           previous = None
@@ -1290,9 +1299,9 @@ jobs:
             fi
             if [ -n "$historical_lines" ]; then
               historical_lines=${historical_lines//$'\n'/$'  \n'}
-              [ -z "$previous_warning" ] || historical_lines="$previous_warning"$'  \n'"$historical_lines"
               [ -z "$previous_selection" ] || historical_lines="$previous_selection"$'  \n'"$historical_lines"
-              metadata="### Current attempt"$'\n'"$metadata"$'\n\n''### Previous completed review'$'\n'"$historical_lines"
+              [ -z "$previous_warning" ] || historical_lines="$previous_warning"$'  \n'"$historical_lines"
+              metadata="**Current attempt**"$'  \n'"$metadata"$'\n\n''**Previous completed review**'$'  \n'"$historical_lines"
               if [ -n "$previous_runtime" ]; then
                 metadata="$metadata"$'  \n'"$previous_runtime"
               fi

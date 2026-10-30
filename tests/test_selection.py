@@ -60,7 +60,7 @@ class SelectionTests(unittest.TestCase):
                 self.assertEqual((config['requested_model'], config['requested_effort']), ('haiku', 'low'))
                 self.assertEqual(config['errors'], ['request'])
                 self.assertEqual(check.valid_configuration(config), config)
-                self.assertIn('Use `/claude-review', ' '.join(check.configuration_notices(config)))
+                self.assertIn('**Usage:** `/claude-review', ' '.join(check.configuration_notices(config)))
 
     def test_ascii_repeated_and_trailing_spaces_preserve_short_requests(self):
         for body, expected in (
@@ -115,8 +115,8 @@ class SelectionTests(unittest.TestCase):
                 self.assertEqual((config['requested_model'], config['requested_effort']),
                                  (expected[0] or 'haiku', expected[1] or 'low'))
                 self.assertEqual(check.valid_configuration(config), config)
-                self.assertIn('Unsupported manual syntax', ' '.join(check.configuration_notices(config)))
-                self.assertIn('Use `/claude-review', ' '.join(check.configuration_notices(config)))
+                self.assertIn('Unsupported syntax', ' '.join(check.configuration_notices(config)))
+                self.assertIn('**Usage:** `/claude-review', ' '.join(check.configuration_notices(config)))
         for body in ('/claude-review please review this', '/claude-review unknown other prose',
                      '/claude-review please  review this '):
             with self.subTest(body=body), self.assertRaises(ValueError):
@@ -275,16 +275,29 @@ class SelectionTests(unittest.TestCase):
 
     def test_primary_fallback_and_conflicting_sources_are_visible(self):
         for models, transform, expected in (
-                (('claude-sonnet-4-6',), None, 'primary model mismatch (Sonnet 4.6 observed)'),
+                (('claude-sonnet-4-6',), None, 'primary model mismatch (Sonnet observed)'),
                 (('claude-opus-5-5',), lambda s: s[0].update(model='claude-sonnet-4-6'),
-                 'primary model evidence ambiguous (Opus 5.5, Sonnet 4.6)'),
+                 'primary model evidence ambiguous (Opus, Sonnet)'),
                 (('claude-opus-5-5', 'claude-sonnet-4-6'), None,
-                 'primary model evidence ambiguous (Opus 5.5, Sonnet 4.6)')):
+                 'primary model evidence ambiguous (Opus, Sonnet)')):
             with self.subTest(expected=expected):
                 owner, record = self.record(models=models, transform=transform)
                 for running in (False, True):
                     notice = check.selection_notice(record, running=running)[0]
                     self.assertIn('⚠️ **Model:** Opus selected; ' + expected, notice)
+
+    def test_model_warning_versions_are_kept_only_to_distinguish_same_family_evidence(self):
+        for models, expected in (
+                (('claude-opus-4-7', 'claude-sonnet-5-5'), 'ambiguous (Opus, Sonnet)'),
+                (('claude-opus-4-7', 'claude-opus-5-5'), 'ambiguous (Opus 4.7, Opus 5.5)'),
+                (('claude-sonnet-5-5-20261001',), 'mismatch (Sonnet observed)')):
+            with self.subTest(models=models):
+                owner, record = self.record(models=models)
+                original = copy.deepcopy(record)
+                self.assertIn(expected, ' '.join(check.selection_notice(record)))
+                self.assertEqual(record, original)
+                self.assertEqual(check.valid_selection(record, owner), original)
+        self.assertEqual(check.model_label('claude-unrecognized-1'), '`claude-unrecognized-1`')
 
     def test_missing_or_invalid_primary_sources_never_confirm_usage_bag(self):
         for transform in (
@@ -396,7 +409,7 @@ class SelectionTests(unittest.TestCase):
     def test_historical_notice_filter_emits_only_actual_single_primary_model_mismatch(self):
         _, mismatch = self.record(models=('claude-sonnet-5-5',))
         self.assertEqual(check.selection_notice(mismatch, mismatch_only=True),
-            ['⚠️ **Model:** Opus selected; primary model mismatch (Sonnet 5.5 observed)'])
+            ['⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)'])
         _, matching = self.record()
         _, conflicting = self.record(models=('claude-opus-5-5', 'claude-sonnet-5-5'))
         _, missing = self.record()
@@ -410,7 +423,7 @@ class SelectionTests(unittest.TestCase):
                 self.assertEqual(record, original)
         self.assertIn('primary model evidence ambiguous', ' '.join(check.selection_notice(conflicting)))
         self.assertIn('primary model evidence missing', ' '.join(check.selection_notice(missing)))
-        self.assertIn('Review configuration', ' '.join(check.selection_notice(configured)))
+        self.assertIn('Review request', ' '.join(check.selection_notice(configured)))
 
     def test_manual_completion_settings_lead_details_before_baseline_and_runtime(self):
         _, record = self.record()

@@ -88,7 +88,7 @@ class RuntimeProvenanceTests(unittest.TestCase):
         check.best_effort_status(OTHER, "in_progress", acquire=True)
         owner = check.status_owner(self.api.status)
         body = self.api.status["body"]
-        attempt, history = body.split("### Previous completed review", 1)
+        attempt, history = body.split("**Previous completed review**", 1)
         self.assertIn(check.runtime_used_line(current), attempt)
         self.assertNotIn(check.runtime_used_line(previous), attempt)
         self.assertIn(check.runtime_used_line(previous), history)

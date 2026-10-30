@@ -1508,7 +1508,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 replacement = ("#### " + label + "\n\n" if heading_format == "level-four"
                                else "**" + label + "**  \n" if heading_format == "bold"
                                else "### " + label + "\n")
-                recorded = recorded.replace("### " + label + "\n", replacement)
+                recorded = recorded.replace("**" + label + "**  \n", replacement)
             owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": recorded}
             for path in (AUTOMATIC, MANUAL):
                 with self.subTest(workflow=path.name, heading_format=heading_format):
@@ -1521,7 +1521,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertEqual(check.status_runtime(after, owner), current)
                     self.assertEqual(check.last_completed_review_details(after)["runtime"], previous)
                     for label in ("Current attempt", "Previous completed review"):
-                        self.assertIn("### " + label + "\n**", repaired)
+                        self.assertIn("**" + label + "**  \n**", repaired)
                         self.assertNotIn("### " + label + "\n\n", repaired)
 
     def test_manual_fallback_retains_only_current_requested_selection(self):
@@ -1610,7 +1610,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     body = self.repaired_status(calls)
                     self.assertIn(expected, body.split("<details>", 1)[1])
                     self.assertNotIn(absent, body)
-                    self.assertIn("Invalid " + captured["errors"][0] + " setting", body.split("<details>", 1)[0])
+                    self.assertIn("Invalid configured " + captured["errors"][0] + " setting", body.split("<details>", 1)[0])
 
     def test_fallback_resolved_defaults_and_per_field_diagnostics_are_retained(self):
         from test_claude_review_check import presentation_owner
@@ -1643,19 +1643,22 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertNotIn("**Effort:**", visible)
                     record = check.current_selection(owner, {"body": body})
                     self.assertEqual(record["configuration"], captured)
+                    source_labels = {"manual": "from command", "workflow": "configured default", "runtime": "built-in default"}
                     for diagnostic in diagnostics:
+                        heading = "Review request" if diagnostic["source"] == "manual" else "Review configuration"
+                        self.assertIn("⚠️ **" + heading + ":**", visible)
                         if diagnostic["field"] == "request":
-                            self.assertIn("Invalid manual request; using Model: " + model.title() + " ("
-                                          + model_source.capitalize() + "), Effort: " + effort.capitalize() + " ("
-                                          + effort_source.capitalize() + ").", visible)
+                            self.assertIn("Invalid request; using Model: " + model.title() + " ("
+                                          + source_labels[model_source] + "), Effort: " + effort.capitalize() + " ("
+                                          + source_labels[effort_source] + ").", visible)
                             continue
-                        self.assertIn(diagnostic["reason"].capitalize() + " " + diagnostic["source"]
-                                      + " " + diagnostic["field"] + ";", visible)
+                        self.assertIn(diagnostic["reason"].capitalize() + " "
+                                      + ("configured " if diagnostic["source"] != "manual" else "") + diagnostic["field"] + ";", visible)
                         self.assertIn("using " + captured["requested_" + diagnostic["field"]].capitalize(), visible)
-                    self.assertEqual("Use `/claude-review" in visible,
-                                     any(d["field"] == "request" or d["reason"] == "missing" for d in diagnostics))
-                    if "Use `/claude-review" in visible:
-                        self.assertIn("Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.", visible)
+                    self.assertEqual("**Usage:** `/claude-review" in visible,
+                                     any(d["source"] == "manual" for d in diagnostics))
+                    if "**Usage:** `/claude-review" in visible:
+                        self.assertIn("**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.", visible)
                     self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
 
     def test_fallback_preserves_captured_syntax_recovery_without_interpreting_removed_options(self):
@@ -1687,7 +1690,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertIn("**Model:** " + model.title() + " · **Effort:** Low", details)
                     for notice in check.configuration_notices(config):
                         self.assertIn(notice, visible)
-                    self.assertIn("Unsupported manual syntax; using Model:", visible)
+                    self.assertIn("Unsupported syntax; using Model:", visible)
                     self.assertNotIn("$(injected)", body)
                     record = check.current_selection(owner, {"body": body})
                     self.assertEqual(record["configuration"], config)
@@ -1785,7 +1788,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         SELECTION_CONFIG=json.dumps(captured_configuration("opus", "high")))
                     self.assertEqual(result.returncode, 1)
                     after = self.repaired_status(calls)
-                    current, previous = after.split("### Previous completed review", 1)
+                    current, previous = after.split("**Previous completed review**", 1)
                     self.assertIn("**Model:** Opus · **Effort:** High", current.split("<details>", 1)[1])
                     self.assertNotIn("**Effort:** Low", current)
                     self.assertIn("**Model:** " + expected_model + " · **Effort:** Low", previous)
@@ -1824,8 +1827,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 1)
                     after = self.repaired_status(calls)
                     details = after.split("<details>", 1)[1]
-                    current, previous = details.split("### Previous completed review\n", 1)
-                    current_group = current.split("### Current attempt\n", 1)[1]
+                    current, previous = details.split("**Previous completed review**  \n", 1)
+                    current_group = current.split("**Current attempt**  \n", 1)[1]
                     if known:
                         self.assertTrue(current_group.startswith("**Model:** Haiku · **Effort:** High  \n**Current commit:**"))
                         self.assertTrue(previous.startswith("**Model:** Sonnet · **Effort:** Low  \n**Last reviewed"))
@@ -1837,8 +1840,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertNotIn("**Model:**", details)
                         self.assertNotIn("**Effort:**", details)
                     self.assertNotIn("<br", details.lower())
-                    self.assertNotIn("### Current attempt\n\n", details)
-                    self.assertNotIn("### Previous completed review\n\n", details)
+                    self.assertNotIn("**Current attempt**  \n\n", details)
+                    self.assertNotIn("**Previous completed review**  \n\n", details)
                     self.assertIn(receipt, after)
                     self.assertEqual(check.last_completed_review_details({**owned, "body": after})["selection"], prior)
 
@@ -1849,8 +1852,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                           "model_source": "workflow", "effort_source": "workflow", "errors": [], "diagnostics": []}
         prefix = "<!-- claude-review-runtime:claude-review-last-reviewed-selection:"
         for path in (AUTOMATIC, MANUAL):
-            for models, observed_label in ((["claude-sonnet-5-5"], "Sonnet 5.5"),
-                    (["claude-sonnet-5-5-20261001"], "`claude-sonnet-5-5-20261001`"),
+            for models, observed_label in ((["claude-sonnet-5-5"], "Sonnet"),
+                    (["claude-sonnet-5-5-20261001"], "Sonnet"),
                     (["claude-opus-5-5"], None), ([], None),
                     (["claude-opus-5-5", "claude-sonnet-5-5"], None)):
                 with self.subTest(workflow=path.name, observed=models):
@@ -1873,16 +1876,16 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 1)
                     after = self.repaired_status(calls)
                     visible, details = after.split("<details>", 1)
-                    current, previous = details.split("### Previous completed review\n", 1)
+                    current, previous = details.split("**Previous completed review**  \n", 1)
                     self.assertIn("Haiku selected; primary model evidence missing", visible)
                     self.assertNotIn("Opus selected", visible + current)
                     self.assertNotIn("primary model mismatch", visible + current)
-                    self.assertTrue(previous.startswith("**Model:** Opus · **Effort:** High  \n"))
+                    self.assertIn("**Model:** Opus · **Effort:** High  \n", previous)
                     if observed_label:
                         warning = "⚠️ **Model:** Opus selected; primary model mismatch (" + observed_label + " observed)"
                         self.assertEqual(after.count(warning), 1)
                         self.assertLess(previous.index(warning), previous.index("**Last reviewed"))
-                        self.assertLess(previous.index("**Effort:** High"), previous.index(warning))
+                        self.assertLess(previous.index(warning), previous.index("**Effort:** High"))
                     else:
                         self.assertNotIn("⚠️ **Model:**", previous)
                     self.assertIn(receipt, after)
@@ -1911,7 +1914,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner,
                         SELECTION_CONFIG=json.dumps(captured_configuration("opus", "high")))
                     self.assertEqual(result.returncode, 1)
-                    previous = self.repaired_status(calls).split("### Previous completed review", 1)[1]
+                    previous = self.repaired_status(calls).split("**Previous completed review**", 1)[1]
                     self.assertNotIn("**Model:**", previous)
                     self.assertNotIn("**Effort:**", previous)
                     self.assertNotIn("primary model mismatch", self.repaired_status(calls))

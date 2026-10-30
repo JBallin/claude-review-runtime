@@ -185,7 +185,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus selected; primary model mismatch (Sonnet 5.5 observed)
+⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -522,7 +522,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus selected; primary model evidence ambiguous (Opus 5.5, Sonnet 5.5)
+⚠️ **Model:** Opus selected; primary model evidence ambiguous (Opus, Sonnet)
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -745,7 +745,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ **Review configuration:** Invalid workflow model; using Sonnet (Runtime).
+⚠️ **Review configuration:** Invalid configured model; using Sonnet (built-in default).
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -785,7 +785,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review configuration:** Invalid manual model; using Haiku (Workflow).
+⚠️ **Review request:** Invalid model; using Haiku (configured default).\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -825,7 +826,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review configuration:** Invalid manual effort; using Medium (Runtime).
+⚠️ **Review request:** Invalid effort; using Medium (built-in default).\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -865,8 +867,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review configuration:** Invalid manual request; using Model: Haiku (Workflow), Effort: Low (Workflow).
-Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.
+⚠️ **Review request:** Invalid request; using Model: Haiku (configured default), Effort: Low (configured default).\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -906,8 +908,8 @@ Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review configuration:** Invalid manual request; using Model: Haiku (Workflow), Effort: Low (Workflow).
-Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.
+⚠️ **Review request:** Invalid request; using Model: Haiku (configured default), Effort: Low (configured default).\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -947,8 +949,8 @@ Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review configuration:** Unsupported manual syntax; using Model: Opus (Manual), Effort: Low (Workflow).
-Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.
+⚠️ **Review request:** Unsupported syntax; using Model: Opus (from command), Effort: Low (configured default).\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -988,8 +990,8 @@ Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review configuration:** Unsupported manual syntax; using Model: Haiku (Workflow), Effort: Low (Workflow).
-Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.
+⚠️ **Review request:** Unsupported syntax; using Model: Haiku (configured default), Effort: Low (configured default).\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -1509,7 +1511,7 @@ Claude Review: No findings. 🎉
 
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
 
-⚠️ **Model:** Opus selected; primary model mismatch (Sonnet 5.5 observed)
+⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -1613,12 +1615,12 @@ This review used the deployed Runtime, not the proposed pin.
 <details>
 <summary>ℹ️ Details</summary>
 
-### Current attempt
+**Current attempt**\
 **Model:** Opus · **Effort:** High\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -1661,12 +1663,12 @@ This review used the deployed Runtime, not the proposed pin.
 <details>
 <summary>ℹ️ Details</summary>
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -1709,12 +1711,12 @@ This review used the deployed Runtime, not the proposed pin.
 <details>
 <summary>ℹ️ Details</summary>
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -1757,14 +1759,14 @@ This review used the deployed Runtime, not the proposed pin.
 <details>
 <summary>ℹ️ Details</summary>
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
+⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)\
 **Model:** Opus · **Effort:** High\
-⚠️ **Model:** Opus selected; primary model mismatch (Sonnet 5.5 observed)\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1814,13 +1816,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Reason:** The review did not complete with reliable execution and finding evidence.
 -->
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -1871,13 +1873,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Reason:** The review did not complete with reliable execution and finding evidence.
 -->
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -1928,13 +1930,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Reason:** The review did not complete with reliable execution and finding evidence.
 -->
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -2113,13 +2115,13 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Reason:** The authoritative Check result could not be published.
 -->
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -2170,13 +2172,13 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Reason:** The authoritative Check result could not be published.
 -->
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -2227,13 +2229,13 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Reason:** The authoritative Check result could not be published.
 -->
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -2322,13 +2324,13 @@ Review completion cannot be established because authoritative Check publication 
 **Reason:** The authoritative Check result could not be published.
 -->
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -2379,13 +2381,13 @@ Review completion cannot be established because authoritative Check publication 
 **Reason:** The authoritative Check result could not be published.
 -->
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -2461,12 +2463,12 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <details>
 <summary>ℹ️ Details</summary>
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -2511,12 +2513,12 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <details>
 <summary>ℹ️ Details</summary>
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -2559,11 +2561,11 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <details>
 <summary>ℹ️ Details</summary>
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -2614,12 +2616,12 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Reason:** The review did not complete with reliable execution and finding evidence.
 -->
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -2843,12 +2845,12 @@ Claude is reviewing captured commit [`bbbbbbb`](https://github.com/owner/repo/co
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
 
-### Current attempt
+**Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-### Previous completed review
+**Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\

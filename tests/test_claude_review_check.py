@@ -2103,7 +2103,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertIn(f"**PR commit:** {check.commit_link(OTHER, REPO)} on `main` — not reviewed", body)
         visible, details = body.split("<details>", 1)
         self.assertIn("| ❌ **Incomplete**", visible)
-        self.assertIn("### Previous completed review", details)
+        self.assertIn("**Previous completed review**", details)
         self.assertIn("**Result:** No findings.", details)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
@@ -2262,7 +2262,7 @@ class PRReactionTests(ScriptTestCase):
         body = self.calls("PATCH")[0]["body"]["body"]
         visible, details = body.split("<details>", 1)
         self.assertIn("| ❌ **Incomplete**", visible)
-        self.assertIn("### Previous completed review", details)
+        self.assertIn("**Previous completed review**", details)
         self.assertIn("**Result:** Findings.", details)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "action_required"))
 

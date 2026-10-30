@@ -149,13 +149,15 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotRegex(details, r"</summary>\s*<br\s*/?>")
                 visible = re.sub(r"<!--.*?-->", "", details, flags=re.DOTALL)
                 visible = visible.split("</summary>", 1)[1].removesuffix("</details>")
-                groups = re.split(r"(?m)^### (?:Current attempt|Previous completed review)\s*$", visible)
+                self.assertNotRegex(visible, r"(?m)^#{1,6} ")
+                groups = re.split(r"(?m)^\*\*(?:Current attempt|Previous completed review)\*\*[ \t]*$", visible)
                 for group in groups:
                     lines = [line.strip() for line in group.splitlines() if line.strip()]
                     settings = [line for line in lines if line.startswith(("**Model:**", "**Effort:**"))]
                     if settings:
                         checked_groups += 1
-                        self.assertEqual(lines[0], settings[0])
+                        warnings = [line for line in lines if line.startswith("⚠️")]
+                        self.assertEqual(lines[0], warnings[0] if warnings else settings[0])
                         self.assertEqual(len(settings), 1)
         # Cover routine current settings, immutable manual receipts, and groups
         # that retain distinct current and previous execution settings.
@@ -191,7 +193,8 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertEqual(record['configuration']['effort_source'], 'workflow')
         main, details = cases['workflow-invalid-setting'].split('<details>', 1)
         self.assertIn('⚠️ **Review configuration:**', main)
-        self.assertIn('Invalid workflow model; using Sonnet (Runtime).', main)
+        self.assertIn('Invalid configured model; using Sonnet (built-in default).', main)
+        self.assertNotIn('**Usage:**', main)
         self.assertNotIn('primary model evidence missing', main)
         self.assertIn('**Model:** Sonnet · **Effort:** High', details)
         self.assertIn('✅ **Completed**', main)
@@ -228,15 +231,18 @@ class PresentationGalleryTests(unittest.TestCase):
                 raw = cases[case_id]
                 main, details = raw.split("<details>", 1)
                 self.assertIn("✅ **Completed**", main)
-                self.assertIn("⚠️ **Review configuration:**", main)
+                self.assertIn("⚠️ **Review request:**", main)
                 self.assertIn(bad_field, main.lower())
                 self.assertIn("**Model:** " + model + " · **Effort:** " + effort, details)
+                self.assertEqual(main.count("**Usage:**"), 1)
+                self.assertIn("  \n" + gallery.check.MANUAL_USAGE, main)
+                self.assertIn("built-in default" if case_id == "manual-invalid-effort" else "configured default", main)
                 with mock.patch.dict(os.environ, {}, clear=True):
                     record = gallery.check.current_selection(gallery.check.status_owner({"body": raw}), {"body": raw})
                 self.assertIn({"field": bad_field, "source": "manual", "reason": reason},
                               record["configuration"]["diagnostics"])
                 if bad_field == "request":
-                    self.assertIn("/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]", main)
+                    self.assertIn("/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]", main)
                     self.assertNotIn("Invalid manual model", main)
                     self.assertNotIn("Invalid manual effort", main)
                     self.assertEqual(record["configuration"]["model_source"], "workflow")
@@ -251,8 +257,10 @@ class PresentationGalleryTests(unittest.TestCase):
                 raw = cases[case_id]
                 main, details = raw.split("<details>", 1)
                 self.assertIn("✅ **Completed**", main)
-                self.assertIn("Unsupported manual syntax", main)
-                self.assertIn("/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]", main)
+                self.assertIn("Unsupported syntax", main)
+                provenance = "from command" if model_source == "manual" else "configured default"
+                self.assertIn("Model: " + model + " (" + provenance + "), Effort: Low (configured default)", main)
+                self.assertIn("/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]", main)
                 self.assertIn("**Model:** " + model + " · **Effort:** Low", details)
                 with mock.patch.dict(os.environ, {}, clear=True):
                     record = gallery.check.current_selection(gallery.check.status_owner({"body": raw}), {"body": raw})
@@ -278,8 +286,8 @@ class PresentationGalleryTests(unittest.TestCase):
     def test_current_and_previous_settings_remain_bound_to_their_generations(self):
         raw = dict(sample_items())['running-history-clean']
         details = raw.split('<details>', 1)[1]
-        current, previous = details.split('### Previous completed review')
-        self.assertIn('### Current attempt\n**Model:** Opus · **Effort:** High', current)
+        current, previous = details.split('**Previous completed review**')
+        self.assertIn('**Current attempt**  \n**Model:** Opus · **Effort:** High', current)
         self.assertNotIn('Sonnet', current)
         self.assertTrue(previous.lstrip().startswith('**Model:** Sonnet · **Effort:** Medium'))
         self.assertNotIn('**Model:** Opus', previous)
@@ -299,14 +307,14 @@ class PresentationGalleryTests(unittest.TestCase):
         cases = dict(sample_items())
         raw = cases["running-history-model-mismatch"]
         main, details = raw.split("<details>", 1)
-        current, previous = details.split("### Previous completed review", 1)
-        self.assertIn("### Current attempt\n**Model:** Sonnet · **Effort:** Medium", current)
-        self.assertTrue(previous.lstrip().startswith("**Model:** Opus · **Effort:** High"))
+        current, previous = details.split("**Previous completed review**", 1)
+        self.assertIn("**Current attempt**  \n**Model:** Sonnet · **Effort:** Medium", current)
         self.assertNotIn("⚠️ **Model:**", main + current)
-        warning = "⚠️ **Model:** Opus selected; primary model mismatch (Sonnet 5.5 observed)"
+        warning = "⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)"
+        self.assertTrue(previous.lstrip().startswith(warning))
         self.assertEqual(raw.count(warning), 1)
         self.assertIn(warning, previous)
-        self.assertLess(previous.index("**Model:** Opus · **Effort:** High"), previous.index(warning))
+        self.assertLess(previous.index(warning), previous.index("**Model:** Opus · **Effort:** High"))
         comment = {"body": raw, "user": {"login": gallery.check.STATUS_AUTHOR, "type": "Bot"}}
         with mock.patch.dict(os.environ, {}, clear=True):
             owner = gallery.check.status_owner(comment)
@@ -461,10 +469,10 @@ class PresentationGalleryTests(unittest.TestCase):
                     else:
                         self.assertIn("authoritative Check publication is unavailable", visible)
                     if case_id.endswith("-none"):
-                        self.assertNotIn("### Previous completed review", details)
+                        self.assertNotIn("**Previous completed review**", details)
                     else:
-                        self.assertIn("### Current attempt", details)
-                        self.assertIn("\n\n### Previous completed review\n", details)
+                        self.assertIn("**Current attempt**", details)
+                        self.assertIn("\n\n**Previous completed review**  \n", details)
                         self.assertIn("**Result:** " + ("Findings." if case_id.endswith("-action-required") else "No findings."), details)
                         self.assertEqual(gallery.check.last_completed_review({"body": body}),
                                          (gallery.fixtures.HEAD, "main", "action_required" if case_id.endswith("-action-required") else "success"))
@@ -476,7 +484,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(len(cases), 3)
         for case_id, body in cases:
             with self.subTest(case_id=case_id):
-                current, previous = body.split("### Previous completed review")
+                current, previous = body.split("**Previous completed review**")
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, current)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, previous)
                 self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", previous)
@@ -508,9 +516,9 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn("[Review run]", details)
                 if case_id.startswith(("shared-run-", "legacy-history-", "stale-")):
                     continue
-                if "### Previous completed review" in details:
-                    current, previous = details.split("### Previous completed review")
-                    self.assertIn("### Current attempt", current)
+                if "**Previous completed review**" in details:
+                    current, previous = details.split("**Previous completed review**")
+                    self.assertIn("**Current attempt**", current)
                     self.assertIn(f"**[Attempt]({attempt}) baseline:**", current)
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
                     self.assertNotIn(reviewed, current)
@@ -557,8 +565,8 @@ class PresentationGalleryTests(unittest.TestCase):
             self.assertNotIn("[Previous completed review]", body)
             with self.subTest(case_id=case_id):
                 if case_id.startswith("shared-run-"):
-                    current, previous = body.split("### Previous completed review")
-                    self.assertIn("### Current attempt", current)
+                    current, previous = body.split("**Previous completed review**")
+                    self.assertIn("**Current attempt**", current)
                     anchor = "Running" if case_id == "shared-run-in-progress" else "Attempt"
                     self.assertIn(f"[{anchor}]({run})", current)
                     self.assertIn(f"**[Reviewed]({run}) against:**", previous)
