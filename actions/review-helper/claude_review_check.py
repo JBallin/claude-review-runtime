@@ -534,18 +534,18 @@ MANUAL_COMMANDS = {"/claude-review": ("", "")}
 for _model in MODELS:
     MANUAL_COMMANDS[f"/claude-review {_model}"] = (_model, "")
 for _effort in EFFORTS:
-    MANUAL_COMMANDS[f"/claude-review effort {_effort}"] = ("", _effort)
+    MANUAL_COMMANDS[f"/claude-review {_effort}"] = ("", _effort)
     for _model in MODELS:
-        MANUAL_COMMANDS[f"/claude-review {_model} effort {_effort}"] = (_model, _effort)
+        MANUAL_COMMANDS[f"/claude-review {_model} {_effort}"] = (_model, _effort)
 
 
 RUNTIME_DEFAULTS = {"model": "sonnet", "effort": "medium"}
-DIAGNOSTIC_FIELDS = ("model", "effort")
+DIAGNOSTIC_FIELDS = ("model", "effort", "request")
 # Repository sources remain readable in immutable receipts from the prior interface.
 # New attempts resolve only workflow inputs; Actions variables are never consulted.
 DIAGNOSTIC_SOURCES = ("manual", "repository", "workflow")
 DIAGNOSTIC_REASONS = ("invalid", "missing", "duplicate")
-MANUAL_USAGE = "Use `/claude-review [opus|sonnet|haiku] [effort low|medium|high|xhigh|max]`."
+MANUAL_USAGE = "Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`."
 
 
 def diagnostic_key(item):
@@ -554,51 +554,35 @@ def diagnostic_key(item):
 
 
 def manual_request(body):
-    """Parse only an anchored command and bounded model/effort option slots.
-
-    Unknown single values are configuration mistakes, not executable arguments.
-    Extra prose and multiline content do not constitute review requests.
-    """
+    """Recognize only short commands; never guess an ambiguous value's field."""
     if (not isinstance(body, str) or body.startswith(" ") or any(c in body for c in "\r\n\t")
             or not body):
         raise ValueError("unsupported manual command")
     tokens = [token for token in body.lower().split(" ") if token]
-    if tokens.pop(0) != "/claude-review":
+    if tokens.pop(0) != "/claude-review" or len(tokens) > 2:
         raise ValueError("unsupported manual command")
+    # Removed keyword/flag forms are not aliases for short requests.
+    if any(token in ("model", "effort") or token.startswith("--") or "=" in token for token in tokens):
+        raise ValueError("unsupported manual command; " + MANUAL_USAGE)
     result = {"requested_model": "", "requested_effort": "", "diagnostics": []}
-    options = {"model": "model", "--model": "model", "effort": "effort", "--effort": "effort"}
-    seen, positional = set(), False
-    index = 0
-    while index < len(tokens):
-        token = tokens[index]
-        option, equal, attached = token.partition("=")
-        if option in options:
-            field = options[option]
-            index += 1
-            if equal:
-                value = attached
-            elif (index == len(tokens) or tokens[index].partition("=")[0] in options
-                  or field == "effort" and tokens[index] in MODELS):
-                value = ""
-            else:
-                value = tokens[index]
-                index += 1
-        elif not positional and not token.startswith("--"):
-            field, value, positional = "model", token, True
-            index += 1
+    if len(tokens) == 1:
+        token = tokens[0]
+        if token in MODELS:
+            result["requested_model"] = token
+        elif token in EFFORTS:
+            result["requested_effort"] = token
         else:
-            raise ValueError("unsupported manual command")
-        reason = ("duplicate" if field in seen else "missing" if not value else
-                  "invalid" if value not in (MODELS if field == "model" else EFFORTS) else None)
-        if reason:
-            item = {"field": field, "source": "manual", "reason": reason}
-            if item not in result["diagnostics"]:
-                result["diagnostics"].append(item)
-            result["requested_" + field] = ""
-        elif field not in seen:
-            result["requested_" + field] = value
-        seen.add(field)
-    result["diagnostics"].sort(key=diagnostic_key)
+            result["diagnostics"].append({"field": "request", "source": "manual", "reason": "invalid"})
+    elif len(tokens) == 2:
+        model, effort = tokens
+        if model in EFFORTS or effort in MODELS:
+            result["diagnostics"].append({"field": "request", "source": "manual", "reason": "invalid"})
+        else:
+            for field, token, allowed in (("model", model, MODELS), ("effort", effort, EFFORTS)):
+                if token in allowed:
+                    result["requested_" + field] = token
+                else:
+                    result["diagnostics"].append({"field": field, "source": "manual", "reason": "invalid"})
     return result
 
 
@@ -637,7 +621,8 @@ def valid_configuration(config):
     if version == 2:
         keys.add("diagnostics")
     if (version not in (1, 2) or set(config) != keys or not isinstance(config["errors"], list)
-            or config["errors"] != [name for name in DIAGNOSTIC_FIELDS if name in config["errors"]]):
+            or config["errors"] != [name for name in (DIAGNOSTIC_FIELDS if version == 2 else ("model", "effort"))
+                                    if name in config["errors"]]):
         return None
     if version == 2:
         diagnostics = config["diagnostics"]
@@ -646,6 +631,7 @@ def valid_configuration(config):
                        or item["field"] not in DIAGNOSTIC_FIELDS or item["source"] not in DIAGNOSTIC_SOURCES
                        or item["reason"] not in DIAGNOSTIC_REASONS
                        or item["source"] in ("repository", "workflow") and item["reason"] != "invalid"
+                       or item["field"] == "request" and (item["source"] != "manual" or item["reason"] != "invalid")
                        for item in diagnostics)
                 or diagnostics != sorted(diagnostics, key=diagnostic_key)
                 or len({(item["field"], item["source"], item["reason"]) for item in diagnostics}) != len(diagnostics)
@@ -657,6 +643,7 @@ def valid_configuration(config):
         if version == 2:
             if (value not in allowed or source not in ("manual", "repository", "workflow", "runtime")
                     or source == "runtime" and value != RUNTIME_DEFAULTS[name]
+                    or source == "manual" and any(item["field"] == "request" for item in config["diagnostics"])
                     or any(item["field"] == name and (item["source"] == source or source == "manual")
                            for item in config["diagnostics"])):
                 return None
@@ -681,11 +668,17 @@ def configuration_notices(config):
     notices = []
     for item in config["diagnostics"]:
         field = item["field"]
+        if field == "request":
+            notices.append("⚠️ **Review configuration:** Invalid manual request; using " + ", ".join(
+                field.title() + ": " + config["requested_" + field].capitalize() + " ("
+                + config[field + "_source"].capitalize() + ")" for field in ("model", "effort")) + ".")
+            continue
         problem = item["reason"].capitalize() + " " + item["source"] + " " + field
         notices.append("⚠️ **Review configuration:** " + problem + "; using "
                        + config["requested_" + field].capitalize() + " ("
                        + config[field + "_source"].capitalize() + ").")
-    if any(item["reason"] in ("missing", "duplicate") for item in config["diagnostics"]):
+    if any(item["field"] == "request" or item["reason"] in ("missing", "duplicate")
+           for item in config["diagnostics"]):
         notices.append(MANUAL_USAGE)
     return notices
 

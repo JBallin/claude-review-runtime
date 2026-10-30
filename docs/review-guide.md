@@ -37,11 +37,11 @@ comments and untrusted requests do not start model execution. The eligibility
 job has read-only PR access and performs no checkout before calling the pinned
 runtime. The runtime resolves the current patch once for each accepted request.
 
-This repository's pinned manual caller accepts optional Opus and effort
-selection. The current Runtime source also supports Sonnet, Haiku, and
-[workflow defaults](consumer-workflows.md#workflow-model-and-effort-defaults);
-using those capabilities requires a supporting Runtime pin and a caller gate
-that accepts its [manual command forms](consumer-workflows.md#optional-model-and-effort-selection).
+The current Runtime source accepts short model and effort selections, including
+`/claude-review opus`, `/claude-review high`, and `/claude-review opus high`.
+Models are Opus, Sonnet, or Haiku; effort is Low, Medium, High, Xhigh, or Max.
+See [workflow defaults](consumer-workflows.md#workflow-model-and-effort-defaults)
+and [manual command forms](consumer-workflows.md#optional-model-and-effort-selection).
 Model evidence is diagnostic: a different primary model produces a notice,
 without changing completion or finding verification.
 
@@ -64,7 +64,8 @@ and captured attempt identity. Resolved Model and Effort settings appear inside
 Details alongside Runtime provenance. Model labels use Sonnet, Opus, or Haiku;
 full execution identifiers stay in the recorded metadata. Each current or
 previous attempt retains its own settings; a status refresh does not apply
-today’s defaults to an older review, and missing historical settings are not filled in. New attempts resolve
+today’s defaults to an older review, and missing historical settings are not
+filled in. New attempts resolve
 each field from a valid manual override, then a valid workflow input, then
 Runtime’s Sonnet / Medium defaults. Invalid or malformed configuration options
 warn and fall back only for the affected field; independently valid settings

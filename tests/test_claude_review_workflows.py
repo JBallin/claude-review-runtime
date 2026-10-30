@@ -370,9 +370,9 @@ class EligibilityPredicateTests(unittest.TestCase):
         commands = ["/claude-review"]
         for model in ("opus", "sonnet", "haiku"):
             commands += ["/claude-review " + model]
-            commands += ["/claude-review " + model + " effort " + effort
+            commands += ["/claude-review " + model + " " + effort
                          for effort in ("low", "medium", "high", "xhigh", "max")]
-        commands += ["/claude-review effort " + effort
+        commands += ["/claude-review " + effort
                      for effort in ("low", "medium", "high", "xhigh", "max")]
         for factory in (issue_comment_event, review_comment_event):
             for command in commands:
@@ -391,9 +391,9 @@ class EligibilityPredicateTests(unittest.TestCase):
             self.assertFalse(evaluate(start_check_predicate(MANUAL),
                                       issue_comment_event(body=command, association="NONE")))
 
-    def test_malformed_options_reach_the_same_trusted_parser_and_queue(self):
-        for command in ("/claude-review effort", "/claude-review model", "/claude-review effort model opus",
-                        "/claude-review --model --effort high", "/claude-review nope effort high"):
+    def test_bounded_malformed_short_requests_reach_the_same_trusted_parser_and_queue(self):
+        for command in ("/claude-review unknown", "/claude-review opus ultra", "/claude-review unknown high",
+                        "/claude-review high opus", "/claude-review opus opus"):
             for factory in (issue_comment_event, review_comment_event):
                 with self.subTest(command=command, event=factory.__name__):
                     event = factory(body=command)
@@ -1347,11 +1347,14 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         owner = presentation_owner(repo=REPO, kind="issue_comment", target=12)
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},
                  "body": check.STATUS_MARKER}
-        cases = [("/claude-review opus effort " + effort, "**Effort:** " + display)
+        cases = [("/claude-review opus " + effort, "**Effort:** " + display)
                  for effort, display in (("low", "Low"), ("medium", "Medium"),
                                          ("high", "High"), ("xhigh", "Xhigh"), ("max", "Max"))]
         for command, expected in cases + [("/claude-review", None),
-                                           ("/claude-review opus; echo bad", None)]:
+                                           ("/claude-review opus; echo bad", None),
+                                           ("/claude-review effort high", None),
+                                           ("/claude-review opus effort high", None),
+                                           ("/claude-review --model opus", None)]:
             result, calls = self.run_fallback(MANUAL,
                 {"GET": [{"stdout": pr_identity()}, {"stdout": json.dumps(owned)}]},
                 OWNER_FIXTURE=owner, STATUS_COMMENT_ID="55", PR_NUMBER="7",
@@ -1437,12 +1440,15 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 ("sonnet", "high", "runtime", "workflow", [
                     {"field": "model", "source": "workflow", "reason": "invalid"}]),
             ]
+            if path == MANUAL:
+                cases.append(("haiku", "high", "workflow", "workflow", [
+                    {"field": "request", "source": "manual", "reason": "invalid"}]))
             for model, effort, model_source, effort_source, diagnostics in cases:
                 with self.subTest(workflow=path.name, diagnostics=diagnostics):
                     captured = {"version": 2, "requested_model": model, "requested_effort": effort,
                                 "model_source": model_source, "effort_source": effort_source,
                                 "diagnostics": diagnostics,
-                                "errors": [f for f in ("model", "effort") if any(d["field"] == f for d in diagnostics)]}
+                                "errors": [f for f in ("model", "effort", "request") if any(d["field"] == f for d in diagnostics)]}
                     result, calls = self.run_fallback(path, OWNER_FIXTURE=owner, STATUS_COMMENT_ID="55",
                                                        PR_NUMBER="7", SELECTION_CONFIG=json.dumps(captured))
                     self.assertEqual(result.returncode, 1)
@@ -1453,10 +1459,18 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     record = check.current_selection(owner, {"body": body})
                     self.assertEqual(record["configuration"], captured)
                     for diagnostic in diagnostics:
+                        if diagnostic["field"] == "request":
+                            self.assertIn("Invalid manual request; using Model: " + model.title() + " ("
+                                          + model_source.capitalize() + "), Effort: " + effort.capitalize() + " ("
+                                          + effort_source.capitalize() + ").", visible)
+                            continue
                         self.assertIn(diagnostic["reason"].capitalize() + " " + diagnostic["source"]
                                       + " " + diagnostic["field"] + ";", visible)
                         self.assertIn("using " + captured["requested_" + diagnostic["field"]].capitalize(), visible)
-                    self.assertEqual("Use `/claude-review" in visible, any(d["reason"] == "missing" for d in diagnostics))
+                    self.assertEqual("Use `/claude-review" in visible,
+                                     any(d["field"] == "request" or d["reason"] == "missing" for d in diagnostics))
+                    if "Use `/claude-review" in visible:
+                        self.assertIn("Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.", visible)
                     self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
 
     def test_automatic_fallback_rejects_manual_diagnostics_without_manual_effective_values(self):
@@ -1494,6 +1508,14 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 {"field": "model", "source": "workflow", "reason": "missing"}]},
             {"errors": ["model"], "model_source": "workflow", "diagnostics": [
                 {"field": "model", "source": "workflow", "reason": "invalid"}]},
+            {"errors": ["request"], "diagnostics": [
+                {"field": "request", "source": "workflow", "reason": "invalid"}]},
+            {"errors": ["request"], "diagnostics": [
+                {"field": "request", "source": "manual", "reason": "missing"}]},
+            {"errors": ["request"], "diagnostics": [
+                {"field": "request", "source": "manual", "reason": "duplicate"}]},
+            {"errors": ["request"], "model_source": "manual", "diagnostics": [
+                {"field": "request", "source": "manual", "reason": "invalid"}]},
         )]
         for path in (AUTOMATIC, MANUAL):
             for raw in raws:

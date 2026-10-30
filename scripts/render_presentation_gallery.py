@@ -174,7 +174,7 @@ def gallery_samples():
                 selection=configured(manual_owner, check.resolve_configuration("/claude-review"), "claude-sonnet-5-5"))),
             GallerySample("effort-only", "current-completion", "Effort-only request", status(
                 "success", owner=manual_owner, trigger_label="Manual request",
-                selection=configured(manual_owner, check.resolve_configuration("/claude-review effort high"), "claude-sonnet-5-5"))),
+                selection=configured(manual_owner, check.resolve_configuration("/claude-review high"), "claude-sonnet-5-5"))),
             GallerySample("inherited-model-ambiguous", "current-completion", "Historical effort-only request with conflicting inherited model evidence", selected(
                 ["claude-opus-5-5", "claude-sonnet-5-5"], model="")),
             GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-5-5"])),
@@ -302,19 +302,19 @@ def gallery_samples():
             GallerySample("manual-invalid-model", "current-completion", "Invalid manual model falls back to workflow model", status(
                 "success", owner=request_owner, trigger_label="Manual request",
                 selection=configured(request_owner, check.resolve_configuration(
-                    "/claude-review unsupported effort high", "haiku", "low"), "claude-haiku-5-5"))),
+                    "/claude-review unsupported high", "haiku", "low"), "claude-haiku-5-5"))),
             GallerySample("manual-invalid-effort", "current-completion", "Invalid manual effort falls back while retaining valid model", status(
                 "success", owner=request_owner, trigger_label="Manual request",
                 selection=configured(request_owner, check.resolve_configuration(
-                    "/claude-review haiku effort unsupported", "opus", ""), "claude-haiku-5-5"))),
-            GallerySample("manual-missing-model", "current-completion", "Missing model value retains valid effort", status(
+                    "/claude-review haiku unsupported", "opus", ""), "claude-haiku-5-5"))),
+            GallerySample("manual-unknown-value", "current-completion", "Unknown single value uses defaults with usage guidance", status(
                 "success", owner=request_owner, trigger_label="Manual request",
                 selection=configured(request_owner, check.resolve_configuration(
-                    "/claude-review model effort high", "haiku", "low"), "claude-haiku-5-5"))),
-            GallerySample("manual-missing-effort", "current-completion", "Missing effort value retains valid model", status(
+                    "/claude-review unsupported", "haiku", "low"), "claude-haiku-5-5"))),
+            GallerySample("manual-reversed-values", "current-completion", "Reversed model and effort use defaults with usage guidance", status(
                 "success", owner=request_owner, trigger_label="Manual request",
                 selection=configured(request_owner, check.resolve_configuration(
-                    "/claude-review haiku effort", "opus", ""), "claude-haiku-5-5"))),
+                    "/claude-review high haiku", "haiku", "low"), "claude-haiku-5-5"))),
         ]
         for group, state, result in (("running-history", "in_progress", "success"),
                                      ("incomplete-history", "failure", "action_required"),

@@ -189,13 +189,13 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(records[0]["requested_effort"], records[1]["requested_effort"])
         self.assertIn("**Model:** Sonnet · **Effort:** High", cases["effort-only"].split("<details>", 1)[1])
 
-    def test_invalid_and_missing_manual_options_show_fallback_and_keep_valid_sibling(self):
+    def test_invalid_and_ambiguous_short_commands_show_fallback_and_usage(self):
         cases = dict(sample_items())
         for case_id, model, effort, bad_field, reason in (
                 ("manual-invalid-model", "Haiku", "High", "model", "invalid"),
                 ("manual-invalid-effort", "Haiku", "Medium", "effort", "invalid"),
-                ("manual-missing-model", "Haiku", "High", "model", "missing"),
-                ("manual-missing-effort", "Haiku", "Medium", "effort", "missing")):
+                ("manual-unknown-value", "Haiku", "Low", "request", "invalid"),
+                ("manual-reversed-values", "Haiku", "Low", "request", "invalid")):
             with self.subTest(case_id=case_id):
                 raw = cases[case_id]
                 main, details = raw.split("<details>", 1)
@@ -207,8 +207,12 @@ class PresentationGalleryTests(unittest.TestCase):
                     record = gallery.check.current_selection(gallery.check.status_owner({"body": raw}), {"body": raw})
                 self.assertIn({"field": bad_field, "source": "manual", "reason": reason},
                               record["configuration"]["diagnostics"])
-                if reason == "missing":
-                    self.assertIn("/claude-review", main)
+                if bad_field == "request":
+                    self.assertIn("/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]", main)
+                    self.assertNotIn("Invalid manual model", main)
+                    self.assertNotIn("Invalid manual effort", main)
+                    self.assertEqual(record["configuration"]["model_source"], "workflow")
+                    self.assertEqual(record["configuration"]["effort_source"], "workflow")
 
     def test_inherited_model_conflict_stays_in_receipts_without_a_visible_model_warning(self):
         raw = dict(sample_items())['inherited-model-ambiguous']

@@ -33,38 +33,42 @@ class SelectionTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     check.manual_selection(body)
 
-    def test_malformed_options_preserve_other_options_and_valid_tokens(self):
-        for body, expected, invalid in (
-                ('/claude-review --model --effort high', ('', 'high'), 'model'),
-                ('/claude-review model effort high', ('', 'high'), 'model'),
-                ('/claude-review effort --model opus', ('opus', ''), 'effort'),
-                ('/claude-review --effort opus', ('opus', ''), 'effort'),
-                ('/claude-review --model', ('', ''), 'model'),
-                ('/claude-review --model= --effort=high', ('', 'high'), 'model'),
-                ('/claude-review --effort= --model=opus', ('opus', ''), 'effort'),
-                ('/claude-review effort', ('', ''), 'effort'),
-                ('/claude-review effort ', ('', ''), 'effort'),
-                ('/claude-review --model  --effort high ', ('', 'high'), 'model'),
-                ('/claude-review effort  --model opus ', ('opus', ''), 'effort'),
-                ('/claude-review opus effort invalid', ('opus', ''), 'effort'),
-                ('/claude-review invalid effort high', ('', 'high'), 'model')):
+    def test_invalid_positional_fields_preserve_the_valid_sibling(self):
+        for body, expected, fields in (
+                ('/claude-review invalid high', ('', 'high'), ['model']),
+                ('/claude-review opus invalid', ('opus', ''), ['effort']),
+                ('/claude-review invalid invalid', ('', ''), ['model', 'effort'])):
             with self.subTest(body=body):
                 parsed = check.manual_request(body)
                 self.assertEqual((parsed['requested_model'], parsed['requested_effort']), expected)
-                self.assertIn(invalid, [item['field'] for item in parsed['diagnostics']])
-                self.assertTrue(all(item['source'] == 'manual' for item in parsed['diagnostics']))
-                self.assertEqual(check.manual_selection(body), dict(zip(('requested_model', 'requested_effort'), expected)))
+                self.assertEqual(parsed['diagnostics'], [
+                    {'field': field, 'source': 'manual', 'reason': 'invalid'} for field in fields])
                 config = check.resolve_configuration(body, 'haiku', 'low')
                 self.assertEqual((config['requested_model'], config['requested_effort']),
                                  (expected[0] or 'haiku', expected[1] or 'low'))
                 self.assertEqual(check.valid_configuration(config), config)
 
-    def test_ascii_repeated_and_trailing_spaces_preserve_recognized_requests(self):
+    def test_ambiguous_single_value_or_reversed_order_warns_without_guessing_fields(self):
+        for body in ('/claude-review invalid', '/claude-review high opus',
+                     '/claude-review high invalid', '/claude-review invalid opus',
+                     '/claude-review opus haiku', '/claude-review high max'):
+            with self.subTest(body=body):
+                parsed = check.manual_request(body)
+                self.assertEqual((parsed['requested_model'], parsed['requested_effort']), ('', ''))
+                self.assertEqual(parsed['diagnostics'], [
+                    {'field': 'request', 'source': 'manual', 'reason': 'invalid'}])
+                config = check.resolve_configuration(body, 'haiku', 'low')
+                self.assertEqual((config['requested_model'], config['requested_effort']), ('haiku', 'low'))
+                self.assertEqual(config['errors'], ['request'])
+                self.assertEqual(check.valid_configuration(config), config)
+                self.assertIn('Use `/claude-review', ' '.join(check.configuration_notices(config)))
+
+    def test_ascii_repeated_and_trailing_spaces_preserve_short_requests(self):
         for body, expected in (
                 ('/claude-review ', ('', '')),
                 ('/claude-review opus ', ('opus', '')),
-                ('/claude-review  opus  effort  high  ', ('opus', 'high')),
-                ('/claude-review   --effort high  --model opus ', ('opus', 'high'))):
+                ('/claude-review high ', ('', 'high')),
+                ('/claude-review  opus  high  ', ('opus', 'high'))):
             with self.subTest(body=body):
                 parsed = check.manual_request(body)
                 self.assertEqual((parsed['requested_model'], parsed['requested_effort']), expected)
@@ -74,24 +78,14 @@ class SelectionTests(unittest.TestCase):
             with self.subTest(body=body), self.assertRaises(ValueError):
                 check.manual_request(body)
 
-    def test_explicit_model_and_effort_option_syntax(self):
-        for body in ('/claude-review model opus effort high',
-                     '/claude-review --model opus --effort high',
-                     '/claude-review --effort high --model opus',
-                     '/claude-review effort high opus',
-                     '/claude-review --model=opus --effort=high'):
-            with self.subTest(body=body):
-                self.assertEqual(check.manual_selection(body), {'requested_model': 'opus', 'requested_effort': 'high'})
-                self.assertEqual(check.manual_request(body)['diagnostics'], [])
-
-    def test_duplicate_options_warn_and_do_not_silently_choose_one(self):
-        for body, field, expected in (
-                ('/claude-review opus model haiku effort high', 'model', ('', 'high')),
-                ('/claude-review opus effort high --effort low', 'effort', ('opus', ''))):
-            with self.subTest(body=body):
-                parsed = check.manual_request(body)
-                self.assertEqual((parsed['requested_model'], parsed['requested_effort']), expected)
-                self.assertIn({'field': field, 'source': 'manual', 'reason': 'duplicate'}, parsed['diagnostics'])
+    def test_option_keywords_and_flags_are_not_hidden_command_aliases(self):
+        for body in ('/claude-review effort high', '/claude-review opus effort high',
+                     '/claude-review model opus', '/claude-review --model opus',
+                     '/claude-review --effort high', '/claude-review --model=opus',
+                     '/claude-review --effort=high', '/claude-review model', '/claude-review effort',
+                     '/claude-review opus high extra', '/claude-review please review this'):
+            with self.subTest(body=body), self.assertRaises(ValueError):
+                check.manual_request(body)
 
     def test_literal_resolved_args_and_ambient_model_guard(self):
         for body in check.MANUAL_COMMANDS:
@@ -113,7 +107,7 @@ class SelectionTests(unittest.TestCase):
         for effort, display in (('low', 'Low'), ('medium', 'Medium'), ('high', 'High'),
                                 ('xhigh', 'Xhigh'), ('max', 'Max')):
             with self.subTest(effort=effort):
-                command = '/claude-review opus effort ' + effort
+                command = '/claude-review opus ' + effort
                 selected = check.manual_selection(command.upper())
                 self.assertEqual(selected, {'requested_model': 'opus', 'requested_effort': effort})
                 with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': command}, clear=True), mock.patch.object(check, 'write_output') as out:
@@ -136,7 +130,7 @@ class SelectionTests(unittest.TestCase):
         if changes.get('requested_model', 'opus'):
             command += ' ' + changes.get('requested_model', 'opus')
         if changes.get('requested_effort', 'high'):
-            command += ' effort ' + changes.get('requested_effort', 'high')
+            command += ' ' + changes.get('requested_effort', 'high')
         stream = [{'type': 'system', 'subtype': 'init', 'session_id': 'session', 'model': models[0] if models else None},
                   *[{'type':'assistant','session_id':'session','message':{'model':m}} for m in models],
                   {'type':'result','session_id':'session','modelUsage':usage if usage is not None else {m:{'inputTokens':1} for m in models}}]
@@ -296,7 +290,7 @@ class SelectionTests(unittest.TestCase):
                         {**record['primary_model_evidence'], 'attempt': 3},
                         {**record['primary_model_evidence'], 'initialization': '<bad>'}):
             self.assertIsNone(check.valid_selection({**record, 'primary_model_evidence': primary}, owner))
-        with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': '/claude-review opus effort high'}, clear=True):
+        with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': '/claude-review opus high'}, clear=True):
             running = check.selection_record(owner)
         for state, extra in (('in_progress', {}), ('stale', {'owner_running': True})):
             body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=running, **extra)
@@ -328,7 +322,7 @@ class SelectionTests(unittest.TestCase):
         self.assertNotIn('**Model:**', body.split('<details>')[0])
         self.assertEqual(check.current_selection(owner, {'body': body}), record)
         self.assertNotIn('**Observed effort:**', body)
-        with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': '/claude-review effort high'}, clear=True):
+        with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': '/claude-review high'}, clear=True):
             running = check.selection_record(owner)
         self.assertEqual(check.selection_details(running), ['**Model:** Sonnet · **Effort:** High'])
         self.assertEqual(check.selection_notice(running, running=True), [])

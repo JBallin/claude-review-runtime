@@ -275,7 +275,7 @@ class ManualBaselineTests(unittest.TestCase):
                 (None, 'primary model evidence missing')):
             with self.subTest(model=model):
                 self.reset_manual()
-                os.environ['TRIGGER_COMMENT'] = '/claude-review opus effort high'
+                os.environ['TRIGGER_COMMENT'] = '/claude-review opus high'
                 owner = self.start()
                 self.assertIn('**Model:** Opus · **Effort:** High', self.api.status['body'])
                 record = check.selection_record(owner)
@@ -311,7 +311,7 @@ class ManualBaselineTests(unittest.TestCase):
             for state in ("success", "action_required"):
                 with self.subTest(movement=movement, state=state):
                     self.reset_manual()
-                    os.environ['TRIGGER_COMMENT'] = '/claude-review opus effort high'
+                    os.environ['TRIGGER_COMMENT'] = '/claude-review opus high'
                     owner = self.start()
                     record = check.selection_record(owner)
                     record.update(models=['claude-opus-5-5'], model_evidence='observed', execution_attempt=1,

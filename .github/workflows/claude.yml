@@ -1190,22 +1190,24 @@ jobs:
                       or value["version"] not in (1, 2)
                       or set(value) != keys | ({"diagnostics"} if value["version"] == 2 else set())
                       or not isinstance(value["errors"], list)
-                      or value["errors"] != [f for f in ("model", "effort") if f in value["errors"]]):
+                      or value["errors"] != [f for f in (("model", "effort", "request") if value["version"] == 2 else ("model", "effort")) if f in value["errors"]]):
                   raise ValueError("invalid captured configuration")
               diagnostics = value.get("diagnostics", [])
               if value["version"] == 2:
                   if (not isinstance(diagnostics, list) or len(diagnostics) > 8
                           or any(not isinstance(d, dict) or set(d) != {"field", "source", "reason"}
-                              or d["field"] not in ("model", "effort")
+                              or d["field"] not in ("model", "effort", "request")
                               or d["source"] not in ("manual", "repository", "workflow")
                               or d["reason"] not in ("invalid", "missing", "duplicate")
-                              or d["source"] in ("repository", "workflow") and d["reason"] != "invalid" for d in diagnostics)):
+                              or d["source"] in ("repository", "workflow") and d["reason"] != "invalid"
+                              or d["field"] == "request" and (d["source"] != "manual" or d["reason"] != "invalid")
+                              for d in diagnostics)):
                       raise ValueError("invalid configuration diagnostics")
-                  order = [( ("model", "effort").index(d["field"]),
+                  order = [( ("model", "effort", "request").index(d["field"]),
                              ("manual", "repository", "workflow").index(d["source"]),
                              ("invalid", "missing", "duplicate").index(d["reason"])) for d in diagnostics]
                   if (order != sorted(set(order))
-                          or value["errors"] != [f for f in ("model", "effort") if any(d["field"] == f for d in diagnostics)]):
+                          or value["errors"] != [f for f in ("model", "effort", "request") if any(d["field"] == f for d in diagnostics)]):
                       raise ValueError("invalid diagnostic order")
               for field, allowed, fallback in (("model", aliases, "sonnet"), ("effort", efforts, "medium")):
                   source, selected = value[field + "_source"], value["requested_" + field]
@@ -1218,7 +1220,8 @@ jobs:
                   elif (selected not in allowed or source not in ("manual", "repository", "workflow", "runtime")
                           or source == "runtime" and selected != fallback
                           or any(d["field"] == field and (d["source"] == source or source == "manual")
-                                 for d in diagnostics)):
+                                 for d in diagnostics)
+                          or source == "manual" and any(d["field"] == "request" for d in diagnostics)):
                       raise ValueError("invalid resolved configuration")
               return value
           def configuration_notices(value):
@@ -1228,11 +1231,17 @@ jobs:
               notices = []
               for diagnostic in value["diagnostics"]:
                   field = diagnostic["field"]
+                  if field == "request":
+                      notices.append("⚠️ **Review configuration:** Invalid manual request; using Model: "
+                          + value["requested_model"].capitalize() + " (" + value["model_source"].capitalize()
+                          + "), Effort: " + value["requested_effort"].capitalize() + " ("
+                          + value["effort_source"].capitalize() + ").")
+                      continue
                   notices.append("⚠️ **Review configuration:** " + diagnostic["reason"].capitalize()
                       + " " + diagnostic["source"] + " " + field + "; using "
                       + value["requested_" + field].capitalize() + " (" + value[field + "_source"].capitalize() + ").")
-              if any(d["reason"] in ("missing", "duplicate") for d in value["diagnostics"]):
-                  notices.append("Use `/claude-review [opus|sonnet|haiku] [effort low|medium|high|xhigh|max]`.")
+              if any(d["field"] == "request" or d["reason"] in ("missing", "duplicate") for d in value["diagnostics"]):
+                  notices.append("Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.")
               return notices
           def record(value, generation):
               required = {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
@@ -1301,9 +1310,9 @@ jobs:
                   for model in aliases:
                       commands["/claude-review " + model] = (model, "")
                   for effort in efforts:
-                      commands["/claude-review effort " + effort] = ("", effort)
+                      commands["/claude-review " + effort] = ("", effort)
                       for model in aliases:
-                          commands["/claude-review " + model + " effort " + effort] = (model, effort)
+                          commands["/claude-review " + model + " " + effort] = (model, effort)
                   body = os.environ.get("TRIGGER_COMMENT", "").lower()
                   if owner["kind"] in ("issue_comment", "pull_request_review_comment") and body in commands:
                       model, effort = commands[body]

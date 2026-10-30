@@ -838,15 +838,15 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 ---
 
-<a id="manual-missing-model"></a>
+<a id="manual-unknown-value"></a>
 
-### 23 — Missing model value retains valid effort
+### 23 — Unknown single value uses defaults with usage guidance
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22missing%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%7D -->
+<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22request%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%22request%22%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22low%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22low%22%2C%22requested_model%22%3A%22haiku%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -858,36 +858,36 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-trigger:Manual%20request -->
 <!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22missing%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22haiku%22%7D -->
+<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22request%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%22request%22%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22low%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22low%22%2C%22requested_model%22%3A%22haiku%22%7D -->
 ## Claude Review
 
 | Status | Reviewed commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review configuration:** Missing manual model; using Haiku (Workflow).
-Use `/claude-review [opus|sonnet|haiku] [effort low|medium|high|xhigh|max]`.
+⚠️ **Review configuration:** Invalid manual request; using Model: Haiku (Workflow), Effort: Low (Workflow).
+Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.
 
 <details>
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Model:** Haiku · **Effort:** High
+**Model:** Haiku · **Effort:** Low
 
 </details>
 
 ---
 
-<a id="manual-missing-effort"></a>
+<a id="manual-reversed-values"></a>
 
-### 24 — Missing effort value retains valid model
+### 24 — Reversed model and effort use defaults with usage guidance
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22effort%22%2C%22reason%22%3A%22missing%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%22effort%22%5D%2C%22model_source%22%3A%22manual%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%7D -->
+<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22request%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%22request%22%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22low%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22low%22%2C%22requested_model%22%3A%22haiku%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -899,22 +899,22 @@ Use `/claude-review [opus|sonnet|haiku] [effort low|medium|high|xhigh|max]`.
 <!-- claude-review-runtime:claude-review-last-reviewed-trigger:Manual%20request -->
 <!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22effort%22%2C%22reason%22%3A%22missing%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%22effort%22%5D%2C%22model_source%22%3A%22manual%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%7D -->
+<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22request%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22manual%22%7D%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%22request%22%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22low%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22low%22%2C%22requested_model%22%3A%22haiku%22%7D -->
 ## Claude Review
 
 | Status | Reviewed commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review configuration:** Missing manual effort; using Medium (Runtime).
-Use `/claude-review [opus|sonnet|haiku] [effort low|medium|high|xhigh|max]`.
+⚠️ **Review configuration:** Invalid manual request; using Model: Haiku (Workflow), Effort: Low (Workflow).
+Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.
 
 <details>
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Model:** Haiku · **Effort:** Medium
+**Model:** Haiku · **Effort:** Low
 
 </details>
 

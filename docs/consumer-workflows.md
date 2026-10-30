@@ -194,11 +194,6 @@ requires verified completion and reports the review as Incomplete. See
 [installation and incomplete reviews](review-guide.md#installation-and-incomplete-reviews)
 for diagnosis and recovery.
 
-These inputs require callers pinned to a Runtime revision that supports them.
-Existing pins retain their prior behavior. Adopting this feature changes reviews
-without configured defaults to explicit Sonnet / Medium; set caller inputs before
-adoption if you want a different default.
-
 ## Manual review
 
 Use this caller to accept manual review requests:
@@ -236,43 +231,26 @@ Post one of these entire comment bodies, case-insensitively:
 ```text
 /claude-review
 /claude-review opus
-/claude-review sonnet
-/claude-review haiku
-/claude-review effort high
-/claude-review opus effort high
+/claude-review high
+/claude-review opus high
 ```
 
-Any supported model alias can be followed by `effort` and one of `low`, `medium`,
-`high`, `xhigh`, or `max`, such as `/claude-review sonnet effort high`. Selection
-comes from the trusted comment; any caller eligibility gate must accept the
-same forms as its selected Runtime revision. Full model IDs, context suffixes,
-and routing modes are not supported model values. Callers with an older
-Opus-only allowlist need a caller update as well as a new Runtime pin. Update
-`uses:` to the reviewed Runtime revision, then replace the old model-specific
-comment-body filter with the [manual caller template above](#manual-review).
-That template delegates command recognition to Runtime, so it admits all three
-aliases and lets malformed options reach the warning-and-fallback parser.
-Preserve any additional access restrictions you require; do not remove
-permissions or author checks to broaden access. Runtime still checks the event,
-PR context, trusted commenter association, and captured patch authority before
-execution. Review and merge this caller change through the normal consumer
-adoption process; a pin update alone cannot change its filters.
+The model may be `opus`, `sonnet`, or `haiku`. Effort may be `low`, `medium`,
+`high`, `xhigh`, or `max`. When both are present, put the model first, such as
+`/claude-review sonnet high`.
 
 Plain `/claude-review` uses both [workflow defaults](#workflow-model-and-effort-defaults),
 falling back to Sonnet / Medium. A model-only command retains the resolved effort
 default; an effort-only command retains the resolved model default.
 
-For a recognized review command, an invalid model or effort value warns and
-falls back to the valid workflow input, then the Runtime default, for that
-field. Missing or malformed option values also show usage guidance. A malformed
-option does not consume a following valid option, and independently valid
-settings are retained. This recovery applies to configuration options, not
-authorization checks, conflicting ambient configuration, or execution failures.
-Explicit `model` / `--model` and `effort` / `--effort` option names are also
-recognized, with a space or `=` before the value. For example,
-`/claude-review --model --effort high` warns about the missing model value,
-uses the workflow model or Sonnet, and keeps High effort. Duplicate options
-fall back for that field and show usage guidance. Keep requests on one line,
+In a two-value request, an invalid model or effort warns and falls back to the
+valid workflow input, then the Runtime default, for that field. For example,
+`/claude-review unsupported high` retains High effort, and
+`/claude-review haiku unsupported` retains Haiku. An unknown single value or
+reversed model/effort order is ambiguous: Runtime shows usage guidance and uses
+both resolved defaults rather than guessing which field to override. This
+recovery applies to configuration values, not authorization checks, conflicting
+ambient configuration, or execution failures. Keep requests on one line,
 without leading whitespace. Repeated or trailing spaces are accepted;
 multiline comments, tabs, and unrelated extra text are not review requests.
 
