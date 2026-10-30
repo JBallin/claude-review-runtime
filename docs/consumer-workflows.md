@@ -149,6 +149,41 @@ review to a later patch.
 For the selected revision's publication behavior, see the
 [finding-publication contract](review-guide.md#finding-publication).
 
+## Repository model and effort defaults
+
+To choose defaults for automatic and manual reviews, add Actions configuration
+variables in the **consumer repository's Settings → Secrets and variables →
+Actions → Variables**:
+
+| Variable | Supported values |
+| --- | --- |
+| `CLAUDE_REVIEW_MODEL` | `opus`, `sonnet`, `haiku` |
+| `CLAUDE_REVIEW_EFFORT` | `low`, `medium`, `high`, `xhigh`, `max` |
+
+For example, set `CLAUDE_REVIEW_MODEL` to `opus` and `CLAUDE_REVIEW_EFFORT` to
+`high` if those are the defaults you want. Runtime supplies no model or effort
+default of its own. Values are case-insensitive and surrounding whitespace is
+ignored; unset or empty values leave that setting inherited from upstream.
+
+Each setting resolves independently: an explicit [manual selection](#optional-model-and-effort-selection)
+overrides the repository default for that field; otherwise the repository
+default applies. With neither, Claude Code retains its existing configuration
+and account behavior. A nonempty value outside the supported choices stops the
+review before model execution, unless a manual selection replaces that field.
+Check the workflow's configuration error and correct the named variable or
+override it in a new manual request.
+
+The pinned Runtime reads these owner-managed variables directly; it does not
+read defaults from PR files or caller workflow inputs. For reusable workflows,
+[GitHub uses the caller repository's variables](https://docs.github.com/en/actions/reference/workflows-and-actions/variables#configuration-variable-precedence),
+including permitted organization variables when no repository value overrides
+them. Defaults are captured with each review attempt, so later variable changes
+do not rewrite its settings or historical results.
+
+These settings require callers pinned to a Runtime revision that supports them.
+Existing pins retain their prior behavior. If neither variable is set, adopting
+this feature preserves existing model and effort inheritance.
+
 ## Manual review
 
 Use this caller to accept manual review requests:
@@ -184,37 +219,47 @@ spaces shown:
 ```text
 /claude-review
 /claude-review opus
+/claude-review sonnet
+/claude-review haiku
 /claude-review effort high
 /claude-review opus effort high
 ```
 
-`effort` accepts `low`, `medium`, `high`, `xhigh`, or `max`. Surrounding whitespace,
-extra arguments and other model choices are rejected. Selection comes from the
-trusted comment, not workflow inputs; any caller eligibility gate must accept
-the same forms as its selected Runtime revision.
+Any supported model alias can be followed by `effort` and one of `low`, `medium`,
+`high`, `xhigh`, or `max`, such as `/claude-review sonnet effort high`. Surrounding
+whitespace, extra arguments, full model IDs, context suffixes, and routing modes
+are rejected. Selection comes from the trusted comment; any caller eligibility
+gate must accept the same forms as its selected Runtime revision.
 
-Plain `/claude-review` sets neither model nor effort. Claude Code resolves both
-from applicable configuration and account defaults; `opus` requests its Opus
-alias. See [upstream configuration](https://code.claude.com/docs/en/model-config#adjust-effort-level).
-A conflicting `ANTHROPIC_MODEL` prevents an explicit Opus review from starting.
-Model access still depends on the existing account.
+Plain `/claude-review` uses both [repository defaults](#repository-model-and-effort-defaults).
+A model-only command retains the repository effort default; an effort-only
+command retains the repository model default. An omitted field with no default
+remains inherited from Claude Code.
 
-Higher effort can increase usage and latency; turn and time limits are not a
-spending cap. Model/account policy may limit the requested level. The displayed effort is the requested setting; headless output does not report
-the resolved setting. See [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
+The three aliases follow [upstream model resolution](https://code.claude.com/docs/en/model-config)
+and can advance to newer versions. Model access, alias remapping, and effort
+limits depend on the account and provider. Upstream may reject a selection or
+clamp unsupported effort; Runtime does not silently choose a replacement.
+A conflicting `ANTHROPIC_MODEL` or `CLAUDE_CODE_EFFORT_LEVEL` prevents the
+corresponding explicit selection from starting. Higher effort can increase usage
+and latency; turn and time limits are not a spending cap. See
+[effort support](https://platform.claude.com/docs/en/build-with-claude/effort).
 
-While a manual review runs, explicit selections appear compactly, for example
-“Model: Opus · Effort: High”. The standing status and historical clean-completion
-receipt retain that line when the primary review model is confirmed as Opus.
-Conflicting primary evidence, a different primary model, or missing evidence
-produces a visible warning. Auxiliary model usage stays in diagnostic metadata;
-it does not establish the primary model. Legacy records without separate primary
-evidence show a missing-evidence warning rather than confirming from usage.
-Effort remains the configured request, not an observed or effective value.
-Inherited model evidence stays in diagnostic metadata, including effort-only
-requests. Model diagnostics do not invalidate completed reviews or erase findings. Runtime
-does not add retries or substitution runs for these diagnostics; provider
-failures retain their ordinary incomplete-review behavior.
+Known **Model** and **Effort** settings appear compactly inside Details for
+automatic and manual reviews, including their historical results and manual
+clean-completion receipts. The model can include its version when primary
+execution evidence establishes it; unknown settings are omitted. Effort is the
+configured request, not an independently observed or effective value; headless
+output does not report the resolved setting. See
+[Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
+
+A selected model with missing or conflicting primary evidence, or execution by
+a different model family, produces a visible warning outside Details. Auxiliary
+model usage stays in diagnostic metadata and cannot confirm the primary model.
+Legacy records without separate primary evidence retain the missing-evidence
+warning. Model diagnostics do not invalidate completed reviews or erase
+findings. Runtime adds no retries or substitution runs for these diagnostics;
+provider failures retain their ordinary incomplete-review behavior.
 
 The runtime resolves the current patch once for each accepted manual request.
 Ordinary issue comments and untrusted requests do not start model execution.

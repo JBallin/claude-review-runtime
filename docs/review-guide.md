@@ -37,8 +37,12 @@ comments and untrusted requests do not start model execution. The eligibility
 job has read-only PR access and performs no checkout before calling the pinned
 runtime. The runtime resolves the current patch once for each accepted request.
 
-Manual requests support [optional Opus and effort selection](consumer-workflows.md#optional-model-and-effort-selection).
-Model evidence is diagnostic: a different observed model produces a notice,
+This repository's pinned manual caller accepts optional Opus and effort
+selection. The current Runtime source also supports Sonnet, Haiku, and
+[repository defaults](consumer-workflows.md#repository-model-and-effort-defaults);
+using those capabilities requires a supporting Runtime pin and a caller gate
+that accepts its [manual command forms](consumer-workflows.md#optional-model-and-effort-selection).
+Model evidence is diagnostic: a different primary model produces a notice,
 without changing completion or finding verification.
 
 The command deliberately avoids a Claude mention. `@claude review` can invoke
@@ -56,8 +60,12 @@ accepted attempt, including its captured head/base and workflow run. Checks and
 workflow runs retain earlier attempts. Incomplete and cancelled reviews show
 a concise explanation and recovery link above Details. Verified unread inputs
 take precedence over workflow-change context. Details retain the reason receipt
-and captured attempt identity. A comment API or permission failure is reported in
-the Check/run when publication is possible. Accepted manual requests also receive
+and captured attempt identity. Known Model and Effort settings appear inside
+Details alongside Runtime provenance. Each current or previous attempt retains
+its own settings; a status refresh does not apply today's defaults to an older
+review. Missing, conflicting, or mismatched primary-model evidence remains
+visible above Details when a model was selected. A comment API or permission
+failure is reported in the Check/run when publication is possible. Accepted manual requests also receive
 runtime reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
 publication. For a manual review, 👍 means the captured patch review completed

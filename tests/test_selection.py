@@ -24,7 +24,7 @@ class SelectionTests(unittest.TestCase):
                     for association in ('NONE', 'CONTRIBUTOR'):
                         self.assertFalse(w.evaluate(w.start_check_predicate(w.MANUAL), factory(body=text, association=association)))
         for body in ('/claude-review opus ', '/claude-review\topus', '/claude-review opus\n',
-                     '/claude-review sonnet', '/claude-review opus --effort high',
+                     '/claude-review claude-sonnet-5-5', '/claude-review opus --effort high',
                      '/claude-review effort high opus', '/claude-review opus; echo bad',
                      '/claude-review opus effort $(id)', '/claude-review opus effort ultra', None):
             with self.subTest(body=body):
@@ -39,12 +39,12 @@ class SelectionTests(unittest.TestCase):
                 path = Path(tmp) / 'request.json'
                 path.write_text(json.dumps(dict(trigger_comment=body, **selected)))
                 with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': body, 'ANTHROPIC_MODEL': 'sonnet'}, clear=True), mock.patch.object(check, 'write_output') as out:
-                    self.assertEqual(check.cmd_selection(str(path)), 1 if model else 0)
+                    self.assertEqual(check.cmd_selection(str(path)), 1 if model and model != 'sonnet' else 0)
                     if not model:
                         self.assertIn(mock.call('effort_args', '--effort ' + effort if effort else ''), out.call_args_list)
                 with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': body}, clear=True), mock.patch.object(check, 'write_output') as out:
                     self.assertEqual(check.cmd_selection(str(path)), 0)
-                    self.assertIn(mock.call('model_args', '--model opus' if model else ''), out.call_args_list)
+                    self.assertIn(mock.call('model_args', '--model ' + model if model else ''), out.call_args_list)
                     path.write_text(json.dumps(dict(trigger_comment=body, **{**selected, 'requested_effort': 'bad'})))
                     self.assertEqual(check.cmd_selection(str(path)), 1)
 
@@ -63,13 +63,19 @@ class SelectionTests(unittest.TestCase):
                 original = copy.deepcopy(record)
                 for state in ('in_progress', 'success'):
                     body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=record)
-                    self.assertIn('**Model:** Opus · **Effort:** ' + display, body)
+                    self.assertIn('**Model:** Opus 4.7 · **Effort:** ' + display, body.split('<details>')[1])
+                    self.assertNotIn('**Effort:**', body.split('<details>')[0])
                     self.assertEqual(check.current_selection(owner, {'body': body}), original)
                 self.assertEqual(record, original)
                 self.assertIsNone(record['observed_effort'])
 
     def record(self, models=('claude-opus-4-7',), usage=None, transform=None, **changes):
         owner = presentation_owner(kind='issue_comment', target=12)
+        command = '/claude-review'
+        if changes.get('requested_model', 'opus'):
+            command += ' ' + changes.get('requested_model', 'opus')
+        if changes.get('requested_effort', 'high'):
+            command += ' effort ' + changes.get('requested_effort', 'high')
         stream = [{'type': 'system', 'subtype': 'init', 'session_id': 'session', 'model': models[0] if models else None},
                   *[{'type':'assistant','session_id':'session','message':{'model':m}} for m in models],
                   {'type':'result','session_id':'session','modelUsage':usage if usage is not None else {m:{'inputTokens':1} for m in models}}]
@@ -78,7 +84,7 @@ class SelectionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'execution.json'
             path.write_text(json.dumps(stream))
-            with mock.patch.dict(os.environ, {'TRIGGER_COMMENT':'/claude-review opus effort high', 'GITHUB_RUN_ATTEMPT':'2'}, clear=True):
+            with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': command, 'GITHUB_RUN_ATTEMPT':'2'}, clear=True):
                 record = check.selection_record(owner, str(path))
         record.update(changes)
         return owner, record
@@ -99,7 +105,7 @@ class SelectionTests(unittest.TestCase):
             self.assertNotIn('**Observed effort:**', body)
             self.assertIn('**Model:** Opus', body)
             if models == ('claude-opus-4-7',):
-                self.assertIn('**Model:** Opus · **Effort:** High', body)
+                self.assertIn('**Model:** Opus 4.7 · **Effort:** High', body.split('<details>')[1])
             else:
                 self.assertIn('Opus selected', body)
             if models == ('claude-sonnet-4-6',):
@@ -149,9 +155,13 @@ class SelectionTests(unittest.TestCase):
         for hidden in ('', '<!--\nHaiku requested by an auxiliary call\n-->\n'):
             with self.subTest(multiline_comment=bool(hidden)):
                 visible = re.sub(r'<!--.*?-->', '', (hidden + body).split('<details>')[0], flags=re.DOTALL)
-                self.assertIn('**Model:** Opus · **Effort:** High', visible)
+                self.assertNotIn('**Model:**', visible)
+                self.assertNotIn('**Effort:**', visible)
                 self.assertNotIn('Haiku', visible)
                 self.assertNotIn('requested', visible)
+                details = re.sub(r'<!--.*?-->', '', body.split('<details>')[1], flags=re.DOTALL)
+                self.assertIn('**Model:** Opus 5.5 · **Effort:** High', details)
+                self.assertNotIn('Haiku', details)
         self.assertEqual(check.current_selection(owner, {'body': body}), record)
 
     def test_primary_evidence_survives_unavailable_aggregate_usage(self):
@@ -169,8 +179,9 @@ class SelectionTests(unittest.TestCase):
                 self.assertEqual(record['model_evidence'], 'unknown')
                 self.assertIsNone(record['observed_effort'])
                 self.assertEqual(check.valid_selection(record, owner), record)
-                self.assertEqual(check.selection_notice(record),
-                                 ['**Model:** Opus · **Effort:** High'])
+                self.assertEqual(check.selection_notice(record), [])
+                self.assertEqual(check.selection_details(record),
+                                 ['**Model:** Opus 5.5 · **Effort:** High'])
 
     def test_primary_fallback_and_conflicting_sources_are_visible(self):
         for models, transform, expected in (
@@ -213,7 +224,8 @@ class SelectionTests(unittest.TestCase):
         owner, record = self.record(transform=transform)
         self.assertEqual(record['primary_model_evidence']['assistant'], ['claude-opus-4-7'])
         self.assertIsNone(record['primary_model_evidence']['initialization'])
-        self.assertEqual(check.selection_notice(record), ['**Model:** Opus · **Effort:** High'])
+        self.assertEqual(check.selection_notice(record), [])
+        self.assertEqual(check.selection_details(record), ['**Model:** Opus 4.7 · **Effort:** High'])
         self.assertEqual(check.valid_selection(record, owner), record)
 
     def test_primary_receipt_validation_and_running_selection(self):
@@ -231,39 +243,85 @@ class SelectionTests(unittest.TestCase):
             self.assertNotIn('primary model evidence missing', body)
         self.assertIn('primary model evidence missing', check.selection_notice(running)[0])
 
-    def test_plain_comment_is_quiet_but_preserves_diagnostics(self):
+    def test_plain_comment_displays_known_model_in_details_without_inventing_effort(self):
         owner, record = self.record(requested_model='', requested_effort='')
         for state in ('success', 'in_progress', 'failure', 'stale'):
             body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=record)
-            for label in ('**Model:**', '**Requested model:**', '**Observed models:**',
+            main, details = body.split('<details>')
+            self.assertNotIn('**Model:**', main)
+            self.assertIn('**Model:** Opus 4.7', details)
+            for label in ('**Effort:**', '**Requested model:**', '**Observed models:**',
                           '**Requested effort:**', '**Observed effort:**', '**Model evidence attempt:**'):
                 self.assertNotIn(label, body)
             self.assertIn(check.SELECTION_PREFIX, body)
             self.assertEqual(check.current_selection(owner, {'body': body}), record)
+        with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': '/claude-review'}, clear=True):
+            unknown = check.selection_record(owner)
+        self.assertEqual(check.selection_details(unknown), [])
+        self.assertEqual(check.selection_notice(unknown), [])
 
-    def test_effort_only_confirmation_has_no_model_line(self):
+    def test_effort_only_selection_displays_only_known_fields(self):
         owner, record = self.record(requested_model='')
         body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
-        self.assertEqual(check.selection_notice(record), ['**Effort:** High'])
+        self.assertEqual(check.selection_notice(record), [])
+        self.assertEqual(check.selection_details(record), ['**Model:** Opus 4.7 · **Effort:** High'])
         self.assertNotIn('No override requested', body)
-        self.assertNotIn('**Model:**', body)
+        self.assertNotIn('**Model:**', body.split('<details>')[0])
+        self.assertIn('**Model:** Opus 4.7', body.split('<details>')[1])
         self.assertNotIn('**Observed models:**', body)
         self.assertEqual(check.current_selection(owner, {'body': body}), record)
         self.assertNotIn('**Observed effort:**', body)
+        with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': '/claude-review effort high'}, clear=True):
+            running = check.selection_record(owner)
+        self.assertEqual(check.selection_details(running), ['**Effort:** High'])
+        self.assertEqual(check.selection_notice(running), [])
 
     def test_lifecycle_selection_once_and_structured_attribution(self):
         owner, record = self.record()
         for state in ('in_progress', 'success', 'action_required', 'failure'):
             body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=record)
             main, details = body.split('<details>')
-            self.assertEqual(main.count('**Model:**'), 1)
-            self.assertEqual(main.count('**Effort:**'), 1)
-            for label in ('**Model:', '**Effort:', '**Requested', '**Observed', '**Model evidence attempt:', '**Result:** No findings.'):
+            self.assertNotIn('**Model:**', main)
+            self.assertNotIn('**Effort:**', main)
+            self.assertEqual(details.count('**Model:**'), 1)
+            self.assertEqual(details.count('**Effort:**'), 1)
+            for label in ('**Requested', '**Observed', '**Model evidence attempt:', '**Result:** No findings.'):
                 self.assertNotIn(label, details)
             self.assertEqual(check.current_selection(owner, {'body': body}), record)
         mixed = {**record, 'models': ['claude-haiku-5-5', 'claude-opus-5-5'], 'model_evidence': 'mixed'}
-        notice = check.selection_notice(mixed)[0]
-        self.assertNotIn('⚠️', notice)
-        self.assertEqual(notice, '**Model:** Opus · **Effort:** High')
+        self.assertEqual(check.selection_notice(mixed), [])
+        self.assertEqual(check.selection_details(mixed), ['**Model:** Opus 4.7 · **Effort:** High'])
         _, unusual = self.record(models=('claude-custom',))
         self.assertIn('`claude-custom`', check.selection_notice(unusual)[0])
+
+    def test_legacy_receipt_remains_readable_without_configuration_or_primary_evidence(self):
+        owner, record = self.record()
+        record.pop('configuration')
+        record.pop('primary_model_evidence')
+        self.assertEqual(check.valid_selection(record, owner), record)
+        body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
+        with mock.patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(check.current_selection(owner, {'body': body}), record)
+        main, details = body.split('<details>')
+        self.assertIn('primary model evidence missing', main)
+        self.assertIn('**Model:** Opus · **Effort:** High', details)
+        self.assertNotIn('Opus 4.7', details)
+
+    def test_immutable_completion_receipt_keeps_settings_in_details_and_warning_visible(self):
+        for model, expected, warning in (('claude-opus-5-5', 'Opus 5.5', False),
+                                         ('claude-sonnet-5-5', 'Opus', True)):
+            with self.subTest(model=model):
+                _, record = self.record(models=(model,))
+                original = copy.deepcopy(record)
+                with mock.patch.dict(os.environ, {}, clear=True):
+                    body = check.completion_comment_body(
+                        'owner/repo', HEAD, 'main', 'b' * 40, '<!-- completion -->',
+                        'https://github.com/owner/repo/actions/runs/5', selection=record)
+                main, details = body.split('<details>')
+                self.assertEqual('primary model mismatch' in main, warning)
+                self.assertNotIn('**Effort:**', main)
+                if not warning:
+                    self.assertNotIn('**Model:**', main)
+                self.assertIn('**Model:** ' + expected + ' · **Effort:** High', details)
+                self.assertNotIn('Observed effort', body)
+                self.assertEqual(record, original)

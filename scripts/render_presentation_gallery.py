@@ -133,6 +133,24 @@ def gallery_samples():
             return check.status_comment_body(fixtures.HEAD, "main", state, owner=manual_owner,
                                             trigger_label="Manual request", completed_at=COMPLETED_AT,
                                             selection=record, runtime=check.executing_runtime(), **options)
+
+        def configured(record_owner, config, primary=None):
+            return {
+                "generation": record_owner["generation"],
+                "requested_model": config["requested_model"],
+                "requested_effort": config["requested_effort"],
+                "configuration": config,
+                "models": [primary] if primary else [],
+                "model_evidence": "observed" if primary else "unknown",
+                "execution_attempt": 1 if primary else None,
+                "observed_effort": None,
+                "primary_model_evidence": {
+                    "initialization": primary, "assistant": [primary], "attempt": 1,
+                } if primary else None,
+            }
+
+        repository_config = check.resolve_configuration("", "sonnet", "medium", automatic=True)
+        repository_record = configured(owner, repository_config, "claude-sonnet-5-5")
         samples = [
             GallerySample("selection-running", "current-completion", "Running with explicit selection", selected([], "unknown", None, state="in_progress")),
             GallerySample("selection-findings", "current-completion", "Findings with explicit selection", selected(["claude-opus-5-5"], state="action_required")),
@@ -148,6 +166,16 @@ def gallery_samples():
             GallerySample("opus-legacy", "current-completion", "Legacy receipt without primary evidence", selected(["claude-opus-5-5"], legacy=True)),
             GallerySample("current-clean", "current-completion", "Completed review", status("success")),
             GallerySample(FINDINGS_SAMPLE, "current-completion", "Review with findings", status("action_required")),
+            GallerySample("repository-default-running", "current-completion", "Automatic review running with repository defaults", status(
+                "in_progress", selection=configured(owner, repository_config))),
+            GallerySample("repository-default-observed", "current-completion", "Automatic review completed with repository defaults", status(
+                "success", selection=repository_record)),
+            GallerySample("inherited-model-observed", "current-completion", "Automatic review with inherited model and unknown effort", status(
+                "success", selection=configured(owner, check.resolve_configuration("", automatic=True), "claude-haiku-5-5"))),
+            GallerySample("manual-partial-default", "current-completion", "Manual model override retaining repository effort", status(
+                "success", owner=manual_owner, trigger_label="Manual request",
+                selection=configured(manual_owner, check.resolve_configuration(
+                    "/claude-review haiku", "sonnet", "medium"), "claude-haiku-5-5"))),
             GallerySample("baseline-clean", "baseline-completion", "Clean completion, changed target branch", status(
                 "stale", last_review=history("success"), base_sha=fixtures.OTHER,
                 **stale_options)),
@@ -206,9 +234,16 @@ def gallery_samples():
                 ("failure", "incomplete-history", "Incomplete attempt with older completed history")):
             for result, label in (("success", "clean"), ("action_required", "findings")):
                 options = {"reason": check.STATUS_REASONS["incomplete"]} if state == "failure" else {}
+                historical_details = details
+                if state == "in_progress" and result == "success":
+                    # Each generation keeps its own settings; the current
+                    # repository default must not replace completed history.
+                    options["selection"] = configured(newer_owner, check.resolve_configuration(
+                        "", "opus", "high", automatic=True))
+                    historical_details = {**details, "selection": repository_record}
                 samples.append(GallerySample(f"{group}-{label}", group, f"{description}: {label}", status(
                     state, head=fixtures.OTHER, owner=newer_owner, trigger_label="Draft marked ready",
-                    last_review=history(result), last_review_details=details, **options)))
+                    last_review=history(result), last_review_details=historical_details, **options)))
         for result, label in (("success", "clean"), ("action_required", "findings")):
             samples.append(GallerySample(f"retargeted-{label}", "retargeted", f"Retargeted provenance: {label}", status(
                 "stale", base_ref="release", last_review=history(result),
@@ -242,6 +277,9 @@ def gallery_samples():
             GallerySample("workflow-changed-superseded", "incomplete", "Workflow-change context retained for a superseded attempt", status(
                 "stale", head=fixtures.OTHER, owner_running=False,
                 reason=check.stale_status_reason(check.STATUS_REASONS["workflow_changed"]))),
+            GallerySample("repository-invalid-setting", "incomplete", "Invalid repository model with valid effort retained", status(
+                "failure", reason=check.STATUS_REASONS["preparation_failed"],
+                selection=configured(owner, check.resolve_configuration("", "unsupported", "high", automatic=True)))),
         ]
         for group, state, result in (("running-history", "in_progress", "success"),
                                      ("incomplete-history", "failure", "action_required"),

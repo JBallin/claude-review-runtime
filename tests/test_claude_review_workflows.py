@@ -17,6 +17,7 @@ import tempfile
 import textwrap
 import unittest
 from pathlib import Path
+from urllib.parse import quote
 
 WORKFLOWS = Path(__file__).resolve().parent.parent / ".github" / "workflows"
 AUTOMATIC = WORKFLOWS / "claude-review.yml"
@@ -364,6 +365,29 @@ class EligibilityPredicateTests(unittest.TestCase):
                                      f"claude-review-ineligible-{event['run_id']}")
 
 
+    def test_each_supported_alias_and_effort_retains_the_manual_authority_gate(self):
+        commands = ["/claude-review"]
+        for model in ("opus", "sonnet", "haiku"):
+            commands += ["/claude-review " + model]
+            commands += ["/claude-review " + model + " effort " + effort
+                         for effort in ("low", "medium", "high", "xhigh", "max")]
+        commands += ["/claude-review effort " + effort
+                     for effort in ("low", "medium", "high", "xhigh", "max")]
+        for factory in (issue_comment_event, review_comment_event):
+            for command in commands:
+                with self.subTest(event=factory.__name__, command=command):
+                    event = factory(body=command)
+                    self.assertTrue(evaluate(start_check_predicate(MANUAL), event))
+                    self.assertEqual(evaluate(concurrency_group(MANUAL), event),
+                                     f"claude-review-state-{REPO}-7")
+                    untrusted = factory(body=command, association="NONE")
+                    self.assertFalse(evaluate(start_check_predicate(MANUAL), untrusted))
+                    self.assertIn("ineligible", evaluate(concurrency_group(MANUAL), untrusted))
+        for command in ("/claude-review default", "/claude-review claude-opus-5-5",
+                        "/claude-review sonnet[1m]", "/claude-review haiku --effort high",
+                        "/claude-review sonnet effort ultra", "/claude-review haiku; echo bad"):
+            self.assertFalse(evaluate(start_check_predicate(MANUAL), issue_comment_event(body=command)))
+
     def test_reusable_entrypoints_reject_unrelated_caller_event_names(self):
         for path, event in ((AUTOMATIC, pull_request_event()), (MANUAL, issue_comment_event())):
             for event_name in ("workflow_dispatch", "push", "schedule"):
@@ -466,7 +490,8 @@ class JobStructureTests(unittest.TestCase):
 
     def test_check_run_is_created_before_fallible_review_input_capture(self):
         cases = {
-            AUTOMATIC: ["Capture presentation start", "Check review tooling", "Start Claude Review check", "Fetch PR review inputs"],
+            AUTOMATIC: ["Capture presentation start", "Check review tooling", "Select review configuration",
+                        "Start Claude Review check", "Require valid review configuration", "Fetch PR review inputs"],
             MANUAL: [
                 "Resolve PR under review",
                 "Capture presentation start",
@@ -474,6 +499,7 @@ class JobStructureTests(unittest.TestCase):
                 "Select review configuration",
                 "Validate manual patch authority",
                 "Start Claude Review check",
+                "Require valid review configuration",
                 "Capture PR review snapshot",
             ],
         }
@@ -486,15 +512,16 @@ class JobStructureTests(unittest.TestCase):
 
     def test_fork_evidence_failures_cannot_skip_the_manual_review(self):
         named = steps(job(MANUAL, "start-check"))
-        required = ["Resolve PR under review", "Select review configuration", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
+        required = ["Resolve PR under review", "Require valid review configuration", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
         evidence_only = [
             "Check review tooling",
             "Start Claude Review check",
             "Record existing Claude review comments",
             "Upload pre-review comment evidence",
         ]
-        self.assertEqual(sorted(named), sorted(required + evidence_only + ["Capture presentation start"]))
+        self.assertEqual(sorted(named), sorted(required + evidence_only + ["Capture presentation start", "Select review configuration"]))
         self.assertEqual(scalar(named["Capture presentation start"], "continue-on-error", 8), "true")
+        self.assertEqual(scalar(named["Select review configuration"], "continue-on-error", 8), "true")
         for name in required:
             with self.subTest(step=name):
                 self.assertIsNone(scalar(named[name], "continue-on-error", 8))
@@ -509,11 +536,72 @@ class JobStructureTests(unittest.TestCase):
 
     def test_same_repo_only_automatic_review_keeps_every_start_step_fail_closed(self):
         for name, lines in steps(job(AUTOMATIC, "start-check")).items():
-            if name == "Capture presentation start":
+            if name in ("Capture presentation start", "Select review configuration"):
                 self.assertEqual(scalar(lines, "continue-on-error", 8), "true")
                 continue
             with self.subTest(step=name):
                 self.assertIsNone(scalar(lines, "continue-on-error", 8))
+
+    def test_configuration_is_captured_once_from_trusted_repository_variables(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                named = steps(job(path, "start-check"))
+                selected = named["Select review configuration"]
+                config_env = block(selected, "env", 8)
+                self.assertEqual(scalar(config_env, "REPOSITORY_REVIEW_MODEL", 10),
+                                 "${{ vars.CLAUDE_REVIEW_MODEL }}")
+                self.assertEqual(scalar(config_env, "REPOSITORY_REVIEW_EFFORT", 10),
+                                 "${{ vars.CLAUDE_REVIEW_EFFORT }}")
+                self.assertEqual(path.read_text().count("vars.CLAUDE_REVIEW_MODEL"), 1)
+                self.assertEqual(path.read_text().count("vars.CLAUDE_REVIEW_EFFORT"), 1)
+                self.assertNotIn("${{ inputs.", "\n".join(selected))
+                self.assertNotIn("actions/checkout", "\n".join(job(path, "start-check")))
+                self.assertEqual(scalar(block(job(path, "start-check"), "outputs", 4), "selection_config", 6),
+                                 "${{ steps.select.outputs.selection_config }}")
+                self.assertEqual(scalar(named["Start Claude Review check"], "SELECTION_CONFIG", 10),
+                                 "${{ steps.select.outputs.selection_config }}")
+                capture = named["Fetch PR review inputs" if path == AUTOMATIC else "Capture PR review snapshot"]
+                self.assertEqual(scalar(capture, "SELECTION_CONFIG", 10),
+                                 "${{ steps.select.outputs.selection_config }}")
+                self.assertIn("--argjson selection_config", run_block(capture))
+                self.assertIn("selection_config: $selection_config", run_block(capture))
+                review = steps(job(path, "review"))
+                validator = review["Validate captured selection"]
+                self.assertEqual(scalar(validator, "SELECTION_CONFIG", 10),
+                                 "${{ needs.start-check.outputs.selection_config }}")
+                self.assertIn("selection --metadata", scalar(validator, "run", 8))
+                args = folded(review["Review pull request"], "claude_args", 10)
+                for field in ("model", "effort"):
+                    self.assertIn("${{ steps.selection.outputs." + field + "_args }}", args)
+                self.assertEqual(scalar(review[VERIFY_STEP], "SELECTION_CONFIG", 10),
+                                 "${{ needs.start-check.outputs.selection_config }}")
+                self.assertIn("observe-selection --execution", run_block(review[VERIFY_STEP]))
+                for step in ("Publish Claude Review result", FALLBACK_STEP):
+                    publish = steps(job(path, "publish-status"))[step]
+                    self.assertEqual(scalar(publish, "SELECTION_CONFIG", 10),
+                                     "${{ needs.start-check.outputs.selection_config }}")
+                published = steps(job(path, "publish-status"))["Publish Claude Review result"]
+                self.assertEqual(scalar(published, "SELECTION_EVIDENCE", 10),
+                                 "${{ needs.review.outputs.selection_evidence }}")
+
+    def test_invalid_configuration_stops_review_after_starting_its_check(self):
+        for path in (AUTOMATIC, MANUAL):
+            with self.subTest(workflow=path.name):
+                named = steps(job(path, "start-check"))
+                order = list(named)
+                self.assertLess(order.index("Select review configuration"), order.index("Start Claude Review check"))
+                self.assertLess(order.index("Start Claude Review check"), order.index("Require valid review configuration"))
+                self.assertEqual(scalar(named["Select review configuration"], "continue-on-error", 8), "true")
+                gate = named["Require valid review configuration"]
+                condition = scalar(gate, "if", 8)
+                for outcome, expected in (("success", False), ("failure", True), ("skipped", True)):
+                    self.assertIs(Evaluator(condition, {"steps": {"select": {"outcome": outcome}}}).evaluate(), expected)
+                failed = subprocess.run(["bash", "-e", "-c", run_block(gate)], capture_output=True, text=True)
+                self.assertEqual(failed.returncode, 1)
+                self.assertIn("configuration is invalid", failed.stdout)
+                self.assertIsNone(scalar(job(path, "review"), "if", 4))
+                self.assertEqual(scalar(job(path, "publish-status"), "if", 4),
+                                 "always() && needs.start-check.result != 'skipped'")
 
     def test_tooling_failure_reaches_a_trusted_fallback_instead_of_skipping_publication(self):
         for path in (AUTOMATIC, MANUAL):
@@ -635,7 +723,7 @@ class JobStructureTests(unittest.TestCase):
                 self.assertIn("      completion_verified: ${{ steps.verify.outputs.completion_verified }}", outputs)
                 self.assertIn("      completion_reason: ${{ steps.verify.outputs.completion_reason }}", outputs)
                 self.assertIn("      finding_publication: ${{ steps.verify.outputs.finding_publication }}", outputs)
-                self.assertEqual(len([line for line in outputs if line.strip()]), 5 if path == MANUAL else 4)
+                self.assertEqual(len([line for line in outputs if line.strip()]), 5)
                 publish = steps(job(path, "publish-status"))["Publish Claude Review result"]
                 self.assertEqual(
                     scalar(publish, "COMPLETION_VERIFIED", 10), "${{ needs.review.outputs.completion_verified }}"
@@ -826,6 +914,13 @@ def history(*runs):
 def pr_identity(head=HEAD, base_ref=BASE_REF):
     return json.dumps({"head": {"sha": head}, "base": {
         "ref": base_ref, "sha": "d" * 40, "repo": {"full_name": REPO}}})
+
+
+def captured_configuration(model="", effort="", *, errors=()):
+    return {"version": 1, "requested_model": model, "requested_effort": effort,
+            "model_source": "repository" if model or "model" in errors else "inherited",
+            "effort_source": "repository" if effort or "effort" in errors else "inherited",
+            "errors": list(errors)}
 
 
 class ToolingFallbackScriptTests(unittest.TestCase):
@@ -1230,7 +1325,10 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             body = repaired["body"]["body"]
             self.assertEqual(check.status_owner({"body": body}), owner)
             if expected:
-                self.assertIn(expected, body.split("<details>")[0])
+                visible, details = body.split("<details>", 1)
+                self.assertIn(expected, details)
+                self.assertNotIn("**Effort:**", visible)
+                self.assertIn("primary model evidence missing", visible)
                 record = check.current_selection(owner, {"body": body})
                 self.assertEqual(record["requested_model"], "opus")
                 self.assertEqual(record["requested_effort"], command.rsplit(" ", 1)[1])
@@ -1240,6 +1338,134 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             else:
                 self.assertNotIn("**Model:**", body)
                 self.assertNotIn("**Effort:**", body)
+
+    def repaired_status(self, calls):
+        return next(c["body"]["body"] for c in calls if c["method"] == "PATCH"
+                    and any("issues/comments/55" in arg for arg in c["args"]))
+
+    def test_fallback_captured_defaults_are_compact_in_details_for_both_entrypoints(self):
+        from test_claude_review_check import presentation_owner
+        for path in (AUTOMATIC, MANUAL):
+            owner = presentation_owner(repo=REPO, kind="automatic" if path == AUTOMATIC else "issue_comment",
+                                       target=None if path == AUTOMATIC else 12)
+            for model, effort in (("opus", "high"), ("sonnet", ""), ("", "medium")):
+                with self.subTest(workflow=path.name, model=model, effort=effort):
+                    captured = captured_configuration(model, effort)
+                    result, calls = self.run_fallback(path, OWNER_FIXTURE=owner, STATUS_COMMENT_ID="55",
+                                                       PR_NUMBER="7", TRIGGER_COMMENT="/claude-review",
+                                                       SELECTION_CONFIG=json.dumps(captured))
+                    self.assertEqual(result.returncode, 1)
+                    body = self.repaired_status(calls)
+                    visible, details = body.split("<details>", 1)
+                    self.assertNotIn("**Effort:**", visible)
+                    if model:
+                        self.assertIn("**Model:** " + model.title(), details)
+                        self.assertIn(model.title() + " selected; primary model evidence missing", visible)
+                    else:
+                        self.assertNotIn("**Model:**", body)
+                    if effort:
+                        self.assertIn("**Effort:** " + effort.capitalize(), details)
+                    else:
+                        self.assertNotIn("**Effort:**", body)
+                    record = check.current_selection(owner, {"body": body})
+                    self.assertEqual(record["configuration"], captured)
+                    self.assertIsNone(record.get("observed_effort"))
+                    self.assertEqual(record["models"], [])
+
+    def test_fallback_partial_invalid_capture_preserves_only_the_valid_sibling(self):
+        for path in (AUTOMATIC, MANUAL):
+            for captured, expected, absent in (
+                (captured_configuration("", "high", errors=("model",)), "**Effort:** High", "**Model:**"),
+                (captured_configuration("haiku", "", errors=("effort",)), "**Model:** Haiku", "**Effort:**"),
+            ):
+                with self.subTest(workflow=path.name, errors=captured["errors"]):
+                    result, calls = self.run_fallback(path, STATUS_COMMENT_ID="55", PR_NUMBER="7",
+                                                       SELECTION_CONFIG=json.dumps(captured))
+                    self.assertEqual(result.returncode, 1)
+                    body = self.repaired_status(calls)
+                    self.assertIn(expected, body.split("<details>", 1)[1])
+                    self.assertNotIn(absent, body)
+                    self.assertIn("Invalid " + captured["errors"][0] + " setting", body.split("<details>", 1)[0])
+
+    def test_fallback_rejects_malformed_or_hostile_configuration_without_echoing_values(self):
+        valid = captured_configuration("opus", "high")
+        hostile = "haiku; printf injected"
+        raws = ["not json", json.dumps({**valid, "requested_model": hostile}),
+                json.dumps({**valid, "version": True}),
+                json.dumps({**valid, "model_source": "pr"}),
+                json.dumps({**valid, "extra": "value"}),
+                json.dumps(valid)[:-1] + ", \"requested_model\": \"haiku\"}"]
+        for path in (AUTOMATIC, MANUAL):
+            for raw in raws:
+                with self.subTest(workflow=path.name, raw=raw):
+                    result, calls = self.run_fallback(path, STATUS_COMMENT_ID="55", PR_NUMBER="7",
+                                                       SELECTION_CONFIG=raw)
+                    self.assertEqual(result.returncode, 1)
+                    body = self.repaired_status(calls)
+                    self.assertNotIn("**Model:**", body)
+                    self.assertNotIn("**Effort:**", body)
+                    self.assertNotIn(hostile, body)
+                    self.assertNotIn(check.SELECTION_PREFIX, body)
+                    self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
+
+    def test_fallback_preserves_historical_selection_without_using_current_defaults(self):
+        from test_claude_review_check import presentation_owner
+        generation = "1" * 64
+        prior = {"requested_model": "sonnet", "requested_effort": "low", "generation": generation,
+                 "models": ["claude-sonnet-5-5"], "execution_attempt": 1, "model_evidence": "observed",
+                 "observed_effort": None, "configuration": captured_configuration("sonnet", "low"),
+                 "primary_model_evidence": {"initialization": "claude-sonnet-5-5",
+                                             "assistant": ["claude-sonnet-5-5"], "attempt": 1}}
+        prefix = "<!-- claude-review-runtime:claude-review-last-reviewed-selection:"
+        for path in (AUTOMATIC, MANUAL):
+            for actual, expected_model in (("claude-sonnet-5-5", "Sonnet 5.5"), ("claude-haiku-5-5", "Sonnet")):
+                with self.subTest(workflow=path.name, actual=actual):
+                    observed = {**prior, "models": [actual],
+                                "primary_model_evidence": {"initialization": actual, "assistant": [actual], "attempt": 1}}
+                    receipt = prefix + quote(json.dumps(observed, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+                    owner = presentation_owner(repo=REPO, kind="automatic" if path == AUTOMATIC else "issue_comment",
+                                               target=None if path == AUTOMATIC else 12)
+                    body = check.status_comment_body(HEAD, BASE_REF, "in_progress", owner=owner,
+                        last_review=("b" * 40, BASE_REF, "success"),
+                        last_review_details={"base_sha": "d" * 40, "generation": generation}) + "\n" + receipt
+                    owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": body}
+                    result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
+                        STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner,
+                        SELECTION_CONFIG=json.dumps(captured_configuration("opus", "high")))
+                    self.assertEqual(result.returncode, 1)
+                    after = self.repaired_status(calls)
+                    current, previous = after.split("### Previous completed review", 1)
+                    self.assertIn("**Model:** Opus · **Effort:** High", current.split("<details>", 1)[1])
+                    self.assertNotIn("**Effort:** Low", current)
+                    self.assertIn("**Model:** " + expected_model + " · **Effort:** Low", previous)
+                    self.assertNotIn("**Model:** Haiku", previous)
+                    self.assertNotIn("**Effort:** High", previous)
+                    self.assertIn(receipt, after)
+
+    def test_fallback_omits_ambiguous_or_wrong_generation_historical_selection(self):
+        from test_claude_review_check import presentation_owner
+        owner = presentation_owner(repo=REPO)
+        prefix = "<!-- claude-review-runtime:claude-review-last-reviewed-selection:"
+        prior = {"requested_model": "sonnet", "requested_effort": "low", "generation": "1" * 64,
+                 "models": [], "execution_attempt": None, "model_evidence": "unknown",
+                 "configuration": captured_configuration("sonnet", "low")}
+        marker = lambda value: prefix + quote(json.dumps(value, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+        for path in (AUTOMATIC, MANUAL):
+            for receipts in (marker({**prior, "generation": "2" * 64}),
+                             marker(prior) + "\n" + marker(prior),
+                             marker({**prior, "extra": "value"})):
+                with self.subTest(workflow=path.name, receipt=receipts):
+                    body = check.status_comment_body(HEAD, BASE_REF, "in_progress", owner=owner,
+                        last_review=("b" * 40, BASE_REF, "success"),
+                        last_review_details={"base_sha": "d" * 40, "generation": "1" * 64}) + "\n" + receipts
+                    owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": body}
+                    result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
+                        STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner,
+                        SELECTION_CONFIG=json.dumps(captured_configuration("opus", "high")))
+                    self.assertEqual(result.returncode, 1)
+                    previous = self.repaired_status(calls).split("### Previous completed review", 1)[1]
+                    self.assertNotIn("**Model:**", previous)
+                    self.assertNotIn("**Effort:**", previous)
 
     def test_fallback_records_an_encoded_base_ref(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},

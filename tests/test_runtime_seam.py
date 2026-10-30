@@ -129,6 +129,8 @@ class CapturedInputTests(unittest.TestCase):
                 stub.chmod(0o755)
                 log = root / "gh.log"
                 output = root / "output"
+                selection = {"version": 1, "requested_model": "sonnet", "requested_effort": "high",
+                             "model_source": "repository", "effort_source": "repository", "errors": []}
                 environment = {
                     "PATH": f"{root}{os.pathsep}{os.environ['PATH']}",
                     "RUNNER_TEMP": str(root), "GITHUB_OUTPUT": str(output),
@@ -137,6 +139,8 @@ class CapturedInputTests(unittest.TestCase):
                     "REPO": "example/consumer", "PR_NUMBER": "7", "PR_TITLE": hostile,
                     "PR_BODY": hostile, "TRIGGER_COMMENT": hostile, "BASE_REF": "main",
                     "HEAD_SHA": head, "BASE_SHA": base,
+                    "SELECTION_CONFIG": json.dumps(selection),
+                    "REQUESTED_MODEL": "sonnet", "REQUESTED_EFFORT": "high",
                     "RUNTIME_REPOSITORY": "example/review-runtime", "RUNTIME_SHA": runtime_sha,
                     "RUNTIME_WORKFLOW_PATH": f".github/workflows/{workflow}",
                 }
@@ -148,6 +152,7 @@ class CapturedInputTests(unittest.TestCase):
                 self.assertEqual((captured["number"], captured["title"], captured["body"]), (7, hostile, hostile))
                 self.assertEqual((captured["head_sha"], captured["base_sha"]), (head, base))
                 self.assertEqual(captured["diff_line_count"], 2)
+                self.assertEqual(captured["selection_config"], selection)
                 self.assertEqual((captured["runtime_repository"], captured["runtime_sha"], captured["runtime_workflow_path"]),
                                  ("example/review-runtime", runtime_sha, f".github/workflows/{workflow}"))
                 if workflow == "claude.yml":
