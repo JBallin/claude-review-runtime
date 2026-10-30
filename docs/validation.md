@@ -63,6 +63,11 @@ to investigate; keep independent review and merge requirements in place.
 ## Selection evidence
 
 Offline tests cover selection admission, safe CLI arguments and attempt-bound
-model reporting. Model metadata does not determine review completion. These
-tests do not verify account access, live model selection or fallback, or
+model reporting, including primary-session initialization/assistant evidence,
+auxiliary usage, conflicting primary sources, legacy records, and standing/historical
+presentation. Primary evidence requires one initialization, assistant turns, and
+one result in the same session. Nested auxiliary turns and the result's global
+usage bag cannot confirm the primary model; source model IDs and execution
+attempts remain in diagnostic metadata. Model metadata does not determine review
+completion. These tests do not verify account access, live model selection or fallback, or
 effective effort.

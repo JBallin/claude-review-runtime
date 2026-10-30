@@ -213,6 +213,41 @@ class ManualBaselineTests(unittest.TestCase):
         self.assertNotIn("merge approval", self.api.notices[0]["body"].lower())
         self.assertIn(BASE_TIP, self.api.notices[0]["body"])
 
+    def test_selection_survives_standing_status_receipt_and_stale_refresh(self):
+        for model, expected in (
+                ('claude-opus-5-5', '**Model:** Opus · **Effort:** High'),
+                ('claude-sonnet-4-6', 'primary model mismatch (Sonnet 4.6 observed)'),
+                (None, 'primary model evidence missing')):
+            with self.subTest(model=model):
+                self.reset_manual()
+                os.environ['TRIGGER_COMMENT'] = '/claude-review opus effort high'
+                owner = self.start()
+                self.assertIn('**Model:** Opus · **Effort:** High', self.api.status['body'])
+                record = check.selection_record(owner)
+                if model:
+                    record.update(models=sorted(['claude-haiku-4-5', model]),
+                                  model_evidence='mixed', execution_attempt=1,
+                                  primary_model_evidence={'initialization': model,
+                                                          'assistant': [model], 'attempt': 1})
+                os.environ['SELECTION_EVIDENCE'] = json.dumps(record)
+                self.finish()
+                self.notice()
+                self.assertEqual(len(self.api.notices), 1)
+                for body in (self.api.status['body'], self.api.notices[0]['body']):
+                    self.assertIn(expected, body.split('<details>')[0])
+                    self.assertNotIn('Haiku', body.split('<details>')[0])
+                    self.assertNotIn('**Observed effort:**', body)
+                receipt = self.api.notices[0]['body'].split('<details>')[0]
+                notice = check.selection_notice(record)[0]
+                self.assertIn('**Reviewed commit:** ' + check.commit_link(HEAD, REPO)
+                              + '\n\n' + notice + '\n\n', receipt)
+                os.environ.pop('TRIGGER_COMMENT')
+                os.environ.pop('SELECTION_EVIDENCE')
+                self.api.base_tip = OTHER
+                check.cmd_stale()
+                self.assertIn(expected, self.api.status['body'])
+                self.assertEqual(check.current_selection(owner, self.api.status), record)
+
     def test_status_refresh_cannot_recreate_removed_clean_signals(self):
         owner = self.start()
         self.finish()
