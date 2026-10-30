@@ -435,6 +435,27 @@ class RepositoryConfigurationTests(unittest.TestCase):
         self.assertNotIn("Sonnet 5.5", details)
         self.assertNotIn("Observed effort", body)
 
+    def test_automatic_and_plain_manual_settings_lead_details_before_baseline_and_runtime(self):
+        environment = {"RUNTIME_REPOSITORY": "JBallin/claude-review-runtime", "RUNTIME_SHA": "f" * 40,
+                       "RUNTIME_WORKFLOW_PATH": ".github/workflows/claude.yml"}
+        for body, kind in ((None, "automatic"), ("/claude-review", "issue_comment")):
+            owner = presentation_owner() if kind == "automatic" else presentation_owner(kind=kind, target=12)
+            config = check.resolve_configuration(body, automatic=kind == "automatic")
+            record = self.record(config, owner=owner, model="claude-sonnet-5-5")
+            original = copy.deepcopy(record)
+            for state in ("in_progress", "success"):
+                with self.subTest(kind=kind, state=state), mock.patch.dict(os.environ, environment, clear=True):
+                    rendered = check.status_comment_body(HEAD, "main", state, owner=owner, selection=record,
+                        runtime=check.executing_runtime(), base_sha=BASE_TIP)
+                    details = rendered.split("</summary>", 1)[1].strip()
+                    settings = "**Model:** Sonnet · **Effort:** Medium"
+                    self.assertEqual(details.splitlines()[0].rstrip(), settings)
+                    self.assertNotIn("<br", details)
+                    self.assertLess(details.index(settings), details.index("baseline"))
+                    self.assertLess(details.index(settings), details.index("**Runtime used:**"))
+                    self.assertEqual(check.current_selection(owner, {"body": rendered}), original)
+            self.assertEqual(record, original)
+
     def test_conflicting_inherited_model_evidence_stays_quiet_without_losing_effort(self):
         for body, default_effort, effort in (
                 (None, "", ""), (None, "medium", "medium"),
@@ -531,7 +552,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         comment = self.completed_comment(previous_owner, previous)
         historical = check.last_completed_review_details(comment)
         self.assertEqual(historical["selection"], previous)
-        current_owner = presentation_owner(head=OTHER, run=6, started=3)
+        current_owner = presentation_owner(head=OTHER, base="e" * 40, run=6, started=3)
         current = self.record(check.resolve_configuration(None, "haiku", "low", automatic=True),
                               owner=current_owner)
         body = check.status_comment_body(OTHER, "main", "in_progress", owner=current_owner, selection=current,
@@ -541,8 +562,68 @@ class RepositoryConfigurationTests(unittest.TestCase):
         self.assertNotIn("Opus", current_section)
         self.assertIn("**Model:** Opus · **Effort:** High", previous_section)
         self.assertNotIn("Haiku", previous_section)
+        self.assertEqual(current_section.strip().splitlines()[0].rstrip(), "**Model:** Haiku · **Effort:** Low")
+        self.assertEqual(previous_section.strip().splitlines()[0].rstrip(), "**Model:** Opus · **Effort:** High")
+        self.assertLess(current_section.index("**Model:**"), current_section.index("baseline"))
+        self.assertLess(previous_section.index("**Model:**"), previous_section.index("against"))
+        without_settings = copy.deepcopy(historical)
+        without_settings.pop("selection")
+        missing = check.status_comment_body(OTHER, "main", "in_progress", owner=current_owner, selection=current,
+            last_review=(HEAD, "main", "success"), last_review_details=without_settings, trigger_label="Draft marked ready")
+        missing_previous = missing.split("### Previous completed review", 1)[1]
+        self.assertNotIn("**Model:**", missing_previous)
+        self.assertNotIn("**Effort:**", missing_previous)
+        self.assertEqual(historical["selection"], previous)
         replay = {**comment, "body": body}
         self.assertEqual(check.last_completed_review_details(replay)["selection"], previous)
+
+    def test_previous_model_mismatch_warns_only_in_its_own_captured_group(self):
+        previous_owner = presentation_owner()
+        previous = self.record(check.resolve_configuration(None, "opus", "high", automatic=True),
+                               owner=previous_owner, model="claude-sonnet-5-5")
+        original = copy.deepcopy(previous)
+        comment = self.completed_comment(previous_owner, previous)
+        historical = check.last_completed_review_details(comment)
+        current_owner = presentation_owner(head=OTHER, base="e" * 40, run=6, started=3)
+        current = self.record(check.resolve_configuration(None, "sonnet", "medium", automatic=True),
+                              owner=current_owner, model="claude-sonnet-5-5")
+        current_original = copy.deepcopy(current)
+
+        def render(details):
+            return check.status_comment_body(OTHER, "main", "in_progress", owner=current_owner, selection=current,
+                last_review=(HEAD, "main", "success"), last_review_details=details, trigger_label="Draft marked ready")
+
+        body = render(historical)
+        top, groups = body.split("### Current attempt", 1)
+        current_section, previous_section = groups.split("### Previous completed review", 1)
+        warning = "⚠️ **Model:** Opus selected; primary model mismatch (Sonnet 5.5 observed)"
+        self.assertNotIn("⚠️ **Model:**", top + current_section)
+        self.assertIn("**Model:** Sonnet · **Effort:** Medium", current_section)
+        self.assertEqual(previous_section.count(warning), 1)
+        self.assertEqual(previous_section.strip().splitlines()[0].rstrip(), "**Model:** Opus · **Effort:** High")
+        self.assertLess(previous_section.index("**Model:** Opus"), previous_section.index(warning))
+        self.assertLess(previous_section.index(warning), previous_section.index("against"))
+        self.assertEqual(check.last_completed_review_details({**comment, "body": body})["selection"], original)
+        self.assertEqual(previous, original)
+        self.assertEqual(current, current_original)
+
+        # A canonical-looking receipt belonging to another generation cannot
+        # supply either the historical settings or its mismatch warning.
+        marker = next(line for line in comment["body"].splitlines()
+                      if line.startswith(check.STATUS_REVIEWED_SELECTION_PREFIX))
+        foreign = {**previous, "generation": current_owner["generation"]}
+        replacement = check.STATUS_REVIEWED_SELECTION_PREFIX + quote(json.dumps(
+            foreign, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+        stale_receipt = {**comment, "body": comment["body"].replace(marker, replacement)}
+        stale_details = check.last_completed_review_details(stale_receipt)
+        self.assertNotIn("selection", stale_details)
+        stale_previous = render(stale_details).split("### Previous completed review", 1)[1]
+        self.assertNotIn("⚠️ **Model:**", stale_previous)
+        self.assertNotIn("**Model:**", stale_previous)
+        mismatched = copy.deepcopy(historical)
+        mismatched["selection"]["generation"] = "f" * 64
+        self.assertNotIn("⚠️ **Model:**", render(mismatched).split("### Previous completed review", 1)[1])
+        self.assertEqual(previous, original)
 
     def test_previously_recorded_v2_repository_configuration_stays_historical(self):
         owner = presentation_owner()

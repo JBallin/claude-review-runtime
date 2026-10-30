@@ -942,14 +942,16 @@ def selection_details(record):
     return [" · ".join(parts)] if parts else []
 
 
-def selection_notice(record, *, running=False):
-    """Keep meaningful primary-model and configuration warnings outside Details."""
+def selection_notice(record, *, running=False, mismatch_only=False):
+    """Return current diagnostics, or only an evidenced model mismatch for history."""
     if not record:
         return []
-    notices = []
-    notices.extend(configuration_notices(record.get("configuration")))
+    notices = [] if mismatch_only else configuration_notices(record.get("configuration"))
     selected = record["requested_model"]
     models = primary_selection_models(record)
+    if mismatch_only and (not selected or len(models) != 1
+                          or models[0].startswith("claude-" + selected + "-")):
+        return []
     prefix = selected.title() + " selected; " if selected else ""
     if not models and selected and not running:
         value = prefix + "primary model evidence missing"
@@ -1564,13 +1566,16 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if not show_review and runtime_used_line(runtime):
         metadata.append(runtime_used_line(runtime))
     if not show_review:
-        metadata.extend(selection_details(selection))
+        metadata[0:0] = selection_details(selection)
     if last_review and runtime_used_line(last_review_details.get("runtime")):
         review_metadata.append(runtime_used_line(last_review_details["runtime"]))
     if last_review:
         historical_selection = valid_selection(last_review_details.get("selection"),
                                                {"generation": last_review_details.get("generation")})
-        review_metadata.extend(selection_details(historical_selection))
+        historical_metadata = selection_details(historical_selection)
+        if history_in_details:
+            historical_metadata += selection_notice(historical_selection, mismatch_only=True)
+        review_metadata[0:0] = historical_metadata
     if metadata:
         if history_in_details:
             lines += ["### Current attempt"]
@@ -2301,7 +2306,8 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     reviewed = f"[Reviewed]({details_url})" if details_url else "Reviewed"
     notice = selection_notice(selection)
     settings = "\n\n" + "\n".join(notice) if notice else ""
-    metadata = [f"**{reviewed} against:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
+    metadata = selection_details(selection) + [
+        f"**{reviewed} against:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
     observed_tip = ""
     if observed_base_sha and observed_base_sha != base_sha:
         metadata.append(f"**Observed target commit:** {commit_link(observed_base_sha, repo)} on {inline_code(base_ref)}")
@@ -2309,7 +2315,6 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     runtime_line = runtime_used_line(executing_runtime())
     if runtime_line:
         metadata.append(runtime_line)
-    metadata.extend(selection_details(selection))
     details = "  \n".join(metadata) + observed_tip
     return (
         f"{marker}\n"

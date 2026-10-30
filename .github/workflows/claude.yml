@@ -1328,6 +1328,17 @@ jobs:
               if value["requested_effort"]:
                   parts.append("**Effort:** " + value["requested_effort"].capitalize())
               return " · ".join(parts)
+          def previous_mismatch(value):
+              if not value or not value["requested_model"]:
+                  return ""
+              primary = value.get("primary_model_evidence")
+              observed = sorted(set(primary["assistant"] + ([primary["initialization"]] if primary["initialization"] else []))) if primary else []
+              selected = value["requested_model"]
+              if len(observed) != 1 or observed[0].startswith("claude-" + selected + "-"):
+                  return ""
+              match = re.fullmatch(r"claude-(opus|sonnet|haiku)-(\d+)-(\d+)", observed[0])
+              label = match[1].title() + " " + match[2] + "." + match[3] if match else "`" + observed[0] + "`"
+              return "⚠️ **Model:** " + selected.title() + " selected; primary model mismatch (" + label + " observed)"
           current, marker, warning = None, "", ""
           try:
               raw = os.environ.get("SELECTION_CONFIG", "")
@@ -1380,17 +1391,19 @@ jobs:
                       previous = None
           except (ValueError, TypeError, KeyError):
               pass
-          print(json.dumps({"marker": marker, "notice": details(current), "warning": warning, "previous": details(previous)}))
+          print(json.dumps({"marker": marker, "notice": details(current), "warning": warning, "previous": details(previous),
+                            "previous_warning": previous_mismatch(previous)}))
           ' "$reviewed_markers") || return 0
             selection_notice=$(printf '%s' "$selection_payload" | jq -r '.notice')
             selection_warning=$(printf '%s' "$selection_payload" | jq -r '.warning')
             previous_selection=$(printf '%s' "$selection_payload" | jq -r '.previous')
+            previous_warning=$(printf '%s' "$selection_payload" | jq -r '.previous_warning')
             selection_marker=$(printf '%s' "$selection_payload" | jq -r '.marker')
             [ -z "$selection_marker" ] || reviewed_markers="$reviewed_markers$selection_marker"$'\n'
             [ -z "$selection_warning" ] || message="$message"$'\n\n'"$selection_warning"
             metadata="**Current commit:** \`${display_head:0:7}\`$trigger_line$captured_line"
             metadata=${metadata//$'\n'/$'  \n'}
-            [ -z "$selection_notice" ] || metadata="$metadata"$'  \n'"$selection_notice"
+            [ -z "$selection_notice" ] || metadata="$selection_notice"$'  \n'"$metadata"
             runtime_metadata=$(printf '%s' "$comment" | python3 -c '
           import json, os, re, sys
           comment = json.load(sys.stdin)
@@ -1425,7 +1438,8 @@ jobs:
             fi
             if [ -n "$historical_lines" ]; then
               historical_lines=${historical_lines//$'\n'/$'  \n'}
-              [ -z "$previous_selection" ] || historical_lines="$historical_lines"$'  \n'"$previous_selection"
+              [ -z "$previous_warning" ] || historical_lines="$previous_warning"$'  \n'"$historical_lines"
+              [ -z "$previous_selection" ] || historical_lines="$previous_selection"$'  \n'"$historical_lines"
               metadata="### Current attempt"$'\n'"$metadata"$'\n\n''### Previous completed review'$'\n'"$historical_lines"
               if [ -n "$previous_runtime" ]; then
                 metadata="$metadata"$'  \n'"$previous_runtime"

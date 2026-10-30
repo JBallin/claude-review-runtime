@@ -1589,6 +1589,9 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertIn("**Effort:** " + effort.capitalize(), details)
                     else:
                         self.assertNotIn("**Effort:**", body)
+                    setting = "**Model:**" if model else "**Effort:**"
+                    self.assertLess(details.index(setting), details.index("**Current commit:**"))
+                    self.assertNotIn("<br", details.lower())
                     record = check.current_selection(owner, {"body": body})
                     self.assertEqual(record["configuration"], captured)
                     self.assertIsNone(record.get("observed_effort"))
@@ -1796,39 +1799,104 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         previous_config = {"version": 2, "requested_model": "sonnet", "requested_effort": "low",
                            "model_source": "repository", "effort_source": "repository",
                            "errors": [], "diagnostics": []}
-        prior = {"generation": generation, "requested_model": "sonnet", "requested_effort": "low",
-                 "models": [], "execution_attempt": None, "model_evidence": "unknown",
-                 "configuration": previous_config}
-        prefix = "<!-- claude-review-runtime:claude-review-last-reviewed-selection:"
-        receipt = prefix + quote(json.dumps(prior, sort_keys=True, separators=(",", ":")), safe="") + " -->"
         current_config = {"version": 2, "requested_model": "haiku", "requested_effort": "high",
                           "model_source": "workflow", "effort_source": "workflow", "errors": [], "diagnostics": []}
+        prefix = "<!-- claude-review-runtime:claude-review-last-reviewed-selection:"
         for path in (AUTOMATIC, MANUAL):
-            with self.subTest(workflow=path.name):
-                owner = presentation_owner(repo=REPO, kind="automatic" if path == AUTOMATIC else "issue_comment",
-                                           target=None if path == AUTOMATIC else 12)
-                before = check.status_comment_body(HEAD, BASE_REF, "in_progress", owner=owner,
-                    last_review=("b" * 40, BASE_REF, "success"),
-                    last_review_details={"base_sha": "d" * 40, "generation": generation}) + "\n" + receipt
-                owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": before}
-                result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
-                    STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner,
-                    SELECTION_CONFIG=json.dumps(current_config))
-                self.assertEqual(result.returncode, 1)
-                after = self.repaired_status(calls)
-                current, previous = after.split("### Previous completed review", 1)
-                self.assertIn("**Model:** Haiku · **Effort:** High", current)
-                self.assertIn("**Model:** Sonnet · **Effort:** Low", previous)
-                self.assertIn(receipt, after)
-                self.assertEqual(check.last_completed_review_details({**owned, "body": after})["selection"], prior)
+            for known in (True, False):
+                with self.subTest(workflow=path.name, known_settings=known):
+                    historical_config = previous_config if known else captured_configuration()
+                    selected_config = current_config if known else captured_configuration()
+                    prior = {"generation": generation, "requested_model": historical_config["requested_model"],
+                             "requested_effort": historical_config["requested_effort"],
+                             "models": [], "execution_attempt": None, "model_evidence": "unknown",
+                             "configuration": historical_config}
+                    receipt = prefix + quote(json.dumps(prior, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+                    owner = presentation_owner(repo=REPO, kind="automatic" if path == AUTOMATIC else "issue_comment",
+                                               target=None if path == AUTOMATIC else 12)
+                    before = check.status_comment_body(HEAD, BASE_REF, "in_progress", owner=owner,
+                        last_review=("b" * 40, BASE_REF, "success"),
+                        last_review_details={"base_sha": "d" * 40, "generation": generation}) + "\n" + receipt
+                    owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": before}
+                    result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
+                        STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner,
+                        SELECTION_CONFIG=json.dumps(selected_config))
+                    self.assertEqual(result.returncode, 1)
+                    after = self.repaired_status(calls)
+                    details = after.split("<details>", 1)[1]
+                    current, previous = details.split("### Previous completed review\n", 1)
+                    current_group = current.split("### Current attempt\n", 1)[1]
+                    if known:
+                        self.assertTrue(current_group.startswith("**Model:** Haiku · **Effort:** High  \n**Current commit:**"))
+                        self.assertTrue(previous.startswith("**Model:** Sonnet · **Effort:** Low  \n**Last reviewed"))
+                        self.assertNotIn("**Effort:** Low", current)
+                        self.assertNotIn("**Effort:** High", previous)
+                    else:
+                        self.assertTrue(current_group.startswith("**Current commit:**"))
+                        self.assertTrue(previous.startswith("**Last reviewed"))
+                        self.assertNotIn("**Model:**", details)
+                        self.assertNotIn("**Effort:**", details)
+                    self.assertNotIn("<br", details.lower())
+                    self.assertNotIn("### Current attempt\n\n", details)
+                    self.assertNotIn("### Previous completed review\n\n", details)
+                    self.assertIn(receipt, after)
+                    self.assertEqual(check.last_completed_review_details({**owned, "body": after})["selection"], prior)
+
+    def test_fallback_keeps_previous_mismatch_with_its_recorded_attempt(self):
+        from test_claude_review_check import presentation_owner
+        generation = "1" * 64
+        current_config = {"version": 2, "requested_model": "haiku", "requested_effort": "low",
+                          "model_source": "workflow", "effort_source": "workflow", "errors": [], "diagnostics": []}
+        prefix = "<!-- claude-review-runtime:claude-review-last-reviewed-selection:"
+        for path in (AUTOMATIC, MANUAL):
+            for models, observed_label in ((["claude-sonnet-5-5"], "Sonnet 5.5"),
+                    (["claude-sonnet-5-5-20261001"], "`claude-sonnet-5-5-20261001`"),
+                    (["claude-opus-5-5"], None), ([], None),
+                    (["claude-opus-5-5", "claude-sonnet-5-5"], None)):
+                with self.subTest(workflow=path.name, observed=models):
+                    prior = {"generation": generation, "requested_model": "opus", "requested_effort": "high",
+                             "models": models, "execution_attempt": 1 if models else None,
+                             "model_evidence": "observed" if models else "unknown",
+                             "configuration": captured_configuration("opus", "high"),
+                             "primary_model_evidence": {"initialization": models[0], "assistant": models, "attempt": 1}
+                                if models else None}
+                    receipt = prefix + quote(json.dumps(prior, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+                    owner = presentation_owner(repo=REPO, kind="automatic" if path == AUTOMATIC else "issue_comment",
+                                               target=None if path == AUTOMATIC else 12)
+                    before = check.status_comment_body(HEAD, BASE_REF, "in_progress", owner=owner,
+                        last_review=("b" * 40, BASE_REF, "success"),
+                        last_review_details={"base_sha": "d" * 40, "generation": generation}) + "\n" + receipt
+                    owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": before}
+                    result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
+                        STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner,
+                        SELECTION_CONFIG=json.dumps(current_config))
+                    self.assertEqual(result.returncode, 1)
+                    after = self.repaired_status(calls)
+                    visible, details = after.split("<details>", 1)
+                    current, previous = details.split("### Previous completed review\n", 1)
+                    self.assertIn("Haiku selected; primary model evidence missing", visible)
+                    self.assertNotIn("Opus selected", visible + current)
+                    self.assertNotIn("primary model mismatch", visible + current)
+                    self.assertTrue(previous.startswith("**Model:** Opus · **Effort:** High  \n"))
+                    if observed_label:
+                        warning = "⚠️ **Model:** Opus selected; primary model mismatch (" + observed_label + " observed)"
+                        self.assertEqual(after.count(warning), 1)
+                        self.assertLess(previous.index(warning), previous.index("**Last reviewed"))
+                        self.assertLess(previous.index("**Effort:** High"), previous.index(warning))
+                    else:
+                        self.assertNotIn("⚠️ **Model:**", previous)
+                    self.assertIn(receipt, after)
+                    self.assertEqual(check.last_completed_review_details({**owned, "body": after})["selection"], prior)
 
     def test_fallback_omits_ambiguous_or_wrong_generation_historical_selection(self):
         from test_claude_review_check import presentation_owner
         owner = presentation_owner(repo=REPO)
         prefix = "<!-- claude-review-runtime:claude-review-last-reviewed-selection:"
         prior = {"requested_model": "sonnet", "requested_effort": "low", "generation": "1" * 64,
-                 "models": [], "execution_attempt": None, "model_evidence": "unknown",
-                 "configuration": captured_configuration("sonnet", "low")}
+                 "models": ["claude-haiku-5-5"], "execution_attempt": 1, "model_evidence": "observed",
+                 "configuration": captured_configuration("sonnet", "low"),
+                 "primary_model_evidence": {"initialization": "claude-haiku-5-5",
+                                             "assistant": ["claude-haiku-5-5"], "attempt": 1}}
         marker = lambda value: prefix + quote(json.dumps(value, sort_keys=True, separators=(",", ":")), safe="") + " -->"
         for path in (AUTOMATIC, MANUAL):
             for receipts in (marker({**prior, "generation": "2" * 64}),
@@ -1846,6 +1914,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     previous = self.repaired_status(calls).split("### Previous completed review", 1)[1]
                     self.assertNotIn("**Model:**", previous)
                     self.assertNotIn("**Effort:**", previous)
+                    self.assertNotIn("primary model mismatch", self.repaired_status(calls))
 
     def test_fallback_records_an_encoded_base_ref(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},

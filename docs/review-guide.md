@@ -60,17 +60,18 @@ accepted attempt, including its captured head/base and workflow run. Checks and
 workflow runs retain earlier attempts. Incomplete and cancelled reviews show
 a concise explanation and recovery link above Details. Verified unread inputs
 take precedence over workflow-change context. Details retain the reason receipt
-and captured attempt identity. Resolved Model and Effort settings appear inside
-Details alongside Runtime provenance. Model labels use Sonnet, Opus, or Haiku;
-full execution identifiers stay in the recorded metadata. Each current or
+and captured attempt identity. Resolved Model and Effort settings lead each
+run’s Details, above its baseline and Runtime provenance. Model labels use
+Sonnet, Opus, or Haiku; full execution identifiers stay in the recorded metadata. Each current or
 previous attempt retains its own settings; a status refresh does not apply
 today’s defaults to an older review, and missing historical settings are not
 filled in. New attempts resolve
 each field from a valid manual override, then a valid workflow input, then
 Runtime’s Sonnet / Medium defaults. Invalid or malformed configuration options
 warn and fall back only for the affected field; independently valid settings
-remain in use. Missing, conflicting, or mismatched primary-model evidence remains
-visible above Details when a model was selected. A comment API or permission
+remain in use. Current model warnings stay above Details. A previous run’s
+recorded model mismatch appears inside Previous completed review, using only
+that run’s captured evidence. A comment API or permission
 failure is reported in the Check/run when publication is possible. Accepted manual requests also receive
 runtime reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check

@@ -393,6 +393,42 @@ class SelectionTests(unittest.TestCase):
         self.assertIn('**Model:** Opus · **Effort:** High', details)
         self.assertNotIn('Opus 4.7', details)
 
+    def test_historical_notice_filter_emits_only_actual_single_primary_model_mismatch(self):
+        _, mismatch = self.record(models=('claude-sonnet-5-5',))
+        self.assertEqual(check.selection_notice(mismatch, mismatch_only=True),
+            ['⚠️ **Model:** Opus selected; primary model mismatch (Sonnet 5.5 observed)'])
+        _, matching = self.record()
+        _, conflicting = self.record(models=('claude-opus-5-5', 'claude-sonnet-5-5'))
+        _, missing = self.record()
+        missing.pop('primary_model_evidence')
+        _, configured = self.record()
+        configured['configuration'] = check.resolve_configuration('/claude-review opus invalid', 'sonnet', 'high')
+        for record in (matching, conflicting, missing, configured):
+            with self.subTest(record=record):
+                original = copy.deepcopy(record)
+                self.assertEqual(check.selection_notice(record, mismatch_only=True), [])
+                self.assertEqual(record, original)
+        self.assertIn('primary model evidence ambiguous', ' '.join(check.selection_notice(conflicting)))
+        self.assertIn('primary model evidence missing', ' '.join(check.selection_notice(missing)))
+        self.assertIn('Review configuration', ' '.join(check.selection_notice(configured)))
+
+    def test_manual_completion_settings_lead_details_before_baseline_and_runtime(self):
+        _, record = self.record()
+        original = copy.deepcopy(record)
+        environment = {'RUNTIME_REPOSITORY': 'JBallin/claude-review-runtime', 'RUNTIME_SHA': 'f' * 40,
+                       'RUNTIME_WORKFLOW_PATH': '.github/workflows/claude.yml'}
+        with mock.patch.dict(os.environ, environment, clear=True):
+            body = check.completion_comment_body('owner/repo', HEAD, 'main', 'b' * 40,
+                '<!-- completion -->', 'https://github.com/owner/repo/actions/runs/5', selection=record)
+        visible, details = body.split('</summary>', 1)
+        settings = '**Model:** Opus · **Effort:** High'
+        self.assertNotIn('**Model:**', visible)
+        self.assertEqual(details.strip().splitlines()[0].rstrip(), settings)
+        self.assertNotIn('<br', details)
+        self.assertLess(details.index(settings), details.index('against:**'))
+        self.assertLess(details.index(settings), details.index('**Runtime used:**'))
+        self.assertEqual(record, original)
+
     def test_immutable_completion_receipt_keeps_settings_in_details_and_warning_visible(self):
         for model, expected, warning in (('claude-opus-5-5', 'Opus', False),
                                          ('claude-sonnet-5-5', 'Opus', True)):

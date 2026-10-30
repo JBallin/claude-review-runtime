@@ -332,6 +332,16 @@ def gallery_samples():
                 last_review=history(result), last_review_details=details,
                 **({"reason": check.STATUS_REASONS["check_publication_failed"] if state == "publication_incomplete"
                     else check.STATUS_REASONS["incomplete"]} if state != "in_progress" else {}))))
+        previous_mismatch = configured(owner, check.resolve_configuration(
+            "", "opus", "high", automatic=True), "claude-sonnet-5-5")
+        samples.append(GallerySample(
+            "running-history-model-mismatch", "running-history",
+            "Current Sonnet attempt with a previous model mismatch", status(
+                "in_progress", head=fixtures.OTHER, owner=newer_owner,
+                trigger_label="Draft marked ready", last_review=history("success"),
+                last_review_details={**details, "selection": previous_mismatch},
+                selection=configured(newer_owner, check.resolve_configuration(
+                    "", "sonnet", "medium", automatic=True), "claude-sonnet-5-5"))))
         shared_owner = fixtures.presentation_owner(
             head=fixtures.OTHER, base=fixtures.BASE_TIP, run=5,
             started=STARTED + 600_000_000_000,

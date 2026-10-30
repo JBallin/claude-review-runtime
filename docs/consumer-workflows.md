@@ -270,18 +270,19 @@ review from starting. Higher effort can increase usage and latency; turn and
 time limits are not a spending cap. See
 [effort support](https://platform.claude.com/docs/en/build-with-claude/effort).
 
-Resolved **Model** and **Effort** settings appear compactly inside Details for
-automatic and manual reviews, including manual clean-completion receipts. Normal
-model labels show the family name (Sonnet, Opus, or Haiku); full model identifiers
+Resolved **Model** and **Effort** settings lead each run’s Details, above its
+baseline and Runtime provenance, including manual clean-completion receipts.
+Normal model labels show the family name (Sonnet, Opus, or Haiku); full model identifiers
 remain in recorded execution metadata. Historical results retain the settings
 recorded for that attempt; missing historical settings are omitted. Effort is the
 configured request, not an independently observed or effective value; headless
 output does not report the resolved setting. See
 [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
 
-A selected model with missing or conflicting primary evidence, or execution by
-a different model family, produces a visible warning outside Details. Auxiliary
-model usage stays in diagnostic metadata and cannot confirm the primary model.
+For the current attempt, a selected model with missing or conflicting primary
+evidence, or execution by a different model family, produces a warning outside
+Details. A recorded model mismatch from a previous run appears only within its
+Previous completed review section. Auxiliary model usage stays in diagnostic metadata and cannot confirm the primary model.
 Legacy records without separate primary evidence retain the missing-evidence
 warning. Model diagnostics do not invalidate completed reviews or erase
 findings. Runtime adds no retries or substitution runs for these diagnostics;

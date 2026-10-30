@@ -33,9 +33,9 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 69)
+        self.assertEqual(len(gallery.gallery_samples()), 70)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 70)))
+                         list(range(1, 71)))
         # This committed audit file is not posted as one GitHub comment.
         self.assertLess(len(body.encode("utf-8")), 300_000)
 
@@ -62,7 +62,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 71)))
+                         list(range(1, 72)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [case.case_id for case in changed_order])
 
@@ -97,7 +97,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 64)
+        self.assertEqual(status.call_count, 65)
         self.assertEqual(completion.call_count, 5)
         self.assertEqual([call.kwargs.get("observed_base_sha") for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER, None])
@@ -140,6 +140,34 @@ class PresentationGalleryTests(unittest.TestCase):
                       gallery.fixtures.REPO) + '\n\n', receipt)
         self.assertNotIn('**Model:**', receipt)
         self.assertIn('**Model:** Opus · **Effort:** High', cases['selection-receipt'].split('<details>')[1])
+
+    def test_settings_lead_each_details_group_without_extra_opening_space(self):
+        checked_groups = 0
+        for case_id, raw in sample_items():
+            with self.subTest(case_id=case_id):
+                details = raw.split("<details>", 1)[1]
+                self.assertNotRegex(details, r"</summary>\s*<br\s*/?>")
+                visible = re.sub(r"<!--.*?-->", "", details, flags=re.DOTALL)
+                visible = visible.split("</summary>", 1)[1].removesuffix("</details>")
+                groups = re.split(r"(?m)^### (?:Current attempt|Previous completed review)\s*$", visible)
+                for group in groups:
+                    lines = [line.strip() for line in group.splitlines() if line.strip()]
+                    settings = [line for line in lines if line.startswith(("**Model:**", "**Effort:**"))]
+                    if settings:
+                        checked_groups += 1
+                        self.assertEqual(lines[0], settings[0])
+                        self.assertEqual(len(settings), 1)
+        # Cover routine current settings, immutable manual receipts, and groups
+        # that retain distinct current and previous execution settings.
+        self.assertGreater(checked_groups, len(gallery.gallery_samples()))
+        cases = dict(sample_items())
+        for case_id in ("current-clean", "plain-selection", "selection-receipt"):
+            details = re.sub(r"<!--.*?-->", "", cases[case_id].split("</summary>", 1)[1], flags=re.DOTALL)
+            self.assertTrue(details.lstrip().startswith("**Model:**"))
+        for case_id in ("legacy-history-run", "legacy-history-no-links"):
+            details = re.sub(r"<!--.*?-->", "", cases[case_id].split("</summary>", 1)[1], flags=re.DOTALL)
+            self.assertNotIn("**Model:**", details)
+            self.assertNotIn("**Effort:**", details)
 
     def test_workflow_configuration_views_keep_known_fields_inside_details(self):
         cases = dict(sample_items())
@@ -251,9 +279,9 @@ class PresentationGalleryTests(unittest.TestCase):
         raw = dict(sample_items())['running-history-clean']
         details = raw.split('<details>', 1)[1]
         current, previous = details.split('### Previous completed review')
-        self.assertIn('**Model:** Opus · **Effort:** High', current)
+        self.assertIn('### Current attempt\n**Model:** Opus · **Effort:** High', current)
         self.assertNotIn('Sonnet', current)
-        self.assertIn('**Model:** Sonnet · **Effort:** Medium', previous)
+        self.assertTrue(previous.lstrip().startswith('**Model:** Sonnet · **Effort:** Medium'))
         self.assertNotIn('**Model:** Opus', previous)
         check = gallery.check
         comment = {'body': raw, 'user': {'login': 'github-actions[bot]', 'type': 'Bot'}}
@@ -266,6 +294,33 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(historical['configuration']['requested_model'], 'sonnet')
         self.assertEqual(historical['configuration']['model_source'], 'repository')
         self.assertEqual(historical['configuration']['effort_source'], 'repository')
+
+    def test_previous_model_mismatch_is_scoped_to_previous_details(self):
+        cases = dict(sample_items())
+        raw = cases["running-history-model-mismatch"]
+        main, details = raw.split("<details>", 1)
+        current, previous = details.split("### Previous completed review", 1)
+        self.assertIn("### Current attempt\n**Model:** Sonnet · **Effort:** Medium", current)
+        self.assertTrue(previous.lstrip().startswith("**Model:** Opus · **Effort:** High"))
+        self.assertNotIn("⚠️ **Model:**", main + current)
+        warning = "⚠️ **Model:** Opus selected; primary model mismatch (Sonnet 5.5 observed)"
+        self.assertEqual(raw.count(warning), 1)
+        self.assertIn(warning, previous)
+        self.assertLess(previous.index("**Model:** Opus · **Effort:** High"), previous.index(warning))
+        comment = {"body": raw, "user": {"login": gallery.check.STATUS_AUTHOR, "type": "Bot"}}
+        with mock.patch.dict(os.environ, {}, clear=True):
+            owner = gallery.check.status_owner(comment)
+            current_record = gallery.check.current_selection(owner, comment)
+            previous_record = gallery.check.last_completed_review_details(comment)["selection"]
+        self.assertNotEqual(current_record["generation"], previous_record["generation"])
+        self.assertEqual(current_record["requested_model"], "sonnet")
+        self.assertEqual(previous_record["requested_model"], "opus")
+        for record in (current_record, previous_record):
+            self.assertEqual(record["primary_model_evidence"]["assistant"], ["claude-sonnet-5-5"])
+        # Different configured settings alone and absent historical evidence
+        # cannot manufacture a previous model mismatch.
+        for case_id in ("running-history-clean", "legacy-history-run", "legacy-history-no-links"):
+            self.assertNotIn("primary model mismatch", cases[case_id])
 
     def test_current_findings_completion_has_current_commit_run_and_evidence(self):
         check = gallery.check
