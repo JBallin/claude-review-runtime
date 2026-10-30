@@ -83,6 +83,8 @@ jobs:
       checks: write
       issues: write
     outputs:
+      request_recognized: ${{ steps.request.outputs.recognized }}
+      tooling_unavailable: ${{ steps.tooling-ready.outcome == 'failure' }}
       selection_accepted: ${{ steps.select.outcome == 'success' }}
       selection_config: ${{ steps.select.outputs.selection_config }}
       requested_model: ${{ steps.select.outputs.requested_model }}
@@ -102,6 +104,33 @@ jobs:
     # published as that check's failure. A failure before the head SHA is
     # known cannot be attached to any commit and only fails the job.
     steps:
+      - name: Recognize manual review request
+        id: request
+        # Independent of the bundled helper: tooling failure must still publish
+        # a failure Check, while unrelated comment text must never own one.
+        # Keep acceptance aligned with manual_request; this does not resolve
+        # settings or permit model execution. The job gate owns authorization.
+        env:
+          TRIGGER_COMMENT: ${{ github.event.comment.body }}
+        run: |
+          python3 - <<'PY_REQUEST'
+          import os
+          body = os.environ.get("TRIGGER_COMMENT", "")
+          recognized = False
+          if body and not body.startswith(" ") and not any(c in body for c in "\r\n\t"):
+              tokens = [token for token in body.lower().split(" ") if token]
+              if tokens.pop(0) == "/claude-review":
+                  models = ("opus", "sonnet", "haiku")
+                  efforts = ("low", "medium", "high", "xhigh", "max")
+                  recognized = (len(tokens) <= 2 or tokens[0] in (*models, *efforts)
+                      or tokens[1] in efforts or any(token in ("model", "effort")
+                          or token.startswith("--") or "=" in token for token in tokens))
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("recognized=" + str(recognized).lower() + "\n")
+          if not recognized:
+              print("::notice::Not a recognized manual review request.")
+              raise SystemExit(1)
+          PY_REQUEST
       - name: Resolve PR under review
         # Uses the trusted job's token directly; this step's
         # environment is never passed to or reachable by Claude. Runs
@@ -757,9 +786,14 @@ jobs:
   publish-status:
     name: Publish status
     needs: [start-check, review]
-    # Runs after accepted review attempts, including later preparation failures.
-    # An unrelated command rejected by selection cannot acquire publication ownership.
-    if: always() && needs.start-check.result != 'skipped' && needs.start-check.outputs.selection_accepted == 'true'
+    # A recognized request still needs a failure Check when start tooling is
+    # unavailable. Parser rejection with available tooling stays suppressed.
+    # Recognition runs before all fallible tooling and never grants ownership.
+    if: >-
+      always() && needs.start-check.result != 'skipped' &&
+      (needs.start-check.outputs.selection_accepted == 'true' ||
+      (needs.start-check.outputs.request_recognized == 'true' &&
+      needs.start-check.outputs.tooling_unavailable == 'true'))
     runs-on: ubuntu-latest
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 22
@@ -794,7 +828,7 @@ jobs:
         # the action reports anything (checkout, inputs, startup) or during
         # publication or completion verification maps to failure, as does a
         # start-check failure after the check run was created.
-        if: steps.tooling-ready.outcome == 'success'
+        if: steps.tooling-ready.outcome == 'success' && needs.start-check.outputs.tooling_unavailable != 'true'
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
           PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
@@ -829,11 +863,11 @@ jobs:
           DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python3 "$REVIEW_HELPER" finalize
       - name: Record failure without review tooling
-        # Reached when trusted helper tooling is unavailable, so a missing
-        # helper alone cannot leave this run's check in_progress; if GitHub's
+        # Reached when trusted helper tooling is unavailable in either job, so
+        # a missing helper cannot omit the failure Check; if GitHub's
         # API stays unavailable, publishing may still fail and fail the job.
         # Uses only gh and jq from the runner image, with no checkout of its own.
-        if: always() && steps.tooling-ready.outcome != 'success'
+        if: always() && (steps.tooling-ready.outcome != 'success' || needs.start-check.outputs.tooling_unavailable == 'true')
         timeout-minutes: 5
         env:
           PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
