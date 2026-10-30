@@ -44,12 +44,14 @@ ATTEMPT_TRIGGER_PREFIX = "<!-- claude-review-runtime:attempt-trigger:"
 STATUS_REVIEWED_TRIGGER_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-trigger:"
 REVIEW_TRIGGERS = {"PR opened for review", "Draft marked ready", "Manual request"}
 STATUS_AUTHOR = "github-actions[bot]"
+INLINE_FAILURE_PREFIX = "<!-- claude-review-runtime:inline-tool-failure:"
 OWNER_PHASE_PREFIX = "<!-- claude-review-runtime:presentation-owner-phase:"
 OWNER_PREFIX = "<!-- claude-review-runtime:presentation-owner:"
 STATUS_REASONS = {
     "cancelled": "The review was cancelled before verified completion.",
     "preparation_failed": "Review preparation failed; Claude did not complete this review.",
     "incomplete": "The review did not complete with reliable execution and finding evidence.",
+    "inline_tool_failed": "An inline-comment tool call failed.",
     "unread_inputs": "Required review inputs were not fully read.",
     "workflow_changed": "The captured patch changes the review workflow; the cause of the incomplete review is unknown.",
     "check_publication_failed": "The authoritative Check result could not be published.",
@@ -423,6 +425,8 @@ def decide(
     start_result="success",
     completion_verified=False,
     completion_reason="",
+    inline_posted_count=None,
+    inline_failure_confirmed=False,
 ):
     """Return (conclusion, title, result sentence) for the reviewed commit.
 
@@ -472,6 +476,13 @@ def decide(
             f"Trusted completion evidence is contradictory; review completion is unknown.{kept}{notes}",
         )
     if not completion_verified:
+        if completion_reason == "errored_inline_tool_result" and inline_failure_confirmed:
+            return (
+                "failure", "Review completion could not be verified",
+                (inline_failure_explanation(inline_posted_count) + inline_failure_recovery()
+                 + (" Posted findings remain recorded for this commit."
+                    if new_ids and inline_posted_count is None else "") + notes),
+            )
         if completion_reason == "captured_inputs_not_read":
             return (
                 "failure", "Review inputs were not fully read",
@@ -889,6 +900,103 @@ def workflow_changed(owner, runtime_repository, runtime_workflow_path, api):
         return None
 
 
+def inline_failure_explanation(posted_count):
+    text = STATUS_REASONS["inline_tool_failed"]
+    if posted_count is None:
+        return text + " This review is incomplete."
+    if posted_count == 0:
+        return text + " No findings were posted by this attempt; this review is incomplete."
+    findings = "1 finding was" if posted_count == 1 else f"{posted_count} findings were"
+    verb = "remains" if posted_count == 1 else "remain"
+    return text + f" {findings} posted and {verb} recorded; this review is incomplete."
+
+
+def inline_failure_recovery(*, fresh_review_hint=True):
+    hint = (" For a final candidate with no review in progress, request an approved fresh full manual review."
+            if fresh_review_hint else "")
+    return hint + f" [Recovery guidance]({INCOMPLETE_RECOVERY})."
+
+
+def valid_inline_failure(record, owner):
+    """Presentation-only receipt, bound to the finalized attempt, never a verdict."""
+    if (not owner or not isinstance(record, dict)
+            or set(record) != {"generation", "check_run_id", "posted_count"}
+            or record["generation"] != owner["generation"]
+            or type(record["check_run_id"]) is not int
+            or not 0 < record["check_run_id"] <= MAX_COMMENT_ID
+            or record["posted_count"] is not None and (
+                type(record["posted_count"]) is not int or not 0 <= record["posted_count"] <= MAX_COMMENT_ID)):
+        return None
+    return record
+
+
+def inline_failure_marker(record):
+    return INLINE_FAILURE_PREFIX + quote(json.dumps(record, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+
+
+def finalization_inline_failure(current, check_run_id, head_sha, new_ids, posted_count):
+    """Keep a count from this exact attempt, not current comment visibility.
+
+    Completed Checks may be finalized again after comments were deleted. Their
+    same-diff finding union cannot attribute a count to this particular attempt.
+    Retain only its owner-bound count; legacy or conflicting evidence is unknown.
+    """
+    replay = current is not None and current.get("status") == "completed"
+    try:
+        owner = validate_owner(json.loads(env("PRESENTATION_OWNER"), object_pairs_hook=unique_json_object))
+        if (owner["repo"] != env("REPO") or str(owner["pr"]) != env("PR_NUMBER")
+                or owner["head"] != head_sha or owner["base"] != env("BASE_SHA")
+                or owner["base_ref"] != env("BASE_REF")
+                or str(owner["run"]) != env("GITHUB_RUN_ID")
+                or str(owner["attempt"]) != env("GITHUB_RUN_ATTEMPT")):
+            raise ValueError("owner differs from the captured attempt")
+        record = valid_inline_failure({"generation": owner["generation"],
+                                       "check_run_id": int(check_run_id), "posted_count": posted_count}, owner)
+        if not record:
+            raise ValueError("invalid count receipt")
+        if replay:
+            previous = recorded_evidence(current)
+            retained = valid_inline_failure(previous.get("inline_failure"), owner)
+            previous_ids = previous.get("new_finding_comment_ids", [])
+            if (not retained or retained["check_run_id"] != record["check_run_id"]
+                    or current.get("conclusion") != "failure"
+                    or previous.get("completion_verified") is not False
+                    or previous.get("completion_reason") != "errored_inline_tool_result"
+                    or any(previous.get(key) != "success" for key in (
+                        "start_check_result", "review_job_result", "action_conclusion"))
+                    or any(previous.get(key) != value for key, value in review_identity(head_sha).items())
+                    or not valid_comment_id_list(previous_ids)
+                    or retained["posted_count"] is not None and len(previous_ids) > retained["posted_count"]
+                    or not set(new_ids).issubset(previous_ids)):
+                record["posted_count"] = None
+            else:
+                record["posted_count"] = retained["posted_count"]
+        return record["posted_count"], record
+    except (ValueError, TypeError, KeyError):
+        return (None if replay else posted_count), None
+
+
+def status_inline_failure(comment, owner):
+    reason = terminal_status_reason(comment, owner)
+    body = (comment or {}).get("body") or ""
+    states = re.findall(re.escape(STATUS_STATE_PREFIX) + r"(.*?) -->", body)
+    if body.count(STATUS_STATE_PREFIX) != 1:
+        return None
+    if not ((states == ["failure"] and reason == STATUS_REASONS["inline_tool_failed"])
+            or (states == ["stale"] and reason == stale_status_reason(STATUS_REASONS["inline_tool_failed"]))):
+        return None
+    receipts = re.findall(re.escape(INLINE_FAILURE_PREFIX) + r"(.*?) -->", body)
+    if body.count(INLINE_FAILURE_PREFIX) != 1 or len(receipts) != 1:
+        return None
+    try:
+        record = valid_inline_failure(json.loads(unquote(receipts[0]), object_pairs_hook=unique_json_object), owner)
+        if record and inline_failure_marker(record) == INLINE_FAILURE_PREFIX + receipts[0] + " -->":
+            return record
+    except (ValueError, TypeError):
+        pass
+    return None
+
+
 def incomplete_explanation(reason, owner):
     """Render fixed, owner-bound diagnostics; never infer a provider rejection."""
     stale = reason and reason.startswith(STATUS_REASONS["stale"] + " ")
@@ -910,10 +1018,10 @@ def incomplete_explanation(reason, owner):
 def incomplete_status_reason(owner):
     """Use verifier outputs first; changed paths supply context, never a cause."""
     verdict = env("COMPLETION_REASON")
-    if verdict == "captured_inputs_not_read":
+    if verdict in ("captured_inputs_not_read", "errored_inline_tool_result"):
         if (env("COMPLETION_VERIFIED") == "false" and env("START_RESULT", "success") == "success"
                 and env("REVIEW_RESULT") == "success" and env("ACTION_CONCLUSION") == "success"):
-            return STATUS_REASONS["unread_inputs"]
+            return STATUS_REASONS["unread_inputs" if verdict == "captured_inputs_not_read" else "inline_tool_failed"]
         # Conflicting execution evidence is unknown, not a pre-start rejection.
         return STATUS_REASONS["incomplete"]
     if env("COMPLETION_VERIFIED") == "true" or verdict not in ("", "missing_execution_file"):
@@ -928,7 +1036,8 @@ def incomplete_status_reason(owner):
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
                         last_review_details=None, base_sha=None, trigger_label=None,
                         owner=None, owner_running=None, reason=None, completed_at=None,
-                        completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL, selection=None, runtime=None):
+                        completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL, selection=None,
+                        runtime=None, inline_failure=None):
     """Render trusted informational state without affecting Check authority."""
     messages = {
         "in_progress": "Claude is reviewing this commit.",
@@ -950,6 +1059,13 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                                "trigger": review_trigger(trigger_label, owner),
                                "generation": owner["generation"] if owner else None, "runtime": runtime}
     last_review_details = last_review_details or {}
+    inline_reason = reason in (STATUS_REASONS["inline_tool_failed"],
+                               stale_status_reason(STATUS_REASONS["inline_tool_failed"]))
+    inline_failure = (valid_inline_failure(inline_failure, owner)
+                      if inline_reason and state in ("failure", "stale") and not owner_running else None)
+    if inline_reason and not inline_failure:
+        reason = (stale_status_reason(STATUS_REASONS["incomplete"]) if state == "stale"
+                  else STATUS_REASONS["incomplete"])
     base_advanced = (
         state == "stale" and check_available and completed_owner_verified and owner and not owner_running
         and last_review in ((head_sha, base_ref, "success"), (head_sha, base_ref, "action_required"))
@@ -987,6 +1103,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         f"{STATUS_BASE_REF_PREFIX}{quote(base_ref, safe='')} -->",
         f"{STATUS_STATE_PREFIX}{state} -->",
     ]
+    if inline_failure:
+        lines.append(inline_failure_marker(inline_failure))
     if selection:
         lines.append(SELECTION_PREFIX + quote(json.dumps(selection, sort_keys=True, separators=(",", ":")), safe="") + " -->")
     if attempt_trigger is _TRIGGER_FROM_LABEL:
@@ -1082,7 +1200,13 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if base_advanced:
         lines += ["", TARGET_TIP_WARNING]
     if incomplete and not active:
-        if state == "publication_incomplete" or state == "failure" and not specific_reason:
+        if inline_failure:
+            check_url = (f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/pull/{owner['pr']}"
+                         f"/checks?check_run_id={inline_failure['check_run_id']}")
+            explanation = (inline_failure_explanation(inline_failure["posted_count"])
+                           + f" [Attempt Check]({check_url})."
+                           + inline_failure_recovery(fresh_review_hint=state == "failure"))
+        elif state == "publication_incomplete" or state == "failure" and not specific_reason:
             explanation = messages[state] + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
         else:
             explanation = incomplete_explanation(reason, owner)
@@ -1573,7 +1697,7 @@ def status_publication_identity(comment):
 
 
 def best_effort_status(head_sha, state, *, check_available=True, acquire=False, completed_at=None,
-                       check_completed_at=False):
+                       check_completed_at=False, inline_failure=None):
     """Only trusted starts acquire; every later write requires that exact owner.
 
     The workflow's shared PR queue serializes writers. API reads before writes
@@ -1666,7 +1790,12 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
         # owner's allowlisted terminal reason; acquisition starts a new lifecycle.
         reason = terminal_status_reason(existing, owner) if stale else None
         if stale:
+            inline_failure = status_inline_failure(existing, owner)
             reason = stale_status_reason(reason)
+        elif inline_failure and not acquire:
+            inline_failure = valid_inline_failure({**inline_failure, "generation": owner["generation"]}, owner)
+        else:
+            inline_failure = None
         if state == "failure":
             if env("REVIEW_RESULT") == "cancelled":
                 reason = STATUS_REASONS["cancelled"]
@@ -1783,7 +1912,7 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             owner_running=status_owner_running(existing) if stale else acquiring_running if state == "stale" else None,
             reason=reason, completed_at=completed_at,
             completed_owner_verified=completed_owner_verified, attempt_trigger=attempt_trigger,
-            selection=current_selection(owner, existing), runtime=runtime)}
+            selection=current_selection(owner, existing), runtime=runtime, inline_failure=inline_failure)}
         published = False
         try:
             if existing:
@@ -2228,11 +2357,14 @@ def cmd_finalize():
     # preexisting comments. A raw head SHA alone cannot identify their diff.
     errors = []
     history = []
+    current_check = None
     retained_check_unavailable = False
     try:
         history, (prior_ids, recorded_ids, other_diff_ids) = fetch_prior_finding_evidence(
             repo, head_sha, check_run_id, pr_number, merge_base_sha
         )
+        current_check = next(run for page in history for run in page["check_runs"]
+                             if str(run["id"]) == str(check_run_id))
     except GhError as error:
         prior_ids, recorded_ids, other_diff_ids = [], set(), set()
         errors.append(f"earlier Claude Review history is unavailable ({error})")
@@ -2243,6 +2375,7 @@ def cmd_finalize():
                 f"repos/{repo}/check-runs/{check_run_id}"]), object_pairs_hook=unique_json_object),
                 "Reading the existing Claude Review Check")
             validate_retained_check(current, head_sha, check_run_id, pr_number, merge_base_sha)
+            current_check = current
             prior_ids, recorded_ids, other_diff_ids = prior_finding_evidence(
                 [{"check_runs": [current]}], head_sha, check_run_id, pr_number, merge_base_sha)
         except (GhError, ValueError, TypeError, KeyError):
@@ -2299,6 +2432,14 @@ def cmd_finalize():
         for error in errors:
             print(f"::warning::{error}")
 
+    # Exact new-publication counts require both discovery and its pre-review
+    # baseline. Missing/invalid evidence must never turn an unknown count into zero.
+    inline_posted_count = len(new_ids) if before is not None and observed_ids is not None and not errors else None
+    inline_failure = None
+    if (start_result, review_result, action_conclusion, env("COMPLETION_VERIFIED"), completion_reason) == (
+            "success", "success", "success", "false", "errored_inline_tool_result"):
+        inline_posted_count, inline_failure = finalization_inline_failure(
+            current_check, check_run_id, head_sha, new_ids, inline_posted_count)
     conclusion, title, sentence = decide(
         review_result,
         action_conclusion,
@@ -2309,6 +2450,8 @@ def cmd_finalize():
         start_result,
         completion_verified,
         completion_reason,
+        inline_posted_count=inline_posted_count,
+        inline_failure_confirmed=env("COMPLETION_VERIFIED") == "false",
     )
     evidence = {
         **review_identity(head_sha),
@@ -2332,6 +2475,8 @@ def cmd_finalize():
         "prior_finding_check_run_ids": prior_ids,
         "evidence_errors": errors,
     }
+    if inline_failure:
+        evidence["inline_failure"] = inline_failure
     completed_at = completed_check_timestamp(history, check_run_id, head_sha, conclusion) or now()
     body = {
         "status": "completed",
@@ -2380,7 +2525,8 @@ def cmd_finalize():
         return 1
     print(f"Claude Review check run {check_run_id}: {conclusion} ({title})")
     presentation_outcome = best_effort_status(head_sha, conclusion, completed_at=body["completed_at"],
-                                             check_completed_at=True)
+                                             check_completed_at=True,
+                                             inline_failure=inline_failure)
     if presentation_outcome == "unavailable":
         body["output"]["summary"] = bounded_string(
             "The shared status comment could not be updated; consult this Check and workflow run.\n\n" +

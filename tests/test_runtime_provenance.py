@@ -58,6 +58,24 @@ class RuntimeProvenanceTests(unittest.TestCase):
         self.assertEqual(check.status_runtime(self.api.status, owner), executed)
         self.assertEqual(check.last_completed_review_details(self.api.status)["runtime"], executed)
 
+    def test_inline_failure_refresh_retains_its_count_and_executed_runtime(self):
+        executed = self.configure()
+        owner = self.start()
+        os.environ.update(REVIEW_RESULT="success", ACTION_CONCLUSION="success",
+                          COMPLETION_VERIFIED="false", COMPLETION_REASON="errored_inline_tool_result")
+        check.best_effort_status(HEAD, "failure", inline_failure={"check_run_id": 99, "posted_count": 2})
+        self.assertEqual(check.status_inline_failure(self.api.status, owner)["posted_count"], 2)
+        self.assertEqual(check.status_runtime(self.api.status, owner), executed)
+        self.assertIn("check_run_id=99", self.api.status["body"])
+        refresher = self.configure("c" * 40)
+        self.api.pr["head"]["sha"] = OTHER
+        os.environ.update(COMPLETION_REASON="verified", COMPLETION_VERIFIED="true")
+        check.best_effort_status(OTHER, "stale")
+        self.assertEqual(check.status_inline_failure(self.api.status, owner)["posted_count"], 2)
+        self.assertEqual(check.status_runtime(self.api.status, owner), executed)
+        self.assertNotIn(check.runtime_used_line(refresher), self.api.status["body"])
+        self.assertNotIn("request an approved fresh", self.api.status["body"])
+
     def test_new_attempt_and_previous_review_keep_distinct_runtime_provenance(self):
         previous = self.configure()
         self.start()

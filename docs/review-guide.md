@@ -304,6 +304,24 @@ presence, not credential validity or successful live App/OIDC execution. The
 caller setup does not install an App or configure credentials. New credentials
 or access grants require a separate decision.
 
+When the trusted verifier reports an inline-comment tool failure, the review
+remains incomplete even if the action and workflow succeeded. Assess any posted
+findings; they remain recorded independently of this attempt's completion.
+The status links to that attempt's Check and shows the number posted only when
+trusted discovery and the pre-review snapshot establish it. An unavailable count
+does not mean zero findings. Repeated finalization preserves an established
+count for the same attempt after comment deletion; legacy or conflicting count
+evidence stays unknown. This category does not establish the underlying
+provider, network, or authentication cause.
+
+For a final candidate with no applicable review in progress, request one approved
+fresh full review through the deployed [manual caller](#request-a-manual-review).
+Verify its captured patch and completion in the resulting Check. Rerunning only
+the publisher cannot repair missing model or tool completion. If the failure
+repeats, stop and investigate the permitted upstream evidence; this guidance
+does not authorize broader credentials, logging, or access. Earlier failed Checks
+and posted findings remain historical evidence.
+
 Default Anthropic App/OIDC validation can reject a new or modified caller
 workflow until it exists with matching content on the default branch. A rejected
 caller may skip model execution even when Actions orchestration is green; the
