@@ -27,7 +27,7 @@ The review format and flow were inspired by
 [OpenAI’s Codex code review](https://learn.chatgpt.com/docs/third-party/github).
 See the [review guide](docs/review-guide.md) for more details.
 
-## Examples and Alternatives
+## Examples
 
 Browse the [review presentation gallery](docs/review-presentation-gallery.md) for
 complete synthetic examples of review statuses and completion comments.
@@ -36,5 +36,11 @@ For actual usage, see Ballin’s
 [workflow configuration](https://github.com/JBallin/ballin-scripts/tree/main/.github/workflows)
 and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 
-Alternatives include using [Claude Code Action](https://github.com/anthropics/claude-code-action)
-directly or [Datadog’s code review action](https://github.com/DataDog/code-review-action).
+## Alternatives
+
+- [Claude Code GitHub Action](https://code.claude.com/docs/en/github-actions):
+  Use the underlying GitHub Action directly.
+- Anthropic’s [managed Code Review](https://code.claude.com/docs/en/code-review):
+  Anthropic-hosted reviews for eligible Team and Enterprise plans.
+- [Datadog’s code review action](https://github.com/DataDog/code-review-action):
+  Another GitHub Actions option.
