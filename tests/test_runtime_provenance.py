@@ -44,7 +44,7 @@ class RuntimeProvenanceTests(unittest.TestCase):
         reviewed = "**Reviewed commit:** " + check.commit_link(HEAD, REPO)
         self.assertIn(reviewed, visible)
         self.assertNotIn("**Model:**", visible)
-        self.assertIn("**Model:** Opus 5.5 · **Effort:** High", details)
+        self.assertIn("**Model:** Opus · **Effort:** High", details)
         self.assertNotIn("Runtime used", visible)
         self.assertEqual(details.count(check.runtime_used_line(runtime)), 1)
 

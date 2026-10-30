@@ -161,17 +161,18 @@ Actions → Variables**:
 | `CLAUDE_REVIEW_EFFORT` | `low`, `medium`, `high`, `xhigh`, `max` |
 
 For example, set `CLAUDE_REVIEW_MODEL` to `opus` and `CLAUDE_REVIEW_EFFORT` to
-`high` if those are the defaults you want. Runtime supplies no model or effort
-default of its own. Values are case-insensitive and surrounding whitespace is
-ignored; unset or empty values leave that setting inherited from upstream.
+`high` if those are the defaults you want. Values are case-insensitive and
+surrounding whitespace is ignored. Unset or blank fields use Runtime’s explicit
+**Sonnet / Medium** defaults.
 
-Each setting resolves independently: an explicit [manual selection](#optional-model-and-effort-selection)
-overrides the repository default for that field; otherwise the repository
-default applies. With neither, Claude Code retains its existing configuration
-and account behavior. A nonempty value outside the supported choices stops the
-review before model execution, unless a manual selection replaces that field.
-Check the workflow's configuration error and correct the named variable or
-override it in a new manual request.
+Each field resolves independently: a valid [manual selection](#optional-model-and-effort-selection)
+overrides a valid repository setting; otherwise Runtime uses `sonnet` for model
+and `medium` for effort. Runtime passes both resolved values to execution. An
+invalid manual option or an invalid repository setting needed for resolution
+produces a warning and falls back for that field only, retaining any
+independently valid selection. The warning identifies the setting and the
+replacement; diagnostic metadata records where the invalid setting came from.
+Correct the named variable or use a valid manual override on a later request.
 
 The pinned Runtime reads these owner-managed variables directly; it does not
 read defaults from PR files or caller workflow inputs. For reusable workflows,
@@ -181,8 +182,9 @@ them. Defaults are captured with each review attempt, so later variable changes
 do not rewrite its settings or historical results.
 
 These settings require callers pinned to a Runtime revision that supports them.
-Existing pins retain their prior behavior. If neither variable is set, adopting
-this feature preserves existing model and effort inheritance.
+Existing pins retain their prior behavior. Adopting this feature changes reviews
+without configured defaults to explicit Sonnet / Medium; choose repository
+settings before adoption if you want a different default.
 
 ## Manual review
 
@@ -213,8 +215,7 @@ jobs:
 
 ### Optional model and effort selection
 
-Post one of these entire comment bodies, case-insensitively, with exactly the
-spaces shown:
+Post one of these entire comment bodies, case-insensitively:
 
 ```text
 /claude-review
@@ -226,29 +227,43 @@ spaces shown:
 ```
 
 Any supported model alias can be followed by `effort` and one of `low`, `medium`,
-`high`, `xhigh`, or `max`, such as `/claude-review sonnet effort high`. Surrounding
-whitespace, extra arguments, full model IDs, context suffixes, and routing modes
-are rejected. Selection comes from the trusted comment; any caller eligibility
-gate must accept the same forms as its selected Runtime revision.
+`high`, `xhigh`, or `max`, such as `/claude-review sonnet effort high`. Selection
+comes from the trusted comment; any caller eligibility gate must accept the
+same forms as its selected Runtime revision. Full model IDs, context suffixes,
+and routing modes are not supported model values.
 
-Plain `/claude-review` uses both [repository defaults](#repository-model-and-effort-defaults).
-A model-only command retains the repository effort default; an effort-only
-command retains the repository model default. An omitted field with no default
-remains inherited from Claude Code.
+Plain `/claude-review` uses both [repository defaults](#repository-model-and-effort-defaults),
+falling back to Sonnet / Medium. A model-only command retains the resolved effort
+default; an effort-only command retains the resolved model default.
+
+For a recognized review command, an invalid model or effort value warns and
+falls back to the valid repository setting, then the Runtime default, for that
+field. Missing or malformed option values also show usage guidance. A malformed
+option does not consume a following valid option, and independently valid
+settings are retained. This recovery applies to configuration options, not
+authorization checks, conflicting ambient configuration, or execution failures.
+Explicit `model` / `--model` and `effort` / `--effort` option names are also
+recognized, with a space or `=` before the value. For example,
+`/claude-review --model --effort high` warns about the missing model value,
+uses the repository model or Sonnet, and keeps High effort. Duplicate options
+fall back for that field and show usage guidance. Keep requests on one line,
+without leading whitespace. Repeated or trailing spaces are accepted;
+multiline comments, tabs, and unrelated extra text are not review requests.
 
 The three aliases follow [upstream model resolution](https://code.claude.com/docs/en/model-config)
 and can advance to newer versions. Model access, alias remapping, and effort
 limits depend on the account and provider. Upstream may reject a selection or
 clamp unsupported effort; Runtime does not silently choose a replacement.
 A conflicting `ANTHROPIC_MODEL` or `CLAUDE_CODE_EFFORT_LEVEL` prevents the
-corresponding explicit selection from starting. Higher effort can increase usage
-and latency; turn and time limits are not a spending cap. See
+review from starting. Higher effort can increase usage and latency; turn and
+time limits are not a spending cap. See
 [effort support](https://platform.claude.com/docs/en/build-with-claude/effort).
 
-Known **Model** and **Effort** settings appear compactly inside Details for
-automatic and manual reviews, including their historical results and manual
-clean-completion receipts. The model can include its version when primary
-execution evidence establishes it; unknown settings are omitted. Effort is the
+Resolved **Model** and **Effort** settings appear compactly inside Details for
+automatic and manual reviews, including manual clean-completion receipts. Normal
+model labels show the family name (Sonnet, Opus, or Haiku); full model identifiers
+remain in recorded execution metadata. Historical results retain the settings
+recorded for that attempt; missing historical settings are omitted. Effort is the
 configured request, not an independently observed or effective value; headless
 output does not report the resolved setting. See
 [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).

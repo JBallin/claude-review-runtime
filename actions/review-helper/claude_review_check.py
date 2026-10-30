@@ -539,49 +539,153 @@ for _effort in EFFORTS:
         MANUAL_COMMANDS[f"/claude-review {_model} effort {_effort}"] = (_model, _effort)
 
 
-def manual_selection(body):
-    if not isinstance(body, str) or body.lower() not in MANUAL_COMMANDS:
+RUNTIME_DEFAULTS = {"model": "sonnet", "effort": "medium"}
+DIAGNOSTIC_FIELDS = ("model", "effort")
+DIAGNOSTIC_SOURCES = ("manual", "repository")
+DIAGNOSTIC_REASONS = ("invalid", "missing", "duplicate")
+MANUAL_USAGE = "Use `/claude-review [opus|sonnet|haiku] [effort low|medium|high|xhigh|max]`."
+
+
+def diagnostic_key(item):
+    return (DIAGNOSTIC_FIELDS.index(item["field"]), DIAGNOSTIC_SOURCES.index(item["source"]),
+            DIAGNOSTIC_REASONS.index(item["reason"]))
+
+
+def manual_request(body):
+    """Parse only an anchored command and bounded model/effort option slots.
+
+    Unknown single values are configuration mistakes, not executable arguments.
+    Extra prose and multiline content do not constitute review requests.
+    """
+    if (not isinstance(body, str) or body.startswith(" ") or any(c in body for c in "\r\n\t")
+            or not body):
         raise ValueError("unsupported manual command")
-    model, effort = MANUAL_COMMANDS[body.lower()]
-    return {"requested_model": model, "requested_effort": effort}
+    tokens = [token for token in body.lower().split(" ") if token]
+    if tokens.pop(0) != "/claude-review":
+        raise ValueError("unsupported manual command")
+    result = {"requested_model": "", "requested_effort": "", "diagnostics": []}
+    options = {"model": "model", "--model": "model", "effort": "effort", "--effort": "effort"}
+    seen, positional = set(), False
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        option, equal, attached = token.partition("=")
+        if option in options:
+            field = options[option]
+            index += 1
+            if equal:
+                value = attached
+            elif (index == len(tokens) or tokens[index].partition("=")[0] in options
+                  or field == "effort" and tokens[index] in MODELS):
+                value = ""
+            else:
+                value = tokens[index]
+                index += 1
+        elif not positional and not token.startswith("--"):
+            field, value, positional = "model", token, True
+            index += 1
+        else:
+            raise ValueError("unsupported manual command")
+        reason = ("duplicate" if field in seen else "missing" if not value else
+                  "invalid" if value not in (MODELS if field == "model" else EFFORTS) else None)
+        if reason:
+            item = {"field": field, "source": "manual", "reason": reason}
+            if item not in result["diagnostics"]:
+                result["diagnostics"].append(item)
+            result["requested_" + field] = ""
+        elif field not in seen:
+            result["requested_" + field] = value
+        seen.add(field)
+    result["diagnostics"].sort(key=diagnostic_key)
+    return result
+
+
+def manual_selection(body):
+    parsed = manual_request(body)
+    return {key: parsed[key] for key in ("requested_model", "requested_effort")}
 
 
 def resolve_configuration(body, model="", effort="", *, automatic=False):
-    """Resolve fields separately, without interpreting repository text as arguments."""
-    manual = {} if automatic else manual_selection(body)
-    config = {"version": 1, "errors": []}
+    """Resolve independently to allowlisted execution values, once at capture."""
+    manual = {"diagnostics": []} if automatic else manual_request(body)
+    config = {"version": 2, "errors": [], "diagnostics": list(manual["diagnostics"])}
     for name, raw, allowed in (("model", model, MODELS), ("effort", effort, EFFORTS)):
         key = "requested_" + name
         default = raw.strip().lower() if isinstance(raw, str) else None
-        value = manual.get(key) or default
-        source = "manual" if manual.get(key) else "inherited" if default == "" else "repository"
-        if value not in ("", *allowed):
-            value = ""
-            config["errors"].append(name)
-        # Whitespace-only defaults are omitted as well.
-        if not value and name not in config["errors"]:
-            source = "inherited"
+        if manual.get(key):
+            value, source = manual[key], "manual"
+        elif default in allowed:
+            value, source = default, "repository"
+        else:
+            value, source = RUNTIME_DEFAULTS[name], "runtime"
+            if default != "":
+                config["diagnostics"].append({"field": name, "source": "repository", "reason": "invalid"})
         config[key], config[name + "_source"] = value, source
+    config["diagnostics"].sort(key=diagnostic_key)
+    config["errors"] = [name for name in DIAGNOSTIC_FIELDS
+                        if any(item["field"] == name for item in config["diagnostics"])]
     return config
 
 
 def valid_configuration(config):
-    if (not isinstance(config, dict) or set(config) != {
-            "version", "requested_model", "requested_effort", "model_source", "effort_source", "errors"}
-            or type(config["version"]) is not int or config["version"] != 1
-            or not isinstance(config["errors"], list)
-            or config["errors"] != [name for name in ("model", "effort") if name in config["errors"]]):
+    if not isinstance(config, dict) or type(config.get("version")) is not int:
         return None
+    version = config["version"]
+    keys = {"version", "requested_model", "requested_effort", "model_source", "effort_source", "errors"}
+    if version == 2:
+        keys.add("diagnostics")
+    if (version not in (1, 2) or set(config) != keys or not isinstance(config["errors"], list)
+            or config["errors"] != [name for name in DIAGNOSTIC_FIELDS if name in config["errors"]]):
+        return None
+    if version == 2:
+        diagnostics = config["diagnostics"]
+        if (not isinstance(diagnostics, list) or len(diagnostics) > 8
+                or any(not isinstance(item, dict) or set(item) != {"field", "source", "reason"}
+                       or item["field"] not in DIAGNOSTIC_FIELDS or item["source"] not in DIAGNOSTIC_SOURCES
+                       or item["reason"] not in DIAGNOSTIC_REASONS
+                       or item["source"] == "repository" and item["reason"] != "invalid"
+                       for item in diagnostics)
+                or diagnostics != sorted(diagnostics, key=diagnostic_key)
+                or len({(item["field"], item["source"], item["reason"]) for item in diagnostics}) != len(diagnostics)
+                or config["errors"] != [name for name in DIAGNOSTIC_FIELDS
+                    if any(item["field"] == name for item in diagnostics)]):
+            return None
     for name, allowed in (("model", MODELS), ("effort", EFFORTS)):
         value, source = config["requested_" + name], config[name + "_source"]
-        if value not in ("", *allowed) or source not in ("manual", "repository", "inherited"):
-            return None
-        if name in config["errors"]:
-            if value or source != "repository":
+        if version == 2:
+            if (value not in allowed or source not in ("manual", "repository", "runtime")
+                    or source == "runtime" and value != RUNTIME_DEFAULTS[name]
+                    or any(item["field"] == name and (item["source"] == source or source == "manual")
+                           for item in config["diagnostics"])):
                 return None
-        elif bool(value) != (source != "inherited"):
-            return None
+        else:
+            # Immutable v1 receipts describe the old inherited/fail-closed policy.
+            if value not in ("", *allowed) or source not in ("manual", "repository", "inherited"):
+                return None
+            if name in config["errors"]:
+                if value or source != "repository":
+                    return None
+            elif bool(value) != (source != "inherited"):
+                return None
     return config
+
+
+def configuration_notices(config):
+    if not config:
+        return []
+    if config["version"] == 1:
+        return (["⚠️ **Review configuration:** Invalid " + " and ".join(config["errors"])
+                 + " setting. See the workflow logs."] if config["errors"] else [])
+    notices = []
+    for item in config["diagnostics"]:
+        field = item["field"]
+        problem = item["reason"].capitalize() + " " + item["source"] + " " + field
+        notices.append("⚠️ **Review configuration:** " + problem + "; using "
+                       + config["requested_" + field].capitalize() + " ("
+                       + config[field + "_source"].capitalize() + ").")
+    if any(item["reason"] in ("missing", "duplicate") for item in config["diagnostics"]):
+        notices.append(MANUAL_USAGE)
+    return notices
 
 
 def configuration_from_env(owner=None):
@@ -614,16 +718,26 @@ def cmd_selection(metadata=None):
                     raise ValueError("captured review configuration disagrees across job inputs")
             else:
                 # Compatibility with the original manual snapshot format.
-                config = resolve_configuration(env("TRIGGER_COMMENT"))
+                if env("TRIGGER_COMMENT").lower() not in MANUAL_COMMANDS:
+                    raise ValueError("legacy snapshot contains an unsupported manual command")
+                legacy = manual_selection(env("TRIGGER_COMMENT"))
+                config = {"version": 1, "errors": [], **legacy,
+                          **{name + "_source": "manual" if legacy["requested_" + name] else "inherited"
+                             for name in ("model", "effort")}}
                 if any(captured.get(k) != config[k] for k in ("requested_model", "requested_effort")):
                     raise ValueError("captured selection disagrees with the accepted request")
             if env("TRIGGER_KIND") == "automatic":
-                if any(config[name + "_source"] == "manual" for name in ("model", "effort")):
+                if (any(config[name + "_source"] == "manual" for name in ("model", "effort"))
+                        or any(item["source"] == "manual" for item in config.get("diagnostics", []))):
                     raise ValueError("automatic configuration contains a manual override")
             else:
+                parsed = manual_request(env("TRIGGER_COMMENT"))
                 manual = manual_selection(env("TRIGGER_COMMENT"))
-                if manual_selection(captured.get("trigger_comment")) != manual:
+                if manual_request(captured.get("trigger_comment")) != parsed:
                     raise ValueError("captured selection disagrees with the accepted request")
+                if config["version"] == 2 and [item for item in config["diagnostics"]
+                        if item["source"] == "manual"] != parsed["diagnostics"]:
+                    raise ValueError("captured diagnostics disagree with the accepted request")
                 for name in ("model", "effort"):
                     value = manual["requested_" + name]
                     if ((config[name + "_source"] == "manual") != bool(value)
@@ -631,13 +745,15 @@ def cmd_selection(metadata=None):
                         raise ValueError("captured selection disagrees with the accepted request")
         else:
             config = configuration_from_env()
+        if config["version"] == 1 and config["errors"]:
+            raise ValueError("legacy captured review configuration contains invalid settings")
         for name in ("model", "effort"):
             write_output("requested_" + name, config["requested_" + name])
         write_output("selection_config", json.dumps(config, separators=(",", ":")))
         write_output("model_args", "--model " + config["requested_model"] if config["requested_model"] else "")
         write_output("effort_args", "--effort " + config["requested_effort"] if config["requested_effort"] else "")
-        if config["errors"]:
-            raise ValueError("invalid repository " + " and ".join(config["errors"]) + " setting; use a supported value or a manual override")
+        for notice in configuration_notices(config):
+            print("::warning::" + notice)
         if metadata:
             for key, field in (("ANTHROPIC_MODEL", "model"), ("CLAUDE_CODE_EFFORT_LEVEL", "effort")):
                 selected = config["requested_" + field]
@@ -802,7 +918,8 @@ def selection_details(record):
     selected = record["requested_model"]
     model = selected.title() if selected else None
     if len(models) == 1 and (not selected or models[0].startswith("claude-" + selected + "-")):
-        model = model_label(models[0])
+        family = re.match(r"claude-(opus|sonnet|haiku)(?:-|$)", models[0])
+        model = family[1].title() if family else model_label(models[0])
     parts = ["**Model:** " + model] if model else []
     if record["requested_effort"]:
         parts.append("**Effort:** " + record["requested_effort"].capitalize())
@@ -814,10 +931,7 @@ def selection_notice(record, *, running=False):
     if not record:
         return []
     notices = []
-    errors = (record.get("configuration") or {}).get("errors", [])
-    if errors:
-        notices.append("⚠️ **Review configuration:** Invalid " + " and ".join(errors)
-                       + " setting. See the workflow logs.")
+    notices.extend(configuration_notices(record.get("configuration")))
     selected = record["requested_model"]
     models = primary_selection_models(record)
     prefix = selected.title() + " selected; " if selected else ""

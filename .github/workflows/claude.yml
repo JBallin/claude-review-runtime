@@ -36,7 +36,7 @@ concurrency:
   group: >-
     ${{
     ((github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-    contains(fromJSON('["/claude-review","/claude-review opus","/claude-review sonnet","/claude-review haiku","/claude-review effort low","/claude-review opus effort low","/claude-review sonnet effort low","/claude-review haiku effort low","/claude-review effort medium","/claude-review opus effort medium","/claude-review sonnet effort medium","/claude-review haiku effort medium","/claude-review effort high","/claude-review opus effort high","/claude-review sonnet effort high","/claude-review haiku effort high","/claude-review effort xhigh","/claude-review opus effort xhigh","/claude-review sonnet effort xhigh","/claude-review haiku effort xhigh","/claude-review effort max","/claude-review opus effort max","/claude-review sonnet effort max","/claude-review haiku effort max"]'), github.event.comment.body) &&
+    (github.event.comment.body == '/claude-review' || startsWith(github.event.comment.body, '/claude-review ')) &&
     contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
     github.event.comment.author_association) &&
     (github.event_name == 'pull_request_review_comment' ||
@@ -57,7 +57,7 @@ jobs:
     # checks: write.
     if: >-
       (github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-      contains(fromJSON('["/claude-review","/claude-review opus","/claude-review sonnet","/claude-review haiku","/claude-review effort low","/claude-review opus effort low","/claude-review sonnet effort low","/claude-review haiku effort low","/claude-review effort medium","/claude-review opus effort medium","/claude-review sonnet effort medium","/claude-review haiku effort medium","/claude-review effort high","/claude-review opus effort high","/claude-review sonnet effort high","/claude-review haiku effort high","/claude-review effort xhigh","/claude-review opus effort xhigh","/claude-review sonnet effort xhigh","/claude-review haiku effort xhigh","/claude-review effort max","/claude-review opus effort max","/claude-review sonnet effort max","/claude-review haiku effort max"]'), github.event.comment.body) &&
+      (github.event.comment.body == '/claude-review' || startsWith(github.event.comment.body, '/claude-review ')) &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
       github.event.comment.author_association) &&
       (github.event_name == 'pull_request_review_comment' ||
@@ -72,6 +72,7 @@ jobs:
       checks: write
       issues: write
     outputs:
+      selection_accepted: ${{ steps.select.outcome == 'success' }}
       selection_config: ${{ steps.select.outputs.selection_config }}
       requested_model: ${{ steps.select.outputs.requested_model }}
       requested_effort: ${{ steps.select.outputs.requested_effort }}
@@ -145,7 +146,7 @@ jobs:
           command: create
       - name: Select review configuration
         id: select
-        # Record an exact-SHA Check before a configuration error stops review.
+        # Recognized option errors warn and resolve; unrelated command text fails closed.
         continue-on-error: true
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
@@ -155,6 +156,7 @@ jobs:
           REPOSITORY_REVIEW_EFFORT: ${{ vars.CLAUDE_REVIEW_EFFORT }}
         run: python3 "$REVIEW_HELPER" selection
       - name: Validate manual patch authority
+        if: steps.select.outcome == 'success'
         # Validate the captured head/ref against direct branch authority without
         # replacing the captured comparison base when the target tip differs.
         # Admission is required even when fork Check tooling is best-effort.
@@ -176,7 +178,7 @@ jobs:
         # for a fork; resolving the PR and capturing the review snapshot stay
         # required for every PR.
         id: check
-        if: steps.tooling-ready.outcome == 'success'
+        if: steps.tooling-ready.outcome == 'success' && steps.select.outcome == 'success'
         continue-on-error: ${{ steps.resolve.outputs.is_fork == 'true' }}
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
@@ -204,7 +206,7 @@ jobs:
       - name: Require valid review configuration
         if: steps.select.outcome != 'success'
         run: |
-          echo "::error::Review configuration is invalid; see Select review configuration."
+          echo "::error::Review configuration could not be safely resolved; see Select review configuration."
           exit 1
       - name: Capture PR review snapshot
         # Builds the review inputs from the resolution above only. Diff comes
@@ -744,9 +746,9 @@ jobs:
   publish-status:
     name: Publish status
     needs: [start-check, review]
-    # Runs after any review attempt start-check actually began, including a
-    # failed one, but never for a comment start-check's gate skipped.
-    if: always() && needs.start-check.result != 'skipped'
+    # Runs after accepted review attempts, including later preparation failures.
+    # An unrelated command rejected by selection cannot acquire publication ownership.
+    if: always() && needs.start-check.result != 'skipped' && needs.start-check.outputs.selection_accepted == 'true'
     runs-on: ubuntu-latest
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 22
@@ -1173,21 +1175,54 @@ jobs:
               return result
           def config(value):
               keys = {"version", "requested_model", "requested_effort", "model_source", "effort_source", "errors"}
-              if (not isinstance(value, dict) or set(value) != keys
-                      or type(value["version"]) is not int or value["version"] != 1
-                      or value["requested_model"] not in ("", *aliases)
-                      or value["requested_effort"] not in ("", *efforts)
+              if (not isinstance(value, dict) or type(value.get("version")) is not int
+                      or value["version"] not in (1, 2)
+                      or set(value) != keys | ({"diagnostics"} if value["version"] == 2 else set())
                       or not isinstance(value["errors"], list)
                       or value["errors"] != [f for f in ("model", "effort") if f in value["errors"]]):
                   raise ValueError("invalid captured configuration")
-              for field in ("model", "effort"):
+              diagnostics = value.get("diagnostics", [])
+              if value["version"] == 2:
+                  if (not isinstance(diagnostics, list) or len(diagnostics) > 8
+                          or any(not isinstance(d, dict) or set(d) != {"field", "source", "reason"}
+                              or d["field"] not in ("model", "effort")
+                              or d["source"] not in ("manual", "repository")
+                              or d["reason"] not in ("invalid", "missing", "duplicate")
+                              or d["source"] == "repository" and d["reason"] != "invalid" for d in diagnostics)):
+                      raise ValueError("invalid configuration diagnostics")
+                  order = [( ("model", "effort").index(d["field"]),
+                             ("manual", "repository").index(d["source"]),
+                             ("invalid", "missing", "duplicate").index(d["reason"])) for d in diagnostics]
+                  if (order != sorted(set(order))
+                          or value["errors"] != [f for f in ("model", "effort") if any(d["field"] == f for d in diagnostics)]):
+                      raise ValueError("invalid diagnostic order")
+              for field, allowed, fallback in (("model", aliases, "sonnet"), ("effort", efforts, "medium")):
                   source, selected = value[field + "_source"], value["requested_" + field]
-                  if (source not in ("manual", "repository", "inherited")
-                          or source == "inherited" and selected
-                          or field in value["errors"] and (source != "repository" or selected)
-                          or source != "inherited" and not selected and field not in value["errors"]):
-                      raise ValueError("invalid configuration source")
+                  if value["version"] == 1:
+                      if (selected not in ("", *allowed) or source not in ("manual", "repository", "inherited")
+                              or source == "inherited" and selected
+                              or field in value["errors"] and (source != "repository" or selected)
+                              or source != "inherited" and not selected and field not in value["errors"]):
+                          raise ValueError("invalid configuration source")
+                  elif (selected not in allowed or source not in ("manual", "repository", "runtime")
+                          or source == "runtime" and selected != fallback
+                          or any(d["field"] == field and (d["source"] == source or source == "manual")
+                                 for d in diagnostics)):
+                      raise ValueError("invalid resolved configuration")
               return value
+          def configuration_notices(value):
+              if value["version"] == 1:
+                  return (["⚠️ **Review configuration:** Invalid " + " and ".join(value["errors"])
+                           + " setting. See the workflow logs."] if value["errors"] else [])
+              notices = []
+              for diagnostic in value["diagnostics"]:
+                  field = diagnostic["field"]
+                  notices.append("⚠️ **Review configuration:** " + diagnostic["reason"].capitalize()
+                      + " " + diagnostic["source"] + " " + field + "; using "
+                      + value["requested_" + field].capitalize() + " (" + value[field + "_source"].capitalize() + ").")
+              if any(d["reason"] in ("missing", "duplicate") for d in value["diagnostics"]):
+                  notices.append("Use `/claude-review [opus|sonnet|haiku] [effort low|medium|high|xhigh|max]`.")
+              return notices
           def record(value, generation):
               required = {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
               optional = {"configuration", "primary_model_evidence", "observed_effort"}
@@ -1231,8 +1266,8 @@ jobs:
               observed = sorted(set(primary["assistant"] + ([primary["initialization"]] if primary["initialization"] else []))) if primary else []
               model = value["requested_model"].title()
               if len(observed) == 1 and (not value["requested_model"] or observed[0].startswith("claude-" + value["requested_model"] + "-")):
-                  match = re.fullmatch(r"claude-(opus|sonnet|haiku)-(\d+)-(\d+)", observed[0])
-                  model = match[1].title() + " " + match[2] + "." + match[3] if match else "`" + observed[0] + "`"
+                  match = re.match(r"claude-(opus|sonnet|haiku)(?:-|$)", observed[0])
+                  model = match[1].title() if match else "`" + observed[0] + "`"
               parts = ["**Model:** " + model] if model else []
               if value["requested_effort"]:
                   parts.append("**Effort:** " + value["requested_effort"].capitalize())
@@ -1244,7 +1279,8 @@ jobs:
                   if len(raw) > 2048:
                       raise ValueError("configuration exceeds bound")
                   captured = config(json.loads(raw, object_pairs_hook=unique))
-                  if owner["kind"] == "automatic" and "manual" in (captured["model_source"], captured["effort_source"]):
+                  if owner["kind"] == "automatic" and ("manual" in (captured["model_source"], captured["effort_source"])
+                          or any(d["source"] == "manual" for d in captured.get("diagnostics", []))):
                       raise ValueError("automatic manual selection")
                   current = {k: captured[k] for k in ("requested_model", "requested_effort")}
                   current["configuration"] = captured
@@ -1266,8 +1302,8 @@ jobs:
                                  model_evidence="unknown", observed_effort=None)
                   marker = "<!-- claude-review-runtime:selection:" + quote(json.dumps(current, sort_keys=True, separators=(",", ":")), safe="") + " -->"
                   warnings = []
-                  if current.get("configuration", {}).get("errors"):
-                      warnings.append("⚠️ **Review configuration:** Invalid " + " and ".join(current["configuration"]["errors"]) + " setting. See the workflow logs.")
+                  if current.get("configuration"):
+                      warnings.extend(configuration_notices(current["configuration"]))
                   if current["requested_model"]:
                       warnings.append("⚠️ **Model:** " + current["requested_model"].title() + " selected; primary model evidence missing")
                   warning = "\n\n".join(warnings)

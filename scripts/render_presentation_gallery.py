@@ -95,6 +95,14 @@ def gallery_samples():
         }
 
         def status(state, *, head=fixtures.HEAD, base_ref="main", **options):
+            record_owner = options.get("owner", owner)
+            if record_owner and "selection" not in options:
+                config = check.resolve_configuration(
+                    "/claude-review", automatic=record_owner["kind"] == "automatic")
+                observed = state in ("success", "action_required") or (
+                    state == "stale" and options.get("owner_running") is False)
+                options["selection"] = configured(
+                    record_owner, config, "claude-sonnet-5-5" if observed else None)
             return check.status_comment_body(
                 head, base_ref, state, **{
                     "owner": owner,
@@ -114,7 +122,8 @@ def gallery_samples():
             "reason": check.STATUS_REASONS["stale"],
             "completed_owner_verified": True,
         }
-        manual_owner = fixtures.presentation_owner(kind="issue_comment", target=12, started=STARTED)
+        request_owner = fixtures.presentation_owner(kind="issue_comment", target=12, started=STARTED)
+        manual_owner = request_owner
         def selected(models, evidence="observed", attempt=1, model="opus", effort="high", state="success", primary=None, legacy=False, receipt=False, **options):
             record = {"generation": manual_owner["generation"], "requested_model": model,
                       "requested_effort": effort, "models": models,
@@ -149,6 +158,8 @@ def gallery_samples():
                 } if primary else None,
             }
 
+        details["selection"] = configured(
+            owner, check.resolve_configuration("", automatic=True), "claude-sonnet-5-5")
         repository_config = check.resolve_configuration("", "sonnet", "medium", automatic=True)
         repository_record = configured(owner, repository_config, "claude-sonnet-5-5")
         samples = [
@@ -156,9 +167,13 @@ def gallery_samples():
             GallerySample("selection-findings", "current-completion", "Findings with explicit selection", selected(["claude-opus-5-5"], state="action_required")),
             GallerySample("selection-tooling-unavailable", "current-completion", "Review tooling unavailable with explicit selection", selected([], "unknown", None, state="failure", reason=check.STATUS_REASONS["tooling_unavailable"])),
             GallerySample("selection-incomplete", "current-completion", "Incomplete with explicit selection", selected([], "unknown", None, state="failure")),
-            GallerySample("plain-selection", "current-completion", "Plain manual request", selected(["claude-sonnet-5-5"], model="", effort="")),
-            GallerySample("effort-only", "current-completion", "Effort-only request", selected(["claude-sonnet-5-5"], model="")),
-            GallerySample("inherited-model-ambiguous", "current-completion", "Effort-only request with conflicting inherited model evidence", selected(
+            GallerySample("plain-selection", "current-completion", "Plain manual request", status(
+                "success", owner=manual_owner, trigger_label="Manual request",
+                selection=configured(manual_owner, check.resolve_configuration("/claude-review"), "claude-sonnet-5-5"))),
+            GallerySample("effort-only", "current-completion", "Effort-only request", status(
+                "success", owner=manual_owner, trigger_label="Manual request",
+                selection=configured(manual_owner, check.resolve_configuration("/claude-review effort high"), "claude-sonnet-5-5"))),
+            GallerySample("inherited-model-ambiguous", "current-completion", "Historical effort-only request with conflicting inherited model evidence", selected(
                 ["claude-opus-5-5", "claude-sonnet-5-5"], model="")),
             GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-5-5"])),
             GallerySample("opus-mismatch", "current-completion", "Completed review with model mismatch", selected(["claude-sonnet-5-5"])),
@@ -172,8 +187,8 @@ def gallery_samples():
                 "in_progress", selection=configured(owner, repository_config))),
             GallerySample("repository-default-observed", "current-completion", "Automatic review completed with repository defaults", status(
                 "success", selection=repository_record)),
-            GallerySample("inherited-model-observed", "current-completion", "Automatic review with inherited model and unknown effort", status(
-                "success", selection=configured(owner, check.resolve_configuration("", automatic=True), "claude-haiku-5-5"))),
+            GallerySample("inherited-model-observed", "current-completion", "Automatic review with Runtime defaults", status(
+                "success", selection=configured(owner, check.resolve_configuration("", automatic=True), "claude-sonnet-5-5"))),
             GallerySample("manual-partial-default", "current-completion", "Manual model override retaining repository effort", status(
                 "success", owner=manual_owner, trigger_label="Manual request",
                 selection=configured(manual_owner, check.resolve_configuration(
@@ -279,9 +294,25 @@ def gallery_samples():
             GallerySample("workflow-changed-superseded", "incomplete", "Workflow-change context retained for a superseded attempt", status(
                 "stale", head=fixtures.OTHER, owner_running=False,
                 reason=check.stale_status_reason(check.STATUS_REASONS["workflow_changed"]))),
-            GallerySample("repository-invalid-setting", "incomplete", "Invalid repository model with valid effort retained", status(
-                "failure", reason=check.STATUS_REASONS["preparation_failed"],
-                selection=configured(owner, check.resolve_configuration("", "unsupported", "high", automatic=True)))),
+            GallerySample("repository-invalid-setting", "current-completion", "Invalid repository model falls back while retaining valid effort", status(
+                "success", selection=configured(owner, check.resolve_configuration(
+                    "", "unsupported", "high", automatic=True), "claude-sonnet-5-5"))),
+            GallerySample("manual-invalid-model", "current-completion", "Invalid manual model falls back to repository model", status(
+                "success", owner=request_owner, trigger_label="Manual request",
+                selection=configured(request_owner, check.resolve_configuration(
+                    "/claude-review unsupported effort high", "haiku", "low"), "claude-haiku-5-5"))),
+            GallerySample("manual-invalid-effort", "current-completion", "Invalid manual effort falls back while retaining valid model", status(
+                "success", owner=request_owner, trigger_label="Manual request",
+                selection=configured(request_owner, check.resolve_configuration(
+                    "/claude-review haiku effort unsupported", "opus", ""), "claude-haiku-5-5"))),
+            GallerySample("manual-missing-model", "current-completion", "Missing model value retains valid effort", status(
+                "success", owner=request_owner, trigger_label="Manual request",
+                selection=configured(request_owner, check.resolve_configuration(
+                    "/claude-review model effort high", "haiku", "low"), "claude-haiku-5-5"))),
+            GallerySample("manual-missing-effort", "current-completion", "Missing effort value retains valid model", status(
+                "success", owner=request_owner, trigger_label="Manual request",
+                selection=configured(request_owner, check.resolve_configuration(
+                    "/claude-review haiku effort", "opus", ""), "claude-haiku-5-5"))),
         ]
         for group, state, result in (("running-history", "in_progress", "success"),
                                      ("incomplete-history", "failure", "action_required"),

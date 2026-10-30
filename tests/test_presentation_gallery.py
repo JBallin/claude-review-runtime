@@ -33,11 +33,11 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 63)
+        self.assertEqual(len(gallery.gallery_samples()), 67)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 64)))
+                         list(range(1, 68)))
         # This committed audit file is not posted as one GitHub comment.
-        self.assertLess(len(body.encode("utf-8")), 200_000)
+        self.assertLess(len(body.encode("utf-8")), 300_000)
 
     def test_semantic_anchors_are_unique_and_independent_of_group_order(self):
         samples = gallery.gallery_samples()
@@ -62,7 +62,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 65)))
+                         list(range(1, 69)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [case.case_id for case in changed_order])
 
@@ -97,7 +97,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 58)
+        self.assertEqual(status.call_count, 62)
         self.assertEqual(completion.call_count, 5)
         self.assertEqual([call.kwargs.get("observed_base_sha") for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER, None])
@@ -117,7 +117,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     visible = re.sub(r'<!--.*?-->', '', main, flags=re.DOTALL)
                     self.assertNotIn('**Model:**', visible)
                     self.assertNotIn('**Effort:**', visible)
-                    expected_model = 'Opus' if case_id == 'selection-running' else 'Opus 5.5'
+                    expected_model = 'Opus'
                     self.assertIn('**Model:** ' + expected_model + ' · **Effort:** High', details)
                     visible_details = re.sub(r'<!--.*?-->', '', details, flags=re.DOTALL)
                     self.assertNotIn('Haiku', visible_details)
@@ -139,15 +139,15 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn('**Reviewed commit:** ' + gallery.check.commit_link(gallery.fixtures.HEAD,
                       gallery.fixtures.REPO) + '\n\n', receipt)
         self.assertNotIn('**Model:**', receipt)
-        self.assertIn('**Model:** Opus 5.5 · **Effort:** High', cases['selection-receipt'].split('<details>')[1])
+        self.assertIn('**Model:** Opus · **Effort:** High', cases['selection-receipt'].split('<details>')[1])
 
     def test_repository_configuration_views_keep_known_fields_inside_details(self):
         cases = dict(sample_items())
         for case_id, line in (
                 ('repository-default-running', '**Model:** Sonnet · **Effort:** Medium'),
-                ('repository-default-observed', '**Model:** Sonnet 5.5 · **Effort:** Medium'),
-                ('inherited-model-observed', '**Model:** Haiku 5.5'),
-                ('manual-partial-default', '**Model:** Haiku 5.5 · **Effort:** Medium')):
+                ('repository-default-observed', '**Model:** Sonnet · **Effort:** Medium'),
+                ('inherited-model-observed', '**Model:** Sonnet · **Effort:** Medium'),
+                ('manual-partial-default', '**Model:** Haiku · **Effort:** Medium')):
             with self.subTest(case_id=case_id):
                 main, details = cases[case_id].split('<details>', 1)
                 main = re.sub(r'<!--.*?-->', '', main, flags=re.DOTALL)
@@ -155,13 +155,54 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn('**Effort:**', main)
                 self.assertNotIn('⚠️', main)
                 self.assertIn(line, details)
-                if case_id == 'inherited-model-observed':
-                    self.assertNotIn('**Effort:**', details)
         main, details = cases['repository-invalid-setting'].split('<details>', 1)
-        self.assertIn('⚠️ **Review configuration:** Invalid model setting.', main)
+        self.assertIn('⚠️ **Review configuration:**', main)
+        self.assertIn('model', main)
         self.assertNotIn('primary model evidence missing', main)
-        self.assertIn('**Effort:** High', details)
-        self.assertNotIn('**Model:**', details)
+        self.assertIn('**Model:** Sonnet · **Effort:** High', details)
+        self.assertIn('✅ **Completed**', main)
+
+    def test_resolved_automatic_and_manual_examples_share_settings(self):
+        cases = dict(sample_items())
+        check = gallery.check
+        records = []
+        for case_id, trigger in (("current-clean", "PR opened for review"),
+                                 ("plain-selection", "Manual request")):
+            raw = cases[case_id]
+            main, details = raw.split("<details>", 1)
+            self.assertIn("| " + trigger + " |", main)
+            self.assertIn("**Model:** Sonnet · **Effort:** Medium", details)
+            self.assertNotIn("Sonnet 5.5", details)
+            with mock.patch.dict(os.environ, {}, clear=True):
+                record = check.current_selection(check.status_owner({"body": raw}), {"body": raw})
+            self.assertEqual(record["primary_model_evidence"]["assistant"], ["claude-sonnet-5-5"])
+            self.assertEqual(record["configuration"]["model_source"], "runtime")
+            self.assertEqual(record["configuration"]["effort_source"], "runtime")
+            records.append(record)
+        self.assertEqual(records[0]["requested_model"], records[1]["requested_model"])
+        self.assertEqual(records[0]["requested_effort"], records[1]["requested_effort"])
+        self.assertIn("**Model:** Sonnet · **Effort:** High", cases["effort-only"].split("<details>", 1)[1])
+
+    def test_invalid_and_missing_manual_options_show_fallback_and_keep_valid_sibling(self):
+        cases = dict(sample_items())
+        for case_id, model, effort, bad_field, reason in (
+                ("manual-invalid-model", "Haiku", "High", "model", "invalid"),
+                ("manual-invalid-effort", "Haiku", "Medium", "effort", "invalid"),
+                ("manual-missing-model", "Haiku", "High", "model", "missing"),
+                ("manual-missing-effort", "Haiku", "Medium", "effort", "missing")):
+            with self.subTest(case_id=case_id):
+                raw = cases[case_id]
+                main, details = raw.split("<details>", 1)
+                self.assertIn("✅ **Completed**", main)
+                self.assertIn("⚠️ **Review configuration:**", main)
+                self.assertIn(bad_field, main.lower())
+                self.assertIn("**Model:** " + model + " · **Effort:** " + effort, details)
+                with mock.patch.dict(os.environ, {}, clear=True):
+                    record = gallery.check.current_selection(gallery.check.status_owner({"body": raw}), {"body": raw})
+                self.assertIn({"field": bad_field, "source": "manual", "reason": reason},
+                              record["configuration"]["diagnostics"])
+                if reason == "missing":
+                    self.assertIn("/claude-review", main)
 
     def test_inherited_model_conflict_stays_in_receipts_without_a_visible_model_warning(self):
         raw = dict(sample_items())['inherited-model-ambiguous']
@@ -183,7 +224,7 @@ class PresentationGalleryTests(unittest.TestCase):
         current, previous = details.split('### Previous completed review')
         self.assertIn('**Model:** Opus · **Effort:** High', current)
         self.assertNotIn('Sonnet', current)
-        self.assertIn('**Model:** Sonnet 5.5 · **Effort:** Medium', previous)
+        self.assertIn('**Model:** Sonnet · **Effort:** Medium', previous)
         self.assertNotIn('**Model:** Opus', previous)
         check = gallery.check
         comment = {'body': raw, 'user': {'login': 'github-actions[bot]', 'type': 'Bot'}}
@@ -388,7 +429,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
                     self.assertNotIn(reviewed, current)
                     self.assertNotIn(attempt, previous)
-                elif case_id.startswith("inline-tool-") or case_id in ("selection-running", "selection-incomplete", "selection-tooling-unavailable", "repository-default-running", "repository-invalid-setting"):
+                elif case_id.startswith("inline-tool-") or case_id in ("selection-running", "selection-incomplete", "selection-tooling-unavailable", "repository-default-running"):
                     self.assertIn(f"**[Attempt]({reviewed}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
                 elif case_id.startswith(("publication-incomplete-", "publication-unavailable-", "unread-", "workflow-changed")) or case_id == "incomplete-unknown":

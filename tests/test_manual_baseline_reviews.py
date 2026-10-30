@@ -270,7 +270,7 @@ class ManualBaselineTests(unittest.TestCase):
 
     def test_selection_survives_standing_status_receipt_and_stale_refresh(self):
         for model, expected in (
-                ('claude-opus-5-5', '**Model:** Opus 5.5 · **Effort:** High'),
+                ('claude-opus-5-5', '**Model:** Opus · **Effort:** High'),
                 ('claude-sonnet-4-6', 'primary model mismatch (Sonnet 4.6 observed)'),
                 (None, 'primary model evidence missing')):
             with self.subTest(model=model):
@@ -325,7 +325,7 @@ class ManualBaselineTests(unittest.TestCase):
                     self.finish(state)
                     self.assertEqual(check.status_state(self.api.status), 'stale')
                     details = self.api.status['body'].split('<details>', 1)[1]
-                    self.assertIn('**Model:** Opus 5.5 · **Effort:** High', details)
+                    self.assertIn('**Model:** Opus · **Effort:** High', details)
                     self.assertEqual(check.last_completed_review_details(self.api.status)['selection'], record)
                     os.environ.pop('SELECTION_EVIDENCE')
 
