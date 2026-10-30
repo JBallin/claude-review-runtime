@@ -26,8 +26,7 @@ class SelectionTests(unittest.TestCase):
         for body in ('review /claude-review opus', '/claude-reviewer opus',
                      '/claude-review opus\n', '/claude-review opus; echo bad',
                      '/claude-review please review this', '/claude-review please  review this ',
-                     '/claude-review --tools Bash',
-                     '/claude-review opus --dangerous', '/claude-review\topus',
+                     '/claude-review\topus',
                      ' /claude-review opus', None):
             with self.subTest(body=body):
                 with self.assertRaises(ValueError):
@@ -78,12 +77,48 @@ class SelectionTests(unittest.TestCase):
             with self.subTest(body=body), self.assertRaises(ValueError):
                 check.manual_request(body)
 
-    def test_option_keywords_and_flags_are_not_hidden_command_aliases(self):
-        for body in ('/claude-review effort high', '/claude-review opus effort high',
-                     '/claude-review model opus', '/claude-review --model opus',
-                     '/claude-review --effort high', '/claude-review --model=opus',
-                     '/claude-review --effort=high', '/claude-review model', '/claude-review effort',
-                     '/claude-review opus high extra', '/claude-review please review this'):
+    def test_unsupported_syntax_warns_without_becoming_a_command_alias(self):
+        for body, expected in (
+                ('/claude-review effort high', ('', '')),
+                ('/claude-review effort', ('', '')),
+                ('/claude-review opus effort', ('opus', '')),
+                ('/claude-review opus effort high', ('opus', '')),
+                ('/claude-review model opus', ('', '')),
+                ('/claude-review --model', ('', '')),
+                ('/claude-review --model=', ('', '')),
+                ('/claude-review --model opus', ('', '')),
+                ('/claude-review --model=opus', ('', '')),
+                ('/claude-review --effort high', ('', '')),
+                ('/claude-review --effort=high', ('', '')),
+                ('/claude-review opus --effort', ('opus', '')),
+                ('/claude-review high --model', ('', 'high')),
+                ('/claude-review invalid high --effort', ('', 'high')),
+                ('/claude-review invalid high extra', ('', 'high')),
+                ('/claude-review opus high extra', ('opus', 'high')),
+                ('/claude-review opus --dangerous', ('opus', '')),
+                ('/claude-review --tools Bash', ('', ''))):
+            with self.subTest(body=body):
+                parsed = check.manual_request(body)
+                self.assertEqual((parsed['requested_model'], parsed['requested_effort']), expected)
+                self.assertEqual(parsed['diagnostics'], [
+                    {'field': 'request', 'source': 'manual', 'reason': 'syntax'}])
+                self.assertNotIn(body, check.MANUAL_COMMANDS)
+                for factory in (w.issue_comment_event, w.review_comment_event):
+                    event = factory(body=body)
+                    self.assertTrue(w.evaluate(w.start_check_predicate(w.MANUAL), event))
+                    self.assertNotIn('ineligible', w.evaluate(w.concurrency_group(w.MANUAL), event))
+                    for association in ('NONE', 'CONTRIBUTOR'):
+                        untrusted = factory(body=body, association=association)
+                        self.assertFalse(w.evaluate(w.start_check_predicate(w.MANUAL), untrusted))
+                        self.assertIn('ineligible', w.evaluate(w.concurrency_group(w.MANUAL), untrusted))
+                config = check.resolve_configuration(body, 'haiku', 'low')
+                self.assertEqual((config['requested_model'], config['requested_effort']),
+                                 (expected[0] or 'haiku', expected[1] or 'low'))
+                self.assertEqual(check.valid_configuration(config), config)
+                self.assertIn('Unsupported manual syntax', ' '.join(check.configuration_notices(config)))
+                self.assertIn('Use `/claude-review', ' '.join(check.configuration_notices(config)))
+        for body in ('/claude-review please review this', '/claude-review unknown other prose',
+                     '/claude-review please  review this '):
             with self.subTest(body=body), self.assertRaises(ValueError):
                 check.manual_request(body)
 

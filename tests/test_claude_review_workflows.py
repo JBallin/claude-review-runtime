@@ -1473,17 +1473,56 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertIn("Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`.", visible)
                     self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
 
+    def test_fallback_preserves_captured_syntax_recovery_without_interpreting_removed_options(self):
+        from test_claude_review_check import presentation_owner
+        # Both templates render the same trusted capture; automatic owners must
+        # still reject every manual diagnostic (covered separately).
+        owner = presentation_owner(repo=REPO, kind="issue_comment", target=12)
+        for path in (AUTOMATIC, MANUAL):
+            for request, model, effort in (
+                    ("/claude-review effort high", "haiku", "low"),
+                    ("/claude-review effort", "haiku", "low"),
+                    ("/claude-review opus effort", "opus", "low"),
+                    ("/claude-review --model", "haiku", "low"),
+                    ("/claude-review --model=", "haiku", "low"),
+                    ("/claude-review opus --effort", "opus", "low"),
+                    ("/claude-review opus --effort high", "opus", "low"),
+                    ("/claude-review --model=opus", "haiku", "low"),
+                    ("/claude-review opus --effort=$(injected)", "opus", "low")):
+                with self.subTest(workflow=path.name, request=request):
+                    config = check.resolve_configuration(request, "haiku", "low")
+                    self.assertEqual((config["requested_model"], config["requested_effort"]), (model, effort))
+                    self.assertEqual(config["diagnostics"], [{"field": "request", "source": "manual", "reason": "syntax"}])
+                    result, calls = self.run_fallback(path, OWNER_FIXTURE=owner, STATUS_COMMENT_ID="55",
+                                                       PR_NUMBER="7", TRIGGER_COMMENT=request,
+                                                       SELECTION_CONFIG=json.dumps(config))
+                    self.assertEqual(result.returncode, 1)
+                    body = self.repaired_status(calls)
+                    visible, details = body.split("<details>", 1)
+                    self.assertIn("**Model:** " + model.title() + " · **Effort:** Low", details)
+                    for notice in check.configuration_notices(config):
+                        self.assertIn(notice, visible)
+                    self.assertIn("Unsupported manual syntax; using Model:", visible)
+                    self.assertNotIn("$(injected)", body)
+                    record = check.current_selection(owner, {"body": body})
+                    self.assertEqual(record["configuration"], config)
+                    self.assertEqual(record["models"], [])
+                    self.assertIsNone(record["observed_effort"])
+                    self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
+
     def test_automatic_fallback_rejects_manual_diagnostics_without_manual_effective_values(self):
-        captured = {"version": 2, "requested_model": "sonnet", "requested_effort": "medium",
-                    "model_source": "runtime", "effort_source": "runtime", "errors": ["model"],
-                    "diagnostics": [{"field": "model", "source": "manual", "reason": "missing"}]}
-        result, calls = self.run_fallback(AUTOMATIC, STATUS_COMMENT_ID="55", PR_NUMBER="7",
-                                           SELECTION_CONFIG=json.dumps(captured))
-        self.assertEqual(result.returncode, 1)
-        body = self.repaired_status(calls)
-        self.assertNotIn("**Model:**", body)
-        self.assertNotIn("**Effort:**", body)
-        self.assertNotIn(check.SELECTION_PREFIX, body)
+        for field, reason in (("model", "missing"), ("request", "syntax")):
+            with self.subTest(field=field, reason=reason):
+                captured = {"version": 2, "requested_model": "sonnet", "requested_effort": "medium",
+                            "model_source": "runtime", "effort_source": "runtime", "errors": [field],
+                            "diagnostics": [{"field": field, "source": "manual", "reason": reason}]}
+                result, calls = self.run_fallback(AUTOMATIC, STATUS_COMMENT_ID="55", PR_NUMBER="7",
+                                                   SELECTION_CONFIG=json.dumps(captured))
+                self.assertEqual(result.returncode, 1)
+                body = self.repaired_status(calls)
+                self.assertNotIn("**Model:**", body)
+                self.assertNotIn("**Effort:**", body)
+                self.assertNotIn(check.SELECTION_PREFIX, body)
 
     def test_fallback_rejects_malformed_or_hostile_configuration_without_echoing_values(self):
         valid = captured_configuration("opus", "high")
@@ -1516,6 +1555,10 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 {"field": "request", "source": "manual", "reason": "duplicate"}]},
             {"errors": ["request"], "model_source": "manual", "diagnostics": [
                 {"field": "request", "source": "manual", "reason": "invalid"}]},
+            {"errors": ["model"], "diagnostics": [
+                {"field": "model", "source": "manual", "reason": "syntax"}]},
+            {"errors": ["request"], "diagnostics": [
+                {"field": "request", "source": "workflow", "reason": "syntax"}]},
         )]
         for path in (AUTOMATIC, MANUAL):
             for raw in raws:

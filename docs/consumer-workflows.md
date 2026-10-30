@@ -250,9 +250,16 @@ valid workflow input, then the Runtime default, for that field. For example,
 reversed model/effort order is ambiguous: Runtime shows usage guidance and uses
 both resolved defaults rather than guessing which field to override. This
 recovery applies to configuration values, not authorization checks, conflicting
-ambient configuration, or execution failures. Keep requests on one line,
-without leading whitespace. Repeated or trailing spaces are accepted;
-multiline comments, tabs, and unrelated extra text are not review requests.
+ambient configuration, or execution failures.
+
+Unsupported keyword or flag syntax shows usage guidance and falls back without
+interpreting its values as overrides. Valid selections before the unsupported
+syntax are kept:
+`/claude-review opus --effort` retains Opus and uses the resolved effort default,
+while `/claude-review effort high` uses both defaults. Neither is an alias for
+the supported short forms. Keep requests on one line, without leading whitespace.
+Repeated or trailing spaces are accepted; multiline comments, tabs, and unrelated
+text outside a recognized command are not review requests.
 
 The three aliases follow [upstream model resolution](https://code.claude.com/docs/en/model-config)
 and can advance to newer versions. Model access, alias remapping, and effort

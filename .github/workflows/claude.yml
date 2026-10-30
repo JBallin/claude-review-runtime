@@ -1198,14 +1198,15 @@ jobs:
                           or any(not isinstance(d, dict) or set(d) != {"field", "source", "reason"}
                               or d["field"] not in ("model", "effort", "request")
                               or d["source"] not in ("manual", "repository", "workflow")
-                              or d["reason"] not in ("invalid", "missing", "duplicate")
+                              or d["reason"] not in ("invalid", "missing", "duplicate", "syntax")
                               or d["source"] in ("repository", "workflow") and d["reason"] != "invalid"
-                              or d["field"] == "request" and (d["source"] != "manual" or d["reason"] != "invalid")
+                              or d["field"] == "request" and (d["source"] != "manual" or d["reason"] not in ("invalid", "syntax"))
+                              or d["reason"] == "syntax" and d["field"] != "request"
                               for d in diagnostics)):
                       raise ValueError("invalid configuration diagnostics")
                   order = [( ("model", "effort", "request").index(d["field"]),
                              ("manual", "repository", "workflow").index(d["source"]),
-                             ("invalid", "missing", "duplicate").index(d["reason"])) for d in diagnostics]
+                             ("invalid", "missing", "duplicate", "syntax").index(d["reason"])) for d in diagnostics]
                   if (order != sorted(set(order))
                           or value["errors"] != [f for f in ("model", "effort", "request") if any(d["field"] == f for d in diagnostics)]):
                       raise ValueError("invalid diagnostic order")
@@ -1221,7 +1222,7 @@ jobs:
                           or source == "runtime" and selected != fallback
                           or any(d["field"] == field and (d["source"] == source or source == "manual")
                                  for d in diagnostics)
-                          or source == "manual" and any(d["field"] == "request" for d in diagnostics)):
+                          or source == "manual" and any(d["field"] == "request" and d["reason"] == "invalid" for d in diagnostics)):
                       raise ValueError("invalid resolved configuration")
               return value
           def configuration_notices(value):
@@ -1232,7 +1233,8 @@ jobs:
               for diagnostic in value["diagnostics"]:
                   field = diagnostic["field"]
                   if field == "request":
-                      notices.append("⚠️ **Review configuration:** Invalid manual request; using Model: "
+                      problem = "Unsupported manual syntax" if diagnostic["reason"] == "syntax" else "Invalid manual request"
+                      notices.append("⚠️ **Review configuration:** " + problem + "; using Model: "
                           + value["requested_model"].capitalize() + " (" + value["model_source"].capitalize()
                           + "), Effort: " + value["requested_effort"].capitalize() + " ("
                           + value["effort_source"].capitalize() + ").")

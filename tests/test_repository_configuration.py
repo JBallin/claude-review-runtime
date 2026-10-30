@@ -277,6 +277,45 @@ class RepositoryConfigurationTests(unittest.TestCase):
             self.assertIn("**Model:** Haiku · **Effort:** Low", details)
         self.assertEqual(record, before)
 
+    def test_unsupported_syntax_capture_continues_with_literal_resolved_settings(self):
+        for body, model, effort in (
+                ("/claude-review effort high", "haiku", "low"),
+                ("/claude-review effort", "haiku", "low"),
+                ("/claude-review opus effort", "opus", "low"),
+                ("/claude-review --model", "haiku", "low"),
+                ("/claude-review --model=", "haiku", "low"),
+                ("/claude-review opus --effort", "opus", "low"),
+                ("/claude-review opus high extra", "opus", "high"),
+                ("/claude-review high --model", "haiku", "high"),
+                ("/claude-review invalid high --effort", "haiku", "high"),
+                ("/claude-review invalid high extra", "haiku", "high")):
+            with self.subTest(body=body):
+                config = check.resolve_configuration(body, "haiku", "low")
+                captured = {"selection_config": config, "trigger_comment": body}
+                environment = {"TRIGGER_KIND": "issue_comment", "TRIGGER_COMMENT": body,
+                    "WORKFLOW_REVIEW_MODEL": "haiku", "WORKFLOW_REVIEW_EFFORT": "low"}
+                for metadata in (None, captured):
+                    result, output, message = self.select(environment, metadata)
+                    self.assertEqual(result, 0)
+                    self.assertEqual((output["model_args"], output["effort_args"]),
+                                     ("--model " + model, "--effort " + effort))
+                    self.assertEqual(json.loads(output["selection_config"]), config)
+                    self.assertIn("::warning::", message)
+                    self.assertIn("Unsupported manual syntax", message)
+                    self.assertIn(model.capitalize(), message)
+                    self.assertIn(effort.capitalize(), message)
+                    self.assertIn("Use `/claude-review", message)
+                changed = {**config, "diagnostics": [], "errors": []}
+                self.assertEqual(check.valid_configuration(changed), changed)
+                result, _, message = self.select(environment,
+                    {"selection_config": changed, "trigger_comment": body})
+                self.assertEqual(result, 1)
+                self.assertIn("diagnostics disagree", message)
+                # Configuration recovery never overrides the ambient model guard.
+                result, _, message = self.select({**environment, "ANTHROPIC_MODEL": "custom"}, captured)
+                self.assertEqual(result, 1)
+                self.assertIn("conflicts with the selected model", message)
+
     def test_captured_manual_fields_must_match_the_accepted_command(self):
         body = "/claude-review opus high"
         correct = check.resolve_configuration(body, "sonnet", "medium")

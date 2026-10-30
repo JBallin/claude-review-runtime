@@ -315,6 +315,14 @@ def gallery_samples():
                 "success", owner=request_owner, trigger_label="Manual request",
                 selection=configured(request_owner, check.resolve_configuration(
                     "/claude-review high haiku", "haiku", "low"), "claude-haiku-5-5"))),
+            GallerySample("manual-unsupported-suffix", "current-completion", "Unsupported syntax retains a valid leading model", status(
+                "success", owner=request_owner, trigger_label="Manual request",
+                selection=configured(request_owner, check.resolve_configuration(
+                    "/claude-review opus --effort", "haiku", "low"), "claude-opus-5-5"))),
+            GallerySample("manual-unsupported-keyword", "current-completion", "Unsupported keyword syntax uses both defaults", status(
+                "success", owner=request_owner, trigger_label="Manual request",
+                selection=configured(request_owner, check.resolve_configuration(
+                    "/claude-review effort high", "haiku", "low"), "claude-haiku-5-5"))),
         ]
         for group, state, result in (("running-history", "in_progress", "success"),
                                      ("incomplete-history", "failure", "action_required"),

@@ -544,7 +544,7 @@ DIAGNOSTIC_FIELDS = ("model", "effort", "request")
 # Repository sources remain readable in immutable receipts from the prior interface.
 # New attempts resolve only workflow inputs; Actions variables are never consulted.
 DIAGNOSTIC_SOURCES = ("manual", "repository", "workflow")
-DIAGNOSTIC_REASONS = ("invalid", "missing", "duplicate")
+DIAGNOSTIC_REASONS = ("invalid", "missing", "duplicate", "syntax")
 MANUAL_USAGE = "Use `/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]`."
 
 
@@ -559,12 +559,30 @@ def manual_request(body):
             or not body):
         raise ValueError("unsupported manual command")
     tokens = [token for token in body.lower().split(" ") if token]
-    if tokens.pop(0) != "/claude-review" or len(tokens) > 2:
+    if tokens.pop(0) != "/claude-review":
         raise ValueError("unsupported manual command")
-    # Removed keyword/flag forms are not aliases for short requests.
-    if any(token in ("model", "effort") or token.startswith("--") or "=" in token for token in tokens):
-        raise ValueError("unsupported manual command; " + MANUAL_USAGE)
     result = {"requested_model": "", "requested_effort": "", "diagnostics": []}
+    def unsupported_option(token):
+        return token in ("model", "effort") or token.startswith("--") or "=" in token
+    unsupported = any(unsupported_option(token) for token in tokens)
+    if unsupported or len(tokens) > 2:
+        # Recover short positional values only before malformed syntax. Never
+        # reinterpret a removed keyword/flag's payload as a valid override.
+        positional_effort = (len(tokens) > 1 and tokens[1] in EFFORTS
+                             and tokens[0] not in EFFORTS and not unsupported_option(tokens[0]))
+        if tokens[0] in MODELS and (len(tokens) == 1 or tokens[1] not in MODELS):
+            result["requested_model"] = tokens[0]
+            if len(tokens) > 1 and tokens[1] in EFFORTS:
+                result["requested_effort"] = tokens[1]
+        elif tokens[0] in EFFORTS and len(tokens) > 1 and unsupported_option(tokens[1]):
+            result["requested_effort"] = tokens[0]
+        elif positional_effort:
+            result["requested_effort"] = tokens[1]
+        elif not unsupported and tokens[0] not in (*MODELS, *EFFORTS):
+            # Multiword prose is not an invocation of the short grammar.
+            raise ValueError("unsupported manual command")
+        result["diagnostics"].append({"field": "request", "source": "manual", "reason": "syntax"})
+        return result
     if len(tokens) == 1:
         token = tokens[0]
         if token in MODELS:
@@ -631,7 +649,8 @@ def valid_configuration(config):
                        or item["field"] not in DIAGNOSTIC_FIELDS or item["source"] not in DIAGNOSTIC_SOURCES
                        or item["reason"] not in DIAGNOSTIC_REASONS
                        or item["source"] in ("repository", "workflow") and item["reason"] != "invalid"
-                       or item["field"] == "request" and (item["source"] != "manual" or item["reason"] != "invalid")
+                       or item["field"] == "request" and (item["source"] != "manual" or item["reason"] not in ("invalid", "syntax"))
+                       or item["reason"] == "syntax" and item["field"] != "request"
                        for item in diagnostics)
                 or diagnostics != sorted(diagnostics, key=diagnostic_key)
                 or len({(item["field"], item["source"], item["reason"]) for item in diagnostics}) != len(diagnostics)
@@ -643,7 +662,8 @@ def valid_configuration(config):
         if version == 2:
             if (value not in allowed or source not in ("manual", "repository", "workflow", "runtime")
                     or source == "runtime" and value != RUNTIME_DEFAULTS[name]
-                    or source == "manual" and any(item["field"] == "request" for item in config["diagnostics"])
+                    or source == "manual" and any(item["field"] == "request" and item["reason"] == "invalid"
+                                                 for item in config["diagnostics"])
                     or any(item["field"] == name and (item["source"] == source or source == "manual")
                            for item in config["diagnostics"])):
                 return None
@@ -669,7 +689,8 @@ def configuration_notices(config):
     for item in config["diagnostics"]:
         field = item["field"]
         if field == "request":
-            notices.append("⚠️ **Review configuration:** Invalid manual request; using " + ", ".join(
+            problem = "Unsupported manual syntax" if item["reason"] == "syntax" else "Invalid manual request"
+            notices.append("⚠️ **Review configuration:** " + problem + "; using " + ", ".join(
                 field.title() + ": " + config["requested_" + field].capitalize() + " ("
                 + config[field + "_source"].capitalize() + ")" for field in ("model", "effort")) + ".")
             continue

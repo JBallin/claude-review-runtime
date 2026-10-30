@@ -33,9 +33,9 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 67)
+        self.assertEqual(len(gallery.gallery_samples()), 69)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 68)))
+                         list(range(1, 70)))
         # This committed audit file is not posted as one GitHub comment.
         self.assertLess(len(body.encode("utf-8")), 300_000)
 
@@ -62,7 +62,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 69)))
+                         list(range(1, 71)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [case.case_id for case in changed_order])
 
@@ -97,7 +97,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 62)
+        self.assertEqual(status.call_count, 64)
         self.assertEqual(completion.call_count, 5)
         self.assertEqual([call.kwargs.get("observed_base_sha") for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER, None])
@@ -213,6 +213,25 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertNotIn("Invalid manual effort", main)
                     self.assertEqual(record["configuration"]["model_source"], "workflow")
                     self.assertEqual(record["configuration"]["effort_source"], "workflow")
+
+    def test_unsupported_syntax_warns_and_does_not_interpret_keyword_or_flag_values(self):
+        cases = dict(sample_items())
+        for case_id, model, model_source in (
+                ("manual-unsupported-suffix", "Opus", "manual"),
+                ("manual-unsupported-keyword", "Haiku", "workflow")):
+            with self.subTest(case_id=case_id):
+                raw = cases[case_id]
+                main, details = raw.split("<details>", 1)
+                self.assertIn("✅ **Completed**", main)
+                self.assertIn("Unsupported manual syntax", main)
+                self.assertIn("/claude-review [opus|sonnet|haiku] [low|medium|high|xhigh|max]", main)
+                self.assertIn("**Model:** " + model + " · **Effort:** Low", details)
+                with mock.patch.dict(os.environ, {}, clear=True):
+                    record = gallery.check.current_selection(gallery.check.status_owner({"body": raw}), {"body": raw})
+                config = record["configuration"]
+                self.assertEqual(config["model_source"], model_source)
+                self.assertEqual(config["effort_source"], "workflow")
+                self.assertEqual(config["diagnostics"], [{"field": "request", "source": "manual", "reason": "syntax"}])
 
     def test_inherited_model_conflict_stays_in_receipts_without_a_visible_model_warning(self):
         raw = dict(sample_items())['inherited-model-ambiguous']
