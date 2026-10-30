@@ -380,6 +380,20 @@ model execution or publication. Resolve the reported prerequisite before
 requesting another approved review; do not switch credentials or expand access
 to bypass a rejection.
 
+### Turn-limit failures
+
+Manual reviews have a centrally configured maximum of 100 turns and a 20-minute
+review-job timeout. These are usage backstops, not a precise spending guarantee;
+consumers cannot override the turn maximum.
+
+When trusted execution evidence establishes a turn-limit error, the Check and
+status explain it. A successful SDK result exceeding the configured maximum is
+also rejected by the Action and remains incomplete. Reported turn counts appear
+only when validated for that attempt. Missing or malformed evidence does not
+establish a specific cause, and a turn-limit diagnosis does not establish complete
+input reading or satisfy review completion. Inspect the linked attempt before
+requesting an approved retry.
+
 ### Incomplete captured-input reads
 
 `captured_inputs_not_read` means the execution record did not verify complete
