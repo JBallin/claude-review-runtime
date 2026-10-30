@@ -309,7 +309,9 @@ remains incomplete even if the action and workflow succeeded. Assess any posted
 findings; they remain recorded independently of this attempt's completion.
 The status links to that attempt's Check and shows the number posted only when
 trusted discovery and the pre-review snapshot establish it. An unavailable count
-does not mean zero findings. This category does not establish the underlying
+does not mean zero findings. Repeated finalization preserves an established
+count for the same attempt after comment deletion; legacy or conflicting count
+evidence stays unknown. This category does not establish the underlying
 provider, network, or authentication cause.
 
 For a final candidate with no applicable review in progress, request one approved

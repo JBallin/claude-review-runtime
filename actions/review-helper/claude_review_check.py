@@ -480,7 +480,8 @@ def decide(
             return (
                 "failure", "Review completion could not be verified",
                 (inline_failure_explanation(inline_posted_count) + inline_failure_recovery()
-                 + (kept if inline_posted_count is None else "") + notes),
+                 + (" Posted findings remain recorded for this commit."
+                    if new_ids and inline_posted_count is None else "") + notes),
             )
         if completion_reason == "captured_inputs_not_read":
             return (
@@ -848,6 +849,48 @@ def valid_inline_failure(record, owner):
 
 def inline_failure_marker(record):
     return INLINE_FAILURE_PREFIX + quote(json.dumps(record, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+
+
+def finalization_inline_failure(current, check_run_id, head_sha, new_ids, posted_count):
+    """Keep a count from this exact attempt, not current comment visibility.
+
+    Completed Checks may be finalized again after comments were deleted. Their
+    same-diff finding union cannot attribute a count to this particular attempt.
+    Retain only its owner-bound count; legacy or conflicting evidence is unknown.
+    """
+    replay = current is not None and current.get("status") == "completed"
+    try:
+        owner = validate_owner(json.loads(env("PRESENTATION_OWNER"), object_pairs_hook=unique_json_object))
+        if (owner["repo"] != env("REPO") or str(owner["pr"]) != env("PR_NUMBER")
+                or owner["head"] != head_sha or owner["base"] != env("BASE_SHA")
+                or owner["base_ref"] != env("BASE_REF")
+                or str(owner["run"]) != env("GITHUB_RUN_ID")
+                or str(owner["attempt"]) != env("GITHUB_RUN_ATTEMPT")):
+            raise ValueError("owner differs from the captured attempt")
+        record = valid_inline_failure({"generation": owner["generation"],
+                                       "check_run_id": int(check_run_id), "posted_count": posted_count}, owner)
+        if not record:
+            raise ValueError("invalid count receipt")
+        if replay:
+            previous = recorded_evidence(current)
+            retained = valid_inline_failure(previous.get("inline_failure"), owner)
+            previous_ids = previous.get("new_finding_comment_ids", [])
+            if (not retained or retained["check_run_id"] != record["check_run_id"]
+                    or current.get("conclusion") != "failure"
+                    or previous.get("completion_verified") is not False
+                    or previous.get("completion_reason") != "errored_inline_tool_result"
+                    or any(previous.get(key) != "success" for key in (
+                        "start_check_result", "review_job_result", "action_conclusion"))
+                    or any(previous.get(key) != value for key, value in review_identity(head_sha).items())
+                    or not valid_comment_id_list(previous_ids)
+                    or retained["posted_count"] is not None and len(previous_ids) > retained["posted_count"]
+                    or not set(new_ids).issubset(previous_ids)):
+                record["posted_count"] = None
+            else:
+                record["posted_count"] = retained["posted_count"]
+        return record["posted_count"], record
+    except (ValueError, TypeError, KeyError):
+        return (None if replay else posted_count), None
 
 
 def status_inline_failure(comment, owner):
@@ -2213,11 +2256,14 @@ def cmd_finalize():
     # preexisting comments. A raw head SHA alone cannot identify their diff.
     errors = []
     history = []
+    current_check = None
     retained_check_unavailable = False
     try:
         history, (prior_ids, recorded_ids, other_diff_ids) = fetch_prior_finding_evidence(
             repo, head_sha, check_run_id, pr_number, merge_base_sha
         )
+        current_check = next(run for page in history for run in page["check_runs"]
+                             if str(run["id"]) == str(check_run_id))
     except GhError as error:
         prior_ids, recorded_ids, other_diff_ids = [], set(), set()
         errors.append(f"earlier Claude Review history is unavailable ({error})")
@@ -2228,6 +2274,7 @@ def cmd_finalize():
                 f"repos/{repo}/check-runs/{check_run_id}"]), object_pairs_hook=unique_json_object),
                 "Reading the existing Claude Review Check")
             validate_retained_check(current, head_sha, check_run_id, pr_number, merge_base_sha)
+            current_check = current
             prior_ids, recorded_ids, other_diff_ids = prior_finding_evidence(
                 [{"check_runs": [current]}], head_sha, check_run_id, pr_number, merge_base_sha)
         except (GhError, ValueError, TypeError, KeyError):
@@ -2287,6 +2334,11 @@ def cmd_finalize():
     # Exact new-publication counts require both discovery and its pre-review
     # baseline. Missing/invalid evidence must never turn an unknown count into zero.
     inline_posted_count = len(new_ids) if before is not None and observed_ids is not None and not errors else None
+    inline_failure = None
+    if (start_result, review_result, action_conclusion, env("COMPLETION_VERIFIED"), completion_reason) == (
+            "success", "success", "success", "false", "errored_inline_tool_result"):
+        inline_posted_count, inline_failure = finalization_inline_failure(
+            current_check, check_run_id, head_sha, new_ids, inline_posted_count)
     conclusion, title, sentence = decide(
         review_result,
         action_conclusion,
@@ -2322,6 +2374,8 @@ def cmd_finalize():
         "prior_finding_check_run_ids": prior_ids,
         "evidence_errors": errors,
     }
+    if inline_failure:
+        evidence["inline_failure"] = inline_failure
     completed_at = completed_check_timestamp(history, check_run_id, head_sha, conclusion) or now()
     body = {
         "status": "completed",
@@ -2371,8 +2425,7 @@ def cmd_finalize():
     print(f"Claude Review check run {check_run_id}: {conclusion} ({title})")
     presentation_outcome = best_effort_status(head_sha, conclusion, completed_at=body["completed_at"],
                                              check_completed_at=True,
-                                             inline_failure={"check_run_id": int(check_run_id),
-                                                             "posted_count": inline_posted_count})
+                                             inline_failure=inline_failure)
     if presentation_outcome == "unavailable":
         body["output"]["summary"] = bounded_string(
             "The shared status comment could not be updated; consult this Check and workflow run.\n\n" +
