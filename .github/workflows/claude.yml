@@ -1186,7 +1186,7 @@ jobs:
                   return ""
               match = re.fullmatch(r"\*\*Runtime used:\*\* \[.*\]\(https://github.com/([^/]+/[^/]+)/blob/([0-9a-f]{40})/(.+)\)", lines[0])
               return lines[0] if match and line(*match.groups()) == lines[0] else ""
-          sections = (comment.get("body") or "").split("\n**Previous completed review**", 1)
+          sections = re.split(r"(?m)^(?:#### Previous completed review|\*\*Previous completed review\*\*)[ \t]*$", comment.get("body") or "", maxsplit=1)
           current = recorded(sections[0]) or line(os.environ.get("RUNTIME_REPOSITORY", ""),
               os.environ.get("RUNTIME_SHA", ""), os.environ.get("RUNTIME_WORKFLOW_PATH", ""))
           generations = re.findall(r"<!-- claude-review-runtime:claude-review-last-reviewed-generation:(.*?) -->", sys.argv[2])
@@ -1198,16 +1198,16 @@ jobs:
             current_runtime=$(printf '%s' "$runtime_metadata" | jq -r '.current')
             previous_runtime=$(printf '%s' "$runtime_metadata" | jq -r '.previous')
             if [ -n "$current_runtime" ]; then
-              metadata="$metadata"$'\n\n'"$current_runtime"
+              metadata="$metadata"$'  \n'"$current_runtime"
             fi
             if [ -n "$historical_lines" ]; then
               historical_lines=${historical_lines//$'\n'/$'  \n'}
-              metadata="$metadata"$'\n\n''**Previous completed review**'$'\n\n'"$historical_lines"
+              metadata="#### Current attempt"$'\n\n'"$metadata"$'\n\n''#### Previous completed review'$'\n\n'"$historical_lines"
               if [ -n "$previous_runtime" ]; then
-                metadata="$metadata"$'\n\n'"$previous_runtime"
+                metadata="$metadata"$'  \n'"$previous_runtime"
               fi
             fi
-            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n%s %s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n**Reason:** %s\n\n%s\n\n</details>' \
+            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n%s %s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<!--\n**Reason:** %s\n-->\n\n%s\n\n</details>' \
               "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "$message" "$reason" "$recovery" "$reason" "$metadata")
             body=$(jq -n --arg body "$rendered" '{body: $body}')
             verify_presentation_owner || return 0

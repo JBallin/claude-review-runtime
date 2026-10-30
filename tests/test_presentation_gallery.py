@@ -238,7 +238,11 @@ class PresentationGalleryTests(unittest.TestCase):
     def test_pin_recovery_is_explicitly_synthetic_and_separate_from_generic_receipts(self):
         cases = dict(sample_items())
         recovery = cases["manual-pin-recovery"]
-        self.assertIn("**Synthetic recovery context:**", recovery)
+        headline, details = recovery.split("<details>", 1)
+        self.assertIn("Claude Review: No findings. 🎉", headline)
+        self.assertNotIn("Synthetic recovery context", headline)
+        self.assertNotIn("proposed pin", headline)
+        self.assertIn("**Synthetic recovery context:**", details)
         self.assertIn("from `fffffff` to `9999999`", recovery)
         self.assertIn("used the deployed Runtime", recovery)
         self.assertIn("did not execute the proposed pin", recovery)
@@ -270,10 +274,10 @@ class PresentationGalleryTests(unittest.TestCase):
                     else:
                         self.assertIn("authoritative Check publication is unavailable", visible)
                     if case_id.endswith("-none"):
-                        self.assertNotIn("**Previous completed review**", details)
+                        self.assertNotIn("#### Previous completed review", details)
                     else:
-                        self.assertIn("**Current attempt**", details)
-                        self.assertIn("\n\n**Previous completed review**  \n", details)
+                        self.assertIn("#### Current attempt", details)
+                        self.assertIn("\n\n#### Previous completed review\n\n", details)
                         self.assertIn("**Result:** " + ("Findings." if case_id.endswith("-action-required") else "No findings."), details)
                         self.assertEqual(gallery.check.last_completed_review({"body": body}),
                                          (gallery.fixtures.HEAD, "main", "action_required" if case_id.endswith("-action-required") else "success"))
@@ -285,7 +289,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(len(cases), 3)
         for case_id, body in cases:
             with self.subTest(case_id=case_id):
-                current, previous = body.split("**Previous completed review**")
+                current, previous = body.split("#### Previous completed review")
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, current)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, previous)
                 self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", previous)
@@ -317,9 +321,9 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn("[Review run]", details)
                 if case_id.startswith(("shared-run-", "legacy-history-", "stale-")):
                     continue
-                if "**Previous completed review**" in details:
-                    current, previous = details.split("**Previous completed review**")
-                    self.assertIn("**Current attempt**", current)
+                if "#### Previous completed review" in details:
+                    current, previous = details.split("#### Previous completed review")
+                    self.assertIn("#### Current attempt", current)
                     self.assertIn(f"**[Attempt]({attempt}) baseline:**", current)
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
                     self.assertNotIn(reviewed, current)
@@ -366,8 +370,8 @@ class PresentationGalleryTests(unittest.TestCase):
             self.assertNotIn("[Previous completed review]", body)
             with self.subTest(case_id=case_id):
                 if case_id.startswith("shared-run-"):
-                    current, previous = body.split("**Previous completed review**")
-                    self.assertIn("**Current attempt**", current)
+                    current, previous = body.split("#### Previous completed review")
+                    self.assertIn("#### Current attempt", current)
                     anchor = "Running" if case_id == "shared-run-in-progress" else "Attempt"
                     self.assertIn(f"[{anchor}]({run})", current)
                     self.assertIn(f"**[Reviewed]({run}) against:**", previous)

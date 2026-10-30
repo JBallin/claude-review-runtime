@@ -176,15 +176,17 @@ def gallery_samples():
         ]
         # This fixture explicitly supplies the pin-change context. Generic manual
         # receipts know the executed Runtime, but cannot infer a proposed pin.
+        pin_recovery = check.completion_comment_body(
+            fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
+            check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
+                                    fixtures.BASE_TIP, fixtures.MERGE_BASE),
+            "https://github.com/owner/repo/actions/runs/5")
+        pin_context = ("**Synthetic recovery context:** The captured caller changes its Runtime pin "
+                       "from `fffffff` to `9999999`. This review used the deployed Runtime; "
+                       "it did not execute the proposed pin.")
         samples.append(GallerySample(
             "manual-pin-recovery", "manual-recovery", "Manual recovery after a Runtime pin change (synthetic)",
-            "**Synthetic recovery context:** The captured caller changes its Runtime pin "
-            "from `fffffff` to `9999999`. This review used the deployed Runtime; "
-            "it did not execute the proposed pin.\n\n" + check.completion_comment_body(
-                fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
-                check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
-                                        fixtures.BASE_TIP, fixtures.MERGE_BASE),
-                "https://github.com/owner/repo/actions/runs/5")))
+            pin_recovery.replace("\n\n</details>", f"\n\n{pin_context}\n\n</details>")))
         for count, label in ((1, "partial"), (0, "zero"), (None, "unknown-count")):
             samples.append(GallerySample(f"inline-tool-{label}", "incomplete",
                 f"Inline-comment tool failure: {label}", status(

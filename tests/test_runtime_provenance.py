@@ -86,7 +86,7 @@ class RuntimeProvenanceTests(unittest.TestCase):
         check.best_effort_status(OTHER, "in_progress", acquire=True)
         owner = check.status_owner(self.api.status)
         body = self.api.status["body"]
-        attempt, history = body.split("**Previous completed review**", 1)
+        attempt, history = body.split("#### Previous completed review", 1)
         self.assertIn(check.runtime_used_line(current), attempt)
         self.assertNotIn(check.runtime_used_line(previous), attempt)
         self.assertIn(check.runtime_used_line(previous), history)
@@ -109,6 +109,31 @@ class RuntimeProvenanceTests(unittest.TestCase):
         owner = check.status_owner(self.api.status)
         self.assertIsNone(check.status_runtime(self.api.status, owner))
         self.assertEqual(check.last_completed_review_details(self.api.status)["runtime"], previous)
+
+    def test_legacy_and_small_history_headings_keep_both_runtime_links_on_refresh(self):
+        previous = self.configure()
+        self.start()
+        self.finish()
+        current = self.configure("c" * 40)
+        self.api.pr["head"]["sha"] = OTHER
+        os.environ.update(HEAD_SHA=OTHER, GITHUB_RUN_ID="6", PRESENTATION_START="3")
+        check.best_effort_status(OTHER, "in_progress", acquire=True)
+        original = copy.deepcopy(self.api.status)
+        owner = check.status_owner(original)
+        self.configure("e" * 40)
+        self.api.pr["head"]["sha"] = NEWER
+        for legacy in (False, True):
+            with self.subTest(legacy=legacy):
+                self.api.status = copy.deepcopy(original)
+                if legacy:
+                    for label in ("Current attempt", "Previous completed review"):
+                        self.api.status["body"] = self.api.status["body"].replace(
+                            "#### " + label + "\n\n", "**" + label + "**  \n")
+                self.assertEqual(check.status_runtime(self.api.status, owner), current)
+                self.assertEqual(check.status_runtime(self.api.status, owner, previous=True), previous)
+                check.best_effort_status(NEWER, "stale")
+                self.assertEqual(check.status_runtime(self.api.status, owner), current)
+                self.assertEqual(check.last_completed_review_details(self.api.status)["runtime"], previous)
 
     def test_untrusted_ambiguous_or_noncanonical_display_is_not_provenance(self):
         runtime = self.configure()

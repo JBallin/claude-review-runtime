@@ -835,7 +835,8 @@ def rendered_runtime(body):
 def status_runtime(comment, owner, *, previous=False):
     if not owner or not owned_status(comment or {}) or status_owner(comment) != owner:
         return None
-    sections = (comment.get("body") or "").split("\n**Previous completed review**", 1)
+    sections = re.split(r"(?m)^(?:#### Previous completed review|\*\*Previous completed review\*\*)[ \t]*$",
+                        comment.get("body") or "", maxsplit=1)
     return rendered_runtime(sections[1] if previous and len(sections) == 2 else "" if previous else sections[0])
 
 
@@ -1006,10 +1007,10 @@ def incomplete_explanation(reason, owner):
         return reason + f" [Recovery guidance]({UNREAD_RECOVERY})."
     if reason == STATUS_REASONS["workflow_changed"] and owner:
         run = f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}/attempts/{owner['attempt']}"
-        manual = "Retry with `/claude-review` where supported. " if not stale else ""
+        manual = "Retry with `/claude-review`. " if not stale else ""
         return ("⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. "
                 f"[Check this attempt’s logs]({run}) to confirm. "
-                f"{manual}[See recovery guidance]({INCOMPLETE_RECOVERY}).")
+                f"{manual}See [recovery guidance]({INCOMPLETE_RECOVERY}).")
     if reason not in STATUS_REASONS.values() or reason == STATUS_REASONS["workflow_changed"]:
         reason = STATUS_REASONS["incomplete"]
     return reason + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
@@ -1221,18 +1222,22 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             and last_review_details["generation"] != owner["generation"])
     )
     history_in_details = last_review is not None and current_attempt
-    lines += ["", "<details>", "<summary>ℹ️ Details</summary>", "", "<br/>", ""]
+    lines += ["", "<details>", "<summary>ℹ️ Details</summary>", ""]
     if reason:
         # Existing parsers recover this exact receipt from the raw Markdown.
         # Do not add hard-break whitespace to the Reason line.
         hide_receipt = base_advanced or superseded_review or (state == "stale" and owner_running and reason == STATUS_REASONS["stale"])
+        if incomplete and not active:
+            diagnostic = reason.removeprefix(STATUS_REASONS["stale"] + " ")
+            hide_receipt = hide_receipt or diagnostic in explanation or (
+                diagnostic == STATUS_REASONS["workflow_changed"] and owner is not None)
         if hide_receipt:
             lines += ["<!--"]
         lines += [f"**Reason:** {reason}"]
         if hide_receipt:
             lines += ["-->"]
         lines += [""]
-    metadata = ["**Current attempt**"] if history_in_details else []
+    metadata = []
     row_ref = last_review[1] if show_review else owner["base_ref"] if owner else base_ref
     if (head_sha, base_ref) != (row_commit, row_ref):
         coverage = ""
@@ -1257,8 +1262,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             displayed_baselines.add(attempt_baseline)
     previous = []
     if history_in_details:
-        previous += ["**Previous completed review**",
-                     "**Result:** " + ("No findings." if last_review[2] == "success" else "Findings."),
+        previous += ["**Result:** " + ("No findings." if last_review[2] == "success" else "Findings."),
                      f"**Reviewed commit:** {commit_link(last_review[0], repo)} on {inline_code(last_review[1])}"]
         if completed:
             previous += [f"**Completed:** {relative_time(completed)}"]
@@ -1303,12 +1307,12 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         metadata.append(runtime_used_line(runtime))
     if last_review and runtime_used_line(last_review_details.get("runtime")):
         review_metadata.append(runtime_used_line(last_review_details["runtime"]))
-    if metadata == ["**Current attempt**"]:
-        metadata = []
     if metadata:
+        if history_in_details:
+            lines += ["#### Current attempt", ""]
         lines += ["  \n".join(metadata), ""]
     if previous:
-        lines += ["  \n".join(previous), ""]
+        lines += ["#### Previous completed review", "", "  \n".join(previous), ""]
     lines += ["</details>"]
     return "\n".join(lines)
 
@@ -2010,20 +2014,21 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     reviewed = f"[Reviewed]({details_url})" if details_url else "Reviewed"
     notice = selection_notice(selection)
     settings = "\n\n" + "\n".join(notice) if notice else ""
+    metadata = [f"**{reviewed} against:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
     observed_tip = ""
     if observed_base_sha and observed_base_sha != base_sha:
-        observed_tip = (f"  \n**Observed target commit:** {commit_link(observed_base_sha, repo)} "
-                        f"on {inline_code(base_ref)}\n\n"
-                        "The observed target differed from the reviewed baseline.")
+        metadata.append(f"**Observed target commit:** {commit_link(observed_base_sha, repo)} on {inline_code(base_ref)}")
+        observed_tip = "\n\nThe observed target differed from the reviewed baseline."
     runtime_line = runtime_used_line(executing_runtime())
-    runtime_used = "\n\n" + runtime_line if runtime_line else ""
+    if runtime_line:
+        metadata.append(runtime_line)
+    details = "  \n".join(metadata) + observed_tip
     return (
         f"{marker}\n"
         "Claude Review: No findings. 🎉\n\n"
         f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}){settings}\n\n"
-        "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
-        f"**{reviewed} against:** [`{base_sha[:7]}`](https://github.com/{repo}/commit/{base_sha}) "
-        f"on {inline_code(base_ref)}{observed_tip}{runtime_used}\n\n</details>"
+        "<details>\n<summary>ℹ️ Details</summary>\n\n"
+        f"{details}\n\n</details>"
     )
 
 

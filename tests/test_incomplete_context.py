@@ -200,8 +200,8 @@ class IncompletePresentationTests(unittest.TestCase):
                     self.assertNotIn("expected", visible)
                     if changed:
                         self.assertIn("to confirm.", visible)
-                        self.assertIn("Retry with `/claude-review` where supported.", visible)
-                        self.assertIn("[See recovery guidance]", visible)
+                        self.assertIn("Retry with `/claude-review`.", visible)
+                        self.assertIn("See [recovery guidance]", visible)
                         self.assertNotIn("an authorized user", visible)
                         self.assertNotIn("no applicable review", visible)
                         self.assertIn("/actions/runs/5/attempts/1", visible)

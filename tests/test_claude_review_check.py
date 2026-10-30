@@ -2103,7 +2103,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertIn(f"**PR commit:** {check.commit_link(OTHER, REPO)} on `main` — not reviewed", body)
         visible, details = body.split("<details>", 1)
         self.assertIn("| ❌ **Incomplete**", visible)
-        self.assertIn("**Previous completed review**", details)
+        self.assertIn("#### Previous completed review", details)
         self.assertIn("**Result:** No findings.", details)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
@@ -2262,7 +2262,7 @@ class PRReactionTests(ScriptTestCase):
         body = self.calls("PATCH")[0]["body"]["body"]
         visible, details = body.split("<details>", 1)
         self.assertIn("| ❌ **Incomplete**", visible)
-        self.assertIn("**Previous completed review**", details)
+        self.assertIn("#### Previous completed review", details)
         self.assertIn("**Result:** Findings.", details)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "action_required"))
 
@@ -2370,9 +2370,9 @@ class ManualCompletionTests(ScriptTestCase):
             f"{marker}\n"
             "Claude Review: No findings. 🎉\n\n"
             f"**Reviewed commit:** [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})\n\n"
-            "<details>\n<summary>ℹ️ Details</summary>\n\n<br/>\n\n"
+            "<details>\n<summary>ℹ️ Details</summary>\n\n"
             f"**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** "
-            f"[`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`\n\n"
+            f"[`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`  \n"
             "**Runtime used:** [`example/review-runtime@fffffff`]"
             f"(https://github.com/example/review-runtime/blob/{'f' * 40}/.github/workflows/claude-review.yml)"
             "\n\n</details>"

@@ -34,8 +34,6 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
@@ -71,8 +69,6 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
@@ -112,8 +108,6 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
@@ -151,8 +145,6 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
@@ -192,8 +184,6 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
@@ -231,8 +221,6 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
@@ -272,8 +260,6 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
@@ -308,8 +294,6 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
@@ -353,8 +337,6 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
@@ -384,8 +366,6 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
@@ -418,8 +398,6 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -454,9 +432,9 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -497,8 +475,6 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
@@ -537,8 +513,6 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
@@ -574,8 +548,6 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 <!--
 **Reason:** The target baseline differs; integration with the current baseline has not been reviewed.
@@ -618,8 +590,6 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 <!--
 **Reason:** The target baseline differs; integration with the current baseline has not been reviewed.
 -->
@@ -661,8 +631,6 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -697,9 +665,9 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The review did not complete with reliable execution and finding evidence.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -732,9 +700,9 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** An inline-comment tool call failed.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -767,9 +735,9 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** An inline-comment tool call failed.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -802,9 +770,9 @@ An inline-comment tool call failed. This review is incomplete. [Attempt Check](h
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** An inline-comment tool call failed.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -838,9 +806,9 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt. An inline-comment tool call failed.
+-->
 
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
@@ -873,9 +841,9 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** Required review inputs were not fully read.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -907,9 +875,9 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** Required review inputs were not fully read.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -936,14 +904,14 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. [Check this attempt’s logs](https://github.com/owner/repo/actions/runs/5/attempts/1) to confirm. Retry with `/claude-review` where supported. [See recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. [Check this attempt’s logs](https://github.com/owner/repo/actions/runs/5/attempts/1) to confirm. Retry with `/claude-review`. See [recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The captured patch changes the review workflow; the cause of the incomplete review is unknown.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -971,14 +939,14 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 The review of [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) did not complete. The PR is now at [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb), which this attempt hasn’t reviewed.
 
-⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. [Check this attempt’s logs](https://github.com/owner/repo/actions/runs/5/attempts/1) to confirm. [See recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. [Check this attempt’s logs](https://github.com/owner/repo/actions/runs/5/attempts/1) to confirm. See [recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt. The captured patch changes the review workflow; the cause of the incomplete review is unknown.
+-->
 
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
@@ -1003,10 +971,7 @@ Claude Review: No findings. 🎉
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 </details>
@@ -1027,10 +992,7 @@ Claude Review: No findings. 🎉
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 </details>
@@ -1049,10 +1011,7 @@ Claude Review: No findings. 🎉
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 </details>
@@ -1071,14 +1030,11 @@ Claude Review: No findings. 🎉
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Observed target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`
+**Observed target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
+**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 The observed target differed from the reviewed baseline.
-
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 </details>
 
@@ -1088,8 +1044,6 @@ The observed target differed from the reviewed baseline.
 
 ### 31 — Manual recovery after a Runtime pin change (synthetic)
 
-**Synthetic recovery context:** The captured caller changes its Runtime pin from `fffffff` to `9999999`. This review used the deployed Runtime; it did not execute the proposed pin.
-
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
 
@@ -1098,11 +1052,10 @@ Claude Review: No findings. 🎉
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
-
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+
+**Synthetic recovery context:** The captured caller changes its Runtime pin from `fffffff` to `9999999`. This review used the deployed Runtime; it did not execute the proposed pin.
 
 </details>
 
@@ -1136,13 +1089,13 @@ Claude Review: No findings. 🎉
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
+#### Current attempt
 
-**Current attempt**\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1182,13 +1135,13 @@ Claude Review: No findings. 🎉
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
+#### Current attempt
 
-**Current attempt**\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1228,13 +1181,13 @@ Claude Review: No findings. 🎉
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
+#### Current attempt
 
-**Current attempt**\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1276,16 +1229,18 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The review did not complete with reliable execution and finding evidence.
+-->
 
-**Current attempt**\
+#### Current attempt
+
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1327,16 +1282,18 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The review did not complete with reliable execution and finding evidence.
+-->
 
-**Current attempt**\
+#### Current attempt
+
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1378,16 +1335,18 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The review did not complete with reliable execution and finding evidence.
+-->
 
-**Current attempt**\
+#### Current attempt
+
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1427,8 +1386,6 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
@@ -1472,8 +1429,6 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -1509,9 +1464,9 @@ The authoritative Check result could not be published. Treat this commit as not 
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The authoritative Check result could not be published.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -1551,16 +1506,18 @@ The authoritative Check result could not be published. Treat this commit as not 
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The authoritative Check result could not be published.
+-->
 
-**Current attempt**\
+#### Current attempt
+
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1602,16 +1559,18 @@ The authoritative Check result could not be published. Treat this commit as not 
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The authoritative Check result could not be published.
+-->
 
-**Current attempt**\
+#### Current attempt
+
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1653,16 +1612,18 @@ The authoritative Check result could not be published. Treat this commit as not 
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The authoritative Check result could not be published.
+-->
 
-**Current attempt**\
+#### Current attempt
+
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1695,8 +1656,6 @@ Review completion cannot be established because authoritative Check publication 
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 **Reason:** The authoritative Check result could not be published.
 
@@ -1738,16 +1697,16 @@ Review completion cannot be established because authoritative Check publication 
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **Reason:** The authoritative Check result could not be published.
 
-**Current attempt**\
+#### Current attempt
+
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1789,16 +1748,16 @@ Review completion cannot be established because authoritative Check publication 
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **Reason:** The authoritative Check result could not be published.
 
-**Current attempt**\
+#### Current attempt
+
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1831,8 +1790,6 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
@@ -1871,13 +1828,13 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
+#### Current attempt
 
-**Current attempt**\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1919,13 +1876,13 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
+#### Current attempt
 
-**Current attempt**\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** Findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -1965,12 +1922,12 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
+#### Current attempt
 
-**Current attempt**\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -2012,15 +1969,17 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
+<!--
 **Reason:** The review did not complete with reliable execution and finding evidence.
+-->
 
-**Current attempt**\
+#### Current attempt
+
 **[Attempt](https://github.com/owner/repo/actions/runs/5) started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
@@ -2057,8 +2016,6 @@ The applicability of this completed review to the current PR cannot be confirmed
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 **[Attempt](https://github.com/owner/repo/actions/runs/6) status:** Not recorded\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) target:** `main`
 
@@ -2088,8 +2045,6 @@ The applicability of this completed review to the current PR cannot be confirmed
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
@@ -2123,8 +2078,6 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
@@ -2160,8 +2113,6 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -2195,8 +2146,6 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <details>
 <summary>ℹ️ Details</summary>
-
-<br/>
 
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
@@ -2241,17 +2190,17 @@ Claude is reviewing captured commit [`bbbbbbb`](https://github.com/owner/repo/co
 <details>
 <summary>ℹ️ Details</summary>
 
-<br/>
-
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
 
-**Current attempt**\
+#### Current attempt
+
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
-**Previous completed review**\
+#### Previous completed review
+
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
