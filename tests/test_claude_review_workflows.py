@@ -603,7 +603,7 @@ class JobStructureTests(unittest.TestCase):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
                 named = steps(job(path, "review"))
-                self.assertEqual(list(named)[-2:], ["Review pull request", VERIFY_STEP])
+                self.assertEqual(list(named)[-3:], ["Review pull request", VERIFY_STEP, "Diagnose review execution"])
                 verify = named[VERIFY_STEP]
                 text = "\n".join(verify)
                 self.assertEqual(scalar(verify, "id", 8), "verify")
@@ -635,7 +635,7 @@ class JobStructureTests(unittest.TestCase):
                 self.assertIn("      completion_verified: ${{ steps.verify.outputs.completion_verified }}", outputs)
                 self.assertIn("      completion_reason: ${{ steps.verify.outputs.completion_reason }}", outputs)
                 self.assertIn("      finding_publication: ${{ steps.verify.outputs.finding_publication }}", outputs)
-                self.assertEqual(len([line for line in outputs if line.strip()]), 5 if path == MANUAL else 4)
+                self.assertEqual(len([line for line in outputs if line.strip()]), 6 if path == MANUAL else 5)
                 publish = steps(job(path, "publish-status"))["Publish Claude Review result"]
                 self.assertEqual(
                     scalar(publish, "COMPLETION_VERIFIED", 10), "${{ needs.review.outputs.completion_verified }}"

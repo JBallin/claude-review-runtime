@@ -159,6 +159,13 @@ def gallery_samples():
                 base_sha=fixtures.BASE_TIP, **stale_options)),
             GallerySample("incomplete-unknown", "incomplete", "Incomplete attempt without completed history", status(
                 "failure", reason=check.STATUS_REASONS["incomplete"])),
+            GallerySample("turn-limit", "incomplete", "Verified turn-limit failure", status(
+                "failure", reason=check.STATUS_REASONS["turn_limit"],
+                owner=manual_owner, trigger_label="Manual request",
+                execution_diagnostic={"version": 1, "generation": manual_owner["generation"],
+                                      "run": manual_owner["run"], "attempt": manual_owner["attempt"],
+                                      "execution": "observed", "reason": "over_limit_success",
+                                      "num_turns": 101, "max_turns": 100})),
             GallerySample("selection-receipt", "compact-completion", "Historical manual receipt with primary Opus and auxiliary Haiku", selected(["claude-haiku-4-5", "claude-opus-5-5"], "mixed", primary=["claude-opus-5-5"], receipt=True)),
             GallerySample("selection-receipt-mismatch", "compact-completion", "Historical manual receipt with primary model mismatch", selected(["claude-sonnet-5-5"], receipt=True)),
             GallerySample("compact-clean", "compact-completion", "Compact clean completion, matching baseline", check.completion_comment_body(

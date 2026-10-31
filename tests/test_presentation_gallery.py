@@ -26,6 +26,19 @@ def sample_items():
 
 
 class PresentationGalleryTests(unittest.TestCase):
+    def test_turn_limit_sample_is_manual_and_keeps_failure_evidence(self):
+        case = next(case for case in gallery.gallery_samples() if case.case_id == "turn-limit")
+        owner = gallery.check.status_owner({"body": case.body})
+        self.assertEqual(owner["kind"], "issue_comment")
+        self.assertIn("Manual request", case.body)
+        self.assertIn("101 turns", case.body)
+        self.assertIn("the runtime’s 100-turn limit", case.body)
+        self.assertIn("❌ **Incomplete**", case.body)
+        self.assertNotIn("likely caused", case.body)
+        self.assertNotIn("manual-clean-completion", case.body)
+        self.assertNotIn(gallery.check.EXECUTION_DIAGNOSTIC_PREFIX,
+                         gallery.strip_operational_markers(case.body))
+
     def test_deterministic_complete_gallery(self):
         body = gallery.render_gallery()
         self.assertEqual(body, gallery.render_gallery())
@@ -33,9 +46,9 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 57)
+        self.assertEqual(len(gallery.gallery_samples()), 58)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 58)))
+                         list(range(1, 59)))
         # This committed audit file is not posted as one GitHub comment.
         self.assertLess(len(body.encode("utf-8")), 200_000)
 
@@ -62,7 +75,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 59)))
+                         list(range(1, 60)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [case.case_id for case in changed_order])
 
@@ -82,7 +95,7 @@ class PresentationGalleryTests(unittest.TestCase):
                          gallery.GROUP_ORDER)
         case_ids = [case.case_id for case in samples]
         for related in (
-                ["incomplete-unknown", "inline-tool-partial", "inline-tool-zero",
+                ["incomplete-unknown", "turn-limit", "inline-tool-partial", "inline-tool-zero",
                  "inline-tool-unknown-count", "inline-tool-stale", "unread-automatic", "unread-manual",
                  "workflow-changed", "workflow-changed-superseded"],
                 ["running-history-clean", "running-history-findings", "running-history-manual"],
@@ -97,7 +110,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 52)
+        self.assertEqual(status.call_count, 53)
         self.assertEqual(completion.call_count, 5)
         self.assertEqual([call.kwargs.get("observed_base_sha") for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER, None])
@@ -328,7 +341,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
                     self.assertNotIn(reviewed, current)
                     self.assertNotIn(attempt, previous)
-                elif case_id.startswith("inline-tool-") or case_id in ("selection-running", "selection-incomplete", "selection-tooling-unavailable"):
+                elif case_id.startswith("inline-tool-") or case_id in ("turn-limit", "selection-running", "selection-incomplete", "selection-tooling-unavailable"):
                     self.assertIn(f"**[Attempt]({reviewed}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
                 elif case_id.startswith(("publication-incomplete-", "publication-unavailable-", "unread-", "workflow-changed")) or case_id == "incomplete-unknown":

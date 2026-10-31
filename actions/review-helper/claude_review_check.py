@@ -19,6 +19,7 @@ import hashlib
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
 import time
@@ -45,6 +46,10 @@ STATUS_REVIEWED_TRIGGER_PREFIX = "<!-- claude-review-runtime:claude-review-last-
 REVIEW_TRIGGERS = {"PR opened for review", "Draft marked ready", "Manual request"}
 STATUS_AUTHOR = "github-actions[bot]"
 INLINE_FAILURE_PREFIX = "<!-- claude-review-runtime:inline-tool-failure:"
+EXECUTION_DIAGNOSTIC_PREFIX = "<!-- claude-review-runtime:execution-diagnostic:"
+EXECUTION_DIAGNOSTIC_BYTES = 32 * 1024 * 1024
+EXECUTION_DIAGNOSTIC_MESSAGES = 100_000
+EXECUTION_TURN_LIMIT = 1_000_000
 OWNER_PHASE_PREFIX = "<!-- claude-review-runtime:presentation-owner-phase:"
 OWNER_PREFIX = "<!-- claude-review-runtime:presentation-owner:"
 STATUS_REASONS = {
@@ -53,6 +58,8 @@ STATUS_REASONS = {
     "incomplete": "The review did not complete with reliable execution and finding evidence.",
     "inline_tool_failed": "An inline-comment tool call failed.",
     "unread_inputs": "Required review inputs were not fully read.",
+    "turn_limit": "The review reached its configured turn limit.",
+    "execution_failed": "Claude executed, but this review did not complete reliably.",
     "workflow_changed": "The captured patch changes the review workflow; the cause of the incomplete review is unknown.",
     "check_publication_failed": "The authoritative Check result could not be published.",
     "tooling_unavailable": "Trusted review tooling was unavailable; the review could not be finalized reliably.",
@@ -427,6 +434,7 @@ def decide(
     completion_reason="",
     inline_posted_count=None,
     inline_failure_confirmed=False,
+    execution_failure=None,
 ):
     """Return (conclusion, title, result sentence) for the reviewed commit.
 
@@ -458,6 +466,9 @@ def decide(
             f"so Claude did not review this commit in this run.{notes}",
         )
     if review_result != "success":
+        if execution_failure and execution_failure["execution"] == "observed":
+            return ("failure", "Review turn limit reached" if execution_failure["reason"] in ("error_max_turns", "over_limit_success")
+                    else "Review did not complete", execution_failure_explanation(execution_failure) + kept + notes)
         return (
             "failure",
             "Review did not complete",
@@ -998,6 +1009,143 @@ def status_inline_failure(comment, owner):
     return None
 
 
+def execution_diagnostic(owner, path, maximum=None):
+    """Read only bounded SDK structure; this is never a completion verifier."""
+    record = {"version": 1, "generation": owner["generation"], "run": owner["run"],
+              "attempt": owner["attempt"], "reason": "unavailable", "execution": "unknown", "num_turns": None,
+              "max_turns": maximum}
+    if not path:
+        return record
+    try:
+        # Do not block on a pipe or follow a replacement symlink. Cap both the
+        # initial size and the actual read in case the file grows meanwhile.
+        descriptor = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
+        with os.fdopen(descriptor, "rb") as source:
+            info = os.fstat(source.fileno())
+            if not stat.S_ISREG(info.st_mode) or info.st_size > EXECUTION_DIAGNOSTIC_BYTES:
+                raise ValueError("unsupported execution file")
+            raw = source.read(EXECUTION_DIAGNOSTIC_BYTES + 1)
+        if len(raw) > EXECUTION_DIAGNOSTIC_BYTES:
+            raise ValueError("oversized execution file")
+        stream = json.loads(raw.decode("utf-8"), object_pairs_hook=unique_json_object,
+                            parse_constant=lambda _: (_ for _ in ()).throw(ValueError("invalid number")))
+        if (not isinstance(stream, list) or not 0 < len(stream) <= EXECUTION_DIAGNOSTIC_MESSAGES
+                or any(not isinstance(message, dict) for message in stream)):
+            raise ValueError("invalid message stream")
+        primary = [m for m in stream if m.get("type") in ("assistant", "user", "result")
+                   or m.get("type") == "system" and m.get("subtype") == "init"]
+        init = [m for m in primary if m.get("type") == "system"]
+        turns = [m for m in primary if m.get("type") == "assistant"]
+        results = [m for m in primary if m.get("type") == "result"]
+        execution = init + turns
+        if (len(init) != 1 or not turns or primary[0] is not init[0]
+                or any(m.get("parent_tool_use_id") is not None for m in execution)
+                or any(not isinstance(m.get("session_id"), str)
+                       or not 0 < len(m["session_id"]) <= 200 for m in execution)
+                or len({m["session_id"] for m in execution}) != 1
+                or any(not isinstance(m.get("message"), dict)
+                       or not isinstance(m["message"].get("content"), list) for m in turns)):
+            raise ValueError("ambiguous execution session")
+        # A malformed terminal record cannot undo proof that Claude executed.
+        # Keep that distinction without accepting its cause, count or completion.
+        record["execution"] = "observed"
+        if (len(results) > 1 or results and stream[-1] is not results[0]
+                or any(m.get("session_id") != init[0]["session_id"]
+                       or m.get("parent_tool_use_id") is not None for m in primary)):
+            raise ValueError("ambiguous terminal evidence")
+        terminal = results[0] if results else {}
+        count = terminal.get("num_turns")
+        if count is not None and (type(count) is not int or not 0 <= count <= EXECUTION_TURN_LIMIT):
+            raise ValueError("invalid turn count")
+        record["reason"] = "execution_observed"
+        if terminal.get("subtype") == "error_max_turns" and terminal.get("is_error") is True:
+            record.update(reason="error_max_turns", num_turns=count)
+        elif (terminal.get("subtype") == "success" and terminal.get("is_error") is False
+              and count is not None and maximum is not None and count > maximum):
+            record.update(reason="over_limit_success", num_turns=count)
+    except OSError:
+        pass
+    except (ValueError, TypeError, RecursionError):
+        record.update(reason="malformed", num_turns=None)
+    return record
+
+
+def valid_execution_diagnostic(record, owner):
+    fields = {"version", "generation", "run", "attempt", "reason", "execution", "num_turns", "max_turns"}
+    if (not owner or not isinstance(record, dict) or set(record) != fields
+            or type(record["version"]) is not int or record["version"] != 1
+            or record["generation"] != owner["generation"]
+            or any(type(record[k]) is not int or record[k] != owner[k] for k in ("run", "attempt"))
+            or record["reason"] not in ("unavailable", "malformed", "execution_observed",
+                                         "error_max_turns", "over_limit_success")
+            or record["execution"] not in ("observed", "unknown")
+            or record["reason"] == "unavailable" and record["execution"] != "unknown"
+            or record["reason"] not in ("unavailable", "malformed") and record["execution"] != "observed"):
+        return None
+    count, maximum = record["num_turns"], record["max_turns"]
+    if (count is not None and (type(count) is not int or not 0 <= count <= EXECUTION_TURN_LIMIT)
+            or maximum is not None and (type(maximum) is not int or not 0 < maximum <= EXECUTION_TURN_LIMIT)
+            or record["reason"] not in ("error_max_turns", "over_limit_success") and count is not None
+            or record["reason"] == "over_limit_success"
+            and (count is None or maximum is None or count <= maximum)):
+        return None
+    return record
+
+
+def current_execution_diagnostic(owner):
+    if (env("START_RESULT", "success") != "success" or env("REVIEW_RESULT") != "failure"
+            or env("ACTION_CONCLUSION") not in ("", "failure")
+            or env("COMPLETION_VERIFIED") not in ("", "false")
+            or env("COMPLETION_REASON") not in ("", "missing_execution_file")):
+        return None
+    try:
+        raw = env("EXECUTION_DIAGNOSTIC")
+        if len(raw) > 2048:
+            return None
+        record = valid_execution_diagnostic(json.loads(raw, object_pairs_hook=unique_json_object), owner)
+        if (record and str(record["run"]) == env("GITHUB_RUN_ID")
+                and str(record["attempt"]) == env("GITHUB_RUN_ATTEMPT")):
+            return record
+    except (ValueError, TypeError, RecursionError):
+        pass
+    return None
+
+
+def execution_diagnostic_marker(record):
+    return EXECUTION_DIAGNOSTIC_PREFIX + quote(json.dumps(record, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+
+
+def status_execution_diagnostic(comment, owner):
+    body = (comment or {}).get("body") or ""
+    if status_state(comment) not in ("failure", "stale"):
+        return None
+    matches = re.findall(re.escape(EXECUTION_DIAGNOSTIC_PREFIX) + r"(.*?) -->", body)
+    if body.count(EXECUTION_DIAGNOSTIC_PREFIX) != 1 or len(matches) != 1 or len(matches[0]) > 2048:
+        return None
+    try:
+        record = valid_execution_diagnostic(json.loads(unquote(matches[0]), object_pairs_hook=unique_json_object), owner)
+        if (record and terminal_status_reason(comment, owner) in (
+                STATUS_REASONS["turn_limit"], stale_status_reason(STATUS_REASONS["turn_limit"]),
+                STATUS_REASONS["execution_failed"], stale_status_reason(STATUS_REASONS["execution_failed"]))
+                and execution_diagnostic_marker(record) == EXECUTION_DIAGNOSTIC_PREFIX + matches[0] + " -->"):
+            return record
+    except (ValueError, TypeError, RecursionError):
+        pass
+    return None
+
+
+def execution_failure_explanation(record):
+    if record["reason"] == "over_limit_success":
+        return (f"Claude reported success after {record['num_turns']} turns, exceeding the runtime’s "
+                f"{record['max_turns']}-turn limit. The Action rejected this result; the review remains incomplete.")
+    if record["reason"] == "error_max_turns":
+        cause = (f"Claude reached the runtime’s {record['max_turns']}-turn limit"
+                 if record["max_turns"] is not None else "Claude reported a turn-limit error")
+        counts = f" ({record['num_turns']} turns reported)" if record["num_turns"] is not None else ""
+        return f"{cause}{counts}. The review remains incomplete."
+    return STATUS_REASONS["execution_failed"]
+
+
 def incomplete_explanation(reason, owner):
     """Render fixed, owner-bound diagnostics; never infer a provider rejection."""
     stale = reason and reason.startswith(STATUS_REASONS["stale"] + " ")
@@ -1027,6 +1175,12 @@ def incomplete_status_reason(owner):
         return STATUS_REASONS["incomplete"]
     if env("COMPLETION_VERIFIED") == "true" or verdict not in ("", "missing_execution_file"):
         return STATUS_REASONS["incomplete"]
+    diagnostic = current_execution_diagnostic(owner)
+    if diagnostic:
+        if diagnostic["reason"] in ("error_max_turns", "over_limit_success"):
+            return STATUS_REASONS["turn_limit"]
+        if diagnostic["execution"] == "observed":
+            return STATUS_REASONS["execution_failed"]
     # Optional context gets at most ten seconds of the shared presentation
     # budget, with no retries; reserve time for ownership checks and publication.
     changed = workflow_changed(owner, env("RUNTIME_REPOSITORY"), env("RUNTIME_WORKFLOW_PATH"),
@@ -1038,7 +1192,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                         last_review_details=None, base_sha=None, trigger_label=None,
                         owner=None, owner_running=None, reason=None, completed_at=None,
                         completed_owner_verified=False, attempt_trigger=_TRIGGER_FROM_LABEL, selection=None,
-                        runtime=None, inline_failure=None):
+                        runtime=None, inline_failure=None, execution_diagnostic=None):
     """Render trusted informational state without affecting Check authority."""
     messages = {
         "in_progress": "Claude is reviewing this commit.",
@@ -1060,6 +1214,21 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                                "trigger": review_trigger(trigger_label, owner),
                                "generation": owner["generation"] if owner else None, "runtime": runtime}
     last_review_details = last_review_details or {}
+    diagnostic_reason = reason in (
+        STATUS_REASONS["turn_limit"], stale_status_reason(STATUS_REASONS["turn_limit"]),
+        STATUS_REASONS["execution_failed"], stale_status_reason(STATUS_REASONS["execution_failed"]))
+    execution_diagnostic = (valid_execution_diagnostic(execution_diagnostic, owner)
+                            if diagnostic_reason and state in ("failure", "stale") and not owner_running else None)
+    if execution_diagnostic and execution_diagnostic["execution"] != "observed":
+        execution_diagnostic = None
+    expected_reason = (STATUS_REASONS["turn_limit"] if execution_diagnostic
+                       and execution_diagnostic["reason"] in ("error_max_turns", "over_limit_success")
+                       else STATUS_REASONS["execution_failed"])
+    if diagnostic_reason and (not execution_diagnostic
+                             or reason not in (expected_reason, stale_status_reason(expected_reason))):
+        execution_diagnostic = None
+        reason = (stale_status_reason(STATUS_REASONS["incomplete"]) if state == "stale"
+                  else STATUS_REASONS["incomplete"])
     inline_reason = reason in (STATUS_REASONS["inline_tool_failed"],
                                stale_status_reason(STATUS_REASONS["inline_tool_failed"]))
     inline_failure = (valid_inline_failure(inline_failure, owner)
@@ -1106,6 +1275,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     ]
     if inline_failure:
         lines.append(inline_failure_marker(inline_failure))
+    if execution_diagnostic:
+        lines.append(execution_diagnostic_marker(execution_diagnostic))
     if selection:
         lines.append(SELECTION_PREFIX + quote(json.dumps(selection, sort_keys=True, separators=(",", ":")), safe="") + " -->")
     if attempt_trigger is _TRIGGER_FROM_LABEL:
@@ -1201,7 +1372,12 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     if base_advanced:
         lines += ["", TARGET_TIP_WARNING]
     if incomplete and not active:
-        if inline_failure:
+        if execution_diagnostic:
+            explanation = execution_failure_explanation(execution_diagnostic)
+            run = (f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}"
+                   f"/actions/runs/{owner['run']}/attempts/{owner['attempt']}")
+            explanation += f" [Attempt logs]({run}). [Recovery guidance]({INCOMPLETE_RECOVERY})."
+        elif inline_failure:
             check_url = (f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/pull/{owner['pr']}"
                          f"/checks?check_run_id={inline_failure['check_run_id']}")
             explanation = (inline_failure_explanation(inline_failure["posted_count"])
@@ -1230,6 +1406,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         if incomplete and not active:
             diagnostic = reason.removeprefix(STATUS_REASONS["stale"] + " ")
             hide_receipt = hide_receipt or diagnostic in explanation or (
+                diagnostic == STATUS_REASONS["turn_limit"] and execution_diagnostic is not None) or (
                 diagnostic == STATUS_REASONS["workflow_changed"] and owner is not None) or (
                 state == "publication_incomplete" and diagnostic == STATUS_REASONS["check_publication_failed"])
         if hide_receipt:
@@ -1796,11 +1973,14 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
         reason = terminal_status_reason(existing, owner) if stale else None
         if stale:
             inline_failure = status_inline_failure(existing, owner)
+            execution_failure = status_execution_diagnostic(existing, owner)
             reason = stale_status_reason(reason)
         elif inline_failure and not acquire:
             inline_failure = valid_inline_failure({**inline_failure, "generation": owner["generation"]}, owner)
         else:
             inline_failure = None
+        if not stale:
+            execution_failure = None if acquire else current_execution_diagnostic(owner)
         if state == "failure":
             if env("REVIEW_RESULT") == "cancelled":
                 reason = STATUS_REASONS["cancelled"]
@@ -1917,7 +2097,8 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
             owner_running=status_owner_running(existing) if stale else acquiring_running if state == "stale" else None,
             reason=reason, completed_at=completed_at,
             completed_owner_verified=completed_owner_verified, attempt_trigger=attempt_trigger,
-            selection=current_selection(owner, existing), runtime=runtime, inline_failure=inline_failure)}
+            selection=current_selection(owner, existing), runtime=runtime, inline_failure=inline_failure,
+            execution_diagnostic=execution_failure)}
         published = False
         try:
             if existing:
@@ -2349,6 +2530,15 @@ def cmd_finalize():
     # shows the review itself finished.
     completion_verified = env("COMPLETION_VERIFIED") == "true"
     completion_reason = env("COMPLETION_REASON")
+    try:
+        diagnostic_owner = validate_owner(json.loads(env("PRESENTATION_OWNER"), object_pairs_hook=unique_json_object))
+        if (diagnostic_owner["repo"], str(diagnostic_owner["pr"]), diagnostic_owner["head"],
+                diagnostic_owner["base"], diagnostic_owner["base_ref"]) != (
+                repo, pr_number, head_sha, env("BASE_SHA"), env("BASE_REF")):
+            raise ValueError("diagnostic owner differs from captured patch")
+        execution_failure = current_execution_diagnostic(diagnostic_owner)
+    except (ValueError, TypeError, KeyError):
+        execution_failure = None
     review_completed = (
         start_result == "success"
         and review_result == "success"
@@ -2458,6 +2648,7 @@ def cmd_finalize():
         completion_reason,
         inline_posted_count=inline_posted_count,
         inline_failure_confirmed=env("COMPLETION_VERIFIED") == "false",
+        execution_failure=execution_failure,
     )
     evidence = {
         **review_identity(head_sha),
@@ -2483,6 +2674,8 @@ def cmd_finalize():
     }
     if inline_failure:
         evidence["inline_failure"] = inline_failure
+    if execution_failure:
+        evidence["execution_diagnostic"] = execution_failure
     completed_at = completed_check_timestamp(history, check_run_id, head_sha, conclusion) or now()
     body = {
         "status": "completed",
@@ -2660,7 +2853,23 @@ def main(argv=None):
     selection.add_argument("--metadata")
     observation = sub.add_parser("observe-selection")
     observation.add_argument("--execution", required=True)
+    diagnostic = sub.add_parser("diagnose-execution")
+    diagnostic.add_argument("--execution", required=True)
     args = parser.parse_args(argv)
+    if args.command == "diagnose-execution":
+        try:
+            owner = validate_owner(json.loads(env("PRESENTATION_OWNER"), object_pairs_hook=unique_json_object))
+            if (str(owner["run"]), str(owner["attempt"])) != (env("GITHUB_RUN_ID"), env("GITHUB_RUN_ATTEMPT")):
+                raise ValueError("execution attempt differs")
+            maximum = env("REVIEW_MAX_TURNS")
+            if maximum and (not re.fullmatch(r"[0-9]{1,7}", maximum)
+                            or not 0 < int(maximum) <= EXECUTION_TURN_LIMIT):
+                raise ValueError("invalid configured cap")
+            record = execution_diagnostic(owner, args.execution, int(maximum) if maximum else None)
+            write_output("execution_diagnostic", json.dumps(record, separators=(",", ":")))
+        except (ValueError, TypeError):
+            print("::warning::Execution diagnostic unavailable for this captured attempt.")
+        return 0
     if args.command == "selection":
         return cmd_selection(args.metadata)
     if args.command == "observe-selection":

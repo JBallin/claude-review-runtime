@@ -280,7 +280,11 @@ jobs:
       id-token: write
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    env:
+      # Generous usage backstop, not a precise spending guarantee.
+      REVIEW_MAX_TURNS: "100"
     outputs:
+      execution_diagnostic: ${{ steps.diagnose.outputs.execution_diagnostic }}
       conclusion: ${{ steps.review.outputs.conclusion }}
       completion_verified: ${{ steps.verify.outputs.completion_verified }}
       completion_reason: ${{ steps.verify.outputs.completion_reason }}
@@ -317,6 +321,12 @@ jobs:
           REVIEW_HELPER: ${{ steps.selection-helper.outputs.helper-path }}
           TRIGGER_COMMENT: ${{ github.event.comment.body }}
         run: python3 "$REVIEW_HELPER" selection --metadata "${{ runner.temp }}/pr-review/request.json"
+      - name: Prepare execution diagnostic
+        id: diagnostic-helper
+        continue-on-error: true
+        uses: $/actions/review-helper
+        with:
+          command: diagnose-execution
       - name: Validate model authentication
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -417,7 +427,7 @@ jobs:
           claude_args: >-
             ${{ steps.selection.outputs.model_args }}
             ${{ steps.selection.outputs.effort_args }}
-            --max-turns 30
+            --max-turns ${{ env.REVIEW_MAX_TURNS }}
             --setting-sources user
             --strict-mcp-config
             --permission-mode default
@@ -723,6 +733,18 @@ jobs:
             python3 "$REVIEW_HELPER" observe-selection --execution "$EXECUTION_FILE" || echo "::warning::Selection metadata unavailable."
           fi
 
+      - name: Diagnose review execution
+        id: diagnose
+        # Failure diagnostics never grant completion or ungate the verifier.
+        if: ${{ !cancelled() && (steps.review.outcome == 'success' || steps.review.outcome == 'failure') && steps.diagnostic-helper.outcome == 'success' }}
+        continue-on-error: true
+        timeout-minutes: 1
+        env:
+          REVIEW_HELPER: ${{ steps.diagnostic-helper.outputs.helper-path }}
+          PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+        run: python3 "$REVIEW_HELPER" diagnose-execution --execution "$EXECUTION_FILE"
+
   publish-status:
     name: Publish status
     needs: [start-check, review]
@@ -786,6 +808,7 @@ jobs:
           START_RESULT: ${{ needs.start-check.result }}
           REVIEW_RESULT: ${{ needs.review.result }}
           ACTION_CONCLUSION: ${{ needs.review.outputs.conclusion }}
+          EXECUTION_DIAGNOSTIC: ${{ needs.review.outputs.execution_diagnostic }}
           SELECTION_EVIDENCE: ${{ needs.review.outputs.selection_evidence }}
           COMPLETION_VERIFIED: ${{ needs.review.outputs.completion_verified }}
           COMPLETION_REASON: ${{ needs.review.outputs.completion_reason }}
