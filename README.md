@@ -39,6 +39,8 @@ and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 
 ## Alternatives
 
+Read [Choosing a Claude code-review approach](docs/choosing-a-review-approach.md) to compare fit, operation, and costs.
+
 - [Claude Code GitHub Action](https://code.claude.com/docs/en/github-actions):
   Use the underlying GitHub Action directly.
 - Anthropic’s [managed Code Review](https://code.claude.com/docs/en/code-review):
