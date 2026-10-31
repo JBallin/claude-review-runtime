@@ -178,6 +178,37 @@ class ManualRequestTests(unittest.TestCase):
             self.assertNotIn("rerun-admin", json.dumps(calls))
             self.assertNotIn("claude-review-runtime:", json.dumps(calls))
 
+    def test_managed_user_login_receives_feedback_with_original_commenter_permission(self):
+        for login in ("reviewer_acme", "a" * 34 + "_acme"):
+            for factory in (w.issue_comment_event, w.review_comment_event):
+                with self.subTest(login=login, event=factory.__name__):
+                    event = factory(body="/claude-review invalid")
+                    event["actor"] = "rerun-admin"
+                    event["event"]["comment"]["user"]["login"] = login
+                    result, _, calls = usage_probe(event=event)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertEqual([call["method"] for call in calls], ["GET", "GET", "POST"])
+                    self.assertEqual(calls[0]["path"], f"repos/{w.REPO}/collaborators/{login}/permission")
+                    self.assertEqual(calls[-1]["body"], {"body": check.manual_usage_response("arguments")})
+                    self.assertNotIn("rerun-admin", json.dumps(calls))
+
+    def test_managed_user_login_retains_permission_identity_and_length_limits(self):
+        login = "reviewer_acme"
+        event = w.issue_comment_event(body="/claude-review invalid")
+        event["event"]["comment"]["user"]["login"] = login
+        for permission in ({"permission": "read", "user": {"login": login}},
+                           {"permission": "none", "user": {"login": login}},
+                           {"permission": "write", "user": {"login": "rerun-admin"}}):
+            with self.subTest(permission=permission):
+                result, _, calls = usage_probe(event=event, permission=permission)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual([call["method"] for call in calls], ["GET"])
+                self.assertEqual(calls[0]["path"], f"repos/{w.REPO}/collaborators/{login}/permission")
+        event["event"]["comment"]["user"]["login"] = "a" * 35 + "_acme"
+        result, _, calls = usage_probe(event=event)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(calls, [])
+
     def test_event_and_human_gate_excludes_bots_edits_untrusted_and_non_prs(self):
         base = w.issue_comment_event(body="/claude-review invalid")
         import copy

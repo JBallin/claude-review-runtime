@@ -177,7 +177,7 @@ jobs:
               repo, number, commenter = (os.environ[name] for name in ("REPO", "PR_NUMBER", "COMMENTER"))
               if (not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo)
                       or not number.isdigit() or int(number) <= 0
-                      or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]{0,38}", commenter)):
+                      or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,38}", commenter)):
                   raise ValueError("invalid target")
               permission = api(f"repos/{repo}/collaborators/{quote(commenter, safe='')}/permission")
               if (permission.get("permission") not in ("write", "admin")
