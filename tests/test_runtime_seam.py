@@ -129,6 +129,8 @@ class CapturedInputTests(unittest.TestCase):
                 stub.chmod(0o755)
                 log = root / "gh.log"
                 output = root / "output"
+                selection = {"version": 1, "requested_model": "sonnet", "requested_effort": "high",
+                             "model_source": "repository", "effort_source": "repository", "errors": []}
                 environment = {
                     "PATH": f"{root}{os.pathsep}{os.environ['PATH']}",
                     "RUNNER_TEMP": str(root), "GITHUB_OUTPUT": str(output),
@@ -137,6 +139,8 @@ class CapturedInputTests(unittest.TestCase):
                     "REPO": "example/consumer", "PR_NUMBER": "7", "PR_TITLE": hostile,
                     "PR_BODY": hostile, "TRIGGER_COMMENT": hostile, "BASE_REF": "main",
                     "HEAD_SHA": head, "BASE_SHA": base,
+                    "SELECTION_CONFIG": json.dumps(selection),
+                    "REQUESTED_MODEL": "sonnet", "REQUESTED_EFFORT": "high",
                     "RUNTIME_REPOSITORY": "example/review-runtime", "RUNTIME_SHA": runtime_sha,
                     "RUNTIME_WORKFLOW_PATH": f".github/workflows/{workflow}",
                 }
@@ -148,6 +152,7 @@ class CapturedInputTests(unittest.TestCase):
                 self.assertEqual((captured["number"], captured["title"], captured["body"]), (7, hostile, hostile))
                 self.assertEqual((captured["head_sha"], captured["base_sha"]), (head, base))
                 self.assertEqual(captured["diff_line_count"], 2)
+                self.assertEqual(captured["selection_config"], selection)
                 self.assertEqual((captured["runtime_repository"], captured["runtime_sha"], captured["runtime_workflow_path"]),
                                  ("example/review-runtime", runtime_sha, f".github/workflows/{workflow}"))
                 if workflow == "claude.yml":
@@ -163,13 +168,21 @@ class CapturedInputTests(unittest.TestCase):
 
 
 class ReusableBoundaryTests(unittest.TestCase):
-    def test_entrypoints_only_expose_workflow_call_and_the_named_secret(self):
+    def test_entrypoints_only_expose_settings_inputs_and_the_named_secret(self):
         for name in ENTRYPOINTS:
             with self.subTest(workflow=name):
                 text = (WORKFLOWS / name).read_text()
                 trigger = text.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
                 self.assertIn("  workflow_call:", trigger)
-                self.assertNotIn("inputs:", trigger)
+                if name == "claude-review-status.yml":
+                    self.assertNotIn("inputs:", trigger)
+                else:
+                    inputs = trigger.split("    inputs:\n", 1)[1].split("    secrets:\n", 1)[0]
+                    self.assertEqual(re.findall(r"^      ([a-z_]+):$", inputs, re.MULTILINE),
+                                     ["model", "effort"])
+                    self.assertEqual(inputs.count("type: string"), 2)
+                    self.assertEqual(inputs.count("required: false"), 2)
+                    self.assertEqual(inputs.count("default: ''"), 2)
                 for event in ("pull_request:", "issue_comment:", "workflow_dispatch:", "push:"):
                     self.assertNotIn(event, trigger)
                 if name == "claude-review-status.yml":
@@ -238,7 +251,14 @@ class ReusableBoundaryTests(unittest.TestCase):
             self.assertEqual(re.findall(r"^      ([A-Z_]+):", rendered, re.MULTILINE),
                              [MODEL_AUTH[0]])
             self.assertNotIn("secrets: inherit", rendered)
+            self.assertIn("    with:\n      model: opus\n      effort: high", rendered)
             self.assertIn(f"{path.name}@<full-reviewed-runtime-sha>", rendered)
+            if path == w.MANUAL:
+                # The copied caller delegates recognition, including malformed
+                # option recovery, rather than retaining an Opus-only filter.
+                self.assertNotRegex(rendered, r"(?m)^\s+if:")
+                self.assertIn("issue_comment:\n    types: [created]", rendered)
+                self.assertIn("pull_request_review_comment:\n    types: [created]", rendered)
         status = next(block for block in blocks if f"/{w.STALE.name}@" in block)
         self.assertNotIn("secrets:", status)
         self.assertNotIn("secrets:", w.STALE.read_text())

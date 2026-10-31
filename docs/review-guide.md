@@ -37,8 +37,12 @@ comments and untrusted requests do not start model execution. The eligibility
 job has read-only PR access and performs no checkout before calling the pinned
 runtime. The runtime resolves the current patch once for each accepted request.
 
-Manual requests support [optional Opus and effort selection](consumer-workflows.md#optional-model-and-effort-selection).
-Model evidence is diagnostic: a different observed model produces a notice,
+The current Runtime source accepts short model and effort selections, including
+`/claude-review opus`, `/claude-review high`, and `/claude-review opus high`.
+Models are Opus, Sonnet, or Haiku; effort is Low, Medium, High, Xhigh, or Max.
+See [repository defaults](consumer-workflows.md#repository-model-and-effort-defaults)
+and [manual command forms](consumer-workflows.md#optional-model-and-effort-selection).
+Model evidence is diagnostic: a different primary model produces a notice,
 without changing completion or finding verification.
 
 The command deliberately avoids a Claude mention. `@claude review` can invoke
@@ -56,8 +60,19 @@ accepted attempt, including its captured head/base and workflow run. Checks and
 workflow runs retain earlier attempts. Incomplete and cancelled reviews show
 a concise explanation and recovery link above Details. Verified unread inputs
 take precedence over workflow-change context. Details retain the reason receipt
-and captured attempt identity. A comment API or permission failure is reported in
-the Check/run when publication is possible. Accepted manual requests also receive
+and captured attempt identity. Resolved Model and Effort appear in each
+run’s Details, above its baseline and Runtime provenance. Model labels use
+Sonnet, Opus, or Haiku; full execution identifiers stay in the recorded metadata. Each current or
+previous attempt retains its own settings; a status refresh does not apply
+today’s defaults to an older review, and missing historical settings are not
+filled in. New attempts resolve
+each field from a valid manual override, then a valid workflow input, then
+Runtime’s Sonnet / Medium defaults. Invalid or malformed configuration options
+warn and fall back only for the affected field; independently valid settings
+remain in use. Current model warnings stay above Details. A previous run’s
+recorded model mismatch appears inside Previous completed review before its
+settings, using only that run’s captured evidence. A comment API or permission
+failure is reported in the Check/run when publication is possible. Accepted manual requests also receive
 runtime reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
 publication. For a manual review, 👍 means the captured patch review completed

@@ -17,6 +17,17 @@ name: Claude
 # Live CI access is excluded because it need not describe the captured patch.
 on:
   workflow_call:
+    inputs:
+      model:
+        description: Review model alias; blank uses the Runtime default.
+        type: string
+        required: false
+        default: ''
+      effort:
+        description: Review effort; blank uses the Runtime default.
+        type: string
+        required: false
+        default: ''
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN:
         required: true
@@ -36,7 +47,7 @@ concurrency:
   group: >-
     ${{
     ((github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-    contains(fromJSON('["/claude-review","/claude-review opus","/claude-review effort low","/claude-review effort medium","/claude-review effort high","/claude-review effort xhigh","/claude-review effort max","/claude-review opus effort low","/claude-review opus effort medium","/claude-review opus effort high","/claude-review opus effort xhigh","/claude-review opus effort max"]'), github.event.comment.body) &&
+    (github.event.comment.body == '/claude-review' || startsWith(github.event.comment.body, '/claude-review ')) &&
     contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
     github.event.comment.author_association) &&
     (github.event_name == 'pull_request_review_comment' ||
@@ -57,7 +68,7 @@ jobs:
     # checks: write.
     if: >-
       (github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-      contains(fromJSON('["/claude-review","/claude-review opus","/claude-review effort low","/claude-review effort medium","/claude-review effort high","/claude-review effort xhigh","/claude-review effort max","/claude-review opus effort low","/claude-review opus effort medium","/claude-review opus effort high","/claude-review opus effort xhigh","/claude-review opus effort max"]'), github.event.comment.body) &&
+      (github.event.comment.body == '/claude-review' || startsWith(github.event.comment.body, '/claude-review ')) &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
       github.event.comment.author_association) &&
       (github.event_name == 'pull_request_review_comment' ||
@@ -72,6 +83,10 @@ jobs:
       checks: write
       issues: write
     outputs:
+      request_recognized: ${{ steps.request.outputs.recognized }}
+      tooling_unavailable: ${{ steps.tooling-ready.outcome == 'failure' }}
+      selection_accepted: ${{ steps.select.outcome == 'success' }}
+      selection_config: ${{ steps.select.outputs.selection_config }}
       requested_model: ${{ steps.select.outputs.requested_model }}
       requested_effort: ${{ steps.select.outputs.requested_effort }}
       head_sha: ${{ steps.resolve.outputs.head_sha }}
@@ -89,6 +104,33 @@ jobs:
     # published as that check's failure. A failure before the head SHA is
     # known cannot be attached to any commit and only fails the job.
     steps:
+      - name: Recognize manual review request
+        id: request
+        # Independent of the bundled helper: tooling failure must still publish
+        # a failure Check, while unrelated comment text must never own one.
+        # Keep acceptance aligned with manual_request; this does not resolve
+        # settings or permit model execution. The job gate owns authorization.
+        env:
+          TRIGGER_COMMENT: ${{ github.event.comment.body }}
+        run: |
+          python3 - <<'PY_REQUEST'
+          import os
+          body = os.environ.get("TRIGGER_COMMENT", "")
+          recognized = False
+          if body and not body.startswith(" ") and not any(c in body for c in "\r\n\t"):
+              tokens = [token for token in body.lower().split(" ") if token]
+              if tokens.pop(0) == "/claude-review":
+                  models = ("opus", "sonnet", "haiku")
+                  efforts = ("low", "medium", "high", "xhigh", "max")
+                  recognized = (len(tokens) <= 2 or tokens[0] in (*models, *efforts)
+                      or tokens[1] in efforts or any(token in ("model", "effort")
+                          or token.startswith("--") or "=" in token for token in tokens))
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("recognized=" + str(recognized).lower() + "\n")
+          if not recognized:
+              print("::notice::Not a recognized manual review request.")
+              raise SystemExit(1)
+          PY_REQUEST
       - name: Resolve PR under review
         # Uses the trusted job's token directly; this step's
         # environment is never passed to or reachable by Claude. Runs
@@ -144,11 +186,17 @@ jobs:
           command: create
       - name: Select review configuration
         id: select
+        # Recognized option errors warn and resolve; unrelated command text fails closed.
+        continue-on-error: true
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
+          TRIGGER_KIND: ${{ github.event_name }}
           TRIGGER_COMMENT: ${{ github.event.comment.body }}
+          WORKFLOW_REVIEW_MODEL: ${{ inputs.model }}
+          WORKFLOW_REVIEW_EFFORT: ${{ inputs.effort }}
         run: python3 "$REVIEW_HELPER" selection
       - name: Validate manual patch authority
+        if: steps.select.outcome == 'success'
         # Validate the captured head/ref against direct branch authority without
         # replacing the captured comparison base when the target tip differs.
         # Admission is required even when fork Check tooling is best-effort.
@@ -170,7 +218,7 @@ jobs:
         # for a fork; resolving the PR and capturing the review snapshot stay
         # required for every PR.
         id: check
-        if: steps.tooling-ready.outcome == 'success'
+        if: steps.tooling-ready.outcome == 'success' && steps.select.outcome == 'success'
         continue-on-error: ${{ steps.resolve.outputs.is_fork == 'true' }}
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
@@ -193,7 +241,13 @@ jobs:
           TRIGGER_LABEL: Manual request
           DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           EXTERNAL_ID: ${{ github.workflow }}/${{ github.run_id }}/${{ github.run_attempt }}
+          SELECTION_CONFIG: ${{ steps.select.outputs.selection_config }}
         run: python3 "$REVIEW_HELPER" create
+      - name: Require valid review configuration
+        if: steps.select.outcome != 'success'
+        run: |
+          echo "::error::Review configuration could not be safely resolved; see Select review configuration."
+          exit 1
       - name: Capture PR review snapshot
         # Builds the review inputs from the resolution above only. Diff comes
         # from GitHub's compare API between the captured SHAs, not a live gh
@@ -217,6 +271,7 @@ jobs:
           TRIGGER_COMMENT: ${{ github.event.comment.body }}
           REQUESTED_MODEL: ${{ steps.select.outputs.requested_model }}
           REQUESTED_EFFORT: ${{ steps.select.outputs.requested_effort }}
+          SELECTION_CONFIG: ${{ steps.select.outputs.selection_config }}
         run: |
           gh api "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA" \
             -H "Accept: application/vnd.github.v3.diff" \
@@ -226,6 +281,7 @@ jobs:
             --jq '.merge_base_commit.sha')
 
           jq --arg requested_model "$REQUESTED_MODEL" --arg requested_effort "$REQUESTED_EFFORT" \
+             --argjson selection_config "$SELECTION_CONFIG" \
              --arg comment "$TRIGGER_COMMENT" \
              --arg base_ref "$BASE_REF" \
              --arg base_sha "$BASE_SHA" \
@@ -234,7 +290,7 @@ jobs:
              --arg runtime_workflow_path "$RUNTIME_WORKFLOW_PATH" \
              --arg head_sha "$HEAD_SHA" \
              --argjson diff_line_count "$DIFF_LINE_COUNT" \
-             '{number, title, body, base_ref: $base_ref, base_sha: $base_sha, head_sha: $head_sha, diff_line_count: $diff_line_count, trigger_comment: $comment, requested_model: $requested_model, requested_effort: $requested_effort, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}' \
+             '{number, title, body, base_ref: $base_ref, base_sha: $base_sha, head_sha: $head_sha, diff_line_count: $diff_line_count, trigger_comment: $comment, requested_model: $requested_model, requested_effort: $requested_effort, selection_config: $selection_config, runtime_repository: $runtime_repository, runtime_sha: $runtime_sha, runtime_workflow_path: $runtime_workflow_path}' \
              "$RUNNER_TEMP/pr-review/pr-raw.json" > "$RUNNER_TEMP/pr-review/request.json"
           rm "$RUNNER_TEMP/pr-review/pr-raw.json"
 
@@ -315,6 +371,8 @@ jobs:
         id: selection
         env:
           REVIEW_HELPER: ${{ steps.selection-helper.outputs.helper-path }}
+          TRIGGER_KIND: ${{ github.event_name }}
+          SELECTION_CONFIG: ${{ needs.start-check.outputs.selection_config }}
           TRIGGER_COMMENT: ${{ github.event.comment.body }}
         run: python3 "$REVIEW_HELPER" selection --metadata "${{ runner.temp }}/pr-review/request.json"
       - name: Validate model authentication
@@ -435,11 +493,13 @@ jobs:
         # non-removable built-in may be offered but not used), every tool call
         # answered, correct inline commit targets, no errored publication,
         # complete captured-input Read coverage, and no subagent/background
-        # activity. Only the verdict and complete bounded publication receipts
-        # leave this job; the transcript is never uploaded or published.
+        # activity. Only the verdict, bounded publication receipts, and model
+        # selection metadata leave this job; the transcript is never uploaded or published.
         id: verify
         env:
           REVIEW_HELPER: ${{ steps.selection-helper.outputs.helper-path }}
+          TRIGGER_KIND: ${{ github.event_name }}
+          SELECTION_CONFIG: ${{ needs.start-check.outputs.selection_config }}
           TRIGGER_COMMENT: ${{ github.event.comment.body }}
           PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
@@ -726,9 +786,14 @@ jobs:
   publish-status:
     name: Publish status
     needs: [start-check, review]
-    # Runs after any review attempt start-check actually began, including a
-    # failed one, but never for a comment start-check's gate skipped.
-    if: always() && needs.start-check.result != 'skipped'
+    # A recognized request still needs a failure Check when start tooling is
+    # unavailable. Parser rejection with available tooling stays suppressed.
+    # Recognition runs before all fallible tooling and never grants ownership.
+    if: >-
+      always() && needs.start-check.result != 'skipped' &&
+      (needs.start-check.outputs.selection_accepted == 'true' ||
+      (needs.start-check.outputs.request_recognized == 'true' &&
+      needs.start-check.outputs.tooling_unavailable == 'true'))
     runs-on: ubuntu-latest
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 22
@@ -763,10 +828,11 @@ jobs:
         # the action reports anything (checkout, inputs, startup) or during
         # publication or completion verification maps to failure, as does a
         # start-check failure after the check run was created.
-        if: steps.tooling-ready.outcome == 'success'
+        if: steps.tooling-ready.outcome == 'success' && needs.start-check.outputs.tooling_unavailable != 'true'
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
           PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
+          SELECTION_CONFIG: ${{ needs.start-check.outputs.selection_config }}
           PRESENTATION_OUTCOME: ${{ needs.start-check.outputs.presentation_outcome }}
           GH_TOKEN: ${{ github.token }}
           RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
@@ -797,14 +863,15 @@ jobs:
           DETAILS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: python3 "$REVIEW_HELPER" finalize
       - name: Record failure without review tooling
-        # Reached when trusted helper tooling is unavailable, so a missing
-        # helper alone cannot leave this run's check in_progress; if GitHub's
+        # Reached when trusted helper tooling is unavailable in either job, so
+        # a missing helper cannot omit the failure Check; if GitHub's
         # API stays unavailable, publishing may still fail and fail the job.
         # Uses only gh and jq from the runner image, with no checkout of its own.
-        if: always() && steps.tooling-ready.outcome != 'success'
+        if: always() && (steps.tooling-ready.outcome != 'success' || needs.start-check.outputs.tooling_unavailable == 'true')
         timeout-minutes: 5
         env:
           PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
+          SELECTION_CONFIG: ${{ needs.start-check.outputs.selection_config }}
           GH_TOKEN: ${{ github.token }}
           RUNTIME_REPOSITORY: ${{ job.workflow_repository }}
           RUNTIME_SHA: ${{ job.workflow_sha }}
@@ -1135,39 +1202,226 @@ jobs:
             if [ "$state" = stale ]; then
               captured_line="$captured_line"$'\n'"**Current baseline:** \`$display_base\` — not reviewed"
             fi
-            # Only the admitted current comment supplies requested settings.
-            # Never recover model observations from the previous status body.
-            selection_payload=$(python3 - <<'PY_SELECTION'
-          import json, os
-          from urllib.parse import quote
+            # Settings come from this attempt's trusted capture. A previous
+            # completion's settings can only come from its generation-bound receipt.
+            selection_payload=$(printf '%s' "$comment" | python3 -c '
+          import json, os, re, sys
+          from urllib.parse import quote, unquote
           owner = json.loads(os.environ["PRESENTATION_OWNER"])
-          body = os.environ.get("TRIGGER_COMMENT", "").lower()
-          commands = {"/claude-review": ("", ""), "/claude-review opus": ("opus", "")}
-          for effort in ("low", "medium", "high", "xhigh", "max"):
-              commands[f"/claude-review effort {effort}"] = ("", effort)
-              commands[f"/claude-review opus effort {effort}"] = ("opus", effort)
-          if owner["kind"] not in ("issue_comment", "pull_request_review_comment") or body not in commands:
-              raise SystemExit(0)
-          model, effort = commands[body]
-          record = {"requested_model": model, "requested_effort": effort,
-                    "generation": owner["generation"], "models": [],
-                    "execution_attempt": None, "model_evidence": "unknown", "observed_effort": None}
-          marker = "<!-- claude-review-runtime:selection:" + quote(json.dumps(record, sort_keys=True, separators=(",", ":")), safe="") + " -->"
-          parts = []
-          if model:
-              parts.append("**Model:** Opus requested; execution model unknown")
-          if effort:
-              parts.append("**Effort:** " + effort.capitalize())
-          print(json.dumps({"marker": marker, "notice": " · ".join(parts)}))
-          PY_SELECTION
-            ) || return 0
-            if [ -n "$selection_payload" ]; then
-              reviewed_markers="$reviewed_markers"$(printf '%s' "$selection_payload" | jq -r '.marker')$'\n'
-              selection_notice=$(printf '%s' "$selection_payload" | jq -r '.notice')
-              [ -z "$selection_notice" ] || message="$message"$'\n\n'"$selection_notice"
-            fi
+          comment = json.load(sys.stdin)
+          aliases = ("opus", "sonnet", "haiku")
+          efforts = ("low", "medium", "high", "xhigh", "max")
+          def unique(pairs):
+              result = {}
+              for key, value in pairs:
+                  if key in result:
+                      raise ValueError("duplicate key")
+                  result[key] = value
+              return result
+          def config(value):
+              keys = {"version", "requested_model", "requested_effort", "model_source", "effort_source", "errors"}
+              if (not isinstance(value, dict) or type(value.get("version")) is not int
+                      or value["version"] not in (1, 2)
+                      or set(value) != keys | ({"diagnostics"} if value["version"] == 2 else set())
+                      or not isinstance(value["errors"], list)
+                      or value["errors"] != [f for f in (("model", "effort", "request") if value["version"] == 2 else ("model", "effort")) if f in value["errors"]]):
+                  raise ValueError("invalid captured configuration")
+              diagnostics = value.get("diagnostics", [])
+              if value["version"] == 2:
+                  if (not isinstance(diagnostics, list) or len(diagnostics) > 8
+                          or any(not isinstance(d, dict) or set(d) != {"field", "source", "reason"}
+                              or d["field"] not in ("model", "effort", "request")
+                              or d["source"] not in ("manual", "repository", "workflow")
+                              or d["reason"] not in ("invalid", "missing", "duplicate", "syntax")
+                              or d["source"] in ("repository", "workflow") and d["reason"] != "invalid"
+                              or d["field"] == "request" and (d["source"] != "manual" or d["reason"] not in ("invalid", "syntax"))
+                              or d["reason"] == "syntax" and d["field"] != "request"
+                              for d in diagnostics)):
+                      raise ValueError("invalid configuration diagnostics")
+                  order = [( ("model", "effort", "request").index(d["field"]),
+                             ("manual", "repository", "workflow").index(d["source"]),
+                             ("invalid", "missing", "duplicate", "syntax").index(d["reason"])) for d in diagnostics]
+                  if (order != sorted(set(order))
+                          or value["errors"] != [f for f in ("model", "effort", "request") if any(d["field"] == f for d in diagnostics)]):
+                      raise ValueError("invalid diagnostic order")
+              for field, allowed, fallback in (("model", aliases, "sonnet"), ("effort", efforts, "medium")):
+                  source, selected = value[field + "_source"], value["requested_" + field]
+                  if value["version"] == 1:
+                      if (selected not in ("", *allowed) or source not in ("manual", "repository", "inherited")
+                              or source == "inherited" and selected
+                              or field in value["errors"] and (source != "repository" or selected)
+                              or source != "inherited" and not selected and field not in value["errors"]):
+                          raise ValueError("invalid configuration source")
+                  elif (selected not in allowed or source not in ("manual", "repository", "workflow", "runtime")
+                          or source == "runtime" and selected != fallback
+                          or any(d["field"] == field and (d["source"] == source or source == "manual")
+                                 for d in diagnostics)
+                          or source == "manual" and any(d["field"] == "request" and d["reason"] == "invalid" for d in diagnostics)):
+                      raise ValueError("invalid resolved configuration")
+              return value
+          MANUAL_USAGE = "**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`"
+          def configuration_notices(config):
+              if not config:
+                  return []
+              if config["version"] == 1:
+                  return (["⚠️ **Invalid configured " + " and ".join(config["errors"])
+                           + "** — see the workflow logs"] if config["errors"] else [])
+              sources = {"manual": "requested", "repository": "configured default",
+                         "workflow": "configured default", "runtime": "built-in default"}
+              def fallback(fields):
+                  labels = [sources[config[field + "_source"]] for field in fields]
+                  values = [config["requested_" + field].capitalize() for field in fields]
+                  if len(fields) == 2 and labels[0] == labels[1]:
+                      shared = "requested settings" if labels[0] == "requested" else labels[0] + "s"
+                      return "using " + shared + ": " + " · ".join(
+                          field.title() + " " + value for field, value in zip(fields, values))
+                  return "using " + " · ".join(
+                      (field.title() + " " if len(fields) > 1 else "") + value + " (" + label + ")"
+                      for field, value, label in zip(fields, values, labels))
+              notices = []
+              for item in config["diagnostics"]:
+                  field = item["field"]
+                  if field == "request":
+                      problem = "Unsupported request syntax" if item["reason"] == "syntax" else "Ambiguous request arguments"
+                      fields = ("model", "effort")
+                  else:
+                      problem = ({"invalid": "Invalid " + field + " requested",
+                                  "missing": "Missing " + field + " value",
+                                  "duplicate": "Duplicate " + field + " selection"}[item["reason"]]
+                                 if item["source"] == "manual" else "Invalid configured " + field)
+                      fields = (field,)
+                  notices.append("⚠️ **" + problem + "** — " + fallback(fields))
+              if any(item["source"] == "manual" for item in config["diagnostics"]):
+                  notices.append(MANUAL_USAGE)
+              return notices
+          def record(value, generation):
+              required = {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
+              optional = {"configuration", "primary_model_evidence", "observed_effort"}
+              if (not isinstance(value, dict) or set(value) - optional != required
+                      or value["generation"] != generation
+                      or value["requested_model"] not in ("", *aliases)
+                      or value["requested_effort"] not in ("", *efforts)
+                      or value.get("observed_effort") is not None
+                      or value["model_evidence"] not in ("unknown", "observed", "mixed")):
+                  raise ValueError("invalid selection receipt")
+              models, attempt = value["models"], value["execution_attempt"]
+              if (not isinstance(models, list) or len(models) > 8
+                      or any(not isinstance(m, str) or not re.fullmatch(r"claude-[a-z0-9-]{1,100}", m) for m in models)
+                      or models != sorted(set(models))
+                      or attempt is not None and (type(attempt) is not int or attempt <= 0)
+                      or bool(models) != (attempt is not None)
+                      or (value["model_evidence"] == "unknown") != (attempt is None)):
+                  raise ValueError("invalid aggregate model evidence")
+              if "configuration" in value:
+                  captured = config(value["configuration"])
+                  if any(captured[k] != value[k] for k in ("requested_model", "requested_effort")):
+                      raise ValueError("selection disagrees with configuration")
+              elif value["requested_model"] not in ("", "opus"):
+                  raise ValueError("invalid legacy selection")
+              primary = value.get("primary_model_evidence")
+              if primary is not None:
+                  if (not isinstance(primary, dict) or set(primary) != {"initialization", "assistant", "attempt"}
+                          or type(primary["attempt"]) is not int or primary["attempt"] <= 0
+                          or attempt is not None and primary["attempt"] != attempt
+                          or not isinstance(primary["assistant"], list) or not 0 < len(primary["assistant"]) <= 8):
+                      raise ValueError("invalid primary model evidence")
+                  observed = primary["assistant"] + ([primary["initialization"]] if primary["initialization"] is not None else [])
+                  if (any(not isinstance(m, str) or not re.fullmatch(r"claude-[a-z0-9-]{1,100}", m) for m in observed)
+                          or primary["assistant"] != sorted(set(primary["assistant"]))):
+                      raise ValueError("invalid primary model identity")
+              return value
+          def details(value):
+              if not value:
+                  return ""
+              primary = value.get("primary_model_evidence")
+              observed = sorted(set(primary["assistant"] + ([primary["initialization"]] if primary["initialization"] else []))) if primary else []
+              model = value["requested_model"].title()
+              if len(observed) == 1 and (not value["requested_model"] or observed[0].startswith("claude-" + value["requested_model"] + "-")):
+                  match = re.match(r"claude-(opus|sonnet|haiku)(?:-|$)", observed[0])
+                  model = match[1].title() if match else "`" + observed[0] + "`"
+              parts = ["**Model:** " + model] if model else []
+              if value["requested_effort"]:
+                  parts.append("**Effort:** " + value["requested_effort"].capitalize())
+              return " · ".join(parts)
+          def previous_mismatch(value):
+              if not value or not value["requested_model"]:
+                  return ""
+              primary = value.get("primary_model_evidence")
+              observed = sorted(set(primary["assistant"] + ([primary["initialization"]] if primary["initialization"] else []))) if primary else []
+              selected = value["requested_model"]
+              if len(observed) != 1 or observed[0].startswith("claude-" + selected + "-"):
+                  return ""
+              match = re.match(r"claude-(opus|sonnet|haiku)-", observed[0])
+              label = match[1].title() if match else "`" + observed[0] + "`"
+              return "⚠️ **Model mismatch:** " + label + " observed"
+          current, marker, warning = None, "", ""
+          try:
+              raw = os.environ.get("SELECTION_CONFIG", "")
+              if raw:
+                  if len(raw) > 2048:
+                      raise ValueError("configuration exceeds bound")
+                  captured = config(json.loads(raw, object_pairs_hook=unique))
+                  if owner["kind"] == "automatic" and ("manual" in (captured["model_source"], captured["effort_source"])
+                          or any(d["source"] == "manual" for d in captured.get("diagnostics", []))):
+                      raise ValueError("automatic manual selection")
+                  current = {k: captured[k] for k in ("requested_model", "requested_effort")}
+                  current["configuration"] = captured
+              else:
+                  # Compatibility with an admitted manual request before capture.
+                  commands = {"/claude-review": ("", "")}
+                  for model in aliases:
+                      commands["/claude-review " + model] = (model, "")
+                  for effort in efforts:
+                      commands["/claude-review " + effort] = ("", effort)
+                      for model in aliases:
+                          commands["/claude-review " + model + " " + effort] = (model, effort)
+                  body = os.environ.get("TRIGGER_COMMENT", "").lower()
+                  if owner["kind"] in ("issue_comment", "pull_request_review_comment") and body in commands:
+                      model, effort = commands[body]
+                      current = {"requested_model": model, "requested_effort": effort}
+              if current is not None:
+                  current.update(generation=owner["generation"], models=[], execution_attempt=None,
+                                 model_evidence="unknown", observed_effort=None)
+                  marker = "<!-- claude-review-runtime:selection:" + quote(json.dumps(current, sort_keys=True, separators=(",", ":")), safe="") + " -->"
+                  warnings = []
+                  if current.get("configuration"):
+                      warnings.extend(configuration_notices(current["configuration"]))
+                  if current["requested_model"]:
+                      warnings.append("⚠️ **Model unknown:** primary evidence missing")
+                  if MANUAL_USAGE in warnings:
+                      warnings.remove(MANUAL_USAGE)
+                      warnings.append(MANUAL_USAGE)
+                  warning = "  \n".join(warnings)
+          except (ValueError, TypeError, KeyError):
+              current, marker, warning = None, "", ""
+          previous = None
+          try:
+              raw_markers = sys.argv[1]
+              generations = re.findall(r"<!-- claude-review-runtime:claude-review-last-reviewed-generation:(.*?) -->", raw_markers)
+              prefix = "<!-- claude-review-runtime:claude-review-last-reviewed-selection:"
+              values = re.findall(re.escape(prefix) + r"(.*?) -->", raw_markers)
+              if (len(generations) == 1 and re.fullmatch(r"[0-9a-f]{64}", generations[0])
+                      and raw_markers.count(prefix) == 1 and len(values) == 1 and len(values[0]) < 16384
+                      and (comment.get("body") or "").count(prefix) == 1):
+                  decoded = json.loads(unquote(values[0]), object_pairs_hook=unique)
+                  previous = record(decoded, generations[0])
+                  if quote(json.dumps(previous, sort_keys=True, separators=(",", ":")), safe="") != values[0]:
+                      previous = None
+          except (ValueError, TypeError, KeyError):
+              pass
+          print(json.dumps({"marker": marker, "notice": details(current), "warning": warning, "previous": details(previous),
+                            "previous_warning": previous_mismatch(previous)}))
+          ' "$reviewed_markers") || return 0
+            selection_notice=$(printf '%s' "$selection_payload" | jq -r '.notice')
+            selection_warning=$(printf '%s' "$selection_payload" | jq -r '.warning')
+            previous_selection=$(printf '%s' "$selection_payload" | jq -r '.previous')
+            previous_warning=$(printf '%s' "$selection_payload" | jq -r '.previous_warning')
+            selection_marker=$(printf '%s' "$selection_payload" | jq -r '.marker')
+            [ -z "$selection_marker" ] || reviewed_markers="$reviewed_markers$selection_marker"$'\n'
+            [ -z "$selection_warning" ] || message="$message"$'\n\n'"$selection_warning"
             metadata="**Current commit:** \`${display_head:0:7}\`$trigger_line$captured_line"
             metadata=${metadata//$'\n'/$'  \n'}
+            [ -z "$selection_notice" ] || metadata="$selection_notice"$'  \n'"$metadata"
             runtime_metadata=$(printf '%s' "$comment" | python3 -c '
           import json, os, re, sys
           comment = json.load(sys.stdin)
@@ -1202,7 +1456,9 @@ jobs:
             fi
             if [ -n "$historical_lines" ]; then
               historical_lines=${historical_lines//$'\n'/$'  \n'}
-              metadata="### Current attempt"$'\n'"$metadata"$'\n\n''### Previous completed review'$'\n'"$historical_lines"
+              [ -z "$previous_selection" ] || historical_lines="$previous_selection"$'  \n'"$historical_lines"
+              [ -z "$previous_warning" ] || historical_lines="$previous_warning"$'  \n'"$historical_lines"
+              metadata="**Current attempt**"$'  \n'"$metadata"$'\n\n''**Previous completed review**'$'  \n'"$historical_lines"
               if [ -n "$previous_runtime" ]; then
                 metadata="$metadata"$'  \n'"$previous_runtime"
               fi

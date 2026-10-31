@@ -42,6 +42,7 @@ STATUS_REVIEWED_RUN_URL_PREFIX = "<!-- claude-review-runtime:claude-review-last-
 _TRIGGER_FROM_LABEL = object()
 ATTEMPT_TRIGGER_PREFIX = "<!-- claude-review-runtime:attempt-trigger:"
 STATUS_REVIEWED_TRIGGER_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-trigger:"
+STATUS_REVIEWED_SELECTION_PREFIX = "<!-- claude-review-runtime:claude-review-last-reviewed-selection:"
 REVIEW_TRIGGERS = {"PR opened for review", "Draft marked ready", "Manual request"}
 STATUS_AUTHOR = "github-actions[bot]"
 INLINE_FAILURE_PREFIX = "<!-- claude-review-runtime:inline-tool-failure:"
@@ -528,49 +529,277 @@ def write_output(name, value):
 
 SELECTION_PREFIX = "<!-- claude-review-runtime:selection:"
 EFFORTS = ("low", "medium", "high", "xhigh", "max")
-MANUAL_COMMANDS = {"/claude-review": ("", ""), "/claude-review opus": ("opus", "")}
+MODELS = ("opus", "sonnet", "haiku")
+MANUAL_COMMANDS = {"/claude-review": ("", "")}
+for _model in MODELS:
+    MANUAL_COMMANDS[f"/claude-review {_model}"] = (_model, "")
 for _effort in EFFORTS:
-    MANUAL_COMMANDS[f"/claude-review effort {_effort}"] = ("", _effort)
-    MANUAL_COMMANDS[f"/claude-review opus effort {_effort}"] = ("opus", _effort)
+    MANUAL_COMMANDS[f"/claude-review {_effort}"] = ("", _effort)
+    for _model in MODELS:
+        MANUAL_COMMANDS[f"/claude-review {_model} {_effort}"] = (_model, _effort)
+
+
+RUNTIME_DEFAULTS = {"model": "sonnet", "effort": "medium"}
+DIAGNOSTIC_FIELDS = ("model", "effort", "request")
+# Repository sources remain readable in immutable receipts from the prior interface.
+# New attempts resolve only workflow inputs; Actions variables are never consulted.
+DIAGNOSTIC_SOURCES = ("manual", "repository", "workflow")
+DIAGNOSTIC_REASONS = ("invalid", "missing", "duplicate", "syntax")
+MANUAL_USAGE = "**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`"
+
+
+def diagnostic_key(item):
+    return (DIAGNOSTIC_FIELDS.index(item["field"]), DIAGNOSTIC_SOURCES.index(item["source"]),
+            DIAGNOSTIC_REASONS.index(item["reason"]))
+
+
+def manual_request(body):
+    """Recognize only short commands; never guess an ambiguous value's field."""
+    if (not isinstance(body, str) or body.startswith(" ") or any(c in body for c in "\r\n\t")
+            or not body):
+        raise ValueError("unsupported manual command")
+    tokens = [token for token in body.lower().split(" ") if token]
+    if tokens.pop(0) != "/claude-review":
+        raise ValueError("unsupported manual command")
+    result = {"requested_model": "", "requested_effort": "", "diagnostics": []}
+    def unsupported_option(token):
+        return token in ("model", "effort") or token.startswith("--") or "=" in token
+    unsupported = any(unsupported_option(token) for token in tokens)
+    if unsupported or len(tokens) > 2:
+        # Recover short positional values only before malformed syntax. Never
+        # reinterpret a removed keyword/flag's payload as a valid override.
+        positional_effort = (len(tokens) > 1 and tokens[1] in EFFORTS
+                             and tokens[0] not in EFFORTS and not unsupported_option(tokens[0]))
+        if tokens[0] in MODELS and (len(tokens) == 1 or tokens[1] not in MODELS):
+            result["requested_model"] = tokens[0]
+            if len(tokens) > 1 and tokens[1] in EFFORTS:
+                result["requested_effort"] = tokens[1]
+        elif tokens[0] in EFFORTS and len(tokens) > 1 and unsupported_option(tokens[1]):
+            result["requested_effort"] = tokens[0]
+        elif positional_effort:
+            result["requested_effort"] = tokens[1]
+        elif not unsupported and tokens[0] not in (*MODELS, *EFFORTS):
+            # Multiword prose is not an invocation of the short grammar.
+            raise ValueError("unsupported manual command")
+        result["diagnostics"].append({"field": "request", "source": "manual", "reason": "syntax"})
+        return result
+    if len(tokens) == 1:
+        token = tokens[0]
+        if token in MODELS:
+            result["requested_model"] = token
+        elif token in EFFORTS:
+            result["requested_effort"] = token
+        else:
+            result["diagnostics"].append({"field": "request", "source": "manual", "reason": "invalid"})
+    elif len(tokens) == 2:
+        model, effort = tokens
+        if model in EFFORTS or effort in MODELS:
+            result["diagnostics"].append({"field": "request", "source": "manual", "reason": "invalid"})
+        else:
+            for field, token, allowed in (("model", model, MODELS), ("effort", effort, EFFORTS)):
+                if token in allowed:
+                    result["requested_" + field] = token
+                else:
+                    result["diagnostics"].append({"field": field, "source": "manual", "reason": "invalid"})
+    return result
 
 
 def manual_selection(body):
-    if not isinstance(body, str) or body.lower() not in MANUAL_COMMANDS:
-        raise ValueError("unsupported manual command")
-    model, effort = MANUAL_COMMANDS[body.lower()]
-    return {"requested_model": model, "requested_effort": effort}
+    parsed = manual_request(body)
+    return {key: parsed[key] for key in ("requested_model", "requested_effort")}
+
+
+def resolve_configuration(body, model="", effort="", *, automatic=False):
+    """Resolve independently to allowlisted execution values, once at capture."""
+    manual = {"diagnostics": []} if automatic else manual_request(body)
+    config = {"version": 2, "errors": [], "diagnostics": list(manual["diagnostics"])}
+    for name, raw, allowed in (("model", model, MODELS), ("effort", effort, EFFORTS)):
+        key = "requested_" + name
+        default = raw.strip().lower() if isinstance(raw, str) else None
+        if manual.get(key):
+            value, source = manual[key], "manual"
+        elif default in allowed:
+            value, source = default, "workflow"
+        else:
+            value, source = RUNTIME_DEFAULTS[name], "runtime"
+            if default != "":
+                config["diagnostics"].append({"field": name, "source": "workflow", "reason": "invalid"})
+        config[key], config[name + "_source"] = value, source
+    config["diagnostics"].sort(key=diagnostic_key)
+    config["errors"] = [name for name in DIAGNOSTIC_FIELDS
+                        if any(item["field"] == name for item in config["diagnostics"])]
+    return config
+
+
+def valid_configuration(config):
+    if not isinstance(config, dict) or type(config.get("version")) is not int:
+        return None
+    version = config["version"]
+    keys = {"version", "requested_model", "requested_effort", "model_source", "effort_source", "errors"}
+    if version == 2:
+        keys.add("diagnostics")
+    if (version not in (1, 2) or set(config) != keys or not isinstance(config["errors"], list)
+            or config["errors"] != [name for name in (DIAGNOSTIC_FIELDS if version == 2 else ("model", "effort"))
+                                    if name in config["errors"]]):
+        return None
+    if version == 2:
+        diagnostics = config["diagnostics"]
+        if (not isinstance(diagnostics, list) or len(diagnostics) > 8
+                or any(not isinstance(item, dict) or set(item) != {"field", "source", "reason"}
+                       or item["field"] not in DIAGNOSTIC_FIELDS or item["source"] not in DIAGNOSTIC_SOURCES
+                       or item["reason"] not in DIAGNOSTIC_REASONS
+                       or item["source"] in ("repository", "workflow") and item["reason"] != "invalid"
+                       or item["field"] == "request" and (item["source"] != "manual" or item["reason"] not in ("invalid", "syntax"))
+                       or item["reason"] == "syntax" and item["field"] != "request"
+                       for item in diagnostics)
+                or diagnostics != sorted(diagnostics, key=diagnostic_key)
+                or len({(item["field"], item["source"], item["reason"]) for item in diagnostics}) != len(diagnostics)
+                or config["errors"] != [name for name in DIAGNOSTIC_FIELDS
+                    if any(item["field"] == name for item in diagnostics)]):
+            return None
+    for name, allowed in (("model", MODELS), ("effort", EFFORTS)):
+        value, source = config["requested_" + name], config[name + "_source"]
+        if version == 2:
+            if (value not in allowed or source not in ("manual", "repository", "workflow", "runtime")
+                    or source == "runtime" and value != RUNTIME_DEFAULTS[name]
+                    or source == "manual" and any(item["field"] == "request" and item["reason"] == "invalid"
+                                                 for item in config["diagnostics"])
+                    or any(item["field"] == name and (item["source"] == source or source == "manual")
+                           for item in config["diagnostics"])):
+                return None
+        else:
+            # Immutable v1 receipts describe the old inherited/fail-closed policy.
+            if value not in ("", *allowed) or source not in ("manual", "repository", "inherited"):
+                return None
+            if name in config["errors"]:
+                if value or source != "repository":
+                    return None
+            elif bool(value) != (source != "inherited"):
+                return None
+    return config
+
+
+def configuration_notices(config):
+    if not config:
+        return []
+    if config["version"] == 1:
+        return (["⚠️ **Invalid configured " + " and ".join(config["errors"])
+                 + "** — see the workflow logs"] if config["errors"] else [])
+    sources = {"manual": "requested", "repository": "configured default",
+               "workflow": "configured default", "runtime": "built-in default"}
+    def fallback(fields):
+        labels = [sources[config[field + "_source"]] for field in fields]
+        values = [config["requested_" + field].capitalize() for field in fields]
+        if len(fields) == 2 and labels[0] == labels[1]:
+            shared = "requested settings" if labels[0] == "requested" else labels[0] + "s"
+            return "using " + shared + ": " + " · ".join(
+                field.title() + " " + value for field, value in zip(fields, values))
+        return "using " + " · ".join(
+            (field.title() + " " if len(fields) > 1 else "") + value + " (" + label + ")"
+            for field, value, label in zip(fields, values, labels))
+    notices = []
+    for item in config["diagnostics"]:
+        field = item["field"]
+        if field == "request":
+            problem = "Unsupported request syntax" if item["reason"] == "syntax" else "Ambiguous request arguments"
+            fields = ("model", "effort")
+        else:
+            problem = ({"invalid": "Invalid " + field + " requested",
+                        "missing": "Missing " + field + " value",
+                        "duplicate": "Duplicate " + field + " selection"}[item["reason"]]
+                       if item["source"] == "manual" else "Invalid configured " + field)
+            fields = (field,)
+        notices.append("⚠️ **" + problem + "** — " + fallback(fields))
+    if any(item["source"] == "manual" for item in config["diagnostics"]):
+        notices.append(MANUAL_USAGE)
+    return notices
+
+
+def configuration_from_env(owner=None):
+    if env("SELECTION_CONFIG"):
+        config = valid_configuration(json.loads(env("SELECTION_CONFIG"), object_pairs_hook=unique_json_object))
+        if config is None:
+            raise ValueError("captured review configuration is invalid")
+        return config
+    return resolve_configuration(
+        env("TRIGGER_COMMENT"), env("WORKFLOW_REVIEW_MODEL"), env("WORKFLOW_REVIEW_EFFORT"),
+        automatic=(owner["kind"] == "automatic" if owner else
+                   env("TRIGGER_KIND") == "automatic" or not env("TRIGGER_COMMENT")))
 
 
 def cmd_selection(metadata=None):
     """Only allowlisted constants can reach the action's argument parser."""
     try:
-        selection = manual_selection(env("TRIGGER_COMMENT"))
         if metadata:
             with open(metadata, encoding="utf-8") as source:
                 captured = json.load(source, object_pairs_hook=unique_json_object)
-            if (manual_selection(captured.get("trigger_comment")) != selection
-                    or any(captured.get(k) != v for k, v in selection.items())):
-                raise ValueError("captured selection disagrees with the accepted request")
-            if selection["requested_model"] and env("ANTHROPIC_MODEL") not in ("", "opus"):
-                raise ValueError("ANTHROPIC_MODEL conflicts with the requested Opus override")
-        for key, value in selection.items():
-            write_output(key, value)
-        write_output("model_args", "--model opus" if selection["requested_model"] else "")
-        effort = selection["requested_effort"]
-        write_output("effort_args", "--effort " + effort if effort else "")
+            if not isinstance(captured, dict):
+                raise ValueError("captured review snapshot is invalid")
+            if "selection_config" in captured:
+                config = valid_configuration(captured["selection_config"])
+                if config is None:
+                    raise ValueError("captured review configuration is invalid")
+                if (env("SELECTION_CONFIG") and configuration_from_env() != config
+                        or any(key in captured and captured[key] != config[key]
+                               for key in ("requested_model", "requested_effort"))):
+                    raise ValueError("captured review configuration disagrees across job inputs")
+            else:
+                # Compatibility with the original manual snapshot format.
+                if env("TRIGGER_COMMENT").lower() not in MANUAL_COMMANDS:
+                    raise ValueError("legacy snapshot contains an unsupported manual command")
+                legacy = manual_selection(env("TRIGGER_COMMENT"))
+                config = {"version": 1, "errors": [], **legacy,
+                          **{name + "_source": "manual" if legacy["requested_" + name] else "inherited"
+                             for name in ("model", "effort")}}
+                if any(captured.get(k) != config[k] for k in ("requested_model", "requested_effort")):
+                    raise ValueError("captured selection disagrees with the accepted request")
+            if env("TRIGGER_KIND") == "automatic":
+                if (any(config[name + "_source"] == "manual" for name in ("model", "effort"))
+                        or any(item["source"] == "manual" for item in config.get("diagnostics", []))):
+                    raise ValueError("automatic configuration contains a manual override")
+            else:
+                parsed = manual_request(env("TRIGGER_COMMENT"))
+                manual = manual_selection(env("TRIGGER_COMMENT"))
+                if manual_request(captured.get("trigger_comment")) != parsed:
+                    raise ValueError("captured selection disagrees with the accepted request")
+                if config["version"] == 2 and [item for item in config["diagnostics"]
+                        if item["source"] == "manual"] != parsed["diagnostics"]:
+                    raise ValueError("captured diagnostics disagree with the accepted request")
+                for name in ("model", "effort"):
+                    value = manual["requested_" + name]
+                    if ((config[name + "_source"] == "manual") != bool(value)
+                            or value and config["requested_" + name] != value):
+                        raise ValueError("captured selection disagrees with the accepted request")
+        else:
+            config = configuration_from_env()
+        if config["version"] == 1 and config["errors"]:
+            raise ValueError("legacy captured review configuration contains invalid settings")
+        for name in ("model", "effort"):
+            write_output("requested_" + name, config["requested_" + name])
+        write_output("selection_config", json.dumps(config, separators=(",", ":")))
+        write_output("model_args", "--model " + config["requested_model"] if config["requested_model"] else "")
+        write_output("effort_args", "--effort " + config["requested_effort"] if config["requested_effort"] else "")
+        for notice in configuration_notices(config):
+            print("::warning::" + notice)
+        if metadata:
+            for key, field in (("ANTHROPIC_MODEL", "model"), ("CLAUDE_CODE_EFFORT_LEVEL", "effort")):
+                selected = config["requested_" + field]
+                if selected and env(key) not in ("", selected):
+                    raise ValueError(key + " conflicts with the selected " + field)
         return 0
-    except (OSError, ValueError, TypeError) as error:
+    except (OSError, ValueError, TypeError, KeyError) as error:
         print(f"::error::Cannot select review configuration: {error}")
         return 1
 
 
 def selection_record(owner, execution=None):
-    if not owner or owner["kind"] == "automatic":
+    if not owner:
         return None
-    requested = manual_selection(env("TRIGGER_COMMENT"))
+    config = configuration_from_env(owner)
+    requested = {key: config[key] for key in ("requested_model", "requested_effort")}
     record = {**requested, "generation": owner["generation"], "models": [],
               "execution_attempt": None, "model_evidence": "unknown", "observed_effort": None,
-              "primary_model_evidence": None}
+              "primary_model_evidence": None, "configuration": config}
     if execution:
         try:
             with open(execution, encoding="utf-8") as source:
@@ -639,17 +868,21 @@ def valid_primary_model_evidence(evidence):
 
 
 def valid_selection(record, owner):
-    if (not isinstance(record, dict) or not owner or owner["kind"] == "automatic"
-            or set(record) - {"observed_effort", "primary_model_evidence"} != {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
+    if (not isinstance(record, dict) or not owner
+            or set(record) - {"observed_effort", "primary_model_evidence", "configuration"} != {"generation", "requested_model", "requested_effort", "models", "execution_attempt", "model_evidence"}
             or record.get("observed_effort") is not None
             or record["generation"] != owner["generation"]
-            or record["requested_model"] not in ("", "opus")
+            or record["requested_model"] not in ("", *MODELS)
             or record["requested_effort"] not in ("", *EFFORTS)
             or record["model_evidence"] not in ("unknown", "observed", "mixed")
             or not isinstance(record["models"], list) or len(record["models"]) > 8
             or any(not isinstance(m, str) or not re.fullmatch(r"claude-[a-z0-9-]{1,100}", m) for m in record["models"])
             or record["models"] != sorted(set(record["models"]))):
         return None
+    if "configuration" in record:
+        config = valid_configuration(record["configuration"])
+        if config is None or any(record[key] != config[key] for key in ("requested_model", "requested_effort")):
+            return None
     attempt = record["execution_attempt"]
     if attempt is not None and (type(attempt) is not int or attempt <= 0):
         return None
@@ -673,44 +906,84 @@ def current_selection(owner, comment=None):
     try:
         if env("SELECTION_EVIDENCE"):
             return valid_selection(json.loads(env("SELECTION_EVIDENCE"), object_pairs_hook=unique_json_object), owner)
-        if env("TRIGGER_COMMENT"):
+        if env("SELECTION_CONFIG") or env("TRIGGER_COMMENT"):
             return selection_record(owner)
-        if comment:
-            body = comment.get("body", "")
-            matches = re.findall(re.escape(SELECTION_PREFIX) + r"(.*?) -->", body)
-            if body.count(SELECTION_PREFIX) == 1 and len(matches) == 1:
-                return valid_selection(json.loads(unquote(matches[0]), object_pairs_hook=unique_json_object), owner)
+        return recorded_selection(owner, comment)
     except (ValueError, TypeError):
         pass
     return None
 
 
-def selection_notice(record, *, running=False):
+def recorded_selection(owner, comment):
+    """Read persisted attempt evidence without consulting a newer request's env."""
+    body = (comment or {}).get("body", "")
+    matches = re.findall(re.escape(SELECTION_PREFIX) + r"(.*?) -->", body)
+    try:
+        if body.count(SELECTION_PREFIX) == 1 and len(matches) == 1:
+            return valid_selection(json.loads(unquote(matches[0]), object_pairs_hook=unique_json_object), owner)
+    except (ValueError, TypeError):
+        pass
+    return None
+
+
+def primary_selection_models(record):
+    primary = record.get("primary_model_evidence")
+    return sorted(set(primary["assistant"] + ([primary["initialization"]]
+                      if primary["initialization"] else []))) if primary else []
+
+
+def model_label(model, *, include_version=False):
+    family = re.match(r"claude-(opus|sonnet|haiku)-", model)
+    if family and not include_version:
+        return family[1].title()
+    match = re.fullmatch(r"claude-(opus|sonnet|haiku)-(\d+)-(\d+)", model)
+    return (match[1].title() + " " + match[2] + "." + match[3]) if match else inline_code(model)
+
+
+def selection_details(record):
+    """Routine settings are informational; effort is never claimed as observed."""
     if not record:
         return []
-    parts = []
-    if record["requested_model"]:
-        primary = record.get("primary_model_evidence")
-        models = sorted(set(primary["assistant"] + ([primary["initialization"]]
-                        if primary["initialization"] else []))) if primary else []
-        def label(model):
-            match = re.fullmatch(r"claude-(opus|sonnet|haiku)-(\d+)-(\d+)", model)
-            return (match[1].title() + " " + match[2] + "." + match[3]) if match else inline_code(model)
-        if not models and running:
-            value = "Opus"
-        elif not models:
-            value = "Opus selected; primary model evidence missing"
-        elif len(models) > 1:
-            value = "Opus selected; primary model evidence ambiguous (" + ", ".join(label(m) for m in models) + ")"
-        elif not models[0].startswith("claude-opus-"):
-            value = "Opus selected; primary model mismatch (" + label(models[0]) + " observed)"
-        else:
-            value = "Opus"
-        prefix = "⚠️ " if value != "Opus" else ""
-        parts.append(prefix + "**Model:** " + value)
+    models = primary_selection_models(record)
+    selected = record["requested_model"]
+    model = selected.title() if selected else None
+    if len(models) == 1 and (not selected or models[0].startswith("claude-" + selected + "-")):
+        family = re.match(r"claude-(opus|sonnet|haiku)(?:-|$)", models[0])
+        model = family[1].title() if family else model_label(models[0])
+    parts = ["**Model:** " + model] if model else []
     if record["requested_effort"]:
         parts.append("**Effort:** " + record["requested_effort"].capitalize())
     return [" · ".join(parts)] if parts else []
+
+
+def selection_notice(record, *, running=False, mismatch_only=False):
+    """Return current diagnostics, or only an evidenced model mismatch for history."""
+    if not record:
+        return []
+    notices = [] if mismatch_only else configuration_notices(record.get("configuration"))
+    usage = notices.pop() if notices and notices[-1] == MANUAL_USAGE else None
+    selected = record["requested_model"]
+    models = primary_selection_models(record)
+    if mismatch_only and (not selected or len(models) != 1
+                          or models[0].startswith("claude-" + selected + "-")):
+        return []
+    if not models and selected and not running:
+        problem, evidence = "Model unknown", "primary evidence missing"
+    elif len(models) > 1 and selected:
+        labels = [model_label(model) for model in models]
+        # Versions distinguish contradictory evidence from the same family.
+        labels = [model_label(model, include_version=labels.count(label) > 1)
+                  for model, label in zip(models, labels)]
+        problem, evidence = "Model ambiguous", ", ".join(labels) + " observed"
+    elif models and selected and not models[0].startswith("claude-" + selected + "-"):
+        problem, evidence = "Model mismatch", model_label(models[0]) + " observed"
+    else:
+        problem = None
+    if problem:
+        notices.append("⚠️ **" + problem + ":** " + evidence)
+    if usage:
+        notices.append(usage)
+    return notices
 
 
 def inline_code(value):
@@ -1053,12 +1326,14 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             "Review completion cannot be established because authoritative Check publication is unavailable. "
             "Consult the workflow run and inline review threads."
         )
+    selection = valid_selection(selection, owner)
     if state in ("success", "action_required"):
         last_review = (head_sha, base_ref, state)
         last_review_details = {"base_sha": env("BASE_SHA"), "run_url": env("DETAILS_URL"),
                                "completed_at": completed_at,
                                "trigger": review_trigger(trigger_label, owner),
-                               "generation": owner["generation"] if owner else None, "runtime": runtime}
+                               "generation": owner["generation"] if owner else None, "runtime": runtime,
+                               "selection": selection}
     last_review_details = last_review_details or {}
     inline_reason = reason in (STATUS_REASONS["inline_tool_failed"],
                                stale_status_reason(STATUS_REASONS["inline_tool_failed"]))
@@ -1140,6 +1415,10 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         generation = last_review_details.get("generation")
         if isinstance(generation, str) and re.fullmatch(r"[0-9a-f]{64}", generation):
             lines.append(f"{STATUS_REVIEWED_GENERATION_PREFIX}{generation} -->")
+            historical_selection = valid_selection(last_review_details.get("selection"), {"generation": generation})
+            if historical_selection:
+                lines.append(STATUS_REVIEWED_SELECTION_PREFIX + quote(json.dumps(
+                    historical_selection, sort_keys=True, separators=(",", ":")), safe="") + " -->")
     started = owner_start_time(owner)
     active = state == "in_progress" or (state == "stale" and owner_running)
     incomplete = state in ("failure", "publication_incomplete") or (
@@ -1195,7 +1474,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
     notice = selection_notice(selection, running=state == "in_progress" or owner_running is True)
-    lines += ["", *notice] if notice else []
+    lines += ["", "  \n".join(notice)] if notice else []
     if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
         lines += ["", messages[state]]
     if base_advanced:
@@ -1306,14 +1585,23 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                 metadata.insert(0, f"**[Attempt]({attempt_link}) status:** Not recorded")
     if not show_review and runtime_used_line(runtime):
         metadata.append(runtime_used_line(runtime))
+    if not show_review:
+        metadata[0:0] = selection_details(selection)
     if last_review and runtime_used_line(last_review_details.get("runtime")):
         review_metadata.append(runtime_used_line(last_review_details["runtime"]))
+    if last_review:
+        historical_selection = valid_selection(last_review_details.get("selection"),
+                                               {"generation": last_review_details.get("generation")})
+        historical_metadata = (selection_notice(historical_selection, mismatch_only=True)
+                               if history_in_details else [])
+        historical_metadata += selection_details(historical_selection)
+        review_metadata[0:0] = historical_metadata
     if metadata:
         if history_in_details:
-            lines += ["### Current attempt"]
+            lines += ["**Current attempt**  "]
         lines += ["  \n".join(metadata), ""]
     if previous:
-        lines += ["### Previous completed review", "  \n".join(previous), ""]
+        lines += ["**Previous completed review**  ", "  \n".join(previous), ""]
     lines += ["</details>"]
     return "\n".join(lines)
 
@@ -1415,6 +1703,27 @@ def last_completed_review_details(comment):
         runtime = status_runtime(comment, owner, previous=details["generation"] != owner["generation"])
         if runtime:
             details["runtime"] = runtime
+        selections = re.findall(re.escape(STATUS_REVIEWED_SELECTION_PREFIX) + r"(.*?) -->", body)
+        try:
+            if body.count(STATUS_REVIEWED_SELECTION_PREFIX) == 1 and len(selections) == 1:
+                raw = selections[0]
+                record = json.loads(unquote(raw), object_pairs_hook=unique_json_object)
+                record = valid_selection(record, {"generation": details["generation"]})
+                if record and quote(json.dumps(record, sort_keys=True, separators=(",", ":")), safe="") == raw:
+                    details["selection"] = record
+            elif (not body.count(STATUS_REVIEWED_SELECTION_PREFIX)
+                  and details["generation"] == owner["generation"]
+                  and not status_owner_running(comment)
+                  and (status_state(comment) in ("success", "action_required")
+                       or status_state(comment) == "stale" and terminal_status_reason(comment, owner) in (
+                           STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"]))):
+                # Old completed statuses carried their selection only in the
+                # current receipt. Never use it for another generation.
+                record = recorded_selection(owner, comment)
+                if record:
+                    details["selection"] = record
+        except (ValueError, TypeError):
+            pass
     return details
 
 
@@ -1860,7 +2169,8 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                 last_review = (head_sha, base_ref, state)
                 last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL"),
                                        "completed_at": completed_at, "generation": owner["generation"],
-                                       "trigger": review_trigger(trigger_label, owner), "runtime": runtime}
+                                       "trigger": review_trigger(trigger_label, owner), "runtime": runtime,
+                                       "selection": current_selection(owner, existing)}
             state = "stale"
             reason = stale_status_reason(reason)
             head_sha, base_ref = live[:2]
@@ -1897,7 +2207,8 @@ def best_effort_status(head_sha, state, *, check_available=True, acquire=False, 
                     last_review = (owner["head"], owner["base_ref"], state)
                     last_review_details = {"base_sha": owner["base"], "run_url": env("DETAILS_URL"),
                                            "completed_at": completed_at, "generation": owner["generation"],
-                                           "trigger": review_trigger(trigger_label, owner), "runtime": runtime}
+                                           "trigger": review_trigger(trigger_label, owner), "runtime": runtime,
+                                           "selection": current_selection(owner, existing)}
                 state = "stale"
                 reason = stale_status_reason(reason)
                 head_sha, base_ref = publication_patch[:2]
@@ -2014,8 +2325,9 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     # A fixed receipt describes this captured review; live drift belongs in the aggregate status.
     reviewed = f"[Reviewed]({details_url})" if details_url else "Reviewed"
     notice = selection_notice(selection)
-    settings = "\n\n" + "\n".join(notice) if notice else ""
-    metadata = [f"**{reviewed} against:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
+    settings = "\n\n" + "  \n".join(notice) if notice else ""
+    metadata = selection_details(selection) + [
+        f"**{reviewed} against:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
     observed_tip = ""
     if observed_base_sha and observed_base_sha != base_sha:
         metadata.append(f"**Observed target commit:** {commit_link(observed_base_sha, repo)} on {inline_code(base_ref)}")

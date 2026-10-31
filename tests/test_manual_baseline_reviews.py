@@ -271,11 +271,11 @@ class ManualBaselineTests(unittest.TestCase):
     def test_selection_survives_standing_status_receipt_and_stale_refresh(self):
         for model, expected in (
                 ('claude-opus-5-5', '**Model:** Opus · **Effort:** High'),
-                ('claude-sonnet-4-6', 'primary model mismatch (Sonnet 4.6 observed)'),
-                (None, 'primary model evidence missing')):
+                ('claude-sonnet-4-6', 'Model mismatch:** Sonnet observed'),
+                (None, 'primary evidence missing')):
             with self.subTest(model=model):
                 self.reset_manual()
-                os.environ['TRIGGER_COMMENT'] = '/claude-review opus effort high'
+                os.environ['TRIGGER_COMMENT'] = '/claude-review opus high'
                 owner = self.start()
                 self.assertIn('**Model:** Opus · **Effort:** High', self.api.status['body'])
                 record = check.selection_record(owner)
@@ -289,19 +289,45 @@ class ManualBaselineTests(unittest.TestCase):
                 self.notice()
                 self.assertEqual(len(self.api.notices), 1)
                 for body in (self.api.status['body'], self.api.notices[0]['body']):
-                    self.assertIn(expected, body.split('<details>')[0])
+                    main, details = body.split('<details>', 1)
+                    self.assertIn(expected, details if model == 'claude-opus-5-5' else main)
+                    self.assertIn('**Effort:** High', details)
+                    self.assertNotIn('**Effort:**', main)
                     self.assertNotIn('Haiku', body.split('<details>')[0])
                     self.assertNotIn('**Observed effort:**', body)
                 receipt = self.api.notices[0]['body'].split('<details>')[0]
-                notice = check.selection_notice(record)[0]
-                self.assertIn('**Reviewed commit:** ' + check.commit_link(HEAD, REPO)
-                              + '\n\n' + notice + '\n\n', receipt)
+                self.assertIn('**Reviewed commit:** ' + check.commit_link(HEAD, REPO), receipt)
+                for notice in check.selection_notice(record):
+                    self.assertIn(notice, receipt)
                 os.environ.pop('TRIGGER_COMMENT')
                 os.environ.pop('SELECTION_EVIDENCE')
                 self.api.base_tip = OTHER
                 check.cmd_stale()
                 self.assertIn(expected, self.api.status['body'])
                 self.assertEqual(check.current_selection(owner, self.api.status), record)
+
+    def test_completed_settings_follow_captured_patch_when_head_or_ref_moves_before_finish(self):
+        for movement in ("head", "ref"):
+            for state in ("success", "action_required"):
+                with self.subTest(movement=movement, state=state):
+                    self.reset_manual()
+                    os.environ['TRIGGER_COMMENT'] = '/claude-review opus high'
+                    owner = self.start()
+                    record = check.selection_record(owner)
+                    record.update(models=['claude-opus-5-5'], model_evidence='observed', execution_attempt=1,
+                                  primary_model_evidence={'initialization': 'claude-opus-5-5',
+                                                          'assistant': ['claude-opus-5-5'], 'attempt': 1})
+                    os.environ['SELECTION_EVIDENCE'] = json.dumps(record)
+                    if movement == "head":
+                        self.api.pr['head']['sha'] = OTHER
+                    else:
+                        self.api.pr['base']['ref'] = 'release'
+                    self.finish(state)
+                    self.assertEqual(check.status_state(self.api.status), 'stale')
+                    details = self.api.status['body'].split('<details>', 1)[1]
+                    self.assertIn('**Model:** Opus · **Effort:** High', details)
+                    self.assertEqual(check.last_completed_review_details(self.api.status)['selection'], record)
+                    os.environ.pop('SELECTION_EVIDENCE')
 
     def test_status_refresh_cannot_recreate_removed_clean_signals(self):
         owner = self.start()
