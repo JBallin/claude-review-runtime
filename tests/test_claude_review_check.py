@@ -2375,7 +2375,7 @@ class ManualCompletionTests(ScriptTestCase):
             f"[`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`  \n"
             "**Runtime used:** [`example/review-runtime@fffffff`]"
             f"(https://github.com/example/review-runtime/blob/{'f' * 40}/.github/workflows/claude-review.yml)"
-            "\n\n</details>"
+            "  \n**Turns:** unavailable\n\n</details>"
         ))
         visible, details = body.split("<details>", 1)
         self.assertIn(f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})", visible)
