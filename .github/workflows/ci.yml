@@ -7,9 +7,21 @@ permissions:
 jobs:
   validation:
     name: Validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
+      - name: Report runner image and tools
+        run: |
+          printf 'ImageOS=%s\nImageVersion=%s\n' "${ImageOS:-unknown}" "${ImageVersion:-unknown}"
+          cat /etc/os-release
+          uname -m
+          for tool in python3 bash git gh jq curl timeout; do
+            printf '\n%s: ' "$tool"
+            command -v "$tool"
+            if ! "$tool" --version; then
+              "$tool" --help
+            fi
+          done
       - name: Check out candidate
         # v7.0.1
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

@@ -62,7 +62,7 @@ jobs:
       github.event.comment.author_association) &&
       (github.event_name == 'pull_request_review_comment' ||
       github.event.issue.pull_request)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 14
     # PR comments need pull-requests: write; top-level PR reactions use the issue endpoint and need issues: write.
@@ -278,7 +278,7 @@ jobs:
       contents: read
       pull-requests: read
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     env:
       # Generous usage backstop, not a precise spending guarantee.
@@ -751,7 +751,7 @@ jobs:
     # Runs after any review attempt start-check actually began, including a
     # failed one, but never for a comment start-check's gate skipped.
     if: always() && needs.start-check.result != 'skipped'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 22
     # PR comments need pull-requests: write; top-level PR reactions use the issue endpoint and need issues: write.

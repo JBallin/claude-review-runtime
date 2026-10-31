@@ -50,7 +50,7 @@ jobs:
       !github.event.pull_request.draft &&
       github.actor != 'dependabot[bot]' &&
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 14
     # PR comments need pull-requests: write; top-level PR reactions use the issue endpoint and need issues: write.
@@ -182,7 +182,7 @@ jobs:
       contents: read
       pull-requests: read
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     outputs:
       execution_diagnostic: ${{ steps.diagnose.outputs.execution_diagnostic }}
@@ -616,7 +616,7 @@ jobs:
     # Runs after any review attempt start-check actually began, including a
     # failed one, but never for an event start-check's gate skipped.
     if: always() && needs.start-check.result != 'skipped'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 18
     # PR comments need pull-requests: write; top-level PR reactions use the issue endpoint and need issues: write.
