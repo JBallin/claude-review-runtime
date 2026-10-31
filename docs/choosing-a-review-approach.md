@@ -3,124 +3,93 @@
 *Official sources checked October 31, 2026. Runtime behavior describes this
 revision; consumers run the revision pinned in their workflows.*
 
-Claude Review Runtime is for engineers and teams that want a reusable GitHub
-review workflow with an explicit record of what was reviewed and whether the
-review completed. Choose it when that contract justifies maintaining the
-workflows.
+Claude Review Runtime helps individuals and teams track which changes Claude
+reviewed and whether the review completed. Choose it when that evidence is
+useful enough to justify operating a GitHub review workflow.
 
 ## Quick choice
 
 | Approach | A good fit when you want | What you operate |
 | --- | --- | --- |
-| Anthropic's managed Code Review | Hosted PR reviews with organization controls | App access, review settings, instructions and budget |
-| Official Claude Code Action directly | Your own prompts, tools, triggers or broader automation | Workflow configuration, authentication, dependencies and result handling |
-| Claude Review Runtime | Packaged captured-patch verification and review history | Three pinned caller workflows, credentials, upgrades and recovery |
+| [Anthropic's managed Code Review](https://code.claude.com/docs/en/code-review) | Hosted PR reviews with organization controls | App access, review settings, instructions and budget |
+| [Official Claude Code Action directly](https://code.claude.com/docs/en/github-actions) | Your own prompts, tools, triggers or broader automation | Workflow configuration, authentication, dependencies and result handling |
+| [Claude Review Runtime](consumer-workflows.md#first-review-checklist) | Packaged captured-patch verification and review history | Three pinned caller workflows, credentials, upgrades and recovery |
 
-[Managed Code Review](https://code.claude.com/docs/en/code-review) is available
-to eligible Team and Enterprise organizations. Reviews run on Anthropic
-infrastructure using multiple agents and finding verification, without repository
-workflow files. An organization Owner enables it with Claude GitHub App access.
-Owners choose review depth and frequency; the service chooses models, with no
-admin model selector. Repository instructions customize what it flags. See the
+Managed Code Review runs on Anthropic infrastructure for eligible Team and
+Enterprise organizations, without repository workflow files. An Owner enables
+it with Claude GitHub App access. You can choose review depth and frequency,
+customize review instructions and set a spending limit; the service chooses
+models. Checks and finding retention are not unique to Runtime. See the
 [setup guide](https://code.claude.com/docs/en/code-review-setup) and
 [review customization](https://code.claude.com/docs/en/code-review-customize).
 
-Managed review already posts inline findings and a Check, retains open findings,
-and can reuse earlier results when the effective diff is unchanged under its
-documented conditions. Its own Check never fails, but its machine-readable
-severity counts and documented missing-result handling let you build a separate
-CI gate. Checks and finding retention are not exclusive Runtime capabilities.
-See [managed results and gating](https://code.claude.com/docs/en/code-review-pull-requests).
-
-The [official Action](https://code.claude.com/docs/en/github-actions) runs Claude
-on your GitHub Actions runner. Use it directly when you need control over the
-prompt, model, tools or events, or want implementation automation alongside
-reviews. It supports API keys, subscription OAuth and cloud-provider routes.
-Upstream also documents [Workload Identity Federation and custom GitHub Apps](https://github.com/anthropics/claude-code-action/blob/main/docs/setup.md).
-Those upstream options are not automatically Runtime capabilities.
-
-For occasional reviews, [Claude Code's local `/code-review` command](https://code.claude.com/docs/en/code-review-local)
-may be enough. A local session still uses remote model inference; it does not
-mean offline operation. [Datadog's code review action](https://github.com/DataDog/code-review-action)
-is another reusable workflow to consider if multiple model providers are a
-priority.
+The official Action runs Claude on your GitHub Actions runner. Use it directly
+for custom prompts, models, tools or triggers, or broader implementation
+automation. Its [authentication options](https://github.com/anthropics/claude-code-action/blob/main/docs/setup.md)
+include API keys, subscription OAuth, workload identity federation and custom
+GitHub Apps; cloud-provider routes are also available. Those options are not
+automatically Runtime capabilities. [Datadog's code review action](https://github.com/DataDog/code-review-action)
+is another reusable workflow if multiple model providers are a priority.
 
 ## Runtime's contract and maintenance
 
-Runtime builds on the official Action and packages a particular review contract:
+Runtime builds on the official Action and packages these review safeguards:
 
-- **Captured identity:** the review records its head, base, merge base and
-  executing Runtime revision. The checkout and inline-finding targets use the
-  captured head rather than silently following later PR changes.
-- **Verified execution:** a clean result requires verified foreground completion,
-  successful reads of every captured metadata and diff line, and confirmed
-  publication of each attempted inline finding. Missing or ambiguous evidence
-  cannot establish clean completion.
-- **Retained history:** recorded findings remain findings for the same PR, head
-  and merge base across reruns and recovery. The exact-head `Claude Review`
-  Check is authoritative; comments and reactions present its progress and
-  history. Status refreshes explain stale coverage without reviewing new code
-  or transferring an old Check to a new head.
+- **Captured identity:** records the head, base, merge base and executing Runtime
+  revision; the checkout and inline findings target the captured head.
+- **Verified completion:** requires foreground completion, successful reads of
+  every captured metadata and diff line, and confirmed publication of every
+  attempted inline finding. Missing or ambiguous evidence cannot establish a
+  clean result.
+- **Retained history:** preserves findings for the same PR, head and merge base
+  across reruns and recovery. The exact-head `Claude Review` Check is
+  authoritative; comments and reactions show progress and history. Status
+  refreshes explain stale coverage without reviewing new changes or transferring
+  an old Check to a new head.
 
-These checks establish execution and evidence properties, not exhaustive review
-coverage or superior bug detection. A clean review is not merge approval.
-See the [review contract](review-guide.md#trust-and-review-results).
+Runtime verifies that the review completed on the captured changes; it doesn’t
+guarantee every bug was found. See the
+[review contract](review-guide.md#trust-and-review-results).
 
-Installation means adding **three separate caller workflows**: automatic review,
-manual review and stale-status refresh. Pin all three to one reviewed, immutable
-40-character Runtime commit from the appropriate authentication branch. Install
-the Claude GitHub App and save the model credential as an Actions secret; the
-status caller needs no model secret. Review and merge the caller installation,
-then validate it on a separate eligible PR. The
-[consumer setup guide](consumer-workflows.md#first-review-checklist) owns the
-workflow examples and permissions.
+Install three separate caller workflows for automatic review, manual review
+and stale-status refresh, pinning all three to one reviewed, immutable
+40-character Runtime commit. You also need Claude GitHub App access and a model
+credential stored as an Actions secret. `main` uses subscription OAuth; API keys
+require the separate `api-key` branch, which has not been live-API-tested. Follow
+the [setup checklist](consumer-workflows.md#first-review-checklist) for compatible
+pins, permissions and validation.
 
-`main` requires `CLAUDE_CODE_OAUTH_TOKEN`, obtained through an eligible Claude
-subscription. API-key authentication uses the separate `api-key` branch and
-`ANTHROPIC_API_KEY`; that path has not been live-API-tested. Runtime does not
-support custom GitHub authentication or expose upstream federation/provider
-configuration.
-OAuth uses the token creator's subscription. For a secret shared across
-repositories, [upstream recommends an API key](https://code.claude.com/docs/en/github-actions#set-up-for-an-organization)
-rather than OAuth. Runtime's API-key path still requires its separate branch
-and remains unvalidated by live API testing; upstream's recommendation does not
-establish validated Runtime support.
+Someone must maintain credentials, App access and coherent caller pins, review
+upgrades, and investigate incomplete runs.
 
-Someone must maintain credential validity, App access and coherent caller pins,
-review upgrades, and investigate incomplete runs. A green Actions job alone does
-not prove review completion. New patches need fresh review when required;
-status-only refresh never runs Claude. Configure caller events deliberately,
-including target-branch push refreshes where needed.
+Runtime is GitHub-specific, supporting GitHub.com with GitHub-hosted Ubuntu
+runners; GitLab would require a port. See [validation limits](validation.md)
+for unvalidated configurations. Choose managed review if you do not want to own
+workflows, or the Action directly for options Runtime does not expose. Check
+[data handling](https://code.claude.com/docs/en/data-usage) against your needs;
+runner location alone does not establish privacy or compliance suitability.
 
-Choose another approach if you want managed operation or need unsupported
-authentication or deployment options. Runtime's supported platform is GitHub.com
-with GitHub-hosted Ubuntu runners. Other-owner deployments, forks and GitHub
-Enterprise Server remain unvalidated; see [validation limits](validation.md).
-Neither runner location nor Runtime's verification contract establishes privacy
-or compliance superiority. Check each option's [data handling](https://code.claude.com/docs/en/data-usage) and eligibility
-against your requirements.
+Runtime is open source, and issues and contributions are welcome. You can
+inspect and adapt it under the [MIT License](../LICENSE), read the
+[contribution guide](../CONTRIBUTING.md), or [report an issue](https://github.com/JBallin/claude-review-runtime/issues).
 
 ## Evaluate cost
 
-Managed Code Review has **no flat per-review price**. It bills token usage through
-organization usage credits, separately from included plan usage, and offers a
-monthly service spend limit. Depth, change complexity and review frequency affect
-spend. See [managed costs](https://code.claude.com/docs/en/code-review-costs).
+Managed Code Review bills tokens through organization usage credits, separately
+from included plan usage, with no flat per-review price. Its multi-agent
+operation, review depth and frequency affect spend; see
+[managed costs](https://code.claude.com/docs/en/code-review-costs).
 
-With Runtime or the Action directly, [OAuth runs consume subscription usage;
-API-key runs incur API billing](https://code.claude.com/docs/en/github-actions#manage-costs).
-Include runner and artifact costs under
-[GitHub's billing rules](https://docs.github.com/en/billing/concepts/product-billing/github-actions),
-plus maintenance time. Standard hosted runners in public repositories are free;
-private-repository usage has allowances and possible additional charges.
-Runtime's time and turn limits are not spending caps. There is no measured
-cost comparison here establishing that Runtime is cheaper or more predictable.
+Runtime and the Action directly use [subscription usage for OAuth or API billing
+for API keys](https://code.claude.com/docs/en/github-actions#manage-costs), plus
+[applicable runner and storage costs](https://docs.github.com/en/billing/concepts/product-billing/github-actions)
+and maintenance time. Shared API billing does not imply equal costs: no
+comparative benchmark establishes Runtime as cheaper or more predictable.
+The review job’s 20-minute timeout is not a spending cap.
 
 ## Next steps
 
-Start with your account eligibility, required review contract and willingness to
-own workflows. If Runtime fits, follow the setup checklist and assess the Check
-on the exact reviewed patch. Ballin, a personal macOS project, is one usage
-context; Runtime itself runs in GitHub Actions. Evaluate representative PRs for
-useful findings, incomplete runs, usage and maintenance effort before expanding
-adoption. Keep human review and your merge policy in place with every option.
+If Runtime fits, follow the [setup checklist](consumer-workflows.md#first-review-checklist)
+and evaluate a few representative PRs for useful findings, incomplete runs,
+usage and maintenance effort. The [synthetic presentation gallery](review-presentation-gallery.md)
+previews review states; it is not proof of live coverage.
