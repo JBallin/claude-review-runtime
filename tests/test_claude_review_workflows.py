@@ -304,7 +304,7 @@ def issue_comment_event(*, body="/claude-review", association="OWNER", on_pr=Tru
         "actor": "someone",
         "repository": REPO,
         "run_id": 9002,
-        "event": {"comment": {"body": body, "author_association": association}, "issue": issue},
+        "event": {"action": "created", "comment": {"body": body, "author_association": association, "user": {"type": "User", "login": "comment-author"}}, "issue": issue},
     }
 
 
@@ -315,14 +315,16 @@ def review_comment_event(*, body="/claude-review", association="MEMBER", number=
         "repository": REPO,
         "run_id": 9003,
         "event": {
-            "comment": {"body": body, "author_association": association},
+            "action": "created",
+            "comment": {"body": body, "author_association": association, "user": {"type": "User", "login": "comment-author"}},
             "pull_request": {"number": number},
         },
     }
 
 
 def start_check_predicate(path):
-    return folded(job(path, "start-check"), "if", 4)
+    # Manual coarse event admission precedes exact classification in its own job.
+    return scalar(job(path, "request" if path == MANUAL else "start-check"), "if", 4)
 
 
 def concurrency_group(path):
@@ -351,23 +353,17 @@ class EligibilityPredicateTests(unittest.TestCase):
         self.assertFalse(evaluate(predicate, issue_comment_event(body="looks good")))
         self.assertFalse(evaluate(predicate, issue_comment_event(on_pr=False)))
 
-    def test_manual_gate_admits_only_an_anchored_command_prefix_case_insensitively(self):
+    def test_manual_coarse_gate_accepts_candidates_but_exact_parser_owns_admission(self):
         for factory in (issue_comment_event, review_comment_event):
-            for body in ("/claude-review", "/CLAUDE-REVIEW", "/Claude-Review"):
+            for body in ("/claude-review", "/CLAUDE-REVIEW", " /claude-review", "\t/claude-review",
+                         "/claude-review\n", "please /claude-review", "`/claude-review`", "/claude-reviewing"):
                 event = factory(body=body)
                 self.assertTrue(evaluate(start_check_predicate(MANUAL), event))
-                self.assertEqual(evaluate(concurrency_group(MANUAL), event),
-                                 f"claude-review-state-{REPO}-7")
-            for body in ("@claude", "@claude review", "/claude-reviewing",
-                         "please /claude-review", "`/claude-review`", "> /claude-review",
-                         " /claude-review", "\t/claude-review",
-                         "/claude-review\n", "\n/claude-review\n", "", None):
-                with self.subTest(event=factory.__name__, body=body):
-                    event = factory(body=body)
-                    self.assertFalse(evaluate(start_check_predicate(MANUAL), event))
-                    self.assertEqual(evaluate(concurrency_group(MANUAL), event),
-                                     f"claude-review-ineligible-{event['run_id']}")
-
+                self.assertEqual(evaluate(concurrency_group(MANUAL), event), f"claude-review-state-{REPO}-7")
+            for body in ("@claude", "@claude review", "", None):
+                event = factory(body=body)
+                self.assertFalse(evaluate(start_check_predicate(MANUAL), event))
+                self.assertEqual(evaluate(concurrency_group(MANUAL), event), f"claude-review-ineligible-{event['run_id']}")
 
     def test_each_supported_alias_and_effort_retains_the_manual_authority_gate(self):
         commands = ["/claude-review"]
@@ -467,6 +463,7 @@ class JobStructureTests(unittest.TestCase):
             ("claude-review.yml", "start-check"),
             ("claude-review.yml", "review"),
             ("claude-review.yml", "publish-status"),
+            ("claude.yml", "request"),
             ("claude.yml", "start-check"),
             ("claude.yml", "review"),
             ("claude.yml", "publish-status"),
@@ -512,9 +509,11 @@ class JobStructureTests(unittest.TestCase):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
                 publish = job(path, "publish-status")
-                self.assertEqual(scalar(publish, "needs", 4), "[start-check, review]")
+                self.assertEqual(scalar(publish, "needs", 4), "[request, start-check, review]" if path == MANUAL else "[start-check, review]")
                 expected = "always() && needs.start-check.result != 'skipped'"
                 if path == MANUAL:
+                    expected = ("always() && needs.request.result == 'success' && needs.request.outputs.classification == 'valid' && "
+                                "needs.start-check.result != 'skipped'")
                     expected += (" && (needs.start-check.outputs.selection_accepted == 'true' || "
                                  "(needs.start-check.outputs.request_recognized == 'true' && "
                                  "needs.start-check.outputs.tooling_unavailable == 'true'))")
@@ -541,7 +540,6 @@ class JobStructureTests(unittest.TestCase):
             AUTOMATIC: ["Capture presentation start", "Check review tooling", "Select review configuration",
                         "Start Claude Review check", "Require valid review configuration", "Fetch PR review inputs"],
             MANUAL: [
-                "Recognize manual review request",
                 "Resolve PR under review",
                 "Capture presentation start",
                 "Check review tooling",
@@ -561,7 +559,7 @@ class JobStructureTests(unittest.TestCase):
 
     def test_fork_evidence_failures_cannot_skip_the_manual_review(self):
         named = steps(job(MANUAL, "start-check"))
-        required = ["Recognize manual review request", "Resolve PR under review", "Require valid review configuration", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
+        required = ["Resolve PR under review", "Require valid review configuration", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
         evidence_only = [
             "Check review tooling",
             "Start Claude Review check",
@@ -656,6 +654,8 @@ class JobStructureTests(unittest.TestCase):
                 self.assertIsNone(scalar(job(path, "review"), "if", 4))
                 expected_publish = "always() && needs.start-check.result != 'skipped'"
                 if path == MANUAL:
+                    expected_publish = ("always() && needs.request.result == 'success' && needs.request.outputs.classification == 'valid' && "
+                                        "needs.start-check.result != 'skipped'")
                     expected_publish += (" && (needs.start-check.outputs.selection_accepted == 'true' || "
                                          "(needs.start-check.outputs.request_recognized == 'true' && "
                                          "needs.start-check.outputs.tooling_unavailable == 'true'))")
@@ -970,10 +970,11 @@ def manual_start_probe(body, *, resolve=False, fork=False):
                        "GITHUB_OUTPUT": str(output), "RUNNER_TEMP": tmp, "REPO": REPO, "PR_NUMBER": "7",
                        "GH_STUB_LOG": str(log), "GH_STUB_RESPONSES": json.dumps({"GET": [{"stdout": json.dumps(raw_pr)}]})}
         recognized = subprocess.run(["bash", "-eo", "pipefail", "-c",
-                                    run_block(named["Recognize manual review request"])],
+                                    run_block(steps(job(MANUAL, "request"))["Classify manual review request"])],
                                    env=environment, capture_output=True, text=True)
         resolved = None
-        if resolve and recognized.returncode == 0:
+        classified = dict(line.split("=", 1) for line in output.read_text().splitlines()) if output.exists() else {}
+        if resolve and recognized.returncode == 0 and classified.get("classification") == "valid":
             resolved = subprocess.run(["bash", "-eo", "pipefail", "-c", run_block(named["Resolve PR under review"])],
                                       env=environment, capture_output=True, text=True)
         outputs = dict(line.split("=", 1) for line in output.read_text().splitlines()) if output.exists() else {}
@@ -999,23 +1000,24 @@ class ManualRequestRecognitionTests(unittest.TestCase):
                 except ValueError:
                     expected = False
                 recognized, resolved, outputs, calls = manual_start_probe(body)
-                self.assertEqual(outputs, {"recognized": str(expected).lower()})
-                self.assertEqual(recognized.returncode, 0 if expected else 1)
+                self.assertEqual(outputs["classification"], check.classify_manual_request(body)["status"])
+                self.assertEqual(recognized.returncode, 0)
                 self.assertIsNone(resolved)
                 self.assertEqual(calls, [])
 
     def test_recognizer_rejects_before_resolving_or_using_the_bundled_helper(self):
-        named = steps(job(MANUAL, "start-check"))
-        self.assertEqual(next(iter(named)), "Recognize manual review request")
-        recognition = named["Recognize manual review request"]
+        named = steps(job(MANUAL, "request"))
+        self.assertEqual(next(iter(named)), "Classify manual review request")
+        recognition = named["Classify manual review request"]
         self.assertEqual(scalar(recognition, "id", 8), "request")
-        for forbidden in ("REVIEW_HELPER", "gh ", "actions/checkout", "GH_TOKEN"):
+        self.assertNotRegex("\n".join(recognition), r"\bgh\s")
+        for forbidden in ("REVIEW_HELPER", "actions/checkout", "GH_TOKEN"):
             self.assertNotIn(forbidden, "\n".join(recognition))
-        for body in ("/claude-review please review this", " /claude-review", "/claude-review\n", "hello"):
+        for body in ("/claude-review please review this", "please /claude-review", "`/claude-review`", "hello"):
             with self.subTest(body=body):
                 recognized, resolved, outputs, calls = manual_start_probe(body, resolve=True)
-                self.assertEqual(recognized.returncode, 1)
-                self.assertEqual(outputs["recognized"], "false")
+                self.assertEqual(recognized.returncode, 0)
+                self.assertNotEqual(outputs["classification"], "valid")
                 self.assertIsNone(resolved)
                 self.assertEqual(calls, [])
 
@@ -1165,10 +1167,10 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertNotIn("pull_request.head", "\n".join(readiness))
                         self.assertNotIn("github.sha", "\n".join(readiness))
                         publish_gate = scalar(job(path, "publish-status"), "if", 4)
-                        unavailable = {"needs": {"start-check": {"result": "failure", "outputs": {
+                        unavailable = {"needs": {"request": {"result": "success", "outputs": {"classification": "valid"}}, "start-check": {"result": "failure", "outputs": {
                             "request_recognized": "true", "tooling_unavailable": "true", "selection_accepted": "false"}}}}
                         self.assertIs(Evaluator(publish_gate, unavailable).evaluate(), True)
-                        accepted = {"needs": {"start-check": {"result": "failure", "outputs": {"selection_accepted": "true"}}}}
+                        accepted = {"needs": {"request": {"result": "success", "outputs": {"classification": "valid"}}, "start-check": {"result": "failure", "outputs": {"selection_accepted": "true"}}}}
                         self.assertIs(Evaluator(publish_gate.removeprefix("always() && "), accepted).evaluate(), True)
                         if path == MANUAL:
                             self.assertIs(Evaluator(scalar(create, "if", 8),
@@ -1181,17 +1183,17 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         if not evaluate(start_check_predicate(MANUAL), event):
             return {"job": False, "normal": False, "emergency": False, "calls": []}
         recognized, resolved, captured, calls = manual_start_probe(body, resolve=True, fork=fork)
-        if recognized.returncode == 0:
+        if recognized.returncode == 0 and captured.get("classification") == "valid":
             self.assertIsNotNone(resolved)
             self.assertEqual(resolved.returncode, 0, resolved.stderr)
         else:
-            start_tooling, select_outcome = "skipped", "skipped"
-        start_steps = {"request": {"outputs": {"recognized": captured["recognized"]}},
-                       "tooling-ready": {"outcome": start_tooling}, "select": {"outcome": select_outcome}}
+            return {"job": False, "normal": False, "emergency": False, "calls": calls}
+        request = {"result": "success", "outputs": {"classification": "valid"}}
+        start_steps = {"tooling-ready": {"outcome": start_tooling}, "select": {"outcome": select_outcome}}
         exported = block(job(MANUAL, "start-check"), "outputs", 4)
-        outputs = {key: to_string(Evaluator(unwrap(scalar(exported, key, 6)), {"steps": start_steps}).evaluate())
+        outputs = {key: to_string(Evaluator(unwrap(scalar(exported, key, 6)), {"steps": start_steps, "needs": {"request": request}}).evaluate())
                    for key in ("request_recognized", "tooling_unavailable", "selection_accepted")}
-        context = {"needs": {"start-check": {"result": "failure" if select_outcome != "success" else "success",
+        context = {"needs": {"request": request, "start-check": {"result": "failure" if select_outcome != "success" else "success",
                                              "outputs": outputs}},
                    "steps": {"tooling-ready": {"outcome": publish_tooling}}}
         publication = job(MANUAL, "publish-status")
@@ -1215,7 +1217,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             for select_outcome in ("skipped", "failure"):
                 for publish_tooling in ("success", "failure"):
                     with self.subTest(fork=fork, select=select_outcome, publish_tooling=publish_tooling):
-                        flow = self.manual_publication_probe("/claude-review effort high", fork=fork,
+                        flow = self.manual_publication_probe("/claude-review high", fork=fork,
                             select_outcome=select_outcome, publish_tooling=publish_tooling)
                         self.assertTrue(flow["job"])
                         self.assertFalse(flow["normal"])
@@ -1256,7 +1258,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
 
     def test_unrelated_or_unauthorized_comments_cannot_publish_when_tooling_is_missing(self):
         for body, association in (("/claude-review please review this", "OWNER"),
-                                  (" /claude-review", "OWNER"), ("/claude-review\n", "OWNER"),
+                                  ("please /claude-review", "OWNER"), ("`/claude-review`", "OWNER"),
                                   ("/claude-review", "NONE")):
             with self.subTest(body=body, association=association):
                 flow = self.manual_publication_probe(body, association=association)
@@ -1680,7 +1682,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertIn("**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`", visible)
                     self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
 
-    def test_fallback_preserves_captured_syntax_recovery_without_interpreting_removed_options(self):
+    def test_fallback_preserves_historical_syntax_receipts_without_new_admission(self):
         from test_claude_review_check import presentation_owner
         # Both templates render the same trusted capture; automatic owners must
         # still reject every manual diagnostic (covered separately).
@@ -1697,7 +1699,12 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     ("/claude-review --model=opus", "haiku", "low"),
                     ("/claude-review opus --effort=$(injected)", "opus", "low")):
                 with self.subTest(workflow=path.name, request=request):
-                    config = check.resolve_configuration(request, "haiku", "low")
+                    # An immutable receipt from the old forgiving policy is
+                    # still rendered; the new strict parser cannot create it.
+                    config = {"version": 2, "requested_model": model, "requested_effort": effort,
+                              "model_source": "manual" if model == "opus" else "workflow",
+                              "effort_source": "workflow", "errors": ["request"],
+                              "diagnostics": [{"field": "request", "source": "manual", "reason": "syntax"}]}
                     self.assertEqual((config["requested_model"], config["requested_effort"]), (model, effort))
                     self.assertEqual(config["diagnostics"], [{"field": "request", "source": "manual", "reason": "syntax"}])
                     result, calls = self.run_fallback(path, OWNER_FIXTURE=owner, STATUS_COMMENT_ID="55",

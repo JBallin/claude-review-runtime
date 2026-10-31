@@ -37,17 +37,16 @@ permissions:
   pull-requests: read
   id-token: write
 
-# Eligible reviews for a PR share one queue with claude-review.yml's, so two
-# reviews never overlap on the same PR's comment evidence; queue: max keeps
-# every pending /claude-review request instead of replacing all but the newest.
-# Ineligible comments get a per-run group so they can never occupy that queue.
-# The predicate must stay textually identical to start-check's `if:`
-# (enforced by tests).
+# Keep the shared PR lock for the whole review and publication, not just start.
+# This coarse trusted-comment filter also queues some ignored/invalid text;
+# exact line parsing happens below, so usage feedback may wait for a review.
 concurrency:
   group: >-
     ${{
     ((github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-    (github.event.comment.body == '/claude-review' || startsWith(github.event.comment.body, '/claude-review ')) &&
+    github.event.action == 'created' &&
+    github.event.comment.user.type == 'User' &&
+    contains(github.event.comment.body, '/claude-review') &&
     contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
     github.event.comment.author_association) &&
     (github.event_name == 'pull_request_review_comment' ||
@@ -59,20 +58,157 @@ concurrency:
   queue: max
 
 jobs:
-  start-check:
-    name: Start check
-    # Only trusted commenters start a run, so anyone else's /claude-review never
-    # occupies a runner (the action also requires write access). This keeps the
-    # workflow limited to trusted requests. Gating this first job
-    # keeps ineligible comments away from every later job and from
-    # checks: write.
+  request:
+    name: Classify manual request
     if: >-
       (github.event_name == 'issue_comment' || github.event_name == 'pull_request_review_comment') &&
-      (github.event.comment.body == '/claude-review' || startsWith(github.event.comment.body, '/claude-review ')) &&
+      github.event.action == 'created' &&
+      github.event.comment.user.type == 'User' &&
+      contains(github.event.comment.body, '/claude-review') &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
       github.event.comment.author_association) &&
       (github.event_name == 'pull_request_review_comment' ||
       github.event.issue.pull_request)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 3
+    # Usage feedback cannot acquire review ownership or write a Check.
+    permissions:
+      pull-requests: write
+    outputs:
+      classification: ${{ steps.request.outputs.classification }}
+    steps:
+      - name: Classify manual review request
+        id: request
+        # Independent of helper preparation and PR code. Keep parser and fixed
+        # response text aligned with the helper through offline parity tests.
+        env:
+          TRIGGER_COMMENT: ${{ github.event.comment.body }}
+        run: |
+          python3 - <<'PY_REQUEST'
+          import json, os, re
+          MANUAL_USAGE = '**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`'
+
+          def classify_manual_request(body):
+              """Classify whole command lines without interpreting prose or fenced examples.
+
+              The trusted workflow has a helper-independent copy for early usage feedback;
+              regression tests compare both boundaries and their fixed response text.
+              """
+              result = {"status": "ignored", "reason": "", "requested_model": "", "requested_effort": ""}
+              if not isinstance(body, str):
+                  return result
+              candidates, fence, inline_ticks = [], None, None
+              for line in body.splitlines():
+                  line = line.strip()
+                  marker = re.match(r"(`{3,}|~{3,})(.*)$", line)
+                  if fence:
+                      if marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence) and not marker[2].strip():
+                          fence = None
+                      continue
+                  if inline_ticks is None and marker:
+                      fence = marker[1]
+                      continue
+                  tokens = line.lower().split()
+                  if inline_ticks is None and tokens and tokens[0] == "/claude-review":
+                      candidates.append(tokens[1:])
+                  # Inline code can span lines. Only an equally sized backtick run
+                  # closes it; unmatched delimiters conservatively suppress the tail.
+                  for ticks in re.finditer(r"`+", line):
+                      size = len(ticks[0])
+                      if inline_ticks is not None:
+                          if size == inline_ticks:
+                              inline_ticks = None
+                      else:
+                          before = line[:ticks.start()]
+                          escapes = len(before) - len(before.rstrip("\\"))
+                          # An escape consumes one opening backtick, not a whole run.
+                          size -= escapes % 2
+                          if size:
+                              inline_ticks = size
+              if not candidates:
+                  return result
+              result.update(status="invalid", reason="arguments")
+              if len(candidates) != 1:
+                  result["reason"] = "multiple"
+                  return result
+              tokens = candidates[0]
+              models, efforts = ("opus", "sonnet", "haiku"), ("low", "medium", "high", "xhigh", "max")
+              if not tokens:
+                  pass
+              elif len(tokens) == 1 and tokens[0] in models:
+                  result["requested_model"] = tokens[0]
+              elif len(tokens) == 1 and tokens[0] in efforts:
+                  result["requested_effort"] = tokens[0]
+              elif len(tokens) == 2 and tokens[0] in models and tokens[1] in efforts:
+                  result.update(requested_model=tokens[0], requested_effort=tokens[1])
+              else:
+                  return result
+              result.update(status="valid", reason="")
+              return result
+
+          def manual_usage_response(reason):
+              problem = ("Please use one review command per comment." if reason == "multiple" else
+                         "I couldn't use those review arguments. Please use a supported model and effort, with the model first when both are given.")
+              return problem + "\n\n" + MANUAL_USAGE + "\n\nOmit either setting to use its default. No review was started."
+
+          result = classify_manual_request(os.environ.get("TRIGGER_COMMENT", ""))
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("classification=" + result["status"] + "\n")
+              output.write("response=" + json.dumps(manual_usage_response(result["reason"]) if result["status"] == "invalid" else "") + "\n")
+          PY_REQUEST
+      - name: Explain invalid manual request
+        if: steps.request.outputs.classification == 'invalid'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          RESPONSE_JSON: ${{ steps.request.outputs.response }}
+        run: |
+          python3 - <<'PY_USAGE'
+          import json, os, re, subprocess
+          from urllib.parse import quote
+
+          def api(path):
+              result = subprocess.run(["gh", "api", path], check=True, capture_output=True, text=True, timeout=30)
+              return json.loads(result.stdout)
+
+          try:
+              repo, number, commenter = (os.environ[name] for name in ("REPO", "PR_NUMBER", "COMMENTER"))
+              if (not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo)
+                      or not number.isdigit() or int(number) <= 0
+                      or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]{0,38}", commenter)):
+                  raise ValueError("invalid target")
+              permission = api(f"repos/{repo}/collaborators/{quote(commenter, safe='')}/permission")
+              if (permission.get("permission") not in ("write", "admin")
+                      or permission.get("user", {}).get("login") != commenter):
+                  raise ValueError("commenter does not have write permission")
+              pr = api(f"repos/{repo}/pulls/{number}")
+              if (pr.get("state") != "open" or pr.get("draft") is not False
+                      or pr["head"]["repo"]["full_name"] != repo):
+                  raise ValueError("ineligible PR")
+              response = json.loads(os.environ["RESPONSE_JSON"])
+              if not isinstance(response, str) or not response or len(response) > 2048:
+                  raise ValueError("invalid usage response")
+          except (AttributeError, KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError):
+              print("::warning::Usage feedback eligibility could not be verified; no review was started.")
+              raise SystemExit(1)
+          # One guarded create, without retries or reads/edits of existing comments.
+          # A timeout can have an uncertain outcome; a rerun may post a new response.
+          try:
+              subprocess.run(["gh", "api", f"repos/{repo}/issues/{number}/comments",
+                              "--method", "POST", "--input", "-"],
+                             input=json.dumps({"body": response}), check=True,
+                             capture_output=True, text=True, timeout=30)
+          except (OSError, subprocess.SubprocessError):
+              print("::warning::Usage feedback publication was not confirmed; no review was started.")
+              raise SystemExit(1)
+          PY_USAGE
+
+  start-check:
+    name: Start check
+    needs: request
+    if: needs.request.outputs.classification == 'valid'
     runs-on: ubuntu-26.04
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 14
@@ -83,7 +219,7 @@ jobs:
       checks: write
       issues: write
     outputs:
-      request_recognized: ${{ steps.request.outputs.recognized }}
+      request_recognized: ${{ needs.request.outputs.classification == 'valid' }}
       tooling_unavailable: ${{ steps.tooling-ready.outcome == 'failure' }}
       selection_accepted: ${{ steps.select.outcome == 'success' }}
       selection_config: ${{ steps.select.outputs.selection_config }}
@@ -104,33 +240,6 @@ jobs:
     # published as that check's failure. A failure before the head SHA is
     # known cannot be attached to any commit and only fails the job.
     steps:
-      - name: Recognize manual review request
-        id: request
-        # Independent of the bundled helper: tooling failure must still publish
-        # a failure Check, while unrelated comment text must never own one.
-        # Keep acceptance aligned with manual_request; this does not resolve
-        # settings or permit model execution. The job gate owns authorization.
-        env:
-          TRIGGER_COMMENT: ${{ github.event.comment.body }}
-        run: |
-          python3 - <<'PY_REQUEST'
-          import os
-          body = os.environ.get("TRIGGER_COMMENT", "")
-          recognized = False
-          if body and not body.startswith(" ") and not any(c in body for c in "\r\n\t"):
-              tokens = [token for token in body.lower().split(" ") if token]
-              if tokens.pop(0) == "/claude-review":
-                  models = ("opus", "sonnet", "haiku")
-                  efforts = ("low", "medium", "high", "xhigh", "max")
-                  recognized = (len(tokens) <= 2 or tokens[0] in (*models, *efforts)
-                      or tokens[1] in efforts or any(token in ("model", "effort")
-                          or token.startswith("--") or "=" in token for token in tokens))
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write("recognized=" + str(recognized).lower() + "\n")
-          if not recognized:
-              print("::notice::Not a recognized manual review request.")
-              raise SystemExit(1)
-          PY_REQUEST
       - name: Resolve PR under review
         # Uses the trusted job's token directly; this step's
         # environment is never passed to or reachable by Claude. Runs
@@ -186,7 +295,7 @@ jobs:
           command: create
       - name: Select review configuration
         id: select
-        # Recognized option errors warn and resolve; unrelated command text fails closed.
+        # Manual arguments must be valid; omitted choices use workflow/runtime defaults.
         continue-on-error: true
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
@@ -785,12 +894,14 @@ jobs:
 
   publish-status:
     name: Publish status
-    needs: [start-check, review]
+    needs: [request, start-check, review]
     # A recognized request still needs a failure Check when start tooling is
     # unavailable. Parser rejection with available tooling stays suppressed.
     # Recognition runs before all fallible tooling and never grants ownership.
     if: >-
-      always() && needs.start-check.result != 'skipped' &&
+      always() && needs.request.result == 'success' &&
+      needs.request.outputs.classification == 'valid' &&
+      needs.start-check.result != 'skipped' &&
       (needs.start-check.outputs.selection_accepted == 'true' ||
       (needs.start-check.outputs.request_recognized == 'true' &&
       needs.start-check.outputs.tooling_unavailable == 'true'))

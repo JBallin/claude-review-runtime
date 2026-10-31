@@ -553,55 +553,77 @@ def diagnostic_key(item):
             DIAGNOSTIC_REASONS.index(item["reason"]))
 
 
-def manual_request(body):
-    """Recognize only short commands; never guess an ambiguous value's field."""
-    if (not isinstance(body, str) or body.startswith(" ") or any(c in body for c in "\r\n\t")
-            or not body):
-        raise ValueError("unsupported manual command")
-    tokens = [token for token in body.lower().split(" ") if token]
-    if tokens.pop(0) != "/claude-review":
-        raise ValueError("unsupported manual command")
-    result = {"requested_model": "", "requested_effort": "", "diagnostics": []}
-    def unsupported_option(token):
-        return token in ("model", "effort") or token.startswith("--") or "=" in token
-    unsupported = any(unsupported_option(token) for token in tokens)
-    if unsupported or len(tokens) > 2:
-        # Recover short positional values only before malformed syntax. Never
-        # reinterpret a removed keyword/flag's payload as a valid override.
-        positional_effort = (len(tokens) > 1 and tokens[1] in EFFORTS
-                             and tokens[0] not in EFFORTS and not unsupported_option(tokens[0]))
-        if tokens[0] in MODELS and (len(tokens) == 1 or tokens[1] not in MODELS):
-            result["requested_model"] = tokens[0]
-            if len(tokens) > 1 and tokens[1] in EFFORTS:
-                result["requested_effort"] = tokens[1]
-        elif tokens[0] in EFFORTS and len(tokens) > 1 and unsupported_option(tokens[1]):
-            result["requested_effort"] = tokens[0]
-        elif positional_effort:
-            result["requested_effort"] = tokens[1]
-        elif not unsupported and tokens[0] not in (*MODELS, *EFFORTS):
-            # Multiword prose is not an invocation of the short grammar.
-            raise ValueError("unsupported manual command")
-        result["diagnostics"].append({"field": "request", "source": "manual", "reason": "syntax"})
+def classify_manual_request(body):
+    """Classify whole command lines without interpreting prose or fenced examples.
+
+    The trusted workflow has a helper-independent copy for early usage feedback;
+    regression tests compare both boundaries and their fixed response text.
+    """
+    result = {"status": "ignored", "reason": "", "requested_model": "", "requested_effort": ""}
+    if not isinstance(body, str):
         return result
-    if len(tokens) == 1:
-        token = tokens[0]
-        if token in MODELS:
-            result["requested_model"] = token
-        elif token in EFFORTS:
-            result["requested_effort"] = token
-        else:
-            result["diagnostics"].append({"field": "request", "source": "manual", "reason": "invalid"})
-    elif len(tokens) == 2:
-        model, effort = tokens
-        if model in EFFORTS or effort in MODELS:
-            result["diagnostics"].append({"field": "request", "source": "manual", "reason": "invalid"})
-        else:
-            for field, token, allowed in (("model", model, MODELS), ("effort", effort, EFFORTS)):
-                if token in allowed:
-                    result["requested_" + field] = token
-                else:
-                    result["diagnostics"].append({"field": field, "source": "manual", "reason": "invalid"})
+    candidates, fence, inline_ticks = [], None, None
+    for line in body.splitlines():
+        line = line.strip()
+        marker = re.match(r"(`{3,}|~{3,})(.*)$", line)
+        if fence:
+            if marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence) and not marker[2].strip():
+                fence = None
+            continue
+        if inline_ticks is None and marker:
+            fence = marker[1]
+            continue
+        tokens = line.lower().split()
+        if inline_ticks is None and tokens and tokens[0] == "/claude-review":
+            candidates.append(tokens[1:])
+        # Inline code can span lines. Only an equally sized backtick run
+        # closes it; unmatched delimiters conservatively suppress the tail.
+        for ticks in re.finditer(r"`+", line):
+            size = len(ticks[0])
+            if inline_ticks is not None:
+                if size == inline_ticks:
+                    inline_ticks = None
+            else:
+                before = line[:ticks.start()]
+                escapes = len(before) - len(before.rstrip("\\"))
+                # An escape consumes one opening backtick, not a whole run.
+                size -= escapes % 2
+                if size:
+                    inline_ticks = size
+    if not candidates:
+        return result
+    result.update(status="invalid", reason="arguments")
+    if len(candidates) != 1:
+        result["reason"] = "multiple"
+        return result
+    tokens = candidates[0]
+    models, efforts = ("opus", "sonnet", "haiku"), ("low", "medium", "high", "xhigh", "max")
+    if not tokens:
+        pass
+    elif len(tokens) == 1 and tokens[0] in models:
+        result["requested_model"] = tokens[0]
+    elif len(tokens) == 1 and tokens[0] in efforts:
+        result["requested_effort"] = tokens[0]
+    elif len(tokens) == 2 and tokens[0] in models and tokens[1] in efforts:
+        result.update(requested_model=tokens[0], requested_effort=tokens[1])
+    else:
+        return result
+    result.update(status="valid", reason="")
     return result
+
+
+def manual_usage_response(reason):
+    problem = ("Please use one review command per comment." if reason == "multiple" else
+               "I couldn't use those review arguments. Please use a supported model and effort, with the model first when both are given.")
+    return problem + "\n\n" + MANUAL_USAGE + "\n\nOmit either setting to use its default. No review was started."
+
+
+def manual_request(body):
+    parsed = classify_manual_request(body)
+    if parsed["status"] != "valid":
+        raise ValueError("unsupported manual command" if parsed["status"] == "ignored" else
+                         "invalid manual command: " + parsed["reason"])
+    return {key: parsed[key] for key in ("requested_model", "requested_effort")} | {"diagnostics": []}
 
 
 def manual_selection(body):
@@ -772,6 +794,13 @@ def cmd_selection(metadata=None):
                         raise ValueError("captured selection disagrees with the accepted request")
         else:
             config = configuration_from_env()
+        # Historical receipts remain readable, but cannot admit a new manual
+        # execution under the former argument-recovery policy.
+        if (env("TRIGGER_KIND") in ("issue_comment", "pull_request_review_comment")
+                or env("TRIGGER_KIND") != "automatic" and env("TRIGGER_COMMENT")):
+            manual_request(env("TRIGGER_COMMENT"))
+            if any(item["source"] == "manual" for item in config.get("diagnostics", [])):
+                raise ValueError("captured manual configuration contains rejected arguments")
         if config["version"] == 1 and config["errors"]:
             raise ValueError("legacy captured review configuration contains invalid settings")
         for name in ("model", "effort"):

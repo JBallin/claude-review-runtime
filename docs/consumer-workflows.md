@@ -168,19 +168,18 @@ with:
   effort: high
 ```
 
-| Input | Supported values | Runtime fallback |
+| Input | Supported values | Built-in default |
 | --- | --- | --- |
 | `model` | `opus`, `sonnet`, `haiku` | `sonnet` |
 | `effort` | `low`, `medium`, `high`, `xhigh`, `max` | `medium` |
 
-Values are case-insensitive and surrounding whitespace is ignored. Each field
-resolves independently: a valid [manual selection](#optional-model-and-effort-selection)
-overrides a valid workflow input, then Runtime falls back to **Sonnet / Medium**.
-Runtime passes both resolved values to execution. An invalid manual option or an
-invalid workflow input needed for resolution produces a warning and falls back
-for that field only, retaining any independently valid selection. The warning
-identifies the setting and replacement; diagnostic metadata records its source.
-Correct the caller input or use a valid manual override on a later request.
+Values are case-insensitive and surrounding whitespace is ignored. Each omitted
+manual choice uses its workflow input, then Runtime's **Sonnet / Medium** defaults.
+Runtime passes both resolved values to execution. An invalid workflow input
+needed for resolution produces a warning and falls back for that field only,
+retaining the independently valid setting. A valid manual override shadows its
+workflow input. Invalid manual arguments reject the entire request; they never
+start a review using replacement settings.
 
 Use literal owner-reviewed values in the caller, rather than expressions from
 PR content. Runtime validates the resolved values; it cannot distinguish a
@@ -229,7 +228,7 @@ jobs:
 
 ### Optional model and effort selection
 
-Post one of these entire comment bodies, case-insensitively:
+Put one command on its own line, case-insensitively:
 
 ```text
 /claude-review
@@ -240,34 +239,23 @@ Post one of these entire comment bodies, case-insensitively:
 
 The model may be `haiku`, `sonnet`, or `opus`. Effort may be `low`, `medium`,
 `high`, `xhigh`, or `max`. When both are present, put the model first, such as
-`/claude-review sonnet high`.
+`/claude-review sonnet high`. There is no literal `effort` keyword.
 
-Plain `/claude-review` uses both [repository defaults](#repository-model-and-effort-defaults),
-falling back to Sonnet / Medium. A model-only command retains the resolved effort
-default; an effort-only command retains the resolved model default.
+Plain `/claude-review` uses both [repository defaults](#repository-model-and-effort-defaults).
+A model-only command retains the effort default; an effort-only command retains
+the model default. Surrounding whitespace and whitespace between values are
+allowed. Other lines may contain prose or another reviewer's request. Mid-sentence
+mentions, quoted lines, inline-code examples, and fenced code blocks are ignored;
+indentation alone does not make a command an example.
 
-In a two-value request, an invalid model or effort warns and falls back to the
-valid workflow input, then the Runtime default, for that field. For example,
-`/claude-review unsupported high` retains High effort, and
-`/claude-review haiku unsupported` retains Haiku. An unknown single value or
-reversed model/effort order is ambiguous: Runtime shows usage guidance and uses
-both resolved defaults rather than guessing which field to override. This
-recovery applies to configuration values, not authorization checks, conflicting
-ambient configuration, or execution failures.
-
-Warnings identify the invalid requested or configured setting and explain the
-effective fallback. Settings retained from the command are marked requested,
-while defaults are identified as configured or built-in. Manual-input warnings
-include a separate Usage line showing the supported command syntax.
-
-Unsupported keyword or flag syntax shows usage guidance and falls back without
-interpreting its values as overrides. Valid selections before the unsupported
-syntax are kept:
-`/claude-review opus --effort` retains Opus and uses the resolved effort default,
-while `/claude-review effort high` uses both defaults. Neither is an alias for
-the supported short forms. Keep requests on one line, without leading whitespace.
-Repeated or trailing spaces are accepted; multiline comments, tabs, and unrelated
-text outside a recognized command are not review requests.
+Unknown values, reversed model/effort order, keywords, flags, trailing words, or
+multiple command lines reject the whole request. Runtime does not run a model or
+retain a valid sibling argument from that request. For a trusted human commenter
+with current write access on an open, non-draft, same-repository PR, it posts a
+separate usage response. Existing review results and the authoritative Check
+remain unchanged. Feedback may wait behind an active review in the shared PR
+queue; rerunning the workflow may post another response. Edited comments do not
+trigger this path: post a new comment to request a review.
 
 The three aliases follow [upstream model resolution](https://code.claude.com/docs/en/model-config)
 and can advance to newer versions. Model access, alias remapping, and effort

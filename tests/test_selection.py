@@ -13,114 +13,17 @@ import test_claude_review_workflows as w
 
 
 class SelectionTests(unittest.TestCase):
-    def test_command_grammar_matches_queue_and_admission(self):
+    def test_short_forms_have_literal_selections(self):
         for body, (model, effort) in check.MANUAL_COMMANDS.items():
-            for text in (body, body.upper()):
+            for text in (body, body.upper(), " \t" + body + "\r\n"):
                 self.assertEqual(check.manual_selection(text), dict(requested_model=model, requested_effort=effort))
-                for factory in (w.issue_comment_event, w.review_comment_event):
-                    event = factory(body=text)
-                    self.assertTrue(w.evaluate(w.start_check_predicate(w.MANUAL), event))
-                    self.assertNotIn('ineligible', w.evaluate(w.concurrency_group(w.MANUAL), event))
-                    for association in ('NONE', 'CONTRIBUTOR'):
-                        self.assertFalse(w.evaluate(w.start_check_predicate(w.MANUAL), factory(body=text, association=association)))
-        for body in ('review /claude-review opus', '/claude-reviewer opus',
-                     '/claude-review opus\n', '/claude-review opus; echo bad',
-                     '/claude-review please review this', '/claude-review please  review this ',
-                     '/claude-review\topus',
-                     ' /claude-review opus', None):
-            with self.subTest(body=body):
-                with self.assertRaises(ValueError):
-                    check.manual_selection(body)
 
-    def test_invalid_positional_fields_preserve_the_valid_sibling(self):
-        for body, expected, fields in (
-                ('/claude-review invalid high', ('', 'high'), ['model']),
-                ('/claude-review opus invalid', ('opus', ''), ['effort']),
-                ('/claude-review invalid invalid', ('', ''), ['model', 'effort'])):
-            with self.subTest(body=body):
-                parsed = check.manual_request(body)
-                self.assertEqual((parsed['requested_model'], parsed['requested_effort']), expected)
-                self.assertEqual(parsed['diagnostics'], [
-                    {'field': field, 'source': 'manual', 'reason': 'invalid'} for field in fields])
-                config = check.resolve_configuration(body, 'haiku', 'low')
-                self.assertEqual((config['requested_model'], config['requested_effort']),
-                                 (expected[0] or 'haiku', expected[1] or 'low'))
-                self.assertEqual(check.valid_configuration(config), config)
-
-    def test_ambiguous_single_value_or_reversed_order_warns_without_guessing_fields(self):
-        for body in ('/claude-review invalid', '/claude-review high opus',
-                     '/claude-review high invalid', '/claude-review invalid opus',
-                     '/claude-review opus haiku', '/claude-review high max'):
-            with self.subTest(body=body):
-                parsed = check.manual_request(body)
-                self.assertEqual((parsed['requested_model'], parsed['requested_effort']), ('', ''))
-                self.assertEqual(parsed['diagnostics'], [
-                    {'field': 'request', 'source': 'manual', 'reason': 'invalid'}])
-                config = check.resolve_configuration(body, 'haiku', 'low')
-                self.assertEqual((config['requested_model'], config['requested_effort']), ('haiku', 'low'))
-                self.assertEqual(config['errors'], ['request'])
-                self.assertEqual(check.valid_configuration(config), config)
-                self.assertIn('**Usage:** `/claude-review', ' '.join(check.configuration_notices(config)))
-
-    def test_ascii_repeated_and_trailing_spaces_preserve_short_requests(self):
-        for body, expected in (
-                ('/claude-review ', ('', '')),
-                ('/claude-review opus ', ('opus', '')),
-                ('/claude-review high ', ('', 'high')),
-                ('/claude-review  opus  high  ', ('opus', 'high'))):
-            with self.subTest(body=body):
-                parsed = check.manual_request(body)
-                self.assertEqual((parsed['requested_model'], parsed['requested_effort']), expected)
-                self.assertEqual(parsed['diagnostics'], [])
-        for body in (' /claude-review', '/claude-review\topus', '/claude-review opus\n',
-                     '/claude-review\u00a0opus', '/claude-review opus\t'):
+    def test_invalid_manual_arguments_reject_the_whole_request(self):
+        for body in ('/claude-review invalid high', '/claude-review opus invalid',
+                     '/claude-review high opus', '/claude-review effort high',
+                     '/claude-review opus --effort', '/claude-review opus high extra'):
             with self.subTest(body=body), self.assertRaises(ValueError):
-                check.manual_request(body)
-
-    def test_unsupported_syntax_warns_without_becoming_a_command_alias(self):
-        for body, expected in (
-                ('/claude-review effort high', ('', '')),
-                ('/claude-review effort', ('', '')),
-                ('/claude-review opus effort', ('opus', '')),
-                ('/claude-review opus effort high', ('opus', '')),
-                ('/claude-review model opus', ('', '')),
-                ('/claude-review --model', ('', '')),
-                ('/claude-review --model=', ('', '')),
-                ('/claude-review --model opus', ('', '')),
-                ('/claude-review --model=opus', ('', '')),
-                ('/claude-review --effort high', ('', '')),
-                ('/claude-review --effort=high', ('', '')),
-                ('/claude-review opus --effort', ('opus', '')),
-                ('/claude-review high --model', ('', 'high')),
-                ('/claude-review invalid high --effort', ('', 'high')),
-                ('/claude-review invalid high extra', ('', 'high')),
-                ('/claude-review opus high extra', ('opus', 'high')),
-                ('/claude-review opus --dangerous', ('opus', '')),
-                ('/claude-review --tools Bash', ('', ''))):
-            with self.subTest(body=body):
-                parsed = check.manual_request(body)
-                self.assertEqual((parsed['requested_model'], parsed['requested_effort']), expected)
-                self.assertEqual(parsed['diagnostics'], [
-                    {'field': 'request', 'source': 'manual', 'reason': 'syntax'}])
-                self.assertNotIn(body, check.MANUAL_COMMANDS)
-                for factory in (w.issue_comment_event, w.review_comment_event):
-                    event = factory(body=body)
-                    self.assertTrue(w.evaluate(w.start_check_predicate(w.MANUAL), event))
-                    self.assertNotIn('ineligible', w.evaluate(w.concurrency_group(w.MANUAL), event))
-                    for association in ('NONE', 'CONTRIBUTOR'):
-                        untrusted = factory(body=body, association=association)
-                        self.assertFalse(w.evaluate(w.start_check_predicate(w.MANUAL), untrusted))
-                        self.assertIn('ineligible', w.evaluate(w.concurrency_group(w.MANUAL), untrusted))
-                config = check.resolve_configuration(body, 'haiku', 'low')
-                self.assertEqual((config['requested_model'], config['requested_effort']),
-                                 (expected[0] or 'haiku', expected[1] or 'low'))
-                self.assertEqual(check.valid_configuration(config), config)
-                self.assertIn('Unsupported request syntax', ' '.join(check.configuration_notices(config)))
-                self.assertIn('**Usage:** `/claude-review', ' '.join(check.configuration_notices(config)))
-        for body in ('/claude-review please review this', '/claude-review unknown other prose',
-                     '/claude-review please  review this '):
-            with self.subTest(body=body), self.assertRaises(ValueError):
-                check.manual_request(body)
+                check.resolve_configuration(body, 'haiku', 'low')
 
     def test_literal_resolved_args_and_ambient_model_guard(self):
         for body in check.MANUAL_COMMANDS:
@@ -415,7 +318,9 @@ class SelectionTests(unittest.TestCase):
         _, missing = self.record()
         missing.pop('primary_model_evidence')
         _, configured = self.record()
-        configured['configuration'] = check.resolve_configuration('/claude-review opus invalid', 'sonnet', 'high')
+        configured['configuration'] = {"version": 2, "requested_model": "opus", "requested_effort": "high",
+            "model_source": "manual", "effort_source": "workflow", "errors": ["effort"],
+            "diagnostics": [{"field": "effort", "source": "manual", "reason": "invalid"}]}
         for record in (matching, conflicting, missing, configured):
             with self.subTest(record=record):
                 original = copy.deepcopy(record)

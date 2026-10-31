@@ -299,30 +299,12 @@ def gallery_samples():
             GallerySample("workflow-invalid-setting", "current-completion", "Invalid configured model falls back while retaining valid effort", status(
                 "success", selection=configured(owner, check.resolve_configuration(
                     "", "unsupported", "high", automatic=True), "claude-sonnet-5-5"))),
-            GallerySample("manual-invalid-model", "current-completion", "Invalid requested model falls back to configured default", status(
-                "success", owner=request_owner, trigger_label="Manual request",
-                selection=configured(request_owner, check.resolve_configuration(
-                    "/claude-review unsupported high", "haiku", "low"), "claude-haiku-5-5"))),
-            GallerySample("manual-invalid-effort", "current-completion", "Invalid manual effort falls back while retaining valid model", status(
-                "success", owner=request_owner, trigger_label="Manual request",
-                selection=configured(request_owner, check.resolve_configuration(
-                    "/claude-review haiku unsupported", "opus", ""), "claude-haiku-5-5"))),
-            GallerySample("manual-unknown-value", "current-completion", "Unknown single value uses defaults with usage guidance", status(
-                "success", owner=request_owner, trigger_label="Manual request",
-                selection=configured(request_owner, check.resolve_configuration(
-                    "/claude-review unsupported", "haiku", "low"), "claude-haiku-5-5"))),
-            GallerySample("manual-reversed-values", "current-completion", "Reversed model and effort use defaults with usage guidance", status(
-                "success", owner=request_owner, trigger_label="Manual request",
-                selection=configured(request_owner, check.resolve_configuration(
-                    "/claude-review high haiku", "haiku", "low"), "claude-haiku-5-5"))),
-            GallerySample("manual-unsupported-suffix", "current-completion", "Unsupported syntax retains a valid leading model", status(
-                "success", owner=request_owner, trigger_label="Manual request",
-                selection=configured(request_owner, check.resolve_configuration(
-                    "/claude-review opus --effort", "haiku", "low"), "claude-opus-5-5"))),
-            GallerySample("manual-unsupported-keyword", "current-completion", "Unsupported keyword syntax uses both defaults", status(
-                "success", owner=request_owner, trigger_label="Manual request",
-                selection=configured(request_owner, check.resolve_configuration(
-                    "/claude-review effort high", "haiku", "low"), "claude-haiku-5-5"))),
+            GallerySample("manual-invalid-model", "current-completion", "Unknown model argument rejected without starting a review", check.manual_usage_response("arguments")),
+            GallerySample("manual-invalid-effort", "current-completion", "Unknown effort argument rejected without starting a review", check.manual_usage_response("arguments")),
+            GallerySample("manual-unknown-value", "current-completion", "Multiple command lines rejected with one usage response", check.manual_usage_response("multiple")),
+            GallerySample("manual-reversed-values", "current-completion", "Reversed model and effort rejected without starting a review", check.manual_usage_response("arguments")),
+            GallerySample("manual-unsupported-suffix", "current-completion", "Flag syntax rejected without starting a review", check.manual_usage_response("arguments")),
+            GallerySample("manual-unsupported-keyword", "current-completion", "Literal effort keyword rejected without starting a review", check.manual_usage_response("arguments")),
         ]
         for group, state, result in (("running-history", "in_progress", "success"),
                                      ("incomplete-history", "failure", "action_required"),

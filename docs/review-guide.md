@@ -19,7 +19,7 @@ the executing runtime's repository, SHA, and workflow path.
 | Caller | Events | Eligibility and behavior |
 | --- | --- | --- |
 | [Automatic](../.github/workflows/self-review-automatic.yml) | PR `opened`, `ready_for_review` | Open, non-draft, same-repository PRs; Dependabot-triggered runs are excluded. |
-| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted exact [manual command](#request-a-manual-review), including optional Opus/effort selection, followed by a read-only check for an open, non-draft, same-repository PR. |
+| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted entire-comment command accepted by the pinned caller, followed by a read-only check for an open, non-draft, same-repository PR. |
 | [Status](../.github/workflows/self-review-status.yml) | PR `synchronize`, `edited` | Open, same-repository PRs; refreshes existing presentation after head changes or base-ref retargeting. |
 
 Stacked PRs are eligible; the callers do not restrict the base branch. The pinned
@@ -29,13 +29,14 @@ diff changes, and assess whether a changed base invalidates previous evidence.
 
 ## Request a manual review
 
-Post `/claude-review` or one of its optional forms as the entire top-level or
-inline PR comment, without surrounding whitespace, quotes, or unrelated text. Matching is
-case-insensitive. The commenter must have an owner, member, or collaborator
+In current Runtime source, post `/claude-review` or one of its optional forms on its own line in a top-level
+or inline PR comment. Surrounding whitespace and prose on other lines are allowed;
+quoted and fenced examples are ignored. Matching is case-insensitive. The commenter must have an owner, member, or collaborator
 association; the action also checks actor/access eligibility. Ordinary issue
-comments and untrusted requests do not start model execution. The eligibility
-job has read-only PR access and performs no checkout before calling the pinned
-runtime. The runtime resolves the current patch once for each accepted request.
+comments and untrusted requests do not start model execution. The repository's
+pinned caller performs its own eligibility check. Current Runtime source also
+classifies command lines before review starts and can post usage guidance without
+checking out PR code. The runtime resolves the current patch once for each accepted request.
 
 The current Runtime source accepts short model and effort selections, including
 `/claude-review opus`, `/claude-review high`, and `/claude-review opus high`.
@@ -67,9 +68,10 @@ previous attempt retains its own settings; a status refresh does not apply
 today’s defaults to an older review, and missing historical settings are not
 filled in. New attempts resolve
 each field from a valid manual override, then a valid workflow input, then
-Runtime’s Sonnet / Medium defaults. Invalid or malformed configuration options
-warn and fall back only for the affected field; independently valid settings
-remain in use. Current model warnings stay above Details. A previous run’s
+Runtime’s Sonnet / Medium defaults. Invalid workflow defaults warn and fall back only for the affected field;
+independently valid settings remain in use. Invalid manual arguments reject the
+whole request before review starts. Eligible commenters receive a separate usage
+response without changing an existing review result or Check. Current model warnings stay above Details. A previous run’s
 recorded model mismatch appears inside Previous completed review before its
 settings, using only that run’s captured evidence. A comment API or permission
 failure is reported in the Check/run when publication is possible. Accepted manual requests also receive

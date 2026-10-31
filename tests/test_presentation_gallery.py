@@ -22,7 +22,8 @@ spec.loader.exec_module(gallery)
 
 
 def sample_items():
-    return [(case.case_id, case.body) for case in gallery.gallery_samples()]
+    """Review presentation cases; separate usage responses have no review Details."""
+    return [(case.case_id, case.body) for case in gallery.gallery_samples() if "<details>" in case.body]
 
 
 class PresentationGalleryTests(unittest.TestCase):
@@ -97,7 +98,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 65)
+        self.assertEqual(status.call_count, 59)
         self.assertEqual(completion.call_count, 5)
         self.assertEqual([call.kwargs.get("observed_base_sha") for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER, None])
@@ -106,7 +107,7 @@ class PresentationGalleryTests(unittest.TestCase):
             case_id, raw = case.case_id, case.body
             with self.subTest(case_id=case_id):
                 self.assertIn(gallery.sample_markdown(raw), body)
-                self.assertTrue("claude-review-runtime:" in raw)
+                self.assertEqual("claude-review-runtime:" in raw, "<details>" in raw)
 
     def test_selected_model_views_distinguish_primary_evidence_from_usage(self):
         cases = dict(sample_items())
@@ -220,57 +221,28 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(records[0]["requested_effort"], records[1]["requested_effort"])
         self.assertIn("**Model:** Sonnet · **Effort:** High", cases["effort-only"].split("<details>", 1)[1])
 
-    def test_invalid_and_ambiguous_short_commands_show_fallback_and_usage(self):
-        cases = dict(sample_items())
-        for case_id, model, effort, bad_field, reason in (
-                ("manual-invalid-model", "Haiku", "High", "model", "invalid"),
-                ("manual-invalid-effort", "Haiku", "Medium", "effort", "invalid"),
-                ("manual-unknown-value", "Haiku", "Low", "request", "invalid"),
-                ("manual-reversed-values", "Haiku", "Low", "request", "invalid")):
+    def test_usage_samples_match_actual_workflow_output_and_have_no_review_metadata(self):
+        from test_manual_requests import usage_probe
+        bodies = {
+            "manual-invalid-model": "/claude-review invalid high",
+            "manual-invalid-effort": "/claude-review haiku invalid",
+            "manual-unknown-value": "/claude-review\n/claude-review opus",
+            "manual-reversed-values": "/claude-review high opus",
+            "manual-unsupported-suffix": "/claude-review opus --effort high",
+            "manual-unsupported-keyword": "/claude-review effort high",
+        }
+        samples = {case.case_id: case.body for case in gallery.gallery_samples()}
+        for case_id, body in bodies.items():
             with self.subTest(case_id=case_id):
-                raw = cases[case_id]
-                main, details = raw.split("<details>", 1)
-                self.assertIn("✅ **Completed**", main)
-                problem = ("Ambiguous request arguments" if bad_field == "request"
-                           else "Invalid " + bad_field + " requested")
-                self.assertIn("⚠️ **" + problem + "**", main)
-                self.assertIn(bad_field, main.lower())
-                self.assertIn("**Model:** " + model + " · **Effort:** " + effort, details)
-                self.assertEqual(main.count("**Usage:**"), 1)
-                self.assertIn("  \n" + gallery.check.MANUAL_USAGE, main)
-                self.assertIn("built-in default" if case_id == "manual-invalid-effort" else "configured default", main)
-                with mock.patch.dict(os.environ, {}, clear=True):
-                    record = gallery.check.current_selection(gallery.check.status_owner({"body": raw}), {"body": raw})
-                self.assertIn({"field": bad_field, "source": "manual", "reason": reason},
-                              record["configuration"]["diagnostics"])
-                if bad_field == "request":
-                    self.assertIn("/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]", main)
-                    self.assertNotIn("Invalid manual model", main)
-                    self.assertNotIn("Invalid manual effort", main)
-                    self.assertEqual(record["configuration"]["model_source"], "workflow")
-                    self.assertEqual(record["configuration"]["effort_source"], "workflow")
-
-    def test_unsupported_syntax_warns_and_does_not_interpret_keyword_or_flag_values(self):
-        cases = dict(sample_items())
-        for case_id, model, model_source in (
-                ("manual-unsupported-suffix", "Opus", "manual"),
-                ("manual-unsupported-keyword", "Haiku", "workflow")):
-            with self.subTest(case_id=case_id):
-                raw = cases[case_id]
-                main, details = raw.split("<details>", 1)
-                self.assertIn("✅ **Completed**", main)
-                self.assertIn("Unsupported request syntax", main)
-                fallback = ("using Model Opus (requested) · Effort Low (configured default)"
-                            if model_source == "manual" else "using configured defaults: Model Haiku · Effort Low")
-                self.assertIn(fallback, main)
-                self.assertIn("/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]", main)
-                self.assertIn("**Model:** " + model + " · **Effort:** Low", details)
-                with mock.patch.dict(os.environ, {}, clear=True):
-                    record = gallery.check.current_selection(gallery.check.status_owner({"body": raw}), {"body": raw})
-                config = record["configuration"]
-                self.assertEqual(config["model_source"], model_source)
-                self.assertEqual(config["effort_source"], "workflow")
-                self.assertEqual(config["diagnostics"], [{"field": "request", "source": "manual", "reason": "syntax"}])
+                result, _, calls = usage_probe(body)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                raw = samples[case_id]
+                self.assertEqual(raw, calls[-1]["body"]["body"])
+                self.assertIn("**Usage:**", raw)
+                self.assertIn("No review was started.", raw)
+                for forbidden in ("<details>", "claude-review-runtime:", "Completed", "**Model:**", "❌", "✅"):
+                    self.assertNotIn(forbidden, raw)
+                self.assertIsNone(gallery.check.status_owner({"body": raw}))
 
     def test_inherited_model_conflict_stays_in_receipts_without_a_visible_model_warning(self):
         raw = dict(sample_items())['inherited-model-ambiguous']
