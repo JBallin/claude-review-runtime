@@ -28,6 +28,11 @@ HEADING = "SAMPLE ONLY — Claude Review gallery"
 GALLERY = ROOT / "docs" / "review-presentation-gallery.md"
 REGENERATE = "python3 -B scripts/render_presentation_gallery.py --write"
 FINDINGS_SAMPLE = "current-findings"
+# Retain links to input variants that share one rendered presentation.
+CASE_ANCHOR_ALIASES = {
+    "manual-invalid-model": ("manual-invalid-effort", "manual-reversed-values",
+                             "manual-unsupported-suffix", "manual-unsupported-keyword"),
+}
 SYNTHETIC_FINDING = (
     "`src/cache.py:42` — **[P2] Invalidate cached entries after deletion.** "
     "Deleting an item removes it from storage but leaves its cached value intact, "
@@ -299,12 +304,8 @@ def gallery_samples():
             GallerySample("workflow-invalid-setting", "current-completion", "Invalid configured model falls back while retaining valid effort", status(
                 "success", selection=configured(owner, check.resolve_configuration(
                     "", "unsupported", "high", automatic=True), "claude-sonnet-5-5"))),
-            GallerySample("manual-invalid-model", "current-completion", "Unknown model argument rejected without starting a review", check.manual_usage_response("arguments")),
-            GallerySample("manual-invalid-effort", "current-completion", "Unknown effort argument rejected without starting a review", check.manual_usage_response("arguments")),
+            GallerySample("manual-invalid-model", "current-completion", "Invalid manual arguments rejected without starting a review", check.manual_usage_response("arguments")),
             GallerySample("manual-unknown-value", "current-completion", "Multiple command lines rejected with one usage response", check.manual_usage_response("multiple")),
-            GallerySample("manual-reversed-values", "current-completion", "Reversed model and effort rejected without starting a review", check.manual_usage_response("arguments")),
-            GallerySample("manual-unsupported-suffix", "current-completion", "Flag syntax rejected without starting a review", check.manual_usage_response("arguments")),
-            GallerySample("manual-unsupported-keyword", "current-completion", "Literal effort keyword rejected without starting a review", check.manual_usage_response("arguments")),
         ]
         for group, state, result in (("running-history", "in_progress", "success"),
                                      ("incomplete-history", "failure", "action_required"),
@@ -382,7 +383,9 @@ def render_gallery():
     ])]
     for number, case in enumerate(gallery_samples(), start=1):
         sample_body = sample_markdown(case.body)
-        sections.append(f'<a id="{case.case_id}"></a>\n\n### {number} — {case.title.replace(": in_progress", ": running").replace(": failure", ": incomplete").replace(": publication_incomplete", ": publication unavailable")}\n\n{sample_body}')
+        anchors = "\n".join(f'<a id="{anchor}"></a>' for anchor in
+                            (case.case_id, *CASE_ANCHOR_ALIASES.get(case.case_id, ())))
+        sections.append(f'{anchors}\n\n### {number} — {case.title.replace(": in_progress", ": running").replace(": failure", ": incomplete").replace(": publication_incomplete", ": publication unavailable")}\n\n{sample_body}')
         if case.case_id == FINDINGS_SAMPLE:
             # Findings live in inline threads, outside the status renderer.
             sections[-1] += ("\n\n**Synthetic inline finding context (separate from the status comment):**\n\n"

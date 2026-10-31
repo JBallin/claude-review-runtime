@@ -759,20 +759,12 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 ---
 
 <a id="manual-invalid-model"></a>
-
-### 21 — Unknown model argument rejected without starting a review
-
-I couldn't use those review arguments. Please use a supported model and effort, with the model first when both are given.
-
-**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`
-
-Omit either setting to use its default. No review was started.
-
----
-
 <a id="manual-invalid-effort"></a>
+<a id="manual-reversed-values"></a>
+<a id="manual-unsupported-suffix"></a>
+<a id="manual-unsupported-keyword"></a>
 
-### 22 — Unknown effort argument rejected without starting a review
+### 21 — Invalid manual arguments rejected without starting a review
 
 I couldn't use those review arguments. Please use a supported model and effort, with the model first when both are given.
 
@@ -784,7 +776,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="manual-unknown-value"></a>
 
-### 23 — Multiple command lines rejected with one usage response
+### 22 — Multiple command lines rejected with one usage response
 
 Please use one review command per comment.
 
@@ -794,45 +786,9 @@ Omit either setting to use its default. No review was started.
 
 ---
 
-<a id="manual-reversed-values"></a>
-
-### 24 — Reversed model and effort rejected without starting a review
-
-I couldn't use those review arguments. Please use a supported model and effort, with the model first when both are given.
-
-**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`
-
-Omit either setting to use its default. No review was started.
-
----
-
-<a id="manual-unsupported-suffix"></a>
-
-### 25 — Flag syntax rejected without starting a review
-
-I couldn't use those review arguments. Please use a supported model and effort, with the model first when both are given.
-
-**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`
-
-Omit either setting to use its default. No review was started.
-
----
-
-<a id="manual-unsupported-keyword"></a>
-
-### 26 — Literal effort keyword rejected without starting a review
-
-I couldn't use those review arguments. Please use a supported model and effort, with the model first when both are given.
-
-**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`
-
-Omit either setting to use its default. No review was started.
-
----
-
 <a id="baseline-clean"></a>
 
-### 27 — Clean completion, changed target branch
+### 23 — Clean completion, changed target branch
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -876,7 +832,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="baseline-findings"></a>
 
-### 28 — Findings, changed target branch
+### 24 — Findings, changed target branch
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -920,7 +876,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="changed-head"></a>
 
-### 29 — PR commit changed after clean completion
+### 25 — PR commit changed after clean completion
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -964,7 +920,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="incomplete-unknown"></a>
 
-### 30 — Incomplete attempt without completed history
+### 26 — Incomplete attempt without completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1002,7 +958,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="inline-tool-partial"></a>
 
-### 31 — Inline-comment tool failure: partial
+### 27 — Inline-comment tool failure: partial
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1041,7 +997,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 
 <a id="inline-tool-zero"></a>
 
-### 32 — Inline-comment tool failure: zero
+### 28 — Inline-comment tool failure: zero
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1080,7 +1036,7 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 
 <a id="inline-tool-unknown-count"></a>
 
-### 33 — Inline-comment tool failure: unknown-count
+### 29 — Inline-comment tool failure: unknown-count
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1119,7 +1075,7 @@ An inline-comment tool call failed. This review is incomplete. [Attempt Check](h
 
 <a id="inline-tool-stale"></a>
 
-### 34 — Inline-comment tool failure after the PR commit changes
+### 30 — Inline-comment tool failure after the PR commit changes
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1158,7 +1114,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 
 <a id="unread-automatic"></a>
 
-### 35 — Required inputs unread, automatic attempt
+### 31 — Required inputs unread, automatic attempt
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1196,7 +1152,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="unread-manual"></a>
 
-### 36 — Required inputs unread, manual attempt with workflow changes
+### 32 — Required inputs unread, manual attempt with workflow changes
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1234,7 +1190,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="workflow-changed"></a>
 
-### 37 — Relevant review workflow changed, likely cause unconfirmed
+### 33 — Relevant review workflow changed, likely cause unconfirmed
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1272,7 +1228,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="workflow-changed-superseded"></a>
 
-### 38 — Workflow-change context retained for a superseded attempt
+### 34 — Workflow-change context retained for a superseded attempt
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1310,7 +1266,7 @@ The review of [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaa
 
 <a id="selection-receipt"></a>
 
-### 39 — Historical manual receipt with primary Opus and auxiliary Haiku
+### 35 — Historical manual receipt with primary Opus and auxiliary Haiku
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1330,7 +1286,7 @@ Claude Review: No findings. 🎉
 
 <a id="selection-receipt-mismatch"></a>
 
-### 40 — Historical manual receipt with primary model mismatch
+### 36 — Historical manual receipt with primary model mismatch
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1352,7 +1308,7 @@ Claude Review: No findings. 🎉
 
 <a id="compact-clean"></a>
 
-### 41 — Compact clean completion, matching baseline
+### 37 — Compact clean completion, matching baseline
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1371,7 +1327,7 @@ Claude Review: No findings. 🎉
 
 <a id="compact-differing-baseline"></a>
 
-### 42 — Compact clean completion, differing baseline
+### 38 — Compact clean completion, differing baseline
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1393,7 +1349,7 @@ The observed target differed from the reviewed baseline.
 
 <a id="manual-pin-recovery"></a>
 
-### 43 — Manual recovery after a Runtime pin change (synthetic)
+### 39 — Manual recovery after a Runtime pin change (synthetic)
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1413,7 +1369,7 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-clean"></a>
 
-### 44 — Running attempt with older completed history: clean
+### 40 — Running attempt with older completed history: clean
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1461,7 +1417,7 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-findings"></a>
 
-### 45 — Running attempt with older completed history: findings
+### 41 — Running attempt with older completed history: findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1509,7 +1465,7 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-manual"></a>
 
-### 46 — Manual current attempt with previous completed review: running
+### 42 — Manual current attempt with previous completed review: running
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1557,7 +1513,7 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-model-mismatch"></a>
 
-### 47 — Current Sonnet attempt with a previous model mismatch
+### 43 — Current Sonnet attempt with a previous model mismatch
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1606,7 +1562,7 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="incomplete-history-clean"></a>
 
-### 48 — Incomplete attempt with older completed history: clean
+### 44 — Incomplete attempt with older completed history: clean
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1663,7 +1619,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="incomplete-history-findings"></a>
 
-### 49 — Incomplete attempt with older completed history: findings
+### 45 — Incomplete attempt with older completed history: findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1720,7 +1676,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="incomplete-history-manual"></a>
 
-### 50 — Manual current attempt with previous completed review: incomplete
+### 46 — Manual current attempt with previous completed review: incomplete
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1777,7 +1733,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="retargeted-clean"></a>
 
-### 51 — Retargeted provenance: clean
+### 47 — Retargeted provenance: clean
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1822,7 +1778,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="retargeted-findings"></a>
 
-### 52 — Retargeted provenance: findings
+### 48 — Retargeted provenance: findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1867,7 +1823,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="publication-incomplete-none"></a>
 
-### 53 — Authoritative Check publication incomplete: no completed history
+### 49 — Authoritative Check publication incomplete: no completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1905,7 +1861,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-success"></a>
 
-### 54 — Authoritative Check publication incomplete: previous clean review
+### 50 — Authoritative Check publication incomplete: previous clean review
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1962,7 +1918,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-action-required"></a>
 
-### 55 — Authoritative Check publication incomplete: previous findings
+### 51 — Authoritative Check publication incomplete: previous findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2019,7 +1975,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-manual"></a>
 
-### 56 — Manual current attempt with previous completed review: publication unavailable
+### 52 — Manual current attempt with previous completed review: publication unavailable
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2076,7 +2032,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-unavailable-none"></a>
 
-### 57 — Completion with unavailable Check publication: no completed history
+### 53 — Completion with unavailable Check publication: no completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2114,7 +2070,7 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="publication-unavailable-success"></a>
 
-### 58 — Completion with unavailable Check publication: previous clean review
+### 54 — Completion with unavailable Check publication: previous clean review
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2171,7 +2127,7 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="publication-unavailable-action-required"></a>
 
-### 59 — Completion with unavailable Check publication: previous findings
+### 55 — Completion with unavailable Check publication: previous findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2228,7 +2184,7 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="running-unavailable-none"></a>
 
-### 60 — Running with unavailable Check publication: no completed history
+### 56 — Running with unavailable Check publication: no completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2259,7 +2215,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="running-unavailable-success"></a>
 
-### 61 — Running with unavailable Check publication: previous clean review
+### 57 — Running with unavailable Check publication: previous clean review
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2309,7 +2265,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="running-unavailable-action-required"></a>
 
-### 62 — Running with unavailable Check publication: previous findings
+### 58 — Running with unavailable Check publication: previous findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2359,7 +2315,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="shared-run-in-progress"></a>
 
-### 63 — Shared workflow run, matching historical baseline: running
+### 59 — Shared workflow run, matching historical baseline: running
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2406,7 +2362,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="shared-run-failure"></a>
 
-### 64 — Shared workflow run, matching historical baseline: incomplete
+### 60 — Shared workflow run, matching historical baseline: incomplete
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2462,7 +2418,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="legacy-history-run"></a>
 
-### 65 — Legacy completed history without recorded attempt metadata
+### 61 — Legacy completed history without recorded attempt metadata
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -2494,7 +2450,7 @@ The applicability of this completed review to the current PR cannot be confirmed
 
 <a id="legacy-history-no-links"></a>
 
-### 66 — Legacy completed review without workflow links
+### 62 — Legacy completed review without workflow links
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2528,7 +2484,7 @@ The applicability of this completed review to the current PR cannot be confirmed
 
 <a id="stale-running-head"></a>
 
-### 67 — Stale running attempt without completed history: changed head
+### 63 — Stale running attempt without completed history: changed head
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2564,7 +2520,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-running-base"></a>
 
-### 68 — Stale running attempt without completed history: changed base
+### 64 — Stale running attempt without completed history: changed base
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -2600,7 +2556,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-running-ref"></a>
 
-### 69 — Stale running attempt without completed history: changed ref
+### 65 — Stale running attempt without completed history: changed ref
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -2637,7 +2593,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-manual"></a>
 
-### 70 — Stale manual attempt with distinct completed-review trigger
+### 66 — Stale manual attempt with distinct completed-review trigger
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->

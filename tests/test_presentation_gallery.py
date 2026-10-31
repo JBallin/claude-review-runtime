@@ -34,9 +34,9 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 70)
+        self.assertEqual(len(gallery.gallery_samples()), 66)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 71)))
+                         list(range(1, 67)))
         # This committed audit file is not posted as one GitHub comment.
         self.assertLess(len(body.encode("utf-8")), 300_000)
 
@@ -47,8 +47,15 @@ class PresentationGalleryTests(unittest.TestCase):
         for case in samples:
             self.assertRegex(case.case_id, r"^[a-z][a-z0-9-]+$")
             self.assertNotRegex(case.title, r"^(?:[A-Z]+[0-9]*|[0-9]+) — ")
+        anchors = [anchor for case_id in case_ids for anchor in
+                   (case_id, *gallery.CASE_ANCHOR_ALIASES.get(case_id, ()))]
+        self.assertEqual(len(anchors), 70)
+        self.assertEqual(len(set(anchors)), len(anchors))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', gallery.render_gallery(), re.MULTILINE),
-                         case_ids)
+                         anchors)
+        for representative, aliases in gallery.CASE_ANCHOR_ALIASES.items():
+            self.assertIn(representative, case_ids)
+            self.assertTrue(all(alias not in case_ids for alias in aliases))
         with mock.patch.object(gallery, "GROUP_ORDER", tuple(reversed(gallery.GROUP_ORDER))):
             reordered = gallery.gallery_samples()
         self.assertNotEqual([case.case_id for case in reordered], case_ids)
@@ -63,9 +70,10 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 72)))
+                         list(range(1, 68)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
-                         [case.case_id for case in changed_order])
+                         [anchor for case in changed_order for anchor in
+                          (case.case_id, *gallery.CASE_ANCHOR_ALIASES.get(case.case_id, ()))])
 
         def case_sections(body):
             # Ignore the display heading while retaining each stable anchor's
@@ -232,11 +240,16 @@ class PresentationGalleryTests(unittest.TestCase):
             "manual-unsupported-keyword": "/claude-review effort high",
         }
         samples = {case.case_id: case.body for case in gallery.gallery_samples()}
+        representatives = {alias: case_id for case_id, aliases in gallery.CASE_ANCHOR_ALIASES.items()
+                           for alias in aliases}
+        usage_samples = [case.body for case in gallery.gallery_samples() if "<details>" not in case.body]
+        self.assertEqual(len(usage_samples), 2)
+        self.assertEqual(len(set(usage_samples)), 2)
         for case_id, body in bodies.items():
             with self.subTest(case_id=case_id):
                 result, _, calls = usage_probe(body)
                 self.assertEqual(result.returncode, 0, result.stderr)
-                raw = samples[case_id]
+                raw = samples[representatives.get(case_id, case_id)]
                 self.assertEqual(raw, calls[-1]["body"]["body"])
                 self.assertIn("**Usage:**", raw)
                 self.assertIn("No review was started.", raw)
