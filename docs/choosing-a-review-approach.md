@@ -1,7 +1,6 @@
 # Choosing a Claude code-review approach
 
-*Official sources checked October 31, 2026. Runtime behavior describes this
-revision; consumers run the revision pinned in their workflows.*
+*Sources checked October 31, 2026.*
 
 Claude Review Runtime helps individuals and teams track which changes Claude
 reviewed and whether the review completed. Choose it when that evidence is
@@ -63,7 +62,7 @@ Someone must maintain credentials, App access and coherent caller pins, review
 upgrades, and investigate incomplete runs.
 
 Runtime is GitHub-specific, supporting GitHub.com with GitHub-hosted Ubuntu
-runners; GitLab would require a port. See [validation limits](validation.md)
+runners. See [validation limits](validation.md)
 for unvalidated configurations. Choose managed review if you do not want to own
 workflows, or the Action directly for options Runtime does not expose. Check
 [data handling](https://code.claude.com/docs/en/data-usage) against your needs;
@@ -91,5 +90,5 @@ The review job’s 20-minute timeout is not a spending cap.
 
 If Runtime fits, follow the [setup checklist](consumer-workflows.md#first-review-checklist)
 and evaluate a few representative PRs for useful findings, incomplete runs,
-usage and maintenance effort. The [synthetic presentation gallery](review-presentation-gallery.md)
-previews review states; it is not proof of live coverage.
+usage and maintenance effort. Preview the review output in the
+[synthetic gallery](review-presentation-gallery.md).
