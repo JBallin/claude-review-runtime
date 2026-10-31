@@ -545,7 +545,7 @@ DIAGNOSTIC_FIELDS = ("model", "effort", "request")
 # New attempts resolve only workflow inputs; Actions variables are never consulted.
 DIAGNOSTIC_SOURCES = ("manual", "repository", "workflow")
 DIAGNOSTIC_REASONS = ("invalid", "missing", "duplicate", "syntax")
-MANUAL_USAGE = "**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`."
+MANUAL_USAGE = "**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`"
 
 
 def diagnostic_key(item):
@@ -683,24 +683,33 @@ def configuration_notices(config):
     if not config:
         return []
     if config["version"] == 1:
-        return (["⚠️ **Review configuration:** Invalid configured " + " and ".join(config["errors"])
-                 + " setting. See the workflow logs."] if config["errors"] else [])
-    sources = {"manual": "from command", "repository": "configured default",
+        return (["⚠️ **Invalid configured " + " and ".join(config["errors"])
+                 + "** — see the workflow logs"] if config["errors"] else [])
+    sources = {"manual": "requested", "repository": "configured default",
                "workflow": "configured default", "runtime": "built-in default"}
+    def fallback(fields):
+        labels = [sources[config[field + "_source"]] for field in fields]
+        values = [config["requested_" + field].capitalize() for field in fields]
+        if len(fields) == 2 and labels[0] == labels[1]:
+            shared = "requested settings" if labels[0] == "requested" else labels[0] + "s"
+            return "using " + shared + ": " + " · ".join(
+                field.title() + " " + value for field, value in zip(fields, values))
+        return "using " + " · ".join(
+            (field.title() + " " if len(fields) > 1 else "") + value + " (" + label + ")"
+            for field, value, label in zip(fields, values, labels))
     notices = []
     for item in config["diagnostics"]:
         field = item["field"]
-        heading = "Review request" if item["source"] == "manual" else "Review configuration"
         if field == "request":
-            problem = "Unsupported syntax" if item["reason"] == "syntax" else "Invalid request"
-            notices.append("⚠️ **" + heading + ":** " + problem + "; using " + ", ".join(
-                field.title() + ": " + config["requested_" + field].capitalize() + " ("
-                + sources[config[field + "_source"]] + ")" for field in ("model", "effort")) + ".")
-            continue
-        problem = item["reason"].capitalize() + " " + ("configured " if item["source"] != "manual" else "") + field
-        notices.append("⚠️ **" + heading + ":** " + problem + "; using "
-                       + config["requested_" + field].capitalize() + " ("
-                       + sources[config[field + "_source"]] + ").")
+            problem = "Unsupported request syntax" if item["reason"] == "syntax" else "Ambiguous request arguments"
+            fields = ("model", "effort")
+        else:
+            problem = ({"invalid": "Invalid " + field + " requested",
+                        "missing": "Missing " + field + " value",
+                        "duplicate": "Duplicate " + field + " selection"}[item["reason"]]
+                       if item["source"] == "manual" else "Invalid configured " + field)
+            fields = (field,)
+        notices.append("⚠️ **" + problem + "** — " + fallback(fields))
     if any(item["source"] == "manual" for item in config["diagnostics"]):
         notices.append(MANUAL_USAGE)
     return notices
@@ -958,21 +967,20 @@ def selection_notice(record, *, running=False, mismatch_only=False):
     if mismatch_only and (not selected or len(models) != 1
                           or models[0].startswith("claude-" + selected + "-")):
         return []
-    prefix = selected.title() + " selected; " if selected else ""
     if not models and selected and not running:
-        value = prefix + "primary model evidence missing"
+        problem, evidence = "Model unknown", "primary evidence missing"
     elif len(models) > 1 and selected:
         labels = [model_label(model) for model in models]
         # Versions distinguish contradictory evidence from the same family.
         labels = [model_label(model, include_version=labels.count(label) > 1)
                   for model, label in zip(models, labels)]
-        value = prefix + "primary model evidence ambiguous (" + ", ".join(labels) + ")"
+        problem, evidence = "Model ambiguous", ", ".join(labels) + " observed"
     elif models and selected and not models[0].startswith("claude-" + selected + "-"):
-        value = prefix + "primary model mismatch (" + model_label(models[0]) + " observed)"
+        problem, evidence = "Model mismatch", model_label(models[0]) + " observed"
     else:
-        value = None
-    if value:
-        notices.append("⚠️ **Model:** " + value)
+        problem = None
+    if problem:
+        notices.append("⚠️ **" + problem + ":** " + evidence)
     if usage:
         notices.append(usage)
     return notices

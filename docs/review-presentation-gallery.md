@@ -185,7 +185,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)
+⚠️ **Model mismatch:** Sonnet observed
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -225,7 +225,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -403,7 +403,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 This review did not complete reliably; this commit is not approved by it. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -437,7 +437,7 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 Trusted review tooling was unavailable; the review could not be finalized reliably. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -522,7 +522,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus selected; primary model evidence ambiguous (Opus, Sonnet)
+⚠️ **Model ambiguous:** Opus, Sonnet observed
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -562,7 +562,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model:** Opus selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -577,7 +577,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="workflow-default-running"></a>
 
-### 16 — Automatic review running with workflow inputs
+### 16 — Automatic review running with configured defaults
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -606,7 +606,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="workflow-default-observed"></a>
 
-### 17 — Automatic review completed with workflow inputs
+### 17 — Automatic review completed with configured defaults
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -644,7 +644,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="inherited-model-observed"></a>
 
-### 18 — Automatic review with Runtime defaults
+### 18 — Automatic review with built-in defaults
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -682,7 +682,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="manual-partial-default"></a>
 
-### 19 — Manual model override retaining workflow effort
+### 19 — Manual model override retaining the configured effort default
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -720,7 +720,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="workflow-invalid-setting"></a>
 
-### 20 — Invalid workflow model falls back while retaining valid effort
+### 20 — Invalid configured model falls back while retaining valid effort
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -745,7 +745,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ **Review configuration:** Invalid configured model; using Sonnet (built-in default).
+⚠️ **Invalid configured model** — using Sonnet (built-in default)
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -760,7 +760,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="manual-invalid-model"></a>
 
-### 21 — Invalid manual model falls back to workflow model
+### 21 — Invalid requested model falls back to configured default
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -785,8 +785,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review request:** Invalid model; using Haiku (configured default).\
-**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
+⚠️ **Invalid model requested** — using Haiku (configured default)\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -826,8 +826,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review request:** Invalid effort; using Medium (built-in default).\
-**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
+⚠️ **Invalid effort requested** — using Medium (built-in default)\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -867,8 +867,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review request:** Invalid request; using Model: Haiku (configured default), Effort: Low (configured default).\
-**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
+⚠️ **Ambiguous request arguments** — using configured defaults: Model Haiku · Effort Low\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -908,8 +908,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review request:** Invalid request; using Model: Haiku (configured default), Effort: Low (configured default).\
-**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
+⚠️ **Ambiguous request arguments** — using configured defaults: Model Haiku · Effort Low\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -949,8 +949,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review request:** Unsupported syntax; using Model: Opus (from command), Effort: Low (configured default).\
-**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
+⚠️ **Unsupported request syntax** — using Model Opus (requested) · Effort Low (configured default)\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -990,8 +990,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Review request:** Unsupported syntax; using Model: Haiku (configured default), Effort: Low (configured default).\
-**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.
+⚠️ **Unsupported request syntax** — using configured defaults: Model Haiku · Effort Low\
+**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -1154,7 +1154,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1193,7 +1193,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 An inline-comment tool call failed. 1 finding was posted and remains recorded; this review is incomplete. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1232,7 +1232,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 An inline-comment tool call failed. No findings were posted by this attempt; this review is incomplete. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1271,7 +1271,7 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 An inline-comment tool call failed. This review is incomplete. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1348,7 +1348,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 Required review inputs were not fully read. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#incomplete-captured-input-reads).
 
@@ -1386,7 +1386,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 Required review inputs were not fully read. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#incomplete-captured-input-reads).
 
@@ -1424,7 +1424,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 ⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. [Check this attempt’s logs](https://github.com/owner/repo/actions/runs/5/attempts/1) to confirm. Retry with `/claude-review`. See [recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1511,7 +1511,7 @@ Claude Review: No findings. 🎉
 
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
 
-⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)
+⚠️ **Model mismatch:** Sonnet observed
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -1765,7 +1765,7 @@ This review used the deployed Runtime, not the proposed pin.
 **Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 **Previous completed review**\
-⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)\
+⚠️ **Model mismatch:** Sonnet observed\
 **Model:** Opus · **Effort:** High\
 **Result:** No findings.\
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
@@ -1805,7 +1805,7 @@ This review used the deployed Runtime, not the proposed pin.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1862,7 +1862,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1919,7 +1919,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -2057,7 +2057,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -2104,7 +2104,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -2161,7 +2161,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -2218,7 +2218,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -2266,7 +2266,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -2313,7 +2313,7 @@ Review completion cannot be established because authoritative Check publication 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -2370,7 +2370,7 @@ Review completion cannot be established because authoritative Check publication 
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -2605,7 +2605,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | PR opened for review |
 
-⚠️ **Model:** Sonnet selected; primary model evidence missing
+⚠️ **Model unknown:** primary evidence missing
 
 The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 

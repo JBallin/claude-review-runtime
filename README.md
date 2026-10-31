@@ -17,7 +17,7 @@ Supports both Claude account tokens and Anthropic API keys; follow the
 
 Reviews run automatically when a PR becomes ready for review. Authorized users
 can also comment `/claude-review` on a PR to request an on-demand review.
-Set [model and effort defaults](docs/consumer-workflows.md#workflow-model-and-effort-defaults)
+Set [model and effort defaults](docs/consumer-workflows.md#repository-model-and-effort-defaults)
 in your workflow, and [override them per request](docs/consumer-workflows.md#optional-model-and-effort-selection).
 
 A standing status comment is updated as automatic and manual reviews progress.

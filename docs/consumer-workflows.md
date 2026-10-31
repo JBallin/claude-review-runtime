@@ -152,9 +152,12 @@ review to a later patch.
 For the selected revision's publication behavior, see the
 [finding-publication contract](review-guide.md#finding-publication).
 
-## Workflow model and effort defaults
+<a id="workflow-model-and-effort-defaults"></a>
 
-Set the optional `model` and `effort` inputs on each reusable-workflow caller.
+## Repository model and effort defaults
+
+Set the optional `model` and `effort` inputs on each reusable-workflow caller
+in your workflow.
 The automatic and manual examples above and below use literal `opus` / `high`
 values; choose the values you want and keep both callers consistent if they
 should share defaults:
@@ -239,7 +242,7 @@ The model may be `haiku`, `sonnet`, or `opus`. Effort may be `low`, `medium`,
 `high`, `xhigh`, or `max`. When both are present, put the model first, such as
 `/claude-review sonnet high`.
 
-Plain `/claude-review` uses both [workflow defaults](#workflow-model-and-effort-defaults),
+Plain `/claude-review` uses both [repository defaults](#repository-model-and-effort-defaults),
 falling back to Sonnet / Medium. A model-only command retains the resolved effort
 default; an effort-only command retains the resolved model default.
 
@@ -252,10 +255,10 @@ both resolved defaults rather than guessing which field to override. This
 recovery applies to configuration values, not authorization checks, conflicting
 ambient configuration, or execution failures.
 
-Warnings distinguish review-request errors from invalid configured settings,
-and identify the effective value as a configured default, built-in default, or
-value retained from the command. Manual-input warnings include a separate Usage
-line showing the supported command syntax.
+Warnings identify the invalid requested or configured setting and explain the
+effective fallback. Settings retained from the command are marked requested,
+while defaults are identified as configured or built-in. Manual-input warnings
+include a separate Usage line showing the supported command syntax.
 
 Unsupported keyword or flag syntax shows usage guidance and falls back without
 interpreting its values as overrides. Valid selections before the unsupported

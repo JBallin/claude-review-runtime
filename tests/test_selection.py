@@ -115,7 +115,7 @@ class SelectionTests(unittest.TestCase):
                 self.assertEqual((config['requested_model'], config['requested_effort']),
                                  (expected[0] or 'haiku', expected[1] or 'low'))
                 self.assertEqual(check.valid_configuration(config), config)
-                self.assertIn('Unsupported syntax', ' '.join(check.configuration_notices(config)))
+                self.assertIn('Unsupported request syntax', ' '.join(check.configuration_notices(config)))
                 self.assertIn('**Usage:** `/claude-review', ' '.join(check.configuration_notices(config)))
         for body in ('/claude-review please review this', '/claude-review unknown other prose',
                      '/claude-review please  review this '):
@@ -197,9 +197,9 @@ class SelectionTests(unittest.TestCase):
             if models == ('claude-opus-4-7',):
                 self.assertIn('**Model:** Opus · **Effort:** High', body.split('<details>')[1])
             else:
-                self.assertIn('Opus selected', body)
+                self.assertIn('⚠️ **Model', body.split('<details>')[0])
             if models == ('claude-sonnet-4-6',):
-                self.assertIn('⚠️ **Model:**', body)
+                self.assertIn('⚠️ **Model', body)
             with mock.patch.dict(os.environ, {}, clear=True):
                 self.assertEqual(check.current_selection(owner, {'body':body}), record)
                 other = copy.deepcopy(owner); other['generation'] = 'f' * 64
@@ -275,22 +275,22 @@ class SelectionTests(unittest.TestCase):
 
     def test_primary_fallback_and_conflicting_sources_are_visible(self):
         for models, transform, expected in (
-                (('claude-sonnet-4-6',), None, 'primary model mismatch (Sonnet observed)'),
+                (('claude-sonnet-4-6',), None, 'Model mismatch:** Sonnet observed'),
                 (('claude-opus-5-5',), lambda s: s[0].update(model='claude-sonnet-4-6'),
-                 'primary model evidence ambiguous (Opus, Sonnet)'),
+                 'Model ambiguous:** Opus, Sonnet observed'),
                 (('claude-opus-5-5', 'claude-sonnet-4-6'), None,
-                 'primary model evidence ambiguous (Opus, Sonnet)')):
+                 'Model ambiguous:** Opus, Sonnet observed')):
             with self.subTest(expected=expected):
                 owner, record = self.record(models=models, transform=transform)
                 for running in (False, True):
                     notice = check.selection_notice(record, running=running)[0]
-                    self.assertIn('⚠️ **Model:** Opus selected; ' + expected, notice)
+                    self.assertEqual('⚠️ **' + expected, notice)
 
     def test_model_warning_versions_are_kept_only_to_distinguish_same_family_evidence(self):
         for models, expected in (
-                (('claude-opus-4-7', 'claude-sonnet-5-5'), 'ambiguous (Opus, Sonnet)'),
-                (('claude-opus-4-7', 'claude-opus-5-5'), 'ambiguous (Opus 4.7, Opus 5.5)'),
-                (('claude-sonnet-5-5-20261001',), 'mismatch (Sonnet observed)')):
+                (('claude-opus-4-7', 'claude-sonnet-5-5'), 'Model ambiguous:** Opus, Sonnet observed'),
+                (('claude-opus-4-7', 'claude-opus-5-5'), 'Model ambiguous:** Opus 4.7, Opus 5.5 observed'),
+                (('claude-sonnet-5-5-20261001',), 'Model mismatch:** Sonnet observed')):
             with self.subTest(models=models):
                 owner, record = self.record(models=models)
                 original = copy.deepcopy(record)
@@ -311,13 +311,13 @@ class SelectionTests(unittest.TestCase):
             owner, record = self.record(transform=transform)
             self.assertIsNone(record['primary_model_evidence'])
             self.assertEqual(check.valid_selection(record, owner), record)
-            self.assertIn('⚠️ **Model:** Opus selected; primary model evidence missing',
+            self.assertIn('⚠️ **Model unknown:** primary evidence missing',
                           check.selection_notice(record)[0])
         # Historical global usage records cannot establish a primary model.
         owner, record = self.record()
         del record['primary_model_evidence']
         self.assertEqual(check.valid_selection(record, owner), record)
-        self.assertIn('primary model evidence missing', check.selection_notice(record)[0])
+        self.assertIn('primary evidence missing', check.selection_notice(record)[0])
 
     def test_assistant_source_without_initialization_model_and_nested_auxiliary_turn(self):
         def transform(stream):
@@ -343,8 +343,8 @@ class SelectionTests(unittest.TestCase):
         for state, extra in (('in_progress', {}), ('stale', {'owner_running': True})):
             body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=running, **extra)
             self.assertIn('**Model:** Opus · **Effort:** High', body)
-            self.assertNotIn('primary model evidence missing', body)
-        self.assertIn('primary model evidence missing', check.selection_notice(running)[0])
+            self.assertNotIn('primary evidence missing', body)
+        self.assertIn('primary evidence missing', check.selection_notice(running)[0])
 
     def test_plain_comment_displays_explicit_runtime_settings(self):
         owner, record = self.record(models=('claude-sonnet-5-5',), requested_model='sonnet', requested_effort='medium')
@@ -402,14 +402,14 @@ class SelectionTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {}, clear=True):
             self.assertEqual(check.current_selection(owner, {'body': body}), record)
         main, details = body.split('<details>')
-        self.assertIn('primary model evidence missing', main)
+        self.assertIn('primary evidence missing', main)
         self.assertIn('**Model:** Opus · **Effort:** High', details)
         self.assertNotIn('Opus 4.7', details)
 
     def test_historical_notice_filter_emits_only_actual_single_primary_model_mismatch(self):
         _, mismatch = self.record(models=('claude-sonnet-5-5',))
         self.assertEqual(check.selection_notice(mismatch, mismatch_only=True),
-            ['⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)'])
+            ['⚠️ **Model mismatch:** Sonnet observed'])
         _, matching = self.record()
         _, conflicting = self.record(models=('claude-opus-5-5', 'claude-sonnet-5-5'))
         _, missing = self.record()
@@ -421,9 +421,9 @@ class SelectionTests(unittest.TestCase):
                 original = copy.deepcopy(record)
                 self.assertEqual(check.selection_notice(record, mismatch_only=True), [])
                 self.assertEqual(record, original)
-        self.assertIn('primary model evidence ambiguous', ' '.join(check.selection_notice(conflicting)))
-        self.assertIn('primary model evidence missing', ' '.join(check.selection_notice(missing)))
-        self.assertIn('Review request', ' '.join(check.selection_notice(configured)))
+        self.assertIn('Model ambiguous', ' '.join(check.selection_notice(conflicting)))
+        self.assertIn('primary evidence missing', ' '.join(check.selection_notice(missing)))
+        self.assertIn('**Invalid effort requested**', ' '.join(check.selection_notice(configured)))
 
     def test_manual_completion_settings_lead_details_before_baseline_and_runtime(self):
         _, record = self.record()
@@ -453,7 +453,7 @@ class SelectionTests(unittest.TestCase):
                         'owner/repo', HEAD, 'main', 'b' * 40, '<!-- completion -->',
                         'https://github.com/owner/repo/actions/runs/5', selection=record)
                 main, details = body.split('<details>')
-                self.assertEqual('primary model mismatch' in main, warning)
+                self.assertEqual('Model mismatch' in main, warning)
                 self.assertNotIn('**Effort:**', main)
                 if not warning:
                     self.assertNotIn('**Model:**', main)

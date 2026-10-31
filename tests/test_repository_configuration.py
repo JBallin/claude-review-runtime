@@ -272,7 +272,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
             rendered = renderer()
             main, details = rendered.split("<details>", 1)
             self.assertIn("request", main.lower())
-            self.assertIn("using Model: Haiku (configured default), Effort: Low (configured default)", main)
+            self.assertIn("using configured defaults: Model Haiku · Effort Low", main)
             self.assertIn("**Usage:** `/claude-review [", main)
             self.assertIn("**Model:** Haiku · **Effort:** Low", details)
         self.assertEqual(record, before)
@@ -282,27 +282,28 @@ class RepositoryConfigurationTests(unittest.TestCase):
         original = copy.deepcopy(config)
         notices = check.configuration_notices(config)
         self.assertEqual(notices, [
-            "⚠️ **Review request:** Invalid model; using Sonnet (built-in default).",
-            "⚠️ **Review configuration:** Invalid configured model; using Sonnet (built-in default).",
-            "⚠️ **Review request:** Invalid effort; using Low (configured default).",
+            "⚠️ **Invalid model requested** — using Sonnet (built-in default)",
+            "⚠️ **Invalid configured model** — using Sonnet (built-in default)",
+            "⚠️ **Invalid effort requested** — using Low (configured default)",
             check.MANUAL_USAGE,
         ])
-        for body, model, effort in (("/claude-review invalid high", "haiku", "low"),
-                                   ("/claude-review haiku invalid", "sonnet", "medium"),
-                                   ("/claude-review invalid", "haiku", "low"),
-                                   ("/claude-review opus --effort", "haiku", "low")):
+        for body, model, effort, problem in (
+                ("/claude-review invalid high", "haiku", "low", "Invalid model requested"),
+                ("/claude-review haiku invalid", "sonnet", "medium", "Invalid effort requested"),
+                ("/claude-review invalid", "haiku", "low", "Ambiguous request arguments"),
+                ("/claude-review opus --effort", "haiku", "low", "Unsupported request syntax")):
             with self.subTest(body=body):
                 resolved = check.resolve_configuration(body, model, effort)
                 messages = check.configuration_notices(resolved)
                 self.assertEqual(messages.count(check.MANUAL_USAGE), 1)
                 self.assertEqual(messages[-1], check.MANUAL_USAGE)
-                self.assertTrue(all("**Review request:**" in line for line in messages[:-1]))
+                self.assertTrue(messages[0].startswith("⚠️ **" + problem + "** — "))
                 self.assertNotRegex(" ".join(messages), r"\((?:Workflow|Runtime|Manual)\)")
         automatic = check.resolve_configuration(None, "invalid", "high", automatic=True)
         self.assertEqual(check.configuration_notices(automatic), [
-            "⚠️ **Review configuration:** Invalid configured model; using Sonnet (built-in default)."])
+            "⚠️ **Invalid configured model** — using Sonnet (built-in default)"])
         retained = check.configuration_notices(check.resolve_configuration("/claude-review opus --effort", "haiku", "low"))
-        self.assertIn("Model: Opus (from command), Effort: Low (configured default)", retained[0])
+        self.assertIn("Model Opus (requested) · Effort Low (configured default)", retained[0])
         self.assertEqual(config, original)
 
     def test_usage_is_one_separate_line_after_request_and_model_warnings(self):
@@ -316,10 +317,29 @@ class RepositoryConfigurationTests(unittest.TestCase):
             visible = render().split("<details>", 1)[0]
             self.assertEqual(visible.count("**Usage:**"), 1)
             self.assertIn("  \n" + check.MANUAL_USAGE, visible)
-            self.assertLess(visible.index("⚠️ **Review request:**"), visible.index("**Usage:**"))
-            self.assertLess(visible.index("⚠️ **Model:**"), visible.index("**Usage:**"))
+            self.assertLess(visible.index("⚠️ **Invalid effort requested**"), visible.index("**Usage:**"))
+            self.assertLess(visible.index("⚠️ **Model"), visible.index("**Usage:**"))
             self.assertIn("[haiku|sonnet|opus] [low|medium|high|xhigh|max]", visible)
         self.assertEqual(record, original)
+
+    def test_request_fallback_groups_shared_origins_and_retains_mixed_origins(self):
+        for request, model, effort, expected in (
+                ("/claude-review unknown", "haiku", "low",
+                 "⚠️ **Ambiguous request arguments** — using configured defaults: Model Haiku · Effort Low"),
+                ("/claude-review unknown", "", "",
+                 "⚠️ **Ambiguous request arguments** — using built-in defaults: Model Sonnet · Effort Medium"),
+                ("/claude-review opus high extra", "haiku", "low",
+                 "⚠️ **Unsupported request syntax** — using requested settings: Model Opus · Effort High"),
+                ("/claude-review opus --effort", "haiku", "low",
+                 "⚠️ **Unsupported request syntax** — using Model Opus (requested) · Effort Low (configured default)"),
+                ("/claude-review high --model", "haiku", "low",
+                 "⚠️ **Unsupported request syntax** — using Model Haiku (configured default) · Effort High (requested)")):
+            with self.subTest(request=request, model=model, effort=effort):
+                config = check.resolve_configuration(request, model, effort)
+                original = copy.deepcopy(config)
+                self.assertEqual(check.configuration_notices(config), [expected, check.MANUAL_USAGE])
+                self.assertEqual(config, original)
+                self.assertEqual(check.valid_configuration(config), original)
 
     def test_unsupported_syntax_capture_continues_with_literal_resolved_settings(self):
         for body, model, effort in (
@@ -345,7 +365,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                                      ("--model " + model, "--effort " + effort))
                     self.assertEqual(json.loads(output["selection_config"]), config)
                     self.assertIn("::warning::", message)
-                    self.assertIn("Unsupported syntax", message)
+                    self.assertIn("Unsupported request syntax", message)
                     self.assertIn(model.capitalize(), message)
                     self.assertIn(effort.capitalize(), message)
                     self.assertIn("**Usage:** `/claude-review", message)
@@ -466,7 +486,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         unknown = self.record(config, owner=owner)
         self.assertEqual(check.selection_details(unknown), ["**Model:** Sonnet · **Effort:** Medium"])
         self.assertEqual(check.selection_notice(unknown, running=True), [])
-        self.assertIn("primary model evidence missing", " ".join(check.selection_notice(unknown)))
+        self.assertIn("primary evidence missing", " ".join(check.selection_notice(unknown)))
         observed = self.record(config, owner=owner, model="claude-sonnet-5-5", auxiliary="claude-haiku-5-5")
         self.assertEqual(check.selection_details(observed), ["**Model:** Sonnet · **Effort:** Medium"])
         self.assertEqual(check.selection_notice(observed), [])
@@ -527,7 +547,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                     rendered = check.status_comment_body(HEAD, "main", state, owner=owner, selection=record)
                     main, details = rendered.split("<details>", 1)
                     self.assertNotIn("**Model:**", main + details)
-                    self.assertNotIn("primary model evidence ambiguous", main)
+                    self.assertNotIn("Model ambiguous", main)
                     self.assertNotIn("**Effort:**", main)
                     if effort:
                         self.assertIn("**Effort:** " + effort.capitalize(), details)
@@ -537,7 +557,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 if not automatic:
                     receipt = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, "", "", selection=record)
                     self.assertNotIn("**Model:**", receipt)
-                    self.assertNotIn("primary model evidence ambiguous", receipt)
+                    self.assertNotIn("Model ambiguous", receipt)
                     if effort:
                         self.assertIn("**Effort:** " + effort.capitalize(), receipt.split("<details>", 1)[1])
                 self.assertEqual(record, original)
@@ -552,7 +572,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 record = self.record(config, owner=owner, model="claude-opus-5-5")
                 record["models"] = ["claude-opus-5-5", "claude-sonnet-5-5"]
                 record["primary_model_evidence"]["assistant"] = list(record["models"])
-                warning = config["requested_model"].title() + " selected; primary model evidence ambiguous"
+                warning = "⚠️ **Model ambiguous:** Opus, Sonnet observed"
                 for running in (False, True):
                     self.assertIn(warning, check.selection_notice(record, running=running)[0])
                 rendered = check.status_comment_body(HEAD, "main", "success", owner=owner, selection=record)
@@ -568,7 +588,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         mismatch = self.record(config, owner=owner, model="claude-sonnet-5-5")
         body = check.status_comment_body(HEAD, "main", "success", owner=owner, selection=mismatch)
         main, details = body.split("<details>", 1)
-        self.assertIn("Haiku selected; primary model mismatch (Sonnet observed)", main)
+        self.assertIn("Model mismatch:** Sonnet observed", main)
         self.assertIn("**Model:** Haiku · **Effort:** Max", details)
 
     def test_record_keeps_captured_source_and_validates_generation_and_attempt(self):
@@ -640,8 +660,8 @@ class RepositoryConfigurationTests(unittest.TestCase):
         body = render(historical)
         top, groups = body.split("**Current attempt**", 1)
         current_section, previous_section = groups.split("**Previous completed review**", 1)
-        warning = "⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)"
-        self.assertNotIn("⚠️ **Model:**", top + current_section)
+        warning = "⚠️ **Model mismatch:** Sonnet observed"
+        self.assertNotIn("⚠️ **Model", top + current_section)
         self.assertIn("**Model:** Sonnet · **Effort:** Medium", current_section)
         self.assertEqual(previous_section.count(warning), 1)
         self.assertEqual(previous_section.strip().splitlines()[0].rstrip(), warning)
@@ -662,11 +682,11 @@ class RepositoryConfigurationTests(unittest.TestCase):
         stale_details = check.last_completed_review_details(stale_receipt)
         self.assertNotIn("selection", stale_details)
         stale_previous = render(stale_details).split("**Previous completed review**", 1)[1]
-        self.assertNotIn("⚠️ **Model:**", stale_previous)
+        self.assertNotIn("⚠️ **Model", stale_previous)
         self.assertNotIn("**Model:**", stale_previous)
         mismatched = copy.deepcopy(historical)
         mismatched["selection"]["generation"] = "f" * 64
-        self.assertNotIn("⚠️ **Model:**", render(mismatched).split("**Previous completed review**", 1)[1])
+        self.assertNotIn("⚠️ **Model", render(mismatched).split("**Previous completed review**", 1)[1])
         self.assertEqual(previous, original)
 
     def test_previously_recorded_v2_repository_configuration_stays_historical(self):
@@ -733,7 +753,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         body = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, marker,
                                              f"https://github.com/{REPO}/actions/runs/5", selection=record)
         main, details = body.split("<details>", 1)
-        self.assertIn("Sonnet selected; primary model mismatch (Haiku observed)", main)
+        self.assertIn("Model mismatch:** Haiku observed", main)
         self.assertNotIn("**Effort:**", main)
         self.assertIn("**Model:** Sonnet · **Effort:** High", details)
         self.assertIn(marker, body)

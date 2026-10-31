@@ -40,7 +40,7 @@ runtime. The runtime resolves the current patch once for each accepted request.
 The current Runtime source accepts short model and effort selections, including
 `/claude-review opus`, `/claude-review high`, and `/claude-review opus high`.
 Models are Opus, Sonnet, or Haiku; effort is Low, Medium, High, Xhigh, or Max.
-See [workflow defaults](consumer-workflows.md#workflow-model-and-effort-defaults)
+See [repository defaults](consumer-workflows.md#repository-model-and-effort-defaults)
 and [manual command forms](consumer-workflows.md#optional-model-and-effort-selection).
 Model evidence is diagnostic: a different primary model produces a notice,
 without changing completion or finding verification.

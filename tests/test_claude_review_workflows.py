@@ -1550,7 +1550,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 visible, details = body.split("<details>", 1)
                 self.assertIn(expected, details)
                 self.assertNotIn("**Effort:**", visible)
-                self.assertIn("primary model evidence missing", visible)
+                self.assertIn("primary evidence missing", visible)
                 record = check.current_selection(owner, {"body": body})
                 self.assertEqual(record["requested_model"], "opus")
                 self.assertEqual(record["requested_effort"], command.rsplit(" ", 1)[1])
@@ -1582,7 +1582,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertNotIn("**Effort:**", visible)
                     if model:
                         self.assertIn("**Model:** " + model.title(), details)
-                        self.assertIn(model.title() + " selected; primary model evidence missing", visible)
+                        self.assertIn("⚠️ **Model unknown:** primary evidence missing", visible)
                     else:
                         self.assertNotIn("**Model:**", body)
                     if effort:
@@ -1610,7 +1610,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     body = self.repaired_status(calls)
                     self.assertIn(expected, body.split("<details>", 1)[1])
                     self.assertNotIn(absent, body)
-                    self.assertIn("Invalid configured " + captured["errors"][0] + " setting", body.split("<details>", 1)[0])
+                    self.assertIn("⚠️ **Invalid configured " + captured["errors"][0] + "**", body.split("<details>", 1)[0])
 
     def test_fallback_resolved_defaults_and_per_field_diagnostics_are_retained(self):
         from test_claude_review_check import presentation_owner
@@ -1643,22 +1643,12 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertNotIn("**Effort:**", visible)
                     record = check.current_selection(owner, {"body": body})
                     self.assertEqual(record["configuration"], captured)
-                    source_labels = {"manual": "from command", "workflow": "configured default", "runtime": "built-in default"}
-                    for diagnostic in diagnostics:
-                        heading = "Review request" if diagnostic["source"] == "manual" else "Review configuration"
-                        self.assertIn("⚠️ **" + heading + ":**", visible)
-                        if diagnostic["field"] == "request":
-                            self.assertIn("Invalid request; using Model: " + model.title() + " ("
-                                          + source_labels[model_source] + "), Effort: " + effort.capitalize() + " ("
-                                          + source_labels[effort_source] + ").", visible)
-                            continue
-                        self.assertIn(diagnostic["reason"].capitalize() + " "
-                                      + ("configured " if diagnostic["source"] != "manual" else "") + diagnostic["field"] + ";", visible)
-                        self.assertIn("using " + captured["requested_" + diagnostic["field"]].capitalize(), visible)
+                    for notice in check.configuration_notices(captured):
+                        self.assertIn(notice, visible)
                     self.assertEqual("**Usage:** `/claude-review" in visible,
                                      any(d["source"] == "manual" for d in diagnostics))
                     if "**Usage:** `/claude-review" in visible:
-                        self.assertIn("**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`.", visible)
+                        self.assertIn("**Usage:** `/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]`", visible)
                     self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
 
     def test_fallback_preserves_captured_syntax_recovery_without_interpreting_removed_options(self):
@@ -1690,7 +1680,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertIn("**Model:** " + model.title() + " · **Effort:** Low", details)
                     for notice in check.configuration_notices(config):
                         self.assertIn(notice, visible)
-                    self.assertIn("Unsupported syntax; using Model:", visible)
+                    self.assertIn("⚠️ **Unsupported request syntax** — using", visible)
                     self.assertNotIn("$(injected)", body)
                     record = check.current_selection(owner, {"body": body})
                     self.assertEqual(record["configuration"], config)
@@ -1877,17 +1867,17 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     after = self.repaired_status(calls)
                     visible, details = after.split("<details>", 1)
                     current, previous = details.split("**Previous completed review**  \n", 1)
-                    self.assertIn("Haiku selected; primary model evidence missing", visible)
+                    self.assertIn("⚠️ **Model unknown:** primary evidence missing", visible)
                     self.assertNotIn("Opus selected", visible + current)
-                    self.assertNotIn("primary model mismatch", visible + current)
+                    self.assertNotIn("Model mismatch", visible + current)
                     self.assertIn("**Model:** Opus · **Effort:** High  \n", previous)
                     if observed_label:
-                        warning = "⚠️ **Model:** Opus selected; primary model mismatch (" + observed_label + " observed)"
+                        warning = "⚠️ **Model mismatch:** " + observed_label + " observed"
                         self.assertEqual(after.count(warning), 1)
                         self.assertLess(previous.index(warning), previous.index("**Last reviewed"))
                         self.assertLess(previous.index(warning), previous.index("**Effort:** High"))
                     else:
-                        self.assertNotIn("⚠️ **Model:**", previous)
+                        self.assertNotIn("⚠️ **Model", previous)
                     self.assertIn(receipt, after)
                     self.assertEqual(check.last_completed_review_details({**owned, "body": after})["selection"], prior)
 
@@ -1917,7 +1907,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     previous = self.repaired_status(calls).split("**Previous completed review**", 1)[1]
                     self.assertNotIn("**Model:**", previous)
                     self.assertNotIn("**Effort:**", previous)
-                    self.assertNotIn("primary model mismatch", self.repaired_status(calls))
+                    self.assertNotIn("Model mismatch", self.repaired_status(calls))
 
     def test_fallback_records_an_encoded_base_ref(self):
         owned = {"user": {"login": "github-actions[bot]", "type": "Bot"},

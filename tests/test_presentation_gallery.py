@@ -122,13 +122,13 @@ class PresentationGalleryTests(unittest.TestCase):
                     visible_details = re.sub(r'<!--.*?-->', '', details, flags=re.DOTALL)
                     self.assertNotIn('Haiku', visible_details)
                     self.assertNotIn('evidence', visible_details)
-        for case_id, exception in (('opus-mismatch', 'primary model mismatch'),
-                                   ('selection-receipt-mismatch', 'primary model mismatch'),
-                                   ('opus-unknown', 'primary model evidence missing'),
-                                   ('opus-legacy', 'primary model evidence missing'),
-                                   ('opus-ambiguous', 'primary model evidence ambiguous')):
+        for case_id, exception in (('opus-mismatch', 'Model mismatch:** Sonnet observed'),
+                                   ('selection-receipt-mismatch', 'Model mismatch:** Sonnet observed'),
+                                   ('opus-unknown', 'Model unknown:** primary evidence missing'),
+                                   ('opus-legacy', 'Model unknown:** primary evidence missing'),
+                                   ('opus-ambiguous', 'Model ambiguous:** Opus, Sonnet observed')):
             visible = re.sub(r'<!--.*?-->', '', cases[case_id].split('<details>')[0], flags=re.DOTALL)
-            self.assertIn('⚠️ **Model:** Opus selected; ' + exception, visible)
+            self.assertIn('⚠️ **' + exception, visible)
         mixed = gallery.check.current_selection(
             gallery.fixtures.presentation_owner(kind='issue_comment', target=12, started=gallery.STARTED),
             {'body': cases['opus-multiple']})
@@ -192,10 +192,10 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertEqual(record['configuration']['model_source'], 'workflow')
                     self.assertEqual(record['configuration']['effort_source'], 'workflow')
         main, details = cases['workflow-invalid-setting'].split('<details>', 1)
-        self.assertIn('⚠️ **Review configuration:**', main)
-        self.assertIn('Invalid configured model; using Sonnet (built-in default).', main)
+        self.assertIn('⚠️ **Invalid configured model**', main)
+        self.assertIn('Invalid configured model** — using Sonnet (built-in default)', main)
         self.assertNotIn('**Usage:**', main)
-        self.assertNotIn('primary model evidence missing', main)
+        self.assertNotIn('primary evidence missing', main)
         self.assertIn('**Model:** Sonnet · **Effort:** High', details)
         self.assertIn('✅ **Completed**', main)
 
@@ -231,7 +231,9 @@ class PresentationGalleryTests(unittest.TestCase):
                 raw = cases[case_id]
                 main, details = raw.split("<details>", 1)
                 self.assertIn("✅ **Completed**", main)
-                self.assertIn("⚠️ **Review request:**", main)
+                problem = ("Ambiguous request arguments" if bad_field == "request"
+                           else "Invalid " + bad_field + " requested")
+                self.assertIn("⚠️ **" + problem + "**", main)
                 self.assertIn(bad_field, main.lower())
                 self.assertIn("**Model:** " + model + " · **Effort:** " + effort, details)
                 self.assertEqual(main.count("**Usage:**"), 1)
@@ -257,9 +259,10 @@ class PresentationGalleryTests(unittest.TestCase):
                 raw = cases[case_id]
                 main, details = raw.split("<details>", 1)
                 self.assertIn("✅ **Completed**", main)
-                self.assertIn("Unsupported syntax", main)
-                provenance = "from command" if model_source == "manual" else "configured default"
-                self.assertIn("Model: " + model + " (" + provenance + "), Effort: Low (configured default)", main)
+                self.assertIn("Unsupported request syntax", main)
+                fallback = ("using Model Opus (requested) · Effort Low (configured default)"
+                            if model_source == "manual" else "using configured defaults: Model Haiku · Effort Low")
+                self.assertIn(fallback, main)
                 self.assertIn("/claude-review [haiku|sonnet|opus] [low|medium|high|xhigh|max]", main)
                 self.assertIn("**Model:** " + model + " · **Effort:** Low", details)
                 with mock.patch.dict(os.environ, {}, clear=True):
@@ -274,7 +277,7 @@ class PresentationGalleryTests(unittest.TestCase):
         main, details = raw.split('<details>', 1)
         visible = re.sub(r'<!--.*?-->', '', main, flags=re.DOTALL)
         self.assertNotIn('**Model:**', visible + details)
-        self.assertNotIn('primary model evidence ambiguous', visible)
+        self.assertNotIn('Model ambiguous', visible)
         self.assertNotIn('**Effort:**', visible)
         self.assertIn('**Effort:** High', details)
         with mock.patch.dict(os.environ, {}, clear=True):
@@ -309,8 +312,8 @@ class PresentationGalleryTests(unittest.TestCase):
         main, details = raw.split("<details>", 1)
         current, previous = details.split("**Previous completed review**", 1)
         self.assertIn("**Current attempt**  \n**Model:** Sonnet · **Effort:** Medium", current)
-        self.assertNotIn("⚠️ **Model:**", main + current)
-        warning = "⚠️ **Model:** Opus selected; primary model mismatch (Sonnet observed)"
+        self.assertNotIn("⚠️ **Model", main + current)
+        warning = "⚠️ **Model mismatch:** Sonnet observed"
         self.assertTrue(previous.lstrip().startswith(warning))
         self.assertEqual(raw.count(warning), 1)
         self.assertIn(warning, previous)
@@ -328,7 +331,7 @@ class PresentationGalleryTests(unittest.TestCase):
         # Different configured settings alone and absent historical evidence
         # cannot manufacture a previous model mismatch.
         for case_id in ("running-history-clean", "legacy-history-run", "legacy-history-no-links"):
-            self.assertNotIn("primary model mismatch", cases[case_id])
+            self.assertNotIn("Model mismatch", cases[case_id])
 
     def test_current_findings_completion_has_current_commit_run_and_evidence(self):
         check = gallery.check
