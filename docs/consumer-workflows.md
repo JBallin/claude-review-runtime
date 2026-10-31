@@ -153,11 +153,12 @@ For the selected revision's publication behavior, see the
 [finding-publication contract](review-guide.md#finding-publication).
 
 <a id="workflow-model-and-effort-defaults"></a>
+<a id="repository-model-and-effort-defaults"></a>
 
-## Repository model and effort defaults
+## Model and effort defaults
 
-Set the optional `model` and `effort` inputs on each reusable-workflow caller
-in your workflow.
+Set the review defaults for your repository through the optional `model` and
+`effort` inputs on the automatic and manual callers in your workflow.
 The automatic and manual examples above and below use literal `opus` / `high`
 values; choose the values you want and keep both callers consistent if they
 should share defaults:
@@ -245,7 +246,7 @@ The model may be `haiku`, `sonnet`, or `opus`. Effort may be `low`, `medium`,
 `high`, `xhigh`, or `max`. When both are present, put the model first, such as
 `/claude-review sonnet high`. There is no literal `effort` keyword.
 
-Plain `/claude-review` uses both [repository defaults](#repository-model-and-effort-defaults).
+Plain `/claude-review` uses both [repository defaults](#model-and-effort-defaults).
 A model-only command retains the effort default; an effort-only command retains
 the model default. Surrounding whitespace and whitespace between values are
 allowed. Other lines may contain prose or another reviewer's request. Mid-sentence

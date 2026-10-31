@@ -29,28 +29,24 @@ diff changes, and assess whether a changed base invalidates previous evidence.
 
 ## Request a manual review
 
-In current Runtime source, post `/claude-review` or one of its optional forms on its own line in a top-level
+Post `/claude-review` or one of its optional forms on its own line in a top-level
 or inline PR comment. Surrounding whitespace and prose on other lines are allowed;
 quoted and fenced examples are ignored. Matching is case-insensitive. The commenter must have an owner, member, or collaborator
 association; the action also checks actor/access eligibility. Ordinary issue
 comments and untrusted requests do not start model execution. The repository's
-pinned caller performs its own eligibility check. Current Runtime source also
+pinned caller performs its own eligibility check. Runtime also
 classifies command lines before review starts and can post usage guidance without
 checking out PR code. The runtime resolves the current patch once for each accepted request.
 
-The current Runtime source accepts short model and effort selections, including
+Short model and effort selections include
 `/claude-review opus`, `/claude-review high`, and `/claude-review opus high`.
 Models are Opus, Sonnet, or Haiku; effort is Low, Medium, High, Xhigh, or Max.
-See [repository defaults](consumer-workflows.md#repository-model-and-effort-defaults)
+See [model and effort defaults](consumer-workflows.md#model-and-effort-defaults)
 and [manual command forms](consumer-workflows.md#optional-model-and-effort-selection).
 Model evidence is diagnostic: a different primary model produces a notice,
 without changing completion or finding verification.
 
-The command deliberately avoids a Claude mention. `@claude review` can invoke
-Anthropic's separate managed review service and does not invoke this checkout's
-manual entrypoint or this repository’s callers.
-Provider-bot reactions on comments are preserved and are not this runtime's
-progress or completion signals.
+`@claude review` does not invoke Runtime’s manual entrypoint or this repository’s callers.
 
 ## Read the result
 
