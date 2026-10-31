@@ -73,7 +73,7 @@ jobs:
       github.event.comment.author_association) &&
       (github.event_name == 'pull_request_review_comment' ||
       github.event.issue.pull_request)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 14
     # PR comments need pull-requests: write; top-level PR reactions use the issue endpoint and need issues: write.
@@ -334,7 +334,7 @@ jobs:
       contents: read
       pull-requests: read
       id-token: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     outputs:
       conclusion: ${{ steps.review.outputs.conclusion }}
@@ -794,7 +794,7 @@ jobs:
       (needs.start-check.outputs.selection_accepted == 'true' ||
       (needs.start-check.outputs.request_recognized == 'true' &&
       needs.start-check.outputs.tooling_unavailable == 'true'))
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 22
     # PR comments need pull-requests: write; top-level PR reactions use the issue endpoint and need issues: write.

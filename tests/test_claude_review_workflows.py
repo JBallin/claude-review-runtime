@@ -461,6 +461,35 @@ class ConcurrencyGroupTests(unittest.TestCase):
 
 
 class JobStructureTests(unittest.TestCase):
+    def test_every_executing_job_uses_the_explicit_supported_runner(self):
+        expected = {
+            ("ci.yml", "validation"),
+            ("claude-review.yml", "start-check"),
+            ("claude-review.yml", "review"),
+            ("claude-review.yml", "publish-status"),
+            ("claude.yml", "start-check"),
+            ("claude.yml", "review"),
+            ("claude.yml", "publish-status"),
+            ("claude-review-status.yml", "refresh-status"),
+            ("claude-review-status.yml", "discover-target"),
+            ("claude-review-status.yml", "refresh-target"),
+            ("self-review-manual.yml", "eligibility"),
+        }
+        executing = set()
+        for path in WORKFLOWS.glob("*.yml"):
+            names = re.findall(r"^  ([\w-]+):$", "\n".join(block(lines_of(path), "jobs", 0)),
+                               re.MULTILINE)
+            for name in names:
+                with self.subTest(workflow=path.name, job=name):
+                    definition = job(path, name)
+                    runner = scalar(definition, "runs-on", 4)
+                    if scalar(definition, "uses", 4) is not None:
+                        self.assertIsNone(runner)
+                    else:
+                        self.assertEqual(runner, "ubuntu-26.04")
+                        executing.add((path.name, name))
+        self.assertEqual(executing, expected)
+
     def test_presentation_diagnostic_is_carried_only_between_trusted_jobs(self):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
