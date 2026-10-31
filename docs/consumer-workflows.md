@@ -138,6 +138,9 @@ jobs:
       issues: write
       id-token: write
     uses: JBallin/claude-review-runtime/.github/workflows/claude-review.yml@<full-reviewed-runtime-sha>
+    with:
+      model: opus
+      effort: high
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
@@ -148,6 +151,55 @@ review to a later patch.
 
 For the selected revision's publication behavior, see the
 [finding-publication contract](review-guide.md#finding-publication).
+
+<a id="workflow-model-and-effort-defaults"></a>
+<a id="repository-model-and-effort-defaults"></a>
+
+## Model and effort defaults
+
+Set the review defaults for your repository through the optional `model` and
+`effort` inputs on the automatic and manual callers in your workflow.
+The automatic and manual examples above and below use literal `opus` / `high`
+values; choose the values you want and keep both callers consistent if they
+should share defaults:
+
+```yaml
+with:
+  model: opus
+  effort: high
+```
+
+| Input | Supported values | Built-in default |
+| --- | --- | --- |
+| `model` | `opus`, `sonnet`, `haiku` | `sonnet` |
+| `effort` | `low`, `medium`, `high`, `xhigh`, `max` | `medium` |
+
+Values are case-insensitive and surrounding whitespace is ignored. Every nonblank
+workflow input must be supported, even when a manual choice overrides it. An
+invalid model or effort stops the run before Claude starts. The Actions run shows
+a failed configuration step with an error and summary; existing review results
+and Checks remain intact.
+
+Once the workflow inputs are valid, each omitted manual choice uses its workflow
+input, then Runtime's **Sonnet / Medium** defaults. Blank workflow inputs count as
+omitted. Runtime passes both resolved values to execution. Invalid manual
+arguments reject the entire request; they never start a review using replacement
+settings. See the [selection rationale](design-notes.md#review-model-and-effort-selection).
+
+Use literal owner-reviewed values in the caller, rather than expressions from
+PR content. Runtime validates the resolved values; it cannot distinguish a
+literal from a caller expression. It accepts only supported model and effort
+values as execution arguments; inputs cannot configure prompts, tools, helper paths, credentials,
+or review eligibility. Actions configuration variables are not consulted.
+Settings are captured with each attempt, so later caller changes do not rewrite
+its settings or historical results.
+
+Default Anthropic App/OIDC validation can reject a new or modified caller
+workflow until matching content exists on the default branch. A rejected caller
+may skip model execution even when Actions orchestration is green; Runtime
+requires verified completion and reports the review as Incomplete. See
+[installation and incomplete reviews](review-guide.md#installation-and-incomplete-reviews)
+for diagnosis and recovery.
 
 ## Manual review
 
@@ -172,49 +224,73 @@ jobs:
       issues: write
       id-token: write
     uses: JBallin/claude-review-runtime/.github/workflows/claude.yml@<full-reviewed-runtime-sha>
+    with:
+      model: opus
+      effort: high
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
 
 ### Optional model and effort selection
 
-Post one of these entire comment bodies, case-insensitively, with exactly the
-spaces shown:
+Put one command on its own line, case-insensitively:
 
 ```text
 /claude-review
 /claude-review opus
-/claude-review effort high
-/claude-review opus effort high
+/claude-review high
+/claude-review opus high
 ```
 
-`effort` accepts `low`, `medium`, `high`, `xhigh`, or `max`. Surrounding whitespace,
-extra arguments and other model choices are rejected. Selection comes from the
-trusted comment, not workflow inputs; any caller eligibility gate must accept
-the same forms as its selected Runtime revision.
+The model may be `haiku`, `sonnet`, or `opus`. Effort may be `low`, `medium`,
+`high`, `xhigh`, or `max`. When both are present, put the model first, such as
+`/claude-review sonnet high`. There is no literal `effort` keyword.
 
-Plain `/claude-review` sets neither model nor effort. Claude Code resolves both
-from applicable configuration and account defaults; `opus` requests its Opus
-alias. See [upstream configuration](https://code.claude.com/docs/en/model-config#adjust-effort-level).
-A conflicting `ANTHROPIC_MODEL` prevents an explicit Opus review from starting.
-Model access still depends on the existing account.
+Plain `/claude-review` uses both [repository defaults](#model-and-effort-defaults).
+A model-only command retains the effort default; an effort-only command retains
+the model default. Surrounding whitespace and whitespace between values are
+allowed. Other lines may contain prose or another reviewer's request. Mid-sentence
+mentions, quoted lines, inline-code examples, and fenced code blocks are ignored;
+indentation alone does not make a command an example.
 
-Higher effort can increase usage and latency; turn and time limits are not a
-spending cap. Model/account policy may limit the requested level. The displayed effort is the requested setting; headless output does not report
-the resolved setting. See [Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
+Unknown values, reversed model/effort order, keywords, flags, trailing words, or
+multiple command lines reject the whole request. Runtime does not run a model or
+retain a valid sibling argument from that request. For a trusted human commenter
+with current write access on an open, non-draft, same-repository PR, it posts a
+separate usage response. Existing review results and the authoritative Check
+remain unchanged. Feedback may wait behind an active review in the shared PR
+queue; rerunning the workflow may post another response. Edited comments do not
+trigger this path: post a new comment to request a review.
 
-While a manual review runs, explicit selections appear compactly, for example
-“Model: Opus · Effort: High”. The standing status and historical clean-completion
-receipt retain that line when the primary review model is confirmed as Opus.
-Conflicting primary evidence, a different primary model, or missing evidence
-produces a visible warning. Auxiliary model usage stays in diagnostic metadata;
-it does not establish the primary model. Legacy records without separate primary
-evidence show a missing-evidence warning rather than confirming from usage.
-Effort remains the configured request, not an observed or effective value.
-Inherited model evidence stays in diagnostic metadata, including effort-only
-requests. Model diagnostics do not invalidate completed reviews or erase findings. Runtime
-does not add retries or substitution runs for these diagnostics; provider
-failures retain their ordinary incomplete-review behavior.
+The three aliases follow [upstream model resolution](https://code.claude.com/docs/en/model-config)
+and can advance to newer versions. Model access, alias remapping, and effort
+limits depend on the account and provider. Upstream may reject a selection or
+clamp unsupported effort; Runtime does not silently choose a replacement.
+A conflicting `ANTHROPIC_MODEL` or `CLAUDE_CODE_EFFORT_LEVEL` prevents the
+review from starting. Higher effort can increase usage and latency; turn and
+time limits are not a spending cap. See
+[effort support](https://platform.claude.com/docs/en/build-with-claude/effort).
+
+Resolved **Model** and **Effort** appear in each run’s Details, above its
+baseline and Runtime provenance, including manual clean-completion receipts.
+Normal model labels show the family name (Sonnet, Opus, or Haiku); full model identifiers
+remain in recorded execution metadata. Historical results retain the settings
+recorded for that attempt; missing historical settings are omitted. Effort is the
+configured request, not an independently observed or effective value; headless
+output does not report the resolved setting. See
+[Claude Code #104936](https://github.com/anthropics/claude-code/issues/104936).
+
+For the current attempt, a selected model with missing or conflicting primary
+evidence, or execution by a different model family, produces a warning outside
+Details. A recorded model mismatch from a previous run appears only within its
+Previous completed review section, before its settings. Model warnings use
+family names unless version detail is needed to distinguish conflicting evidence
+from the same family. Auxiliary model usage
+stays in diagnostic metadata and cannot confirm the primary model.
+Legacy records without separate primary evidence retain the missing-evidence
+warning. Model diagnostics do not invalidate completed reviews or erase
+findings. Runtime adds no retries or substitution runs for these diagnostics;
+provider failures retain their ordinary incomplete-review behavior.
 
 The runtime resolves the current patch once for each accepted manual request.
 Ordinary issue comments and untrusted requests do not start model execution.
