@@ -145,8 +145,18 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(mixed['primary_model_evidence']['assistant'], ['claude-opus-5-5'])
         self.assertIsNone(mixed['observed_effort'])
         receipt = cases['selection-receipt'].split('<details>')[0]
-        self.assertIn('**Commit:** ' + gallery.check.commit_link(gallery.fixtures.HEAD,
+        self.assertIn('**Reviewed commit:** ' + gallery.check.commit_link(gallery.fixtures.HEAD,
                       gallery.fixtures.REPO) + '\n\n**Model:** Opus · **Effort:** High\n\n', receipt)
+
+    def test_completed_sample_turns_are_fixed_without_changing_uncertainty(self):
+        cases = dict(sample_items())
+        for key in ('current-clean', 'current-findings', 'opus-observed', 'selection-receipt',
+                    'compact-clean', 'compact-differing-baseline', 'manual-pin-recovery'):
+            self.assertIn('**Turns:** 30', cases[key], key)
+            self.assertNotIn('**Turns:** `', cases[key])
+        for key in ('opus-legacy', 'selection-running'):
+            self.assertIn('**Turns:** unavailable', cases[key])
+        self.assertIn('**Turns:** 101', cases['turn-limit'])
 
     def test_current_findings_completion_has_current_commit_run_and_evidence(self):
         check = gallery.check
@@ -230,7 +240,7 @@ class PresentationGalleryTests(unittest.TestCase):
             elif case_id == "compact-clean":
                 self.assertNotIn("The observed target differed from the reviewed baseline.", raw)
                 self.assertIn("Claude Review: No findings. 🎉", raw)
-                self.assertIn("**Commit:**", raw)
+                self.assertIn("**Reviewed commit:**", raw)
                 self.assertNotIn(gallery.check.TARGET_TIP_WARNING, raw)
                 self.assertNotIn("target commit:**", raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)

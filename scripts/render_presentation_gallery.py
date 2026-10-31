@@ -85,6 +85,11 @@ def gallery_samples():
     """Return stable cases grouped for reading, using raw production output."""
     with fixture_environment(), mock.patch.object(check, "now", return_value=COMPLETED_AT):
         owner = fixtures.presentation_owner(started=STARTED)
+        def sample_execution(sample_owner):
+            return {"version": 2, "generation": sample_owner["generation"], "run": sample_owner["run"],
+                    "attempt": sample_owner["attempt"], "execution": "observed",
+                    "reason": "execution_observed", "num_turns": 30, "max_turns": None}
+
         details = {
             "base_sha": fixtures.BASE_TIP,
             "run_url": "https://github.com/owner/repo/actions/runs/5",
@@ -92,12 +97,14 @@ def gallery_samples():
             "trigger": "PR opened for review",
             "generation": owner["generation"],
             "runtime": check.executing_runtime(),
+            "execution": {"owner": owner, "record": sample_execution(owner)},
         }
 
         def status(state, *, head=fixtures.HEAD, base_ref="main", **options):
             return check.status_comment_body(
                 head, base_ref, state, **{
                     "owner": owner,
+                    "execution_record": sample_execution(options.get("owner", owner)) if state in ("success", "action_required") and options.get("owner", owner) else None,
                     "trigger_label": "PR opened for review",
                     "completed_at": COMPLETED_AT,
                     "runtime": check.executing_runtime() if options.get("owner", owner) else None,
@@ -115,6 +122,10 @@ def gallery_samples():
             "completed_owner_verified": True,
         }
         manual_owner = fixtures.presentation_owner(kind="issue_comment", target=12, started=STARTED)
+        def completed_receipt(*args, receipt_owner=manual_owner, **kwargs):
+            return check.completion_comment_body(*args, owner=receipt_owner,
+                execution_record=sample_execution(receipt_owner), **kwargs)
+
         def selected(models, evidence="observed", attempt=1, model="opus", effort="high", state="success", primary=None, legacy=False, receipt=False, **options):
             record = {"generation": manual_owner["generation"], "requested_model": model,
                       "requested_effort": effort, "models": models,
@@ -129,10 +140,11 @@ def gallery_samples():
                     check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                             fixtures.BASE_TIP, fixtures.MERGE_BASE),
                     "https://github.com/owner/repo/actions/runs/5",
-                    observed_base_sha=fixtures.BASE_TIP, selection=record)
+                    observed_base_sha=fixtures.BASE_TIP, selection=record, owner=manual_owner, execution_record=sample_execution(manual_owner))
             return check.status_comment_body(fixtures.HEAD, "main", state, owner=manual_owner,
                                             trigger_label="Manual request", completed_at=COMPLETED_AT,
-                                            selection=record, runtime=check.executing_runtime(), **options)
+                                            selection=record, runtime=check.executing_runtime(),
+                                            execution_record=sample_execution(manual_owner) if state in ("success", "action_required") and not legacy else None, **options)
         samples = [
             GallerySample("selection-running", "current-completion", "Running with explicit selection", selected([], "unknown", None, state="in_progress")),
             GallerySample("selection-findings", "current-completion", "Findings with explicit selection", selected(["claude-opus-5-5"], state="action_required")),
@@ -146,9 +158,7 @@ def gallery_samples():
             GallerySample("opus-multiple", "current-completion", "Opus primary review with auxiliary Haiku usage", selected(["claude-haiku-4-5", "claude-opus-5-5"], "mixed", primary=["claude-opus-5-5"])),
             GallerySample("opus-ambiguous", "current-completion", "Completed review with conflicting primary models", selected(["claude-opus-5-5", "claude-sonnet-5-5"])),
             GallerySample("opus-legacy", "current-completion", "Legacy receipt without primary evidence", selected(["claude-opus-5-5"], legacy=True)),
-            GallerySample("current-clean", "current-completion", "Completed review", status("success", execution_record={
-                "version": 2, "generation": owner["generation"], "run": owner["run"], "attempt": owner["attempt"],
-                "execution": "observed", "reason": "execution_observed", "num_turns": 33, "max_turns": None})),
+            GallerySample("current-clean", "current-completion", "Completed review", status("success")),
             GallerySample(FINDINGS_SAMPLE, "current-completion", "Review with findings", status("action_required")),
             GallerySample("baseline-clean", "baseline-completion", "Clean completion, changed target branch", status(
                 "stale", last_review=history("success"), base_sha=fixtures.OTHER,
@@ -170,13 +180,13 @@ def gallery_samples():
                                       "num_turns": 101, "max_turns": 100})),
             GallerySample("selection-receipt", "compact-completion", "Historical manual receipt with primary Opus and auxiliary Haiku", selected(["claude-haiku-4-5", "claude-opus-5-5"], "mixed", primary=["claude-opus-5-5"], receipt=True)),
             GallerySample("selection-receipt-mismatch", "compact-completion", "Historical manual receipt with primary model mismatch", selected(["claude-sonnet-5-5"], receipt=True)),
-            GallerySample("compact-clean", "compact-completion", "Compact clean completion, matching baseline", check.completion_comment_body(
+            GallerySample("compact-clean", "compact-completion", "Compact clean completion, matching baseline", completed_receipt(
                 fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
                 check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                         fixtures.BASE_TIP, fixtures.MERGE_BASE),
                 "https://github.com/owner/repo/actions/runs/5",
                 observed_base_sha=fixtures.BASE_TIP)),
-            GallerySample("compact-differing-baseline", "compact-completion", "Compact clean completion, differing baseline", check.completion_comment_body(
+            GallerySample("compact-differing-baseline", "compact-completion", "Compact clean completion, differing baseline", completed_receipt(
                 fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
                 check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                         fixtures.BASE_TIP, fixtures.MERGE_BASE),
@@ -185,7 +195,7 @@ def gallery_samples():
         ]
         # This fixture explicitly supplies the pin-change context. Generic manual
         # receipts know the executed Runtime, but cannot infer a proposed pin.
-        pin_recovery = check.completion_comment_body(
+        pin_recovery = completed_receipt(
             fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
             check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                     fixtures.BASE_TIP, fixtures.MERGE_BASE),

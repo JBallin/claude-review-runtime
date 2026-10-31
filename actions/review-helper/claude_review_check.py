@@ -2308,7 +2308,7 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     return (
         f"{marker}\n"
         "Claude Review: No findings. 🎉\n\n"
-        f"**Commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}){settings}\n\n"
+        f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}){settings}\n\n"
         "<details>\n<summary>ℹ️ Details</summary>\n\n"
         f"{details}\n\n</details>"
     )

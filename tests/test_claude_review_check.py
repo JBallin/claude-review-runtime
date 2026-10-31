@@ -2369,7 +2369,7 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertEqual(body, (
             f"{marker}\n"
             "Claude Review: No findings. 🎉\n\n"
-            f"**Commit:** [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})\n\n"
+            f"**Reviewed commit:** [`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})\n\n"
             "<details>\n<summary>ℹ️ Details</summary>\n\n"
             f"**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** "
             f"[`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`  \n"

@@ -114,7 +114,7 @@ class ManualBaselineTests(unittest.TestCase):
                 self.assertNotIn("The observed target differed", visible)
                 self.assertIn("The observed target differed from the reviewed baseline.", details)
                 self.assertIn("Claude Review: No findings. 🎉", body)
-                self.assertIn("**Commit:** " + check.commit_link(HEAD, REPO), body)
+                self.assertIn("**Reviewed commit:** " + check.commit_link(HEAD, REPO), body)
                 self.assertIn("**Observed target commit:** " + check.commit_link(OTHER, REPO), body)
                 self.assertNotIn("**Current target commit:**", body)
                 for rendered in (self.api.status["body"], body):
@@ -190,7 +190,7 @@ class ManualBaselineTests(unittest.TestCase):
                     observed_base_sha=observed)
                 visible, details = body.split("<details>", 1)
                 self.assertEqual(visible, marker + "\nClaude Review: No findings. 🎉\n\n"
-                                 + "**Commit:** " + check.commit_link(HEAD, REPO) + "\n\n")
+                                 + "**Reviewed commit:** " + check.commit_link(HEAD, REPO) + "\n\n")
                 self.assertNotIn(check.TARGET_TIP_WARNING, body)
                 self.assertNotIn("**Current target commit:**", body)
                 self.assertIn("**[Reviewed](" + os.environ["DETAILS_URL"] + ") against:** "
@@ -295,7 +295,7 @@ class ManualBaselineTests(unittest.TestCase):
                     self.assertNotIn('**Observed effort:**', body)
                 receipt = self.api.notices[0]['body'].split('<details>')[0]
                 notice = check.selection_notice(record)[0]
-                self.assertIn('**Commit:** ' + check.commit_link(HEAD, REPO)
+                self.assertIn('**Reviewed commit:** ' + check.commit_link(HEAD, REPO)
                               + '\n\n' + notice + '\n\n', receipt)
                 os.environ.pop('TRIGGER_COMMENT')
                 os.environ.pop('SELECTION_EVIDENCE')
