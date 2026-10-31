@@ -1136,12 +1136,13 @@ def status_execution_diagnostic(comment, owner):
 
 def execution_failure_explanation(record):
     if record["reason"] == "over_limit_success":
-        return (f"Claude reported success after {record['num_turns']} turns, exceeding the configured "
-                f"maximum of {record['max_turns']}. The Action rejected this result; the review remains incomplete.")
+        return (f"Claude reported success after {record['num_turns']} turns, exceeding the runtime’s "
+                f"{record['max_turns']}-turn limit. The Action rejected this result; the review remains incomplete.")
     if record["reason"] == "error_max_turns":
-        counts = (f" ({record['num_turns']} turns reported; configured maximum {record['max_turns']})"
-                  if record["num_turns"] is not None and record["max_turns"] is not None else "")
-        return f"Claude reported a turn-limit error{counts}. The review remains incomplete."
+        cause = (f"Claude reached the runtime’s {record['max_turns']}-turn limit"
+                 if record["max_turns"] is not None else "Claude reported a turn-limit error")
+        counts = f" ({record['num_turns']} turns reported)" if record["num_turns"] is not None else ""
+        return f"{cause}{counts}. The review remains incomplete."
     return STATUS_REASONS["execution_failed"]
 
 
@@ -1405,6 +1406,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         if incomplete and not active:
             diagnostic = reason.removeprefix(STATUS_REASONS["stale"] + " ")
             hide_receipt = hide_receipt or diagnostic in explanation or (
+                diagnostic == STATUS_REASONS["turn_limit"] and execution_diagnostic is not None) or (
                 diagnostic == STATUS_REASONS["workflow_changed"] and owner is not None) or (
                 state == "publication_incomplete" and diagnostic == STATUS_REASONS["check_publication_failed"])
         if hide_receipt:

@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -151,6 +152,48 @@ class DiagnosticPresentationTests(unittest.TestCase):
         check.best_effort_status(fixtures.HEAD, "failure")
         return self.api.status["body"]
 
+    def test_turn_limit_copy_and_hidden_receipts_survive_current_and_stale_refresh(self):
+        cases = (
+            ("over_limit_success", 76, 75, "Claude reported success after 76 turns, exceeding the runtime’s 75-turn limit."),
+            ("error_max_turns", 75, 75, "Claude reached the runtime’s 75-turn limit (75 turns reported)."),
+            ("error_max_turns", None, 75, "Claude reached the runtime’s 75-turn limit."),
+            ("error_max_turns", 75, None, "Claude reported a turn-limit error (75 turns reported)."),
+            ("error_max_turns", None, None, "Claude reported a turn-limit error."),
+        )
+        for kind, count, maximum, expected in cases:
+            with self.subTest(kind=kind, count=count, maximum=maximum):
+                self.api.status = None
+                self.api.pr["head"]["sha"] = fixtures.HEAD
+                owner = self.start()
+                diagnostic = receipt(owner, reason=kind, count=count, maximum=maximum)
+                body = self.finalize_failure(owner, EXECUTION_DIAGNOSTIC=json.dumps(diagnostic))
+                for stale in (False, True):
+                    with self.subTest(stale=stale):
+                        if stale:
+                            self.api.pr["head"]["sha"] = fixtures.OTHER
+                            check.best_effort_status(fixtures.OTHER, "stale")
+                            body = self.api.status["body"]
+                        reason = check.STATUS_REASONS["turn_limit"]
+                        if stale:
+                            reason = check.stale_status_reason(reason)
+                        raw_receipt = "<!--\n**Reason:** " + reason + "\n-->"
+                        self.assertIn(raw_receipt, body)
+                        self.assertEqual(check.terminal_status_reason(self.api.status, owner), reason)
+                        self.assertEqual(check.status_execution_diagnostic(self.api.status, owner), diagnostic)
+                        visible = re.sub(r"<!--.*?-->", "", body, flags=re.S)
+                        summary, details = visible.split("<details>", 1)
+                        self.assertIn(expected, summary)
+                        self.assertNotIn("**Reason:**", details)
+                        paragraphs = [p.strip() for p in details.split("\n\n") if p.strip()]
+                        self.assertEqual(paragraphs[0], "<summary>ℹ️ Details</summary>")
+                        self.assertTrue(paragraphs[1].startswith("**PR commit:**" if stale else "**Started:**"),
+                                        paragraphs[1])
+                        if stale:
+                            self.assertIn("Current head and base coverage is not established by this attempt.", summary)
+                            self.assertIn("— not reviewed", details)
+                            check.best_effort_status(fixtures.OTHER, "stale")
+                            self.assertEqual(self.api.status["body"], body)
+
     def test_verified_execution_precedes_workflow_hint_and_keeps_failure(self):
         for kind in ("automatic", "issue_comment", "pull_request_review_comment"):
             if kind != "automatic":
@@ -160,7 +203,7 @@ class DiagnosticPresentationTests(unittest.TestCase):
                 body = self.finalize_failure(owner)
             changed.assert_not_called()
             self.assertIn("31 turns", body)
-            self.assertIn("maximum of 30", body)
+            self.assertIn("the runtime’s 30-turn limit", body)
             self.assertIn("/actions/runs/5/attempts/1", body)
             self.assertNotIn("likely caused", body)
             self.assertNotIn("manual-clean-completion", body)

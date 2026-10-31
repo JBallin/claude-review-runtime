@@ -32,7 +32,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(owner["kind"], "issue_comment")
         self.assertIn("Manual request", case.body)
         self.assertIn("101 turns", case.body)
-        self.assertIn("maximum of 100", case.body)
+        self.assertIn("the runtime’s 100-turn limit", case.body)
         self.assertIn("❌ **Incomplete**", case.body)
         self.assertNotIn("likely caused", case.body)
         self.assertNotIn("manual-clean-completion", case.body)

@@ -695,12 +695,14 @@ The review did not complete with reliable execution and finding evidence. [Troub
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-Claude reported success after 101 turns, exceeding the configured maximum of 100. The Action rejected this result; the review remains incomplete. [Attempt logs](https://github.com/owner/repo/actions/runs/5/attempts/1). [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+Claude reported success after 101 turns, exceeding the runtime’s 100-turn limit. The Action rejected this result; the review remains incomplete. [Attempt logs](https://github.com/owner/repo/actions/runs/5/attempts/1). [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary>ℹ️ Details</summary>
 
+<!--
 **Reason:** The review reached its configured turn limit.
+-->
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
