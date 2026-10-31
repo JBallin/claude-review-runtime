@@ -1182,6 +1182,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                                                            "runtime": previous}}
                     body = check.status_comment_body(HEAD, BASE_REF, "in_progress", owner=owner,
                                                     runtime=current, **options)
+                    if with_history:
+                        body = body.replace("**Runtime:**", "**Runtime used:**")
                     owned = {"id": 55, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": body}
                     result, calls = self.run_fallback(path, {"STATUS": [{"stdout": json.dumps(owned)}]},
                                                        STATUS_COMMENT_ID="55", PR_NUMBER="7", OWNER_FIXTURE=owner)
@@ -1192,8 +1194,9 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertEqual(check.status_runtime(after, owner), current)
                     if with_history:
                         self.assertEqual(check.last_completed_review_details(after)["runtime"], previous)
-                    self.assertNotIn("**Runtime used:**", repaired.split("<details>")[0])
+                    self.assertNotIn("**Runtime:**", repaired.split("<details>")[0])
                     self.assertEqual(repaired.count("**Turns:** unavailable"), 2 if with_history else 1)
+                    self.assertNotIn("**Runtime used:**", repaired)
 
     def test_fallback_runtime_uses_valid_execution_evidence_and_omits_unknown(self):
         from test_claude_review_check import presentation_owner
@@ -1205,7 +1208,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 1)
                     repaired = next(c["body"]["body"] for c in calls if c["method"] == "PATCH"
                                     and any("issues/comments/55" in a for a in c["args"]))
-                    self.assertEqual("**Runtime used:**" in repaired, bool(sha and sha != "main"))
+                    self.assertEqual("**Runtime:**" in repaired, bool(sha and sha != "main"))
                     if sha == "f" * 40:
                         after = {"user": {"login": "github-actions[bot]", "type": "Bot"}, "body": repaired}
                         self.assertEqual(check.status_runtime(after, owner)["runtime_sha"], sha)

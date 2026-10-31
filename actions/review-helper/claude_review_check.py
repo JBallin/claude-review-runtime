@@ -831,15 +831,16 @@ def runtime_used_line(runtime):
     if not runtime:
         return None
     repo, sha, path = (runtime[key] for key in ("runtime_repository", "runtime_sha", "runtime_workflow_path"))
-    return f"**Runtime used:** [{inline_code(repo + '@' + sha[:7])}](https://github.com/{repo}/blob/{sha}/{path})"
+    return f"**Runtime:** [{inline_code(repo + '@' + sha[:7])}](https://github.com/{repo}/blob/{sha}/{path})"
 
 
 def rendered_runtime(body):
     """Read one canonical provenance line only from an already trusted status section."""
-    lines = [line[:-2] if line.endswith("  ") else line for line in body.splitlines() if line.startswith("**Runtime used:**")]
+    lines = [line[:-2] if line.endswith("  ") else line for line in body.splitlines() if line.startswith(("**Runtime:**", "**Runtime used:**"))]
     if len(lines) != 1:
         return None
-    match = re.fullmatch(r"\*\*Runtime used:\*\* \[.*\]\(https://github.com/([^/]+/[^/]+)/blob/([0-9a-f]{40})/(.+)\)", lines[0])
+    lines[0] = lines[0].replace("**Runtime used:**", "**Runtime:**", 1)
+    match = re.fullmatch(r"\*\*Runtime:\*\* \[.*\]\(https://github.com/([^/]+/[^/]+)/blob/([0-9a-f]{40})/(.+)\)", lines[0])
     runtime = runtime_provenance(*match.groups()) if match else None
     return runtime if runtime_used_line(runtime) == lines[0] else None
 
@@ -1439,7 +1440,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         # Refresh labels and completed-history triggers cannot identify this attempt.
         row_trigger = attempt_trigger or "Not recorded"
     repo = owner["repo"] if owner else env("REPO")
-    commit_label = "Reviewed commit" if show_review else "Attempt commit" if owner else "PR commit"
+    commit_label = "Commit"
     lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
     notice = selection_notice(selection, running=state == "in_progress" or owner_running is True)
@@ -1518,7 +1519,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     previous = []
     if history_in_details:
         previous += ["**Result:** " + ("No findings." if last_review[2] == "success" else "Findings."),
-                     f"**Reviewed commit:** {commit_link(last_review[0], repo)} on {inline_code(last_review[1])}"]
+                     f"**Commit:** {commit_link(last_review[0], repo)} on {inline_code(last_review[1])}"]
         if completed:
             previous += [f"**Completed:** {relative_time(completed)}"]
         if last_review_details.get("trigger") in REVIEW_TRIGGERS:
@@ -2285,25 +2286,29 @@ def completion_marker(repo, pr_number, head_sha, base_ref, base_sha, merge_base_
 
 
 def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_url, *, observed_base_sha=None,
-                            selection=None, execution_record=None, owner=None):
+                            selection=None, execution_record=None, owner=None, pin_change_context=False):
     # A fixed receipt describes this captured review; live drift belongs in the aggregate status.
     reviewed = f"[Reviewed]({details_url})" if details_url else "Reviewed"
     notice = selection_notice(selection)
     settings = "\n\n" + "\n".join(notice) if notice else ""
     metadata = [f"**{reviewed} against:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
-    observed_tip = ""
+    notes = []
     if observed_base_sha and observed_base_sha != base_sha:
         metadata.append(f"**Observed target commit:** {commit_link(observed_base_sha, repo)} on {inline_code(base_ref)}")
-        observed_tip = "\n\nThe observed target differed from the reviewed baseline."
+        notes.append("The observed target differed from the reviewed baseline.")
     runtime_line = runtime_used_line(executing_runtime())
     if runtime_line:
         metadata.append(runtime_line)
+        # Only an explicit, established pin-change context supports this note.
+        # Executed Runtime provenance alone cannot identify the proposed pin.
+        if pin_change_context is True:
+            notes.append("This review used the deployed Runtime, not the proposed pin.")
     metadata.append(turns_line(valid_execution_diagnostic(execution_record, owner)))
-    details = "  \n".join(metadata) + observed_tip
+    details = ("\n\n".join(notes) + "\n\n" if notes else "") + "  \n".join(metadata)
     return (
         f"{marker}\n"
         "Claude Review: No findings. 🎉\n\n"
-        f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}){settings}\n\n"
+        f"**Commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}){settings}\n\n"
         "<details>\n<summary>ℹ️ Details</summary>\n\n"
         f"{details}\n\n</details>"
     )
@@ -2370,7 +2375,7 @@ def best_effort_manual_completion(head_sha):
 
 def summary_lines(head_sha, sentence, *, completed_at=None):
     lines = [
-        f"**Reviewed commit:** `{head_sha}`",
+        f"**Commit:** `{head_sha}`",
         f"**Trigger:** {env('TRIGGER_LABEL', 'Claude review')}",
         "",
         sentence,

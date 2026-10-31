@@ -1203,12 +1203,13 @@ jobs:
                       or not re.fullmatch(r"\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml", path)
                       or sep and (not ref or any(c in ref for c in "\r\n\x00"))):
                   return ""
-              return "**Runtime used:** [" + chr(96) + repo + "@" + sha[:7] + chr(96) + "](https://github.com/" + repo + "/blob/" + sha + "/" + path + ")"
+              return "**Runtime:** [" + chr(96) + repo + "@" + sha[:7] + chr(96) + "](https://github.com/" + repo + "/blob/" + sha + "/" + path + ")"
           def recorded(text):
-              lines = [v[:-2] if v.endswith("  ") else v for v in text.splitlines() if v.startswith("**Runtime used:**")]
+              lines = [v[:-2] if v.endswith("  ") else v for v in text.splitlines() if v.startswith(("**Runtime:**", "**Runtime used:**"))]
               if len(lines) != 1:
                   return ""
-              match = re.fullmatch(r"\*\*Runtime used:\*\* \[.*\]\(https://github.com/([^/]+/[^/]+)/blob/([0-9a-f]{40})/(.+)\)", lines[0])
+              lines[0] = lines[0].replace("**Runtime used:**", "**Runtime:**", 1)
+              match = re.fullmatch(r"\*\*Runtime:\*\* \[.*\]\(https://github.com/([^/]+/[^/]+)/blob/([0-9a-f]{40})/(.+)\)", lines[0])
               return lines[0] if match and line(*match.groups()) == lines[0] else ""
           sections = re.split(r"(?m)^(?:#{3,4} Previous completed review|\*\*Previous completed review\*\*)[ \t]*$", comment.get("body") or "", maxsplit=1)
           current = recorded(sections[0]) or line(os.environ.get("RUNTIME_REPOSITORY", ""),
@@ -1278,7 +1279,7 @@ jobs:
             repair_review_presentation publication_incomplete
             exit 1
           fi
-          summary=$(printf '**Reviewed commit:** `%s`\n\nThe review outcome could not be published because the review tooling was unavailable; treat this commit as not reviewed.\n\n[Workflow run](%s)' "$HEAD_SHA" "$DETAILS_URL")
+          summary=$(printf '**Commit:** `%s`\n\nThe review outcome could not be published because the review tooling was unavailable; treat this commit as not reviewed.\n\n[Workflow run](%s)' "$HEAD_SHA" "$DETAILS_URL")
           recovery=$(jq -cn --arg run "${GITHUB_RUN_ID:-}" --arg attempt "${GITHUB_RUN_ATTEMPT:-}" '
             def positive_id:
               if test("^[1-9][0-9]{0,15}$") then tonumber

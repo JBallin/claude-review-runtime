@@ -176,10 +176,9 @@ unverifiable owner evidence suppresses presentation writes. A start can establis
 ownership on a legacy status; finalization cannot. Duplicate starts do not reset
 a completed result or reclaim presentation from a newer request.
 
-The status presents one row with Status, a context-sensitive commit column
-(Reviewed commit, Attempt commit, or PR commit), and Review trigger.
+The status presents one row with Status, Commit, and Review trigger.
 For a verified clean or findings result, Status shows its persisted completion time
-and Reviewed commit identifies the reviewed SHA. The current-version or integration caveat
+and Commit identifies the reviewed SHA. The current-version or integration caveat
 appears below the row; newer running, failed, or incomplete attempts remain prominent
 in the main table. Previous completed-review evidence moves inside Details,
 separate from the current attempt’s metadata. Workflow links are grouped with
@@ -349,7 +348,7 @@ Runtime revision in the resulting Check and workflow run. A pin update alone
 does not require manual review, and a manual request is not guaranteed to succeed.
 
 Distinguish the PR's proposed pin from the caller and Runtime actually executing
-each attempt. Status and manual receipt Details link the exact **Runtime used** when trusted
+each attempt. Status and manual receipt Details link the exact **Runtime** when trusted
 provenance is available; unknown provenance is omitted. Status refreshes retain
 the recorded attempt’s Runtime rather than substituting the refresher’s revision. The Check's
 `runtime_repository`, `runtime_sha`, and `runtime_workflow_path` retain the same

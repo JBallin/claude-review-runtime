@@ -29,7 +29,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -37,7 +37,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 33
 
 </details>
@@ -66,7 +66,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -74,7 +74,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -103,7 +103,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -113,7 +113,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -142,7 +142,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -152,7 +152,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -181,7 +181,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -191,7 +191,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -220,7 +220,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -230,7 +230,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -259,7 +259,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -269,7 +269,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -297,7 +297,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -305,7 +305,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -338,7 +338,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -348,7 +348,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -369,7 +369,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:presentation-owner-phase:running -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -379,7 +379,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <summary>ℹ️ Details</summary>
 
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -400,7 +400,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -413,7 +413,7 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -434,7 +434,7 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -451,7 +451,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -480,7 +480,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -490,7 +490,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -519,7 +519,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -529,7 +529,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -556,7 +556,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -571,7 +571,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -598,7 +598,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -613,7 +613,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -640,7 +640,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -655,7 +655,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -675,7 +675,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -690,7 +690,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -711,7 +711,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -726,7 +726,7 @@ Claude reported success after 101 turns, exceeding the runtime’s 100-turn limi
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 101
 
 </details>
@@ -747,7 +747,7 @@ Claude reported success after 101 turns, exceeding the runtime’s 100-turn limi
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -762,7 +762,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -783,7 +783,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -798,7 +798,7 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -819,7 +819,7 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -834,7 +834,7 @@ An inline-comment tool call failed. This review is incomplete. [Attempt Check](h
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -854,7 +854,7 @@ An inline-comment tool call failed. This review is incomplete. [Attempt Check](h
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
@@ -872,7 +872,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -892,7 +892,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -907,7 +907,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -927,7 +927,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
@@ -942,7 +942,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -962,7 +962,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -977,7 +977,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -996,7 +996,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
@@ -1014,7 +1014,7 @@ The review of [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaa
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1028,7 +1028,7 @@ The review of [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaa
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
 
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
 
 **Model:** Opus · **Effort:** High
 
@@ -1036,7 +1036,7 @@ Claude Review: No findings. 🎉
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1050,7 +1050,7 @@ Claude Review: No findings. 🎉
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
 
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
 
 ⚠️ **Model:** Opus selected; primary model mismatch (Sonnet 5.5 observed) · **Effort:** High
 
@@ -1058,7 +1058,7 @@ Claude Review: No findings. 🎉
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1072,13 +1072,13 @@ Claude Review: No findings. 🎉
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
 
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
 
 <details>
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1092,17 +1092,17 @@ Claude Review: No findings. 🎉
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
 
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
 
 <details>
 <summary>ℹ️ Details</summary>
 
+The observed target differed from the reviewed baseline.
+
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Observed target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
-
-The observed target differed from the reviewed baseline.
 
 </details>
 
@@ -1115,14 +1115,15 @@ The observed target differed from the reviewed baseline.
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
 
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
 
 <details>
 <summary>ℹ️ Details</summary>
 
+This review used the deployed Runtime, not the proposed pin.
+
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-This review used the deployed Runtime, not the proposed pin.\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1150,7 +1151,7 @@ This review used the deployed Runtime, not the proposed pin.\
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1159,16 +1160,16 @@ This review used the deployed Runtime, not the proposed pin.\
 
 ### Current attempt
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1196,7 +1197,7 @@ This review used the deployed Runtime, not the proposed pin.\
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1205,16 +1206,16 @@ This review used the deployed Runtime, not the proposed pin.\
 
 ### Current attempt
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1242,7 +1243,7 @@ This review used the deployed Runtime, not the proposed pin.\
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
@@ -1251,16 +1252,16 @@ This review used the deployed Runtime, not the proposed pin.\
 
 ### Current attempt
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1288,7 +1289,7 @@ This review used the deployed Runtime, not the proposed pin.\
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1304,16 +1305,16 @@ The review did not complete with reliable execution and finding evidence. [Troub
 ### Current attempt
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1341,7 +1342,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1357,16 +1358,16 @@ The review did not complete with reliable execution and finding evidence. [Troub
 ### Current attempt
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1394,7 +1395,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
@@ -1410,16 +1411,16 @@ The review did not complete with reliable execution and finding evidence. [Troub
 ### Current attempt
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1446,7 +1447,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -1462,7 +1463,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed against this target\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1489,7 +1490,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -1505,7 +1506,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed against this target\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1525,7 +1526,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1540,7 +1541,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1568,7 +1569,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1584,16 +1585,16 @@ The authoritative Check result could not be published. Treat this commit as not 
 ### Current attempt
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1621,7 +1622,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1637,16 +1638,16 @@ The authoritative Check result could not be published. Treat this commit as not 
 ### Current attempt
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1674,7 +1675,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
@@ -1690,16 +1691,16 @@ The authoritative Check result could not be published. Treat this commit as not 
 ### Current attempt
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1719,7 +1720,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1734,7 +1735,7 @@ Review completion cannot be established because authoritative Check publication 
 
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1762,7 +1763,7 @@ Review completion cannot be established because authoritative Check publication 
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1778,16 +1779,16 @@ Review completion cannot be established because authoritative Check publication 
 ### Current attempt
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1815,7 +1816,7 @@ Review completion cannot be established because authoritative Check publication 
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1831,16 +1832,16 @@ Review completion cannot be established because authoritative Check publication 
 ### Current attempt
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1862,7 +1863,7 @@ Review completion cannot be established because authoritative Check publication 
 
 Claude is reviewing this commit, but authoritative Check publication is unavailable.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1870,7 +1871,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <summary>ℹ️ Details</summary>
 
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1900,7 +1901,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 Claude is reviewing this commit, but authoritative Check publication is unavailable.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1909,16 +1910,16 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 ### Current attempt
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1948,7 +1949,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 Claude is reviewing this commit, but authoritative Check publication is unavailable.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1957,16 +1958,16 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 ### Current attempt
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -1994,7 +1995,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **[Running](https://github.com/owner/repo/actions/runs/5)** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | PR opened for review |
 
@@ -2002,16 +2003,16 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <summary>ℹ️ Details</summary>
 
 ### Current attempt
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -2039,7 +2040,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | PR opened for review |
 
@@ -2054,16 +2055,16 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 ### Current attempt
 **[Attempt](https://github.com/owner/repo/actions/runs/5) started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -2086,7 +2087,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 **Last completed review**
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
@@ -2117,7 +2118,7 @@ The applicability of this completed review to the current PR cannot be confirmed
 <!-- claude-review-runtime:claude-review-last-reviewed-base-sha:dddddddddddddddddddddddddddddddddddddddd -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
@@ -2153,7 +2154,7 @@ The applicability of this completed review to the current PR cannot be confirmed
 
 Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa). The current PR commit [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) is not covered by this attempt.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Draft marked ready |
 
@@ -2166,7 +2167,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -2188,7 +2189,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa). Its captured baseline is [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`; the current target commit is [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb).
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Draft marked ready |
 
@@ -2201,7 +2202,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -2223,7 +2224,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa). This attempt targets `main`; the PR now targets `release`.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Draft marked ready |
 
@@ -2237,7 +2238,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 **PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed against this target\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>
@@ -2267,7 +2268,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 Claude is reviewing captured commit [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb). This attempt's coverage of the current PR cannot be confirmed.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
@@ -2280,16 +2281,16 @@ Claude is reviewing captured commit [`bbbbbbb`](https://github.com/owner/repo/co
 
 ### Current attempt
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 ### Previous completed review
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
 </details>

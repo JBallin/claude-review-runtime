@@ -114,7 +114,7 @@ class ManualBaselineTests(unittest.TestCase):
                 self.assertNotIn("The observed target differed", visible)
                 self.assertIn("The observed target differed from the reviewed baseline.", details)
                 self.assertIn("Claude Review: No findings. 🎉", body)
-                self.assertIn("**Reviewed commit:** " + check.commit_link(HEAD, REPO), body)
+                self.assertIn("**Commit:** " + check.commit_link(HEAD, REPO), body)
                 self.assertIn("**Observed target commit:** " + check.commit_link(OTHER, REPO), body)
                 self.assertNotIn("**Current target commit:**", body)
                 for rendered in (self.api.status["body"], body):
@@ -190,15 +190,16 @@ class ManualBaselineTests(unittest.TestCase):
                     observed_base_sha=observed)
                 visible, details = body.split("<details>", 1)
                 self.assertEqual(visible, marker + "\nClaude Review: No findings. 🎉\n\n"
-                                 + "**Reviewed commit:** " + check.commit_link(HEAD, REPO) + "\n\n")
+                                 + "**Commit:** " + check.commit_link(HEAD, REPO) + "\n\n")
                 self.assertNotIn(check.TARGET_TIP_WARNING, body)
                 self.assertNotIn("**Current target commit:**", body)
                 self.assertIn("**[Reviewed](" + os.environ["DETAILS_URL"] + ") against:** "
                               + check.commit_link(BASE_TIP, REPO), details)
                 if observed and observed != BASE_TIP:
                     self.assertEqual(body.count(note), 1)
+                    self.assertTrue(details.startswith("\n<summary>ℹ️ Details</summary>\n\n" + note + "\n\n**[Reviewed]"))
                     self.assertIn("**Observed target commit:** " + check.commit_link(observed, REPO)
-                                  + " on `main`  \n**Turns:** unavailable\n\n" + note + "\n\n</details>", details)
+                                  + " on `main`  \n**Turns:** unavailable\n\n</details>", details)
                 else:
                     self.assertNotIn(note, body)
                     self.assertNotIn("**Observed target commit:**", body)
@@ -225,11 +226,11 @@ class ManualBaselineTests(unittest.TestCase):
                 self.notice()
                 body = self.api.notices[0]["body"]
                 visible, details = body.split("<details>", 1)
-                self.assertNotIn("Runtime used", visible)
+                self.assertNotIn("Runtime", visible)
                 self.assertIn(check.commit_link(HEAD, REPO), visible)
                 self.assertIn(check.commit_link(BASE_TIP, REPO), details)
-                self.assertEqual(details.count("**Runtime used:**"), 1)
-                self.assertIn("**Runtime used:** [`review/runtime@fffffff`]"
+                self.assertEqual(details.count("**Runtime:**"), 1)
+                self.assertIn("**Runtime:** [`review/runtime@fffffff`]"
                               f"(https://github.com/review/runtime/blob/{runtime_sha}/.github/workflows/claude.yml)",
                               details)
                 self.assertNotIn("current main", body.lower())
@@ -250,7 +251,7 @@ class ManualBaselineTests(unittest.TestCase):
                 os.environ[key] = value
                 body = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, marker,
                                                      os.environ["DETAILS_URL"])
-                self.assertNotIn("**Runtime used:**", body)
+                self.assertNotIn("**Runtime:**", body)
                 self.assertIn(check.commit_link(HEAD, REPO), body)
 
     def test_later_runtime_does_not_rewrite_or_duplicate_historical_manual_receipt(self):
@@ -294,7 +295,7 @@ class ManualBaselineTests(unittest.TestCase):
                     self.assertNotIn('**Observed effort:**', body)
                 receipt = self.api.notices[0]['body'].split('<details>')[0]
                 notice = check.selection_notice(record)[0]
-                self.assertIn('**Reviewed commit:** ' + check.commit_link(HEAD, REPO)
+                self.assertIn('**Commit:** ' + check.commit_link(HEAD, REPO)
                               + '\n\n' + notice + '\n\n', receipt)
                 os.environ.pop('TRIGGER_COMMENT')
                 os.environ.pop('SELECTION_EVIDENCE')

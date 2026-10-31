@@ -145,7 +145,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(mixed['primary_model_evidence']['assistant'], ['claude-opus-5-5'])
         self.assertIsNone(mixed['observed_effort'])
         receipt = cases['selection-receipt'].split('<details>')[0]
-        self.assertIn('**Reviewed commit:** ' + gallery.check.commit_link(gallery.fixtures.HEAD,
+        self.assertIn('**Commit:** ' + gallery.check.commit_link(gallery.fixtures.HEAD,
                       gallery.fixtures.REPO) + '\n\n**Model:** Opus · **Effort:** High\n\n', receipt)
 
     def test_current_findings_completion_has_current_commit_run_and_evidence(self):
@@ -160,7 +160,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("last_review", call.kwargs)
         visible, details = raw.split("<details>", 1)
         self.assertIn("⚠️ **Findings**", visible)
-        self.assertIn("| Reviewed commit |", visible)
+        self.assertIn("| Commit |", visible)
         self.assertIn(check.commit_link(gallery.fixtures.HEAD, gallery.fixtures.REPO), visible)
         self.assertIn("PR opened for review", visible)
         self.assertIn(gallery.COMPLETED_AT, visible)
@@ -221,21 +221,21 @@ class PresentationGalleryTests(unittest.TestCase):
                     receipt = "<!--\n**Reason:** " + gallery.check.STATUS_REASONS["base_advanced"] + "\n-->"
                     self.assertIn(receipt, body)
                     self.assertIn("**Current target commit:**", body)
-                    self.assertIn("| Reviewed commit |", body)
+                    self.assertIn("| Commit |", body)
                     self.assertEqual(body.count(
                         "⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed."
                     ), 1)
             elif case_id == "incomplete-unknown":
-                self.assertIn("| Attempt commit |", raw)
+                self.assertIn("| Commit |", raw)
             elif case_id == "compact-clean":
                 self.assertNotIn("The observed target differed from the reviewed baseline.", raw)
                 self.assertIn("Claude Review: No findings. 🎉", raw)
-                self.assertIn("**Reviewed commit:**", raw)
+                self.assertIn("**Commit:**", raw)
                 self.assertNotIn(gallery.check.TARGET_TIP_WARNING, raw)
                 self.assertNotIn("target commit:**", raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
-                self.assertIn("**Runtime used:** [`JBallin/claude-review-runtime@fffffff`]", raw.split("<details>")[1])
+                self.assertIn("**Runtime:** [`JBallin/claude-review-runtime@fffffff`]", raw.split("<details>")[1])
             elif case_id == "compact-differing-baseline":
                 visible, details = raw.split("<details>", 1)
                 self.assertNotIn("The observed target differed", visible)
@@ -255,17 +255,17 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn("Claude Review: No findings. 🎉", headline)
         self.assertNotIn("Synthetic recovery context", headline)
         self.assertNotIn("proposed pin", headline)
-        runtime_line = next(line for line in details.splitlines() if line.startswith("**Runtime used:**"))
-        self.assertIn(runtime_line + "\nThis review used the deployed Runtime, not the proposed pin.", details)
+        runtime_line = next(line for line in details.splitlines() if line.startswith("**Runtime:**"))
+        self.assertTrue(details.startswith("\n<summary>ℹ️ Details</summary>\n\nThis review used the deployed Runtime, not the proposed pin.\n\n**[Reviewed]"))
         self.assertTrue(runtime_line.endswith("  "))
         self.assertNotIn("from `fffffff`", details)
-        self.assertIn("**Runtime used:** [`JBallin/claude-review-runtime@fffffff`]", recovery)
+        self.assertIn("**Runtime:** [`JBallin/claude-review-runtime@fffffff`]", recovery)
         for key in ("compact-clean", "compact-differing-baseline"):
             self.assertNotIn("deployed Runtime", cases[key])
             self.assertNotIn("proposed pin", cases[key])
         for key, body in cases.items():
             if not key.startswith("legacy-"):
-                self.assertIn("**Runtime used:**", body, key)
+                self.assertIn("**Runtime:**", body, key)
         self.assertNotIn("owner/runtime", gallery.render_gallery())
 
     def test_publication_failures_and_unavailable_check_variants_use_current_attempt(self):
@@ -276,7 +276,7 @@ class PresentationGalleryTests(unittest.TestCase):
             for case_id, body in cases:
                 with self.subTest(case_id=case_id):
                     visible, details = body.split("<details>", 1)
-                    self.assertIn("| Attempt commit |", visible)
+                    self.assertIn("| Commit |", visible)
                     self.assertIn("| " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO)
                                   + (" | Manual request |" if case_id.endswith("-manual") else " | Draft marked ready |"), visible)
                     self.assertNotIn("✅ **Completed**", visible)
