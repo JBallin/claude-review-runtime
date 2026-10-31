@@ -2,6 +2,10 @@
 
 ## Configurations
 
+Runtime jobs explicitly select `ubuntu-26.04`. This fixes the Ubuntu release;
+GitHub can still update the image and bundled tools. CI logs its actual image
+and selected tool versions for compatibility diagnosis.
+
 Live consumer reviews have exercised GitHub.com, hosted Ubuntu runners, and
 Claude OAuth with default Anthropic App/OIDC authentication, including automatic
 and manual reviews. The API-key branch has not been live-tested.
