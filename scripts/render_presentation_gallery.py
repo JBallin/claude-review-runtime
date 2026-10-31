@@ -146,7 +146,9 @@ def gallery_samples():
             GallerySample("opus-multiple", "current-completion", "Opus primary review with auxiliary Haiku usage", selected(["claude-haiku-4-5", "claude-opus-5-5"], "mixed", primary=["claude-opus-5-5"])),
             GallerySample("opus-ambiguous", "current-completion", "Completed review with conflicting primary models", selected(["claude-opus-5-5", "claude-sonnet-5-5"])),
             GallerySample("opus-legacy", "current-completion", "Legacy receipt without primary evidence", selected(["claude-opus-5-5"], legacy=True)),
-            GallerySample("current-clean", "current-completion", "Completed review", status("success")),
+            GallerySample("current-clean", "current-completion", "Completed review", status("success", execution_record={
+                "version": 2, "generation": owner["generation"], "run": owner["run"], "attempt": owner["attempt"],
+                "execution": "observed", "reason": "execution_observed", "num_turns": 33, "max_turns": None})),
             GallerySample(FINDINGS_SAMPLE, "current-completion", "Review with findings", status("action_required")),
             GallerySample("baseline-clean", "baseline-completion", "Clean completion, changed target branch", status(
                 "stale", last_review=history("success"), base_sha=fixtures.OTHER,
@@ -159,7 +161,7 @@ def gallery_samples():
                 base_sha=fixtures.BASE_TIP, **stale_options)),
             GallerySample("incomplete-unknown", "incomplete", "Incomplete attempt without completed history", status(
                 "failure", reason=check.STATUS_REASONS["incomplete"])),
-            GallerySample("turn-limit", "incomplete", "Verified turn-limit failure", status(
+            GallerySample("turn-limit", "incomplete", "Historical configured-cap failure (nondefault)", status(
                 "failure", reason=check.STATUS_REASONS["turn_limit"],
                 owner=manual_owner, trigger_label="Manual request",
                 execution_diagnostic={"version": 1, "generation": manual_owner["generation"],

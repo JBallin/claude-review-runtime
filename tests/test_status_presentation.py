@@ -464,7 +464,9 @@ class DetailsProvenanceTests(unittest.TestCase):
                 self.assertIn(f'**[Reviewed]({url}) against:**', body)
                 if state != 'stale':
                     current, previous = body.split('### Previous completed review')
-                    self.assertEqual('### Current attempt' in current, state != 'in_progress')
+                    self.assertIn('### Current attempt', current)
+                    self.assertIn('**Turns:** unavailable', current)
+                    self.assertIn('**Turns:** unavailable', previous)
                     self.assertIn(f'**[Running]({url})**' if state == 'in_progress' else f'**[Attempt]({url}) started:**', current)
                     self.assertNotIn(f'[Reviewed]({url})', current)
                     self.assertIn(f'**[Reviewed]({url}) against:**', previous)

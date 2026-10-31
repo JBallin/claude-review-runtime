@@ -2,6 +2,13 @@
 
 ## Configurations
 
+PR Details and the Actions run summary display **Turns** from the same bounded,
+captured-attempt SDK `num_turns` receipt, independently of any configured cap.
+Only a strictly validated integer from a unique same-session terminal result is
+accepted; missing historical data remains unavailable. Counts do not establish
+completion or measure API rounds, tokens, cost, quota, or the native turn budget.
+See [Execution limits](design-notes.md#execution-limits) for the design rationale.
+
 Runtime jobs explicitly select `ubuntu-26.04`. This fixes the Ubuntu release;
 GitHub can still update the image and bundled tools. CI logs its actual image
 and selected tool versions for compatibility diagnosis.

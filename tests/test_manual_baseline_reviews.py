@@ -198,7 +198,7 @@ class ManualBaselineTests(unittest.TestCase):
                 if observed and observed != BASE_TIP:
                     self.assertEqual(body.count(note), 1)
                     self.assertIn("**Observed target commit:** " + check.commit_link(observed, REPO)
-                                  + " on `main`\n\n" + note + "\n\n</details>", details)
+                                  + " on `main`  \n**Turns:** unavailable\n\n" + note + "\n\n</details>", details)
                 else:
                     self.assertNotIn(note, body)
                     self.assertNotIn("**Observed target commit:**", body)

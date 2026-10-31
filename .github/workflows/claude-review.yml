@@ -601,14 +601,19 @@ jobs:
       - name: Diagnose review execution
         id: diagnose
         # Failure diagnostics never grant completion or ungate the verifier.
-        if: ${{ !cancelled() && (steps.review.outcome == 'success' || steps.review.outcome == 'failure') && steps.diagnostic-helper.outcome == 'success' }}
+        if: ${{ !cancelled() && (steps.review.outcome == 'success' || steps.review.outcome == 'failure') }}
         continue-on-error: true
         timeout-minutes: 1
         env:
           REVIEW_HELPER: ${{ steps.diagnostic-helper.outputs.helper-path }}
           PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}
           EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
-        run: python3 "$REVIEW_HELPER" diagnose-execution --execution "$EXECUTION_FILE"
+        run: |
+          if [ -n "$REVIEW_HELPER" ] && python3 "$REVIEW_HELPER" diagnose-execution --execution "$EXECUTION_FILE"; then
+            :
+          else
+            printf '**Turns:** unavailable\n' >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   publish-status:
     name: Publish status
@@ -1033,7 +1038,7 @@ jobs:
                   return ""
               return "**Runtime used:** [" + chr(96) + repo + "@" + sha[:7] + chr(96) + "](https://github.com/" + repo + "/blob/" + sha + "/" + path + ")"
           def recorded(text):
-              lines = [v for v in text.splitlines() if v.startswith("**Runtime used:**")]
+              lines = [v[:-2] if v.endswith("  ") else v for v in text.splitlines() if v.startswith("**Runtime used:**")]
               if len(lines) != 1:
                   return ""
               match = re.fullmatch(r"\*\*Runtime used:\*\* \[.*\]\(https://github.com/([^/]+/[^/]+)/blob/([0-9a-f]{40})/(.+)\)", lines[0])
@@ -1052,12 +1057,14 @@ jobs:
             if [ -n "$current_runtime" ]; then
               metadata="$metadata"$'  \n'"$current_runtime"
             fi
+            metadata="$metadata"$'  \n''**Turns:** unavailable'
             if [ -n "$historical_lines" ]; then
               historical_lines=${historical_lines//$'\n'/$'  \n'}
               metadata="### Current attempt"$'\n'"$metadata"$'\n\n''### Previous completed review'$'\n'"$historical_lines"
               if [ -n "$previous_runtime" ]; then
                 metadata="$metadata"$'  \n'"$previous_runtime"
               fi
+              metadata="$metadata"$'  \n''**Turns:** unavailable'
             fi
             rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n%s %s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<!--\n**Reason:** %s\n-->\n\n%s\n\n</details>' \
               "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "$message" "$reason" "$recovery" "$reason" "$metadata")

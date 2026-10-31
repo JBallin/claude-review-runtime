@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 import subprocess
 import sys
+import textwrap
 import tempfile
 import unittest
 from unittest import mock
@@ -29,7 +30,7 @@ def stream(subtype="success", count=31, error=False):
 
 def receipt(owner=None, reason="over_limit_success", count=31, maximum=30, execution=None):
     owner = owner or fixtures.presentation_owner()
-    return {"version": 1, "generation": owner["generation"], "run": owner["run"],
+    return {"version": 2, "generation": owner["generation"], "run": owner["run"],
             "attempt": owner["attempt"], "reason": reason, "num_turns": count, "max_turns": maximum,
             "execution": execution or ("unknown" if reason in ("unavailable", "malformed") else "observed")}
 
@@ -47,8 +48,8 @@ class ExecutionDiagnosticTests(unittest.TestCase):
                          receipt(reason="error_max_turns", count=30))
         # Automatic reviews gain no turn cap from diagnostics.
         self.assertEqual(self.diagnose(maximum=None),
-                         receipt(reason="execution_observed", count=None, maximum=None))
-        self.assertEqual(self.diagnose(stream(count=30)), receipt(reason="execution_observed", count=None))
+                         receipt(reason="execution_observed", count=31, maximum=None))
+        self.assertEqual(self.diagnose(stream(count=30)), receipt(reason="execution_observed", count=30))
 
     def test_counts_are_strict_integers_and_ambiguous_streams_stay_unknown(self):
         bad = [stream(count=value) for value in (True, False, 31.0, "31", -1, 1_000_001)]
@@ -88,6 +89,23 @@ class ExecutionDiagnosticTests(unittest.TestCase):
             self.assertIsNone(check.valid_execution_diagnostic({**receipt(), key: value}, owner))
         self.assertIsNone(check.valid_execution_diagnostic({**receipt(), "transcript": "private"}, owner))
 
+    def test_uncapped_counts_and_historical_receipts(self):
+        owner = fixtures.presentation_owner()
+        for subtype, error in (("success", False), ("error_max_turns", True), ("error_during_execution", True)):
+            for count in (0, 33, None):
+                record = self.diagnose(stream(subtype, count, error), maximum=None)
+                self.assertEqual(record["num_turns"], count)
+                self.assertIsNone(record["max_turns"])
+                self.assertEqual(check.valid_execution_diagnostic(record, owner), record)
+        old = {**receipt(), "version": 1}
+        self.assertEqual(check.valid_execution_diagnostic(old, owner), old)
+        old.update(reason="execution_observed", num_turns=None)
+        self.assertEqual(check.turns_line(check.valid_execution_diagnostic(old, owner)), "**Turns:** unavailable")
+        for key, value in (("is_error", "false"), ("subtype", "model prose")):
+            messages = stream()
+            messages[-1][key] = value
+            self.assertIsNone(self.diagnose(messages, maximum=None)["num_turns"])
+
     def test_actual_diagnostic_step_and_cli_never_export_completion_or_text(self):
         for path in (workflows.MANUAL, workflows.AUTOMATIC):
             named = workflows.steps(workflows.job(path, "review"))
@@ -103,35 +121,55 @@ class ExecutionDiagnosticTests(unittest.TestCase):
             self.assertEqual(workflows.scalar(helper, "continue-on-error", 8), "true")
             with tempfile.TemporaryDirectory() as temporary:
                 output, record = Path(temporary) / "output", Path(temporary) / "execution.json"
+                summary = Path(temporary) / "summary"
                 record.write_text(json.dumps(stream()))
                 env = {"PATH": os.environ["PATH"], "REVIEW_HELPER": str(fixtures.SCRIPT),
-                       "EXECUTION_FILE": str(record), "GITHUB_OUTPUT": str(output),
+                       "EXECUTION_FILE": str(record), "GITHUB_OUTPUT": str(output), "GITHUB_STEP_SUMMARY": str(summary),
                        "PRESENTATION_OWNER": json.dumps(fixtures.presentation_owner()),
                        "GITHUB_RUN_ID": "5", "GITHUB_RUN_ATTEMPT": "1", "REVIEW_MAX_TURNS": "30"}
-                run = subprocess.run(["bash", "-eo", "pipefail", "-c", workflows.scalar(diagnostic, "run", 8)],
+                run = subprocess.run(["bash", "-eo", "pipefail", "-c", textwrap.dedent("\n".join(diagnostic[diagnostic.index("        run: |") + 1:]))],
                                      env=env, capture_output=True, text=True, timeout=5)
                 self.assertEqual(run.returncode, 0, run.stderr)
                 written = output.read_text()
                 key, value = written.strip().split("=", 1)
                 self.assertEqual(key, "execution_diagnostic")
                 self.assertEqual(json.loads(value), receipt())
+                self.assertEqual(summary.read_text(), check.execution_summary(json.loads(value), fixtures.presentation_owner()))
                 self.assertNotIn("private", written + run.stdout + run.stderr)
                 self.assertNotIn("completion_verified", written)
                 output.unlink()
+                summary.unlink()
+                env.pop("REVIEW_MAX_TURNS")
+                run = subprocess.run(["bash", "-eo", "pipefail", "-c", textwrap.dedent(
+                    "\n".join(diagnostic[diagnostic.index("        run: |") + 1:]))],
+                    env=env, capture_output=True, text=True, timeout=5)
+                self.assertEqual(run.returncode, 0, run.stderr)
+                uncapped = json.loads(output.read_text().strip().split("=", 1)[1])
+                self.assertEqual(uncapped, receipt(reason="execution_observed", count=31, maximum=None))
+                self.assertEqual(summary.read_text(), check.execution_summary(uncapped, fixtures.presentation_owner()))
+                output.unlink()
+                summary.unlink()
+                env["REVIEW_HELPER"] = ""
+                run = subprocess.run(["bash", "-eo", "pipefail", "-c", textwrap.dedent(
+                    "\n".join(diagnostic[diagnostic.index("        run: |") + 1:]))],
+                    env=env, capture_output=True, text=True, timeout=5)
+                self.assertEqual(run.returncode, 0, run.stderr)
+                self.assertEqual(summary.read_text(), "**Turns:** unavailable\n")
+                self.assertFalse(output.exists())
                 env["GITHUB_RUN_ATTEMPT"] = "2"
                 run = subprocess.run([sys.executable, str(fixtures.SCRIPT), "diagnose-execution", "--execution", str(record)],
                                      env=env, capture_output=True, text=True, timeout=5)
                 self.assertEqual(run.returncode, 0, run.stderr)
                 self.assertFalse(output.exists())
 
-    def test_manual_cap_has_one_source_and_automatic_policy_is_unchanged(self):
+    def test_both_review_jobs_are_uncapped_with_20_minute_timeout(self):
         manual = workflows.job(workflows.MANUAL, "review")
         automatic = workflows.job(workflows.AUTOMATIC, "review")
-        self.assertIn('      REVIEW_MAX_TURNS: "100"', manual)
+        self.assertNotIn("REVIEW_MAX_TURNS", "\n".join(manual))
         self.assertIn("    timeout-minutes: 20", manual)
         self.assertIn("    timeout-minutes: 20", automatic)
         args = workflows.folded(workflows.steps(manual)["Review pull request"], "claude_args", 10)
-        self.assertIn("--max-turns ${{ env.REVIEW_MAX_TURNS }}", args)
+        self.assertNotIn("--max-turns", args)
         self.assertNotIn("--max-turns", workflows.folded(workflows.steps(automatic)["Review pull request"], "claude_args", 10))
         for path in (workflows.MANUAL, workflows.AUTOMATIC):
             publish = workflows.steps(workflows.job(path, "publish-status"))["Publish Claude Review result"]
@@ -143,6 +181,78 @@ class DiagnosticPresentationTests(unittest.TestCase):
     setUp = ownership.OwnershipTests.setUp
     start = ownership.OwnershipTests.start
     target = ownership.OwnershipTests.target
+
+    def test_count_is_informational_and_shared_with_summary_through_stale_refresh(self):
+        owner = self.start()
+        record = receipt(owner, reason="execution_observed", count=33, maximum=None)
+        os.environ.update(REVIEW_RESULT="success", ACTION_CONCLUSION="success", COMPLETION_VERIFIED="false",
+                          COMPLETION_REASON="captured_inputs_not_read", EXECUTION_DIAGNOSTIC=json.dumps(record))
+        check.best_effort_status(fixtures.HEAD, "failure")
+        self.assertEqual(check.status_state(self.api.status), "failure")
+        self.assertIsNone(check.last_completed_review(self.api.status))
+        self.assertIn(check.STATUS_REASONS["unread_inputs"], self.api.status["body"])
+        self.assertIn(check.turns_line(record), self.api.status["body"])
+        self.assertIn(check.turns_line(record), check.execution_summary(record, owner))
+        self.api.pr["head"]["sha"] = fixtures.OTHER
+        check.best_effort_status(fixtures.OTHER, "stale")
+        self.assertEqual(check.status_execution_record(self.api.status, owner), record)
+        self.assertIn("**Turns:** 33", self.api.status["body"])
+        # Exact run/attempt mismatches cannot supply even informational counts.
+        for key, value in (("GITHUB_RUN_ID", "6"), ("GITHUB_RUN_ATTEMPT", "2")):
+            with mock.patch.dict(os.environ, {key: value}):
+                self.assertIsNone(check.current_execution_record(owner))
+
+    def test_completed_count_stays_with_its_history_and_new_attempt_has_own_count(self):
+        owner = self.start()
+        record = receipt(owner, reason="execution_observed", count=33, maximum=None)
+        os.environ.update(REVIEW_RESULT="success", ACTION_CONCLUSION="success", COMPLETION_VERIFIED="true",
+                          COMPLETION_REASON="verified", EXECUTION_DIAGNOSTIC=json.dumps(record),
+                          DETAILS_URL=f"https://github.com/{fixtures.REPO}/actions/runs/5")
+        check.best_effort_status(fixtures.HEAD, "success")
+        self.assertEqual(check.last_completed_review_details(self.api.status)["execution"]["record"], record)
+        os.environ["EXECUTION_DIAGNOSTIC"] = ""
+        check.best_effort_status(fixtures.HEAD, "success")
+        self.assertEqual(check.last_completed_review_details(self.api.status)["execution"]["record"], record)
+        self.api.pr["head"]["sha"] = fixtures.OTHER
+        check.best_effort_status(fixtures.OTHER, "stale")
+        self.assertIn("**Turns:** 33", self.api.status["body"])
+        os.environ.update(HEAD_SHA=fixtures.OTHER, GITHUB_RUN_ID="6", PRESENTATION_START="3")
+        check.best_effort_status(fixtures.OTHER, "in_progress", acquire=True)
+        newer = check.status_owner(self.api.status)
+        os.environ["PRESENTATION_OWNER"] = json.dumps(newer)
+        current, previous = self.api.status["body"].split("### Previous completed review", 1)
+        self.assertIn("**Turns:** unavailable", current)
+        self.assertIn("**Turns:** 33", previous)
+        second = receipt(newer, reason="execution_observed", count=7, maximum=None)
+        os.environ.update(REVIEW_RESULT="failure", ACTION_CONCLUSION="", COMPLETION_VERIFIED="",
+                          COMPLETION_REASON="", EXECUTION_DIAGNOSTIC=json.dumps(second))
+        check.best_effort_status(fixtures.OTHER, "failure")
+        current, previous = self.api.status["body"].split("### Previous completed review", 1)
+        self.assertIn("**Turns:** 7", current)
+        self.assertIn("**Turns:** 33", previous)
+        self.assertEqual(check.last_completed_review(self.api.status), (fixtures.HEAD, "main", "success"))
+
+    def test_conflicting_same_attempt_counts_stay_unavailable(self):
+        owner = self.start()
+        original = receipt(owner, reason="execution_observed", count=33, maximum=None)
+        self.finalize_failure(owner, EXECUTION_DIAGNOSTIC=json.dumps(original))
+        conflicting = {**original, "num_turns": 7}
+        body = self.finalize_failure(owner, EXECUTION_DIAGNOSTIC=json.dumps(conflicting))
+        self.assertIn("**Turns:** unavailable", body)
+        self.assertIsNone(check.status_execution_record(self.api.status, owner)["num_turns"])
+        self.assertEqual(check.status_execution_record(self.api.status, owner)["reason"], "conflicting")
+        self.assertEqual(self.finalize_failure(owner, EXECUTION_DIAGNOSTIC=json.dumps(conflicting)), body)
+
+    def test_compact_completion_count_uses_the_captured_owner(self):
+        owner = fixtures.presentation_owner()
+        record = receipt(owner, reason="execution_observed", count=33, maximum=None)
+        for candidate, expected in ((record, "33"), ({**record, "attempt": 2}, "unavailable"), (None, "unavailable")):
+            body = check.completion_comment_body(fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
+                "synthetic-marker", "https://github.com/owner/repo/actions/runs/5", owner=owner,
+                execution_record=candidate)
+            visible, details = body.split("<details>", 1)
+            self.assertNotIn("**Turns:**", visible)
+            self.assertIn("**Turns:** " + expected, details)
 
     def finalize_failure(self, owner, **changes):
         os.environ.update(REVIEW_RESULT="failure", ACTION_CONCLUSION="",
@@ -235,7 +345,7 @@ class DiagnosticPresentationTests(unittest.TestCase):
             os.environ.pop("START_RESULT", None)
             body = self.finalize_failure(owner, **changes)
             self.assertIn(check.STATUS_REASONS[reason], body)
-            self.assertNotIn(check.EXECUTION_DIAGNOSTIC_PREFIX, body)
+            self.assertIsNone(check.status_execution_diagnostic(self.api.status, owner))
             self.assertNotIn("31 turns", body)
 
     def test_malformed_missing_and_conflicting_diagnostics_cannot_supply_cause(self):
@@ -246,7 +356,8 @@ class DiagnosticPresentationTests(unittest.TestCase):
             with mock.patch.object(check, "workflow_changed", return_value=None):
                 body = self.finalize_failure(owner, EXECUTION_DIAGNOSTIC=raw)
             self.assertNotIn("31 turns", body)
-            self.assertNotIn(check.EXECUTION_DIAGNOSTIC_PREFIX, body)
+            self.assertIsNone(check.status_execution_diagnostic(self.api.status, owner))
+            self.assertIn("**Turns:** unavailable", body)
         good = self.finalize_failure(owner)
         for bad in (good + "\n" + check.execution_diagnostic_marker(receipt(owner)),
                     good.replace(check.execution_diagnostic_marker(receipt(owner)), "")):

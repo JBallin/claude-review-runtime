@@ -1193,6 +1193,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     if with_history:
                         self.assertEqual(check.last_completed_review_details(after)["runtime"], previous)
                     self.assertNotIn("**Runtime used:**", repaired.split("<details>")[0])
+                    self.assertEqual(repaired.count("**Turns:** unavailable"), 2 if with_history else 1)
 
     def test_fallback_runtime_uses_valid_execution_evidence_and_omits_unknown(self):
         from test_claude_review_check import presentation_owner
