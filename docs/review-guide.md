@@ -68,9 +68,11 @@ previous attempt retains its own settings; a status refresh does not apply
 today’s defaults to an older review, and missing historical settings are not
 filled in. New attempts resolve
 each field from a valid manual override, then a valid workflow input, then
-Runtime’s Sonnet / Medium defaults. Invalid workflow defaults warn and fall back only for the affected field;
-independently valid settings remain in use. Invalid manual arguments reject the
-whole request before review starts. Eligible commenters receive a separate usage
+Runtime’s Sonnet / Medium defaults. Every nonblank workflow input must be valid,
+including inputs overridden by a manual request. Invalid workflow configuration
+fails the Actions configuration step before Claude starts, with an error and run
+summary; it does not replace an existing review result or Check. Invalid manual
+arguments reject the whole request before review starts. Eligible commenters receive a separate usage
 response without changing an existing review result or Check. Current model warnings stay above Details. A previous run’s
 recorded model mismatch appears inside Previous completed review before its
 settings, using only that run’s captured evidence. A comment API or permission

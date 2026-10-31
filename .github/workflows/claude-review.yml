@@ -71,6 +71,7 @@ jobs:
       checks: write
       issues: write
     outputs:
+      configuration_valid: ${{ steps.configuration.outcome == 'success' && steps.configuration.outputs.configuration_valid == 'true' }}
       selection_config: ${{ steps.select.outputs.selection_config }}
       check_run_id: ${{ steps.check.outputs.check_run_id }}
       status_comment_id: ${{ steps.check.outputs.status_comment_id }}
@@ -81,6 +82,49 @@ jobs:
     # before any fallible input fetching; a later failure here is then
     # published as that check's failure rather than leaving no state.
     steps:
+      - name: Validate workflow configuration
+        id: configuration
+        # Trusted, helper-independent validation must precede all review state.
+        env:
+          WORKFLOW_REVIEW_MODEL: ${{ inputs.model }}
+          WORKFLOW_REVIEW_EFFORT: ${{ inputs.effort }}
+        run: |
+          python3 - <<'PY_CONFIGURATION'
+          import os
+
+          def invalid_workflow_fields(model, effort):
+              """Validate supplied inputs before applying any manual override or default."""
+              invalid = []
+              for field, raw, allowed in (("model", model, ("opus", "sonnet", "haiku")),
+                                          ("effort", effort, ("low", "medium", "high", "xhigh", "max"))):
+                  value = raw.strip().lower() if isinstance(raw, str) else None
+                  if value != "" and value not in allowed:
+                      invalid.append(field)
+              return invalid
+
+          def configuration_error_body(fields):
+              """Safe configuration guidance for known fields, without raw input values."""
+              messages = {
+                  "model": "**Invalid workflow model.** Use `haiku`, `sonnet`, or `opus`.",
+                  "effort": "**Invalid workflow effort.** Use `low`, `medium`, `high`, `xhigh`, or `max`.",
+              }
+              if (not isinstance(fields, (list, tuple)) or not fields
+                      or any(field not in messages for field in fields) or len(set(fields)) != len(fields)):
+                  raise ValueError("invalid configuration error fields")
+              return "\n\n".join([*[messages[field] for field in ("model", "effort") if field in fields],
+                                   "No review was started. Correct the workflow input before requesting a review."])
+
+          invalid = invalid_workflow_fields(os.environ.get("WORKFLOW_REVIEW_MODEL", ""),
+                                            os.environ.get("WORKFLOW_REVIEW_EFFORT", ""))
+          if invalid:
+              for field in invalid:
+                  print("::error::Invalid workflow " + field + " input; see the configuration guidance in the step summary.")
+              with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+                  summary.write(configuration_error_body(invalid) + "\n")
+              raise SystemExit(1)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("configuration_valid=true\n")
+          PY_CONFIGURATION
       - name: Capture presentation start
         id: presentation-start
         continue-on-error: true
@@ -105,6 +149,7 @@ jobs:
         run: python3 "$REVIEW_HELPER" selection
       - name: Start Claude Review check
         id: check
+        if: steps.configuration.outcome == 'success' && steps.configuration.outputs.configuration_valid == 'true' && steps.select.outcome == 'success'
         env:
           REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}
           GH_TOKEN: ${{ github.token }}
@@ -208,6 +253,7 @@ jobs:
   review:
     name: Review
     needs: start-check
+    if: needs.start-check.outputs.configuration_valid == 'true'
     permissions:
       contents: read
       pull-requests: read
@@ -647,9 +693,9 @@ jobs:
   publish-status:
     name: Publish status
     needs: [start-check, review]
-    # Runs after any review attempt start-check actually began, including a
-    # failed one, but never for an event start-check's gate skipped.
-    if: always() && needs.start-check.result != 'skipped'
+    # Runs only after successful configuration preflight, including later
+    # failed attempts, but never for rejected inputs or skipped start jobs.
+    if: always() && needs.start-check.outputs.configuration_valid == 'true' && needs.start-check.result != 'skipped'
     runs-on: ubuntu-26.04
     # Sized for the bundled review helper's bounded retries.
     timeout-minutes: 18

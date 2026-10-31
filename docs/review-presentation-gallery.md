@@ -7,6 +7,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 ---
 
 <a id="current-clean"></a>
+<a id="workflow-default-observed"></a>
+<a id="inherited-model-observed"></a>
 
 ### 1 — Completed review
 
@@ -45,6 +47,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 ---
 
 <a id="plain-selection"></a>
+<a id="manual-partial-default"></a>
 
 ### 2 — Plain manual request
 
@@ -121,6 +124,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 ---
 
 <a id="opus-observed"></a>
+<a id="opus-multiple"></a>
 
 ### 4 — Opus observed with requested effort
 
@@ -199,6 +203,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 ---
 
 <a id="opus-unknown"></a>
+<a id="opus-legacy"></a>
 
 ### 6 — Completed review with unknown model
 
@@ -238,47 +243,9 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 ---
 
-<a id="opus-multiple"></a>
-
-### 7 — Opus primary review with auxiliary Haiku usage
-
-<!-- claude-review-runtime:claude-review-status -->
-<!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-status-base-ref:main -->
-<!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22mixed%22%2C%22models%22%3A%5B%22claude-haiku-4-5%22%2C%22claude-opus-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-opus-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-opus-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
-<!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
-<!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
-<!-- claude-review-runtime:presentation-owner-phase:terminal -->
-<!-- claude-review-runtime:claude-review-last-reviewed-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:main -->
-<!-- claude-review-runtime:claude-review-last-reviewed-result:success -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-sha:dddddddddddddddddddddddddddddddddddddddd -->
-<!-- claude-review-runtime:claude-review-last-reviewed-run-url:https%3A%2F%2Fgithub.com%2Fowner%2Frepo%2Factions%2Fruns%2F5 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-trigger:Manual%20request -->
-<!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
-<!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22mixed%22%2C%22models%22%3A%5B%22claude-haiku-4-5%22%2C%22claude-opus-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-opus-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-opus-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
-## Claude Review
-
-| Status | Reviewed commit | Review trigger |
-| --- | --- | --- |
-| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
-
-<details>
-<summary>ℹ️ Details</summary>
-
-**Model:** Opus · **Effort:** High\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
-
-</details>
-
----
-
 <a id="current-findings"></a>
 
-### 8 — Review with findings
+### 7 — Review with findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -320,7 +287,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 <a id="selection-findings"></a>
 
-### 9 — Findings with explicit selection
+### 8 — Findings with explicit selection
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -358,7 +325,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 <a id="selection-running"></a>
 
-### 10 — Running with explicit selection
+### 9 — Running with explicit selection
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -387,7 +354,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 <a id="selection-incomplete"></a>
 
-### 11 — Incomplete with explicit selection
+### 10 — Incomplete with explicit selection
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -421,7 +388,7 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 
 <a id="selection-tooling-unavailable"></a>
 
-### 12 — Review tooling unavailable with explicit selection
+### 11 — Review tooling unavailable with explicit selection
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -457,47 +424,9 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 ---
 
-<a id="inherited-model-ambiguous"></a>
-
-### 13 — Historical effort-only request with conflicting inherited model evidence
-
-<!-- claude-review-runtime:claude-review-status -->
-<!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-status-base-ref:main -->
-<!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%2C%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-opus-5-5%22%2C%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-opus-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22%22%7D -->
-<!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
-<!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
-<!-- claude-review-runtime:presentation-owner-phase:terminal -->
-<!-- claude-review-runtime:claude-review-last-reviewed-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:main -->
-<!-- claude-review-runtime:claude-review-last-reviewed-result:success -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-sha:dddddddddddddddddddddddddddddddddddddddd -->
-<!-- claude-review-runtime:claude-review-last-reviewed-run-url:https%3A%2F%2Fgithub.com%2Fowner%2Frepo%2Factions%2Fruns%2F5 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-trigger:Manual%20request -->
-<!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
-<!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%2C%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-opus-5-5%22%2C%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-opus-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22%22%7D -->
-## Claude Review
-
-| Status | Reviewed commit | Review trigger |
-| --- | --- | --- |
-| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
-
-<details>
-<summary>ℹ️ Details</summary>
-
-**Effort:** High\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
-
-</details>
-
----
-
 <a id="opus-ambiguous"></a>
 
-### 14 — Completed review with conflicting primary models
+### 12 — Completed review with conflicting primary models
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -522,47 +451,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
-⚠️ **Model ambiguous:** Opus, Sonnet observed
-
-<details>
-<summary>ℹ️ Details</summary>
-
-**Model:** Opus · **Effort:** High\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
-
-</details>
-
----
-
-<a id="opus-legacy"></a>
-
-### 15 — Legacy receipt without primary evidence
-
-<!-- claude-review-runtime:claude-review-status -->
-<!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-status-base-ref:main -->
-<!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
-<!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
-<!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
-<!-- claude-review-runtime:presentation-owner-phase:terminal -->
-<!-- claude-review-runtime:claude-review-last-reviewed-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:main -->
-<!-- claude-review-runtime:claude-review-last-reviewed-result:success -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-sha:dddddddddddddddddddddddddddddddddddddddd -->
-<!-- claude-review-runtime:claude-review-last-reviewed-run-url:https%3A%2F%2Fgithub.com%2Fowner%2Frepo%2Factions%2Fruns%2F5 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-trigger:Manual%20request -->
-<!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
-<!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
-## Claude Review
-
-| Status | Reviewed commit | Review trigger |
-| --- | --- | --- |
-| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
-
-⚠️ **Model unknown:** primary evidence missing
+⚠️ **Model ambiguous:** Opus / Sonnet observed
 
 <details>
 <summary>ℹ️ Details</summary>
@@ -577,7 +466,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="workflow-default-running"></a>
 
-### 16 — Automatic review running with configured defaults
+### 13 — Automatic review running with configured defaults
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -604,157 +493,13 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 ---
 
-<a id="workflow-default-observed"></a>
-
-### 17 — Automatic review completed with configured defaults
-
-<!-- claude-review-runtime:claude-review-status -->
-<!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-status-base-ref:main -->
-<!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
-<!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
-<!-- claude-review-runtime:attempt-trigger:%5B%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22PR%20opened%20for%20review%22%5D -->
-<!-- claude-review-runtime:presentation-owner-phase:terminal -->
-<!-- claude-review-runtime:claude-review-last-reviewed-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:main -->
-<!-- claude-review-runtime:claude-review-last-reviewed-result:success -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-sha:dddddddddddddddddddddddddddddddddddddddd -->
-<!-- claude-review-runtime:claude-review-last-reviewed-run-url:https%3A%2F%2Fgithub.com%2Fowner%2Frepo%2Factions%2Fruns%2F5 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-trigger:PR%20opened%20for%20review -->
-<!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
-<!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
-## Claude Review
-
-| Status | Reviewed commit | Review trigger |
-| --- | --- | --- |
-| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
-
-<details>
-<summary>ℹ️ Details</summary>
-
-**Model:** Sonnet · **Effort:** Medium\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
-
-</details>
-
----
-
-<a id="inherited-model-observed"></a>
-
-### 18 — Automatic review with built-in defaults
-
-<!-- claude-review-runtime:claude-review-status -->
-<!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-status-base-ref:main -->
-<!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
-<!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
-<!-- claude-review-runtime:attempt-trigger:%5B%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22PR%20opened%20for%20review%22%5D -->
-<!-- claude-review-runtime:presentation-owner-phase:terminal -->
-<!-- claude-review-runtime:claude-review-last-reviewed-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:main -->
-<!-- claude-review-runtime:claude-review-last-reviewed-result:success -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-sha:dddddddddddddddddddddddddddddddddddddddd -->
-<!-- claude-review-runtime:claude-review-last-reviewed-run-url:https%3A%2F%2Fgithub.com%2Fowner%2Frepo%2Factions%2Fruns%2F5 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-trigger:PR%20opened%20for%20review -->
-<!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
-<!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
-## Claude Review
-
-| Status | Reviewed commit | Review trigger |
-| --- | --- | --- |
-| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
-
-<details>
-<summary>ℹ️ Details</summary>
-
-**Model:** Sonnet · **Effort:** Medium\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
-
-</details>
-
----
-
-<a id="manual-partial-default"></a>
-
-### 19 — Manual model override retaining the configured effort default
-
-<!-- claude-review-runtime:claude-review-status -->
-<!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-status-base-ref:main -->
-<!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22manual%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%7D -->
-<!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
-<!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
-<!-- claude-review-runtime:presentation-owner-phase:terminal -->
-<!-- claude-review-runtime:claude-review-last-reviewed-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:main -->
-<!-- claude-review-runtime:claude-review-last-reviewed-result:success -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-sha:dddddddddddddddddddddddddddddddddddddddd -->
-<!-- claude-review-runtime:claude-review-last-reviewed-run-url:https%3A%2F%2Fgithub.com%2Fowner%2Frepo%2Factions%2Fruns%2F5 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-trigger:Manual%20request -->
-<!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
-<!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22manual%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-haiku-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-haiku-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22haiku%22%7D -->
-## Claude Review
-
-| Status | Reviewed commit | Review trigger |
-| --- | --- | --- |
-| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
-
-<details>
-<summary>ℹ️ Details</summary>
-
-**Model:** Haiku · **Effort:** Medium\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
-
-</details>
-
----
-
 <a id="workflow-invalid-setting"></a>
 
-### 20 — Invalid configured model falls back while retaining valid effort
+### 14 — Invalid workflow configuration, Actions run summary
 
-<!-- claude-review-runtime:claude-review-status -->
-<!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-status-base-ref:main -->
-<!-- claude-review-runtime:claude-review-status-state:success -->
-<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22workflow%22%7D%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
-<!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
-<!-- claude-review-runtime:attempt-trigger:%5B%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22PR%20opened%20for%20review%22%5D -->
-<!-- claude-review-runtime:presentation-owner-phase:terminal -->
-<!-- claude-review-runtime:claude-review-last-reviewed-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:main -->
-<!-- claude-review-runtime:claude-review-last-reviewed-result:success -->
-<!-- claude-review-runtime:claude-review-last-reviewed-base-sha:dddddddddddddddddddddddddddddddddddddddd -->
-<!-- claude-review-runtime:claude-review-last-reviewed-run-url:https%3A%2F%2Fgithub.com%2Fowner%2Frepo%2Factions%2Fruns%2F5 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-trigger:PR%20opened%20for%20review -->
-<!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
-<!-- claude-review-runtime:claude-review-last-reviewed-generation:471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20 -->
-<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%7B%22field%22%3A%22model%22%2C%22reason%22%3A%22invalid%22%2C%22source%22%3A%22workflow%22%7D%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%22model%22%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
-## Claude Review
+**Invalid workflow model.** Use `haiku`, `sonnet`, or `opus`.
 
-| Status | Reviewed commit | Review trigger |
-| --- | --- | --- |
-| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
-
-⚠️ **Invalid configured model** — using Sonnet (built-in default)
-
-<details>
-<summary>ℹ️ Details</summary>
-
-**Model:** Sonnet · **Effort:** High\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
-
-</details>
+No review was started. Correct the workflow input before requesting a review.
 
 ---
 
@@ -764,7 +509,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <a id="manual-unsupported-suffix"></a>
 <a id="manual-unsupported-keyword"></a>
 
-### 21 — Invalid manual arguments rejected without starting a review
+### 15 — Invalid manual arguments rejected without starting a review
 
 I couldn't use those review arguments. Please use a supported model and effort, with the model first when both are given.
 
@@ -776,7 +521,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="manual-unknown-value"></a>
 
-### 22 — Multiple command lines rejected with one usage response
+### 16 — Multiple command lines rejected with one usage response
 
 Please use one review command per comment.
 
@@ -788,7 +533,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="baseline-clean"></a>
 
-### 23 — Clean completion, changed target branch
+### 17 — Clean completion, changed target branch
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -832,7 +577,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="baseline-findings"></a>
 
-### 24 — Findings, changed target branch
+### 18 — Findings, changed target branch
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -876,7 +621,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="changed-head"></a>
 
-### 25 — PR commit changed after clean completion
+### 19 — PR commit changed after clean completion
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -920,7 +665,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="incomplete-unknown"></a>
 
-### 26 — Incomplete attempt without completed history
+### 20 — Incomplete attempt without completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -958,7 +703,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="inline-tool-partial"></a>
 
-### 27 — Inline-comment tool failure: partial
+### 21 — Inline-comment tool failure: partial
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -997,7 +742,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 
 <a id="inline-tool-zero"></a>
 
-### 28 — Inline-comment tool failure: zero
+### 22 — Inline-comment tool failure: zero
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1036,7 +781,7 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 
 <a id="inline-tool-unknown-count"></a>
 
-### 29 — Inline-comment tool failure: unknown-count
+### 23 — Inline-comment tool failure: unknown-count
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1075,7 +820,7 @@ An inline-comment tool call failed. This review is incomplete. [Attempt Check](h
 
 <a id="inline-tool-stale"></a>
 
-### 30 — Inline-comment tool failure after the PR commit changes
+### 24 — Inline-comment tool failure after the PR commit changes
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1114,7 +859,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 
 <a id="unread-automatic"></a>
 
-### 31 — Required inputs unread, automatic attempt
+### 25 — Required inputs unread, automatic attempt
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1152,7 +897,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="unread-manual"></a>
 
-### 32 — Required inputs unread, manual attempt with workflow changes
+### 26 — Required inputs unread, manual attempt with workflow changes
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1190,7 +935,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="workflow-changed"></a>
 
-### 33 — Relevant review workflow changed, likely cause unconfirmed
+### 27 — Relevant review workflow changed, likely cause unconfirmed
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1228,7 +973,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="workflow-changed-superseded"></a>
 
-### 34 — Workflow-change context retained for a superseded attempt
+### 28 — Workflow-change context retained for a superseded attempt
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1266,7 +1011,7 @@ The review of [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaa
 
 <a id="selection-receipt"></a>
 
-### 35 — Historical manual receipt with primary Opus and auxiliary Haiku
+### 29 — Historical manual receipt with primary Opus and auxiliary Haiku
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1286,7 +1031,7 @@ Claude Review: No findings. 🎉
 
 <a id="selection-receipt-mismatch"></a>
 
-### 36 — Historical manual receipt with primary model mismatch
+### 30 — Historical manual receipt with primary model mismatch
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1308,7 +1053,7 @@ Claude Review: No findings. 🎉
 
 <a id="compact-clean"></a>
 
-### 37 — Compact clean completion, matching baseline
+### 31 — Compact clean completion, matching baseline
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1327,7 +1072,7 @@ Claude Review: No findings. 🎉
 
 <a id="compact-differing-baseline"></a>
 
-### 38 — Compact clean completion, differing baseline
+### 32 — Compact clean completion, differing baseline
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1349,7 +1094,7 @@ The observed target differed from the reviewed baseline.
 
 <a id="manual-pin-recovery"></a>
 
-### 39 — Manual recovery after a Runtime pin change (synthetic)
+### 33 — Manual recovery after a Runtime pin change (synthetic)
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1369,7 +1114,7 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-clean"></a>
 
-### 40 — Running attempt with older completed history: clean
+### 34 — Running attempt with older completed history: clean
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1417,7 +1162,7 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-findings"></a>
 
-### 41 — Running attempt with older completed history: findings
+### 35 — Running attempt with older completed history: findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1465,7 +1210,7 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-manual"></a>
 
-### 42 — Manual current attempt with previous completed review: running
+### 36 — Manual current attempt with previous completed review: running
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1513,7 +1258,7 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-model-mismatch"></a>
 
-### 43 — Current Sonnet attempt with a previous model mismatch
+### 37 — Current Sonnet attempt with a previous model mismatch
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1562,7 +1307,7 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="incomplete-history-clean"></a>
 
-### 44 — Incomplete attempt with older completed history: clean
+### 38 — Incomplete attempt with older completed history: clean
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1619,7 +1364,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="incomplete-history-findings"></a>
 
-### 45 — Incomplete attempt with older completed history: findings
+### 39 — Incomplete attempt with older completed history: findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1676,7 +1421,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="incomplete-history-manual"></a>
 
-### 46 — Manual current attempt with previous completed review: incomplete
+### 40 — Manual current attempt with previous completed review: incomplete
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1733,7 +1478,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="retargeted-clean"></a>
 
-### 47 — Retargeted provenance: clean
+### 41 — Retargeted provenance: clean
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1778,7 +1523,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="retargeted-findings"></a>
 
-### 48 — Retargeted provenance: findings
+### 42 — Retargeted provenance: findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -1823,7 +1568,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="publication-incomplete-none"></a>
 
-### 49 — Authoritative Check publication incomplete: no completed history
+### 43 — Authoritative Check publication incomplete: no completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1861,7 +1606,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-success"></a>
 
-### 50 — Authoritative Check publication incomplete: previous clean review
+### 44 — Authoritative Check publication incomplete: previous clean review
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1918,7 +1663,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-action-required"></a>
 
-### 51 — Authoritative Check publication incomplete: previous findings
+### 45 — Authoritative Check publication incomplete: previous findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1975,7 +1720,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-manual"></a>
 
-### 52 — Manual current attempt with previous completed review: publication unavailable
+### 46 — Manual current attempt with previous completed review: publication unavailable
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2032,7 +1777,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-unavailable-none"></a>
 
-### 53 — Completion with unavailable Check publication: no completed history
+### 47 — Completion with unavailable Check publication: no completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2070,7 +1815,7 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="publication-unavailable-success"></a>
 
-### 54 — Completion with unavailable Check publication: previous clean review
+### 48 — Completion with unavailable Check publication: previous clean review
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2127,7 +1872,7 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="publication-unavailable-action-required"></a>
 
-### 55 — Completion with unavailable Check publication: previous findings
+### 49 — Completion with unavailable Check publication: previous findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2184,7 +1929,7 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="running-unavailable-none"></a>
 
-### 56 — Running with unavailable Check publication: no completed history
+### 50 — Running with unavailable Check publication: no completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2215,7 +1960,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="running-unavailable-success"></a>
 
-### 57 — Running with unavailable Check publication: previous clean review
+### 51 — Running with unavailable Check publication: previous clean review
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2265,7 +2010,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="running-unavailable-action-required"></a>
 
-### 58 — Running with unavailable Check publication: previous findings
+### 52 — Running with unavailable Check publication: previous findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2315,7 +2060,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="shared-run-in-progress"></a>
 
-### 59 — Shared workflow run, matching historical baseline: running
+### 53 — Shared workflow run, matching historical baseline: running
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2362,7 +2107,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="shared-run-failure"></a>
 
-### 60 — Shared workflow run, matching historical baseline: incomplete
+### 54 — Shared workflow run, matching historical baseline: incomplete
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2418,7 +2163,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="legacy-history-run"></a>
 
-### 61 — Legacy completed history without recorded attempt metadata
+### 55 — Legacy completed history without recorded attempt metadata
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -2450,7 +2195,7 @@ The applicability of this completed review to the current PR cannot be confirmed
 
 <a id="legacy-history-no-links"></a>
 
-### 62 — Legacy completed review without workflow links
+### 56 — Legacy completed review without workflow links
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2484,7 +2229,7 @@ The applicability of this completed review to the current PR cannot be confirmed
 
 <a id="stale-running-head"></a>
 
-### 63 — Stale running attempt without completed history: changed head
+### 57 — Stale running attempt without completed history: changed head
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2520,7 +2265,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-running-base"></a>
 
-### 64 — Stale running attempt without completed history: changed base
+### 58 — Stale running attempt without completed history: changed base
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -2556,7 +2301,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-running-ref"></a>
 
-### 65 — Stale running attempt without completed history: changed ref
+### 59 — Stale running attempt without completed history: changed ref
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -2593,7 +2338,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-manual"></a>
 
-### 66 — Stale manual attempt with distinct completed-review trigger
+### 60 — Stale manual attempt with distinct completed-review trigger
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->

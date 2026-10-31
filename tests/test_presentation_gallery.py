@@ -22,8 +22,8 @@ spec.loader.exec_module(gallery)
 
 
 def sample_items():
-    """Review presentation cases; separate usage responses have no review Details."""
-    return [(case.case_id, case.body) for case in gallery.gallery_samples() if "<details>" in case.body]
+    """All review fixtures, including variants consolidated in the gallery."""
+    return [(case.case_id, case.body) for case in gallery.presentation_samples() if "<details>" in case.body]
 
 
 class PresentationGalleryTests(unittest.TestCase):
@@ -34,9 +34,9 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 66)
+        self.assertEqual(len(gallery.gallery_samples()), 60)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 67)))
+                         list(range(1, 61)))
         # This committed audit file is not posted as one GitHub comment.
         self.assertLess(len(body.encode("utf-8")), 300_000)
 
@@ -49,7 +49,7 @@ class PresentationGalleryTests(unittest.TestCase):
             self.assertNotRegex(case.title, r"^(?:[A-Z]+[0-9]*|[0-9]+) — ")
         anchors = [anchor for case_id in case_ids for anchor in
                    (case_id, *gallery.CASE_ANCHOR_ALIASES.get(case_id, ()))]
-        self.assertEqual(len(anchors), 70)
+        self.assertEqual(len(anchors), 69)
         self.assertEqual(len(set(anchors)), len(anchors))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', gallery.render_gallery(), re.MULTILINE),
                          anchors)
@@ -70,7 +70,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 68)))
+                         list(range(1, 62)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [anchor for case in changed_order for anchor in
                           (case.case_id, *gallery.CASE_ANCHOR_ALIASES.get(case.case_id, ()))])
@@ -106,7 +106,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 59)
+        self.assertEqual(status.call_count, 57)
         self.assertEqual(completion.call_count, 5)
         self.assertEqual([call.kwargs.get("observed_base_sha") for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER, None])
@@ -135,7 +135,7 @@ class PresentationGalleryTests(unittest.TestCase):
                                    ('selection-receipt-mismatch', 'Model mismatch:** Sonnet observed'),
                                    ('opus-unknown', 'Model unknown:** primary evidence missing'),
                                    ('opus-legacy', 'Model unknown:** primary evidence missing'),
-                                   ('opus-ambiguous', 'Model ambiguous:** Opus, Sonnet observed')):
+                                   ('opus-ambiguous', 'Model ambiguous:** Opus / Sonnet observed')):
             visible = re.sub(r'<!--.*?-->', '', cases[case_id].split('<details>')[0], flags=re.DOTALL)
             self.assertIn('⚠️ **' + exception, visible)
         mixed = gallery.check.current_selection(
@@ -200,13 +200,13 @@ class PresentationGalleryTests(unittest.TestCase):
                                                                   {'body': cases[case_id]})
                     self.assertEqual(record['configuration']['model_source'], 'workflow')
                     self.assertEqual(record['configuration']['effort_source'], 'workflow')
-        main, details = cases['workflow-invalid-setting'].split('<details>', 1)
-        self.assertIn('⚠️ **Invalid configured model**', main)
-        self.assertIn('Invalid configured model** — using Sonnet (built-in default)', main)
-        self.assertNotIn('**Usage:**', main)
-        self.assertNotIn('primary evidence missing', main)
-        self.assertIn('**Model:** Sonnet · **Effort:** High', details)
-        self.assertIn('✅ **Completed**', main)
+        error = next(case.body for case in gallery.gallery_samples()
+                     if case.case_id == 'workflow-invalid-setting')
+        self.assertEqual(error, gallery.check.configuration_error_body(('model',)))
+        self.assertIn('model', error)
+        self.assertNotIn('**Usage:**', error)
+        self.assertNotIn('<details>', error)
+        self.assertIsNone(gallery.check.status_owner({'body': error}))
 
     def test_resolved_automatic_and_manual_examples_share_settings(self):
         cases = dict(sample_items())
@@ -242,7 +242,7 @@ class PresentationGalleryTests(unittest.TestCase):
         samples = {case.case_id: case.body for case in gallery.gallery_samples()}
         representatives = {alias: case_id for case_id, aliases in gallery.CASE_ANCHOR_ALIASES.items()
                            for alias in aliases}
-        usage_samples = [case.body for case in gallery.gallery_samples() if "<details>" not in case.body]
+        usage_samples = [case.body for case in gallery.gallery_samples() if "**Usage:**" in case.body]
         self.assertEqual(len(usage_samples), 2)
         self.assertEqual(len(set(usage_samples)), 2)
         for case_id, body in bodies.items():
@@ -258,7 +258,20 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIsNone(gallery.check.status_owner({"body": raw}))
 
     def test_inherited_model_conflict_stays_in_receipts_without_a_visible_model_warning(self):
-        raw = dict(sample_items())['inherited-model-ambiguous']
+        # Keep historical receipt coverage without a standalone gallery view.
+        with gallery.fixture_environment():
+            owner = gallery.fixtures.presentation_owner(kind='issue_comment', target=12,
+                                                       started=gallery.STARTED)
+            models = ['claude-opus-5-5', 'claude-sonnet-5-5']
+            selection = {'generation': owner['generation'], 'requested_model': '',
+                         'requested_effort': 'high', 'models': models,
+                         'model_evidence': 'observed', 'execution_attempt': 1,
+                         'observed_effort': None,
+                         'primary_model_evidence': {'initialization': models[0],
+                                                    'assistant': models, 'attempt': 1}}
+            raw = gallery.check.status_comment_body(gallery.fixtures.HEAD, 'main', 'success',
+                owner=owner, trigger_label='Manual request', completed_at=gallery.COMPLETED_AT,
+                selection=selection, runtime=gallery.check.executing_runtime())
         main, details = raw.split('<details>', 1)
         visible = re.sub(r'<!--.*?-->', '', main, flags=re.DOTALL)
         self.assertNotIn('**Model:**', visible + details)

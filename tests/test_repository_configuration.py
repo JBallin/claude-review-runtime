@@ -15,6 +15,19 @@ from urllib.parse import quote
 from test_claude_review_check import BASE_TIP, HEAD, OTHER, REPO, check, presentation_owner
 
 
+def historical_workflow_configuration(model="", effort=""):
+    """Explicit fixtures for the old fallback policy, never new execution."""
+    config = {"version": 2, "errors": [], "diagnostics": []}
+    for field, raw, allowed in (("model", model, check.MODELS), ("effort", effort, check.EFFORTS)):
+        value = raw.strip().lower()
+        config["requested_" + field] = value if value in allowed else check.RUNTIME_DEFAULTS[field]
+        config[field + "_source"] = "workflow" if value in allowed else "runtime"
+        if value and value not in allowed:
+            config["errors"].append(field)
+            config["diagnostics"].append({"field": field, "source": "workflow", "reason": "invalid"})
+    return config
+
+
 def historical_manual_configuration(body, model="", effort=""):
     """Fixed old receipt cases, independent of the new strict manual parser."""
     cases = {
@@ -29,7 +42,7 @@ def historical_manual_configuration(body, model="", effort=""):
         "/claude-review high --model": ("", "high", [("request", "syntax")]),
     }
     requested_model, requested_effort, diagnostics = cases[body]
-    config = check.resolve_configuration(None, model, effort, automatic=True)
+    config = historical_workflow_configuration(model, effort)
     for name, value in (("model", requested_model), ("effort", requested_effort)):
         if value:
             config["requested_" + name], config[name + "_source"] = value, "manual"
@@ -149,28 +162,37 @@ class RepositoryConfigurationTests(unittest.TestCase):
             with self.subTest(body=body):
                 self.assertIn(check.manual_selection(body)["requested_model"], check.MODELS)
 
-    def test_invalid_defaults_fall_back_independently_and_unused_defaults_are_shadowed(self):
-        for model, effort, errors, expected in (
-                ("claude-opus-5-5", "high", ["model"], ("sonnet", "high")),
-                ("haiku", "ultra", ["effort"], ("haiku", "medium")),
-                ("opus[1m]", "--effort high", ["model", "effort"], ("sonnet", "medium"))):
-            with self.subTest(model=model, effort=effort):
-                result, output, message = self.select({"TRIGGER_KIND": "automatic",
-                    "WORKFLOW_REVIEW_MODEL": model, "WORKFLOW_REVIEW_EFFORT": effort})
-                self.assertEqual(result, 0)
-                config = json.loads(output["selection_config"])
-                self.assertEqual(config["errors"], errors)
-                self.assertEqual((config["requested_model"], config["requested_effort"]), expected)
-                self.assertEqual(check.valid_configuration(config), config)
-                self.assertEqual(config["diagnostics"], [
-                    {"field": field, "source": "workflow", "reason": "invalid"} for field in errors])
-                self.assertIn("::warning::", message)
-                self.assertEqual((output["model_args"], output["effort_args"]),
-                                 ("--model " + expected[0], "--effort " + expected[1]))
-        config = check.resolve_configuration("/claude-review haiku max", "invalid", "invalid")
-        self.assertEqual(config["errors"], [])
-        self.assertEqual(config["diagnostics"], [])
-        self.assertEqual((config["requested_model"], config["requested_effort"]), ("haiku", "max"))
+    def test_invalid_workflow_inputs_reject_even_when_manual_choices_shadow_them(self):
+        for model, effort, fields in (("claude-opus-5-5", "high", ["model"]),
+                                      ("haiku", "ultra", ["effort"]),
+                                      ("opus[1m]", "--effort high", ["model", "effort"])):
+            for request in (None, "/claude-review", "/claude-review haiku max"):
+                with self.subTest(model=model, effort=effort, request=request):
+                    environment = {"TRIGGER_KIND": "automatic" if request is None else "issue_comment",
+                                   "WORKFLOW_REVIEW_MODEL": model, "WORKFLOW_REVIEW_EFFORT": effort}
+                    if request is not None:
+                        environment["TRIGGER_COMMENT"] = request
+                    result, output, message = self.select(environment)
+                    self.assertEqual(result, 1)
+                    self.assertEqual(output, {})
+                    self.assertIn("invalid workflow configuration: " + " and ".join(fields), message)
+
+    def test_historical_workflow_diagnostics_remain_readable_but_cannot_execute(self):
+        for source in ("workflow", "repository"):
+            config = historical_workflow_configuration("invalid", "high")
+            config["diagnostics"][0]["source"] = source
+            self.assertEqual(check.valid_configuration(config), config)
+            self.assertIn("Invalid configured model", check.configuration_notices(config)[0])
+            for kind, body in (("automatic", None), ("issue_comment", "/claude-review")):
+                environment = {"TRIGGER_KIND": kind}
+                if body:
+                    environment["TRIGGER_COMMENT"] = body
+                with self.subTest(source=source, kind=kind):
+                    for metadata in (None, {"selection_config": config, "trigger_comment": body}):
+                        result, output, message = self.select({**environment, "SELECTION_CONFIG": json.dumps(config)}, metadata)
+                        self.assertEqual(result, 1)
+                        self.assertEqual(output, {})
+                        self.assertIn("contains invalid settings", message)
 
     def test_invalid_manual_arguments_never_emit_execution_values_or_echo_raw_text(self):
         for body in ("/claude-review invalid high", "/claude-review opus invalid",
@@ -189,9 +211,8 @@ class RepositoryConfigurationTests(unittest.TestCase):
         result, output, message = self.select({"TRIGGER_KIND": "automatic",
                                               "WORKFLOW_REVIEW_MODEL": hostile,
                                               "WORKFLOW_REVIEW_EFFORT": "high"})
-        self.assertEqual(result, 0)
-        self.assertEqual(output["model_args"], "--model sonnet")
-        self.assertEqual(output["effort_args"], "--effort high")
+        self.assertEqual(result, 1)
+        self.assertEqual(output, {})
         self.assertNotIn(hostile, message + json.dumps(output))
         self.assertNotIn("$(id)", message + json.dumps(output))
 
@@ -279,7 +300,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 self.assertEqual(messages[-1], check.MANUAL_USAGE)
                 self.assertTrue(messages[0].startswith("⚠️ **" + problem + "** — "))
                 self.assertNotRegex(" ".join(messages), r"\((?:Workflow|Runtime|Manual)\)")
-        automatic = check.resolve_configuration(None, "invalid", "high", automatic=True)
+        automatic = historical_workflow_configuration("invalid", "high")
         self.assertEqual(check.configuration_notices(automatic), [
             "⚠️ **Invalid configured model** — using Sonnet (built-in default)"])
         retained = check.configuration_notices(historical_manual_configuration("/claude-review opus --effort", "haiku", "low"))
@@ -513,7 +534,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 record = self.record(config, owner=owner, model="claude-opus-5-5")
                 record["models"] = ["claude-opus-5-5", "claude-sonnet-5-5"]
                 record["primary_model_evidence"]["assistant"] = list(record["models"])
-                warning = "⚠️ **Model ambiguous:** Opus, Sonnet observed"
+                warning = "⚠️ **Model ambiguous:** Opus / Sonnet observed"
                 for running in (False, True):
                     self.assertIn(warning, check.selection_notice(record, running=running)[0])
                 rendered = check.status_comment_body(HEAD, "main", "success", owner=owner, selection=record)

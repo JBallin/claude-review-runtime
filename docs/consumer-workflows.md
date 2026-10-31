@@ -173,13 +173,17 @@ with:
 | `model` | `opus`, `sonnet`, `haiku` | `sonnet` |
 | `effort` | `low`, `medium`, `high`, `xhigh`, `max` | `medium` |
 
-Values are case-insensitive and surrounding whitespace is ignored. Each omitted
-manual choice uses its workflow input, then Runtime's **Sonnet / Medium** defaults.
-Runtime passes both resolved values to execution. An invalid workflow input
-needed for resolution produces a warning and falls back for that field only,
-retaining the independently valid setting. A valid manual override shadows its
-workflow input. Invalid manual arguments reject the entire request; they never
-start a review using replacement settings.
+Values are case-insensitive and surrounding whitespace is ignored. Every nonblank
+workflow input must be supported, even when a manual choice overrides it. An
+invalid model or effort stops the run before Claude starts. The Actions run shows
+a failed configuration step with an error and summary; existing review results
+and Checks remain intact.
+
+Once the workflow inputs are valid, each omitted manual choice uses its workflow
+input, then Runtime's **Sonnet / Medium** defaults. Blank workflow inputs count as
+omitted. Runtime passes both resolved values to execution. Invalid manual
+arguments reject the entire request; they never start a review using replacement
+settings. See the [selection rationale](design-notes.md#review-model-and-effort-selection).
 
 Use literal owner-reviewed values in the caller, rather than expressions from
 PR content. Runtime validates the resolved values; it cannot distinguish a

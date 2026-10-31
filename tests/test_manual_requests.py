@@ -279,7 +279,7 @@ class ManualRequestTests(unittest.TestCase):
                 context = {"needs": {
                     "request": {"result": result, "outputs": {"classification": classification}},
                     "start-check": {"result": "failure", "outputs": {
-                        "request_recognized": "true", "tooling_unavailable": "true", "selection_accepted": "false"}}}}
+                        "configuration_valid": "true", "request_recognized": "true", "tooling_unavailable": "true", "selection_accepted": "false"}}}}
                 with self.subTest(result=result, classification=classification):
                     self.assertEqual(bool(w.Evaluator(condition, context).evaluate()),
                                      result == "success" and classification == "valid")

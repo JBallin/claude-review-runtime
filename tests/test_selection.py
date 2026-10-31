@@ -180,9 +180,9 @@ class SelectionTests(unittest.TestCase):
         for models, transform, expected in (
                 (('claude-sonnet-4-6',), None, 'Model mismatch:** Sonnet observed'),
                 (('claude-opus-5-5',), lambda s: s[0].update(model='claude-sonnet-4-6'),
-                 'Model ambiguous:** Opus, Sonnet observed'),
+                 'Model ambiguous:** Opus / Sonnet observed'),
                 (('claude-opus-5-5', 'claude-sonnet-4-6'), None,
-                 'Model ambiguous:** Opus, Sonnet observed')):
+                 'Model ambiguous:** Opus / Sonnet observed')):
             with self.subTest(expected=expected):
                 owner, record = self.record(models=models, transform=transform)
                 for running in (False, True):
@@ -191,8 +191,8 @@ class SelectionTests(unittest.TestCase):
 
     def test_model_warning_versions_are_kept_only_to_distinguish_same_family_evidence(self):
         for models, expected in (
-                (('claude-opus-4-7', 'claude-sonnet-5-5'), 'Model ambiguous:** Opus, Sonnet observed'),
-                (('claude-opus-4-7', 'claude-opus-5-5'), 'Model ambiguous:** Opus 4.7, Opus 5.5 observed'),
+                (('claude-opus-4-7', 'claude-sonnet-5-5'), 'Model ambiguous:** Opus / Sonnet observed'),
+                (('claude-opus-4-7', 'claude-opus-5-5'), 'Model ambiguous:** Opus 4.7 / Opus 5.5 observed'),
                 (('claude-sonnet-5-5-20261001',), 'Model mismatch:** Sonnet observed')):
             with self.subTest(models=models):
                 owner, record = self.record(models=models)

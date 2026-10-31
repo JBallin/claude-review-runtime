@@ -503,16 +503,16 @@ class JobStructureTests(unittest.TestCase):
             with self.subTest(workflow=path.name):
                 review = job(path, "review")
                 self.assertEqual(scalar(review, "needs", 4), "start-check")
-                self.assertIsNone(scalar(review, "if", 4))
+                self.assertEqual(scalar(review, "if", 4), "needs.start-check.outputs.configuration_valid == 'true'")
 
     def test_publish_status_never_runs_for_a_skipped_start_check(self):
         for path in (AUTOMATIC, MANUAL):
             with self.subTest(workflow=path.name):
                 publish = job(path, "publish-status")
                 self.assertEqual(scalar(publish, "needs", 4), "[request, start-check, review]" if path == MANUAL else "[start-check, review]")
-                expected = "always() && needs.start-check.result != 'skipped'"
+                expected = "always() && needs.start-check.outputs.configuration_valid == 'true' && needs.start-check.result != 'skipped'"
                 if path == MANUAL:
-                    expected = ("always() && needs.request.result == 'success' && needs.request.outputs.classification == 'valid' && "
+                    expected = ("always() && needs.start-check.outputs.configuration_valid == 'true' && needs.request.result == 'success' && needs.request.outputs.classification == 'valid' && "
                                 "needs.start-check.result != 'skipped'")
                     expected += (" && (needs.start-check.outputs.selection_accepted == 'true' || "
                                  "(needs.start-check.outputs.request_recognized == 'true' && "
@@ -537,9 +537,10 @@ class JobStructureTests(unittest.TestCase):
 
     def test_check_run_is_created_before_fallible_review_input_capture(self):
         cases = {
-            AUTOMATIC: ["Capture presentation start", "Check review tooling", "Select review configuration",
+            AUTOMATIC: ["Validate workflow configuration", "Capture presentation start", "Check review tooling", "Select review configuration",
                         "Start Claude Review check", "Require valid review configuration", "Fetch PR review inputs"],
             MANUAL: [
+                "Validate workflow configuration",
                 "Resolve PR under review",
                 "Capture presentation start",
                 "Check review tooling",
@@ -559,7 +560,7 @@ class JobStructureTests(unittest.TestCase):
 
     def test_fork_evidence_failures_cannot_skip_the_manual_review(self):
         named = steps(job(MANUAL, "start-check"))
-        required = ["Resolve PR under review", "Require valid review configuration", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
+        required = ["Validate workflow configuration", "Resolve PR under review", "Require valid review configuration", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
         evidence_only = [
             "Check review tooling",
             "Start Claude Review check",
@@ -597,8 +598,8 @@ class JobStructureTests(unittest.TestCase):
                 config_env = block(selected, "env", 8)
                 self.assertEqual(scalar(config_env, "WORKFLOW_REVIEW_MODEL", 10), "${{ inputs.model }}")
                 self.assertEqual(scalar(config_env, "WORKFLOW_REVIEW_EFFORT", 10), "${{ inputs.effort }}")
-                self.assertEqual(path.read_text().count("inputs.model"), 1)
-                self.assertEqual(path.read_text().count("inputs.effort"), 1)
+                self.assertEqual(path.read_text().count("inputs.model"), 2)
+                self.assertEqual(path.read_text().count("inputs.effort"), 2)
                 self.assertNotIn("vars.", path.read_text())
                 self.assertNotIn("REPOSITORY_REVIEW_", path.read_text())
                 inputs = block(block(block(lines_of(path), "on", 0), "workflow_call", 2), "inputs", 4)
@@ -651,10 +652,10 @@ class JobStructureTests(unittest.TestCase):
                 failed = subprocess.run(["bash", "-e", "-c", run_block(gate)], capture_output=True, text=True)
                 self.assertEqual(failed.returncode, 1)
                 self.assertIn("configuration could not be safely resolved", failed.stdout)
-                self.assertIsNone(scalar(job(path, "review"), "if", 4))
-                expected_publish = "always() && needs.start-check.result != 'skipped'"
+                self.assertEqual(scalar(job(path, "review"), "if", 4), "needs.start-check.outputs.configuration_valid == 'true'")
+                expected_publish = "always() && needs.start-check.outputs.configuration_valid == 'true' && needs.start-check.result != 'skipped'"
                 if path == MANUAL:
-                    expected_publish = ("always() && needs.request.result == 'success' && needs.request.outputs.classification == 'valid' && "
+                    expected_publish = ("always() && needs.start-check.outputs.configuration_valid == 'true' && needs.request.result == 'success' && needs.request.outputs.classification == 'valid' && "
                                         "needs.start-check.result != 'skipped'")
                     expected_publish += (" && (needs.start-check.outputs.selection_accepted == 'true' || "
                                          "(needs.start-check.outputs.request_recognized == 'true' && "
@@ -1168,9 +1169,9 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertNotIn("github.sha", "\n".join(readiness))
                         publish_gate = scalar(job(path, "publish-status"), "if", 4)
                         unavailable = {"needs": {"request": {"result": "success", "outputs": {"classification": "valid"}}, "start-check": {"result": "failure", "outputs": {
-                            "request_recognized": "true", "tooling_unavailable": "true", "selection_accepted": "false"}}}}
+                            "configuration_valid": "true", "request_recognized": "true", "tooling_unavailable": "true", "selection_accepted": "false"}}}}
                         self.assertIs(Evaluator(publish_gate, unavailable).evaluate(), True)
-                        accepted = {"needs": {"request": {"result": "success", "outputs": {"classification": "valid"}}, "start-check": {"result": "failure", "outputs": {"selection_accepted": "true"}}}}
+                        accepted = {"needs": {"request": {"result": "success", "outputs": {"classification": "valid"}}, "start-check": {"result": "failure", "outputs": {"configuration_valid": "true", "selection_accepted": "true"}}}}
                         self.assertIs(Evaluator(publish_gate.removeprefix("always() && "), accepted).evaluate(), True)
                         if path == MANUAL:
                             self.assertIs(Evaluator(scalar(create, "if", 8),
@@ -1189,10 +1190,10 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         else:
             return {"job": False, "normal": False, "emergency": False, "calls": calls}
         request = {"result": "success", "outputs": {"classification": "valid"}}
-        start_steps = {"tooling-ready": {"outcome": start_tooling}, "select": {"outcome": select_outcome}}
+        start_steps = {"configuration": {"outcome": "success", "outputs": {"configuration_valid": "true"}}, "tooling-ready": {"outcome": start_tooling}, "select": {"outcome": select_outcome}}
         exported = block(job(MANUAL, "start-check"), "outputs", 4)
         outputs = {key: to_string(Evaluator(unwrap(scalar(exported, key, 6)), {"steps": start_steps, "needs": {"request": request}}).evaluate())
-                   for key in ("request_recognized", "tooling_unavailable", "selection_accepted")}
+                   for key in ("configuration_valid", "request_recognized", "tooling_unavailable", "selection_accepted")}
         context = {"needs": {"request": request, "start-check": {"result": "failure" if select_outcome != "success" else "success",
                                              "outputs": outputs}},
                    "steps": {"tooling-ready": {"outcome": publish_tooling}}}

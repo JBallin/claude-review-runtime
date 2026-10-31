@@ -631,8 +631,35 @@ def manual_selection(body):
     return {key: parsed[key] for key in ("requested_model", "requested_effort")}
 
 
+def invalid_workflow_fields(model, effort):
+    """Validate supplied inputs before applying any manual override or default."""
+    invalid = []
+    for field, raw, allowed in (("model", model, ("opus", "sonnet", "haiku")),
+                                ("effort", effort, ("low", "medium", "high", "xhigh", "max"))):
+        value = raw.strip().lower() if isinstance(raw, str) else None
+        if value != "" and value not in allowed:
+            invalid.append(field)
+    return invalid
+
+
+def configuration_error_body(fields):
+    """Safe configuration guidance for known fields, without raw input values."""
+    messages = {
+        "model": "**Invalid workflow model.** Use `haiku`, `sonnet`, or `opus`.",
+        "effort": "**Invalid workflow effort.** Use `low`, `medium`, `high`, `xhigh`, or `max`.",
+    }
+    if (not isinstance(fields, (list, tuple)) or not fields
+            or any(field not in messages for field in fields) or len(set(fields)) != len(fields)):
+        raise ValueError("invalid configuration error fields")
+    return "\n\n".join([*[messages[field] for field in ("model", "effort") if field in fields],
+                         "No review was started. Correct the workflow input before requesting a review."])
+
+
 def resolve_configuration(body, model="", effort="", *, automatic=False):
     """Resolve independently to allowlisted execution values, once at capture."""
+    invalid = invalid_workflow_fields(model, effort)
+    if invalid:
+        raise ValueError("invalid workflow configuration: " + " and ".join(invalid))
     manual = {"diagnostics": []} if automatic else manual_request(body)
     config = {"version": 2, "errors": [], "diagnostics": list(manual["diagnostics"])}
     for name, raw, allowed in (("model", model, MODELS), ("effort", effort, EFFORTS)):
@@ -644,8 +671,6 @@ def resolve_configuration(body, model="", effort="", *, automatic=False):
             value, source = default, "workflow"
         else:
             value, source = RUNTIME_DEFAULTS[name], "runtime"
-            if default != "":
-                config["diagnostics"].append({"field": name, "source": "workflow", "reason": "invalid"})
         config[key], config[name + "_source"] = value, source
     config["diagnostics"].sort(key=diagnostic_key)
     config["errors"] = [name for name in DIAGNOSTIC_FIELDS
@@ -803,6 +828,8 @@ def cmd_selection(metadata=None):
                 raise ValueError("captured manual configuration contains rejected arguments")
         if config["version"] == 1 and config["errors"]:
             raise ValueError("legacy captured review configuration contains invalid settings")
+        if config["errors"]:
+            raise ValueError("captured review configuration contains invalid settings")
         for name in ("model", "effort"):
             write_output("requested_" + name, config["requested_" + name])
         write_output("selection_config", json.dumps(config, separators=(",", ":")))
@@ -1003,7 +1030,7 @@ def selection_notice(record, *, running=False, mismatch_only=False):
         # Versions distinguish contradictory evidence from the same family.
         labels = [model_label(model, include_version=labels.count(label) > 1)
                   for model, label in zip(models, labels)]
-        problem, evidence = "Model ambiguous", ", ".join(labels) + " observed"
+        problem, evidence = "Model ambiguous", " / ".join(labels) + " observed"
     elif models and selected and not models[0].startswith("claude-" + selected + "-"):
         problem, evidence = "Model mismatch", model_label(models[0]) + " observed"
     else:

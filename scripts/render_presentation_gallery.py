@@ -30,6 +30,10 @@ REGENERATE = "python3 -B scripts/render_presentation_gallery.py --write"
 FINDINGS_SAMPLE = "current-findings"
 # Retain links to input variants that share one rendered presentation.
 CASE_ANCHOR_ALIASES = {
+    "current-clean": ("workflow-default-observed", "inherited-model-observed"),
+    "plain-selection": ("manual-partial-default",),
+    "opus-observed": ("opus-multiple",),
+    "opus-unknown": ("opus-legacy",),
     "manual-invalid-model": ("manual-invalid-effort", "manual-reversed-values",
                              "manual-unsupported-suffix", "manual-unsupported-keyword"),
 }
@@ -86,8 +90,8 @@ def strip_operational_markers(body):
     return OPERATIONAL_MARKER.sub("", body)
 
 
-def gallery_samples():
-    """Return stable cases grouped for reading, using raw production output."""
+def presentation_samples():
+    """Keep input fixtures available to tests independently of gallery selection."""
     with fixture_environment(), mock.patch.object(check, "now", return_value=COMPLETED_AT):
         owner = fixtures.presentation_owner(started=STARTED)
         details = {
@@ -180,8 +184,6 @@ def gallery_samples():
             GallerySample("effort-only", "current-completion", "Effort-only request", status(
                 "success", owner=manual_owner, trigger_label="Manual request",
                 selection=configured(manual_owner, check.resolve_configuration("/claude-review high"), "claude-sonnet-5-5"))),
-            GallerySample("inherited-model-ambiguous", "current-completion", "Historical effort-only request with conflicting inherited model evidence", selected(
-                ["claude-opus-5-5", "claude-sonnet-5-5"], model="")),
             GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-5-5"])),
             GallerySample("opus-mismatch", "current-completion", "Completed review with model mismatch", selected(["claude-sonnet-5-5"])),
             GallerySample("opus-unknown", "current-completion", "Completed review with unknown model", selected([], "unknown", None)),
@@ -301,9 +303,7 @@ def gallery_samples():
             GallerySample("workflow-changed-superseded", "incomplete", "Workflow-change context retained for a superseded attempt", status(
                 "stale", head=fixtures.OTHER, owner_running=False,
                 reason=check.stale_status_reason(check.STATUS_REASONS["workflow_changed"]))),
-            GallerySample("workflow-invalid-setting", "current-completion", "Invalid configured model falls back while retaining valid effort", status(
-                "success", selection=configured(owner, check.resolve_configuration(
-                    "", "unsupported", "high", automatic=True), "claude-sonnet-5-5"))),
+            GallerySample("workflow-invalid-setting", "current-completion", "Invalid workflow configuration, Actions run summary", check.configuration_error_body(("model",))),
             GallerySample("manual-invalid-model", "current-completion", "Invalid manual arguments rejected without starting a review", check.manual_usage_response("arguments")),
             GallerySample("manual-unknown-value", "current-completion", "Multiple command lines rejected with one usage response", check.manual_usage_response("multiple")),
         ]
@@ -365,6 +365,12 @@ def gallery_samples():
                  "selection-tooling-unavailable")
         by_id = {case.case_id: case for case in ordered}
         return [*[by_id[key] for key in first], *[case for case in ordered if case.case_id not in first]]
+
+
+def gallery_samples():
+    """Display one representative per distinct presentation, retaining old anchors."""
+    consolidated = {alias for aliases in CASE_ANCHOR_ALIASES.values() for alias in aliases}
+    return [case for case in presentation_samples() if case.case_id not in consolidated]
 
 
 def sample_markdown(body):
