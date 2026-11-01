@@ -19,7 +19,7 @@ the executing runtime's repository, SHA, and workflow path.
 | Caller | Events | Eligibility and behavior |
 | --- | --- | --- |
 | [Automatic](../.github/workflows/self-review-automatic.yml) | PR `opened`, `ready_for_review` | Open, non-draft, same-repository PRs; Dependabot-triggered runs are excluded. |
-| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted exact [manual command](#request-a-manual-review), including optional Opus/effort selection, followed by a read-only check for an open, non-draft, same-repository PR. |
+| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted entire-comment command accepted by the pinned caller, followed by a read-only check for an open, non-draft, same-repository PR. |
 | [Status](../.github/workflows/self-review-status.yml) | PR `synchronize`, `edited` | Open, same-repository PRs; refreshes existing presentation after head changes or base-ref retargeting. |
 
 Stacked PRs are eligible; the callers do not restrict the base branch. The pinned
@@ -29,23 +29,24 @@ diff changes, and assess whether a changed base invalidates previous evidence.
 
 ## Request a manual review
 
-Post `/claude-review` or one of its optional forms as the entire top-level or
-inline PR comment, without surrounding whitespace, quotes, or unrelated text. Matching is
-case-insensitive. The commenter must have an owner, member, or collaborator
+Post `/claude-review` or one of its optional forms on its own line in a top-level
+or inline PR comment. Surrounding whitespace and prose on other lines are allowed;
+quoted and fenced examples are ignored. Matching is case-insensitive. The commenter must have an owner, member, or collaborator
 association; the action also checks actor/access eligibility. Ordinary issue
-comments and untrusted requests do not start model execution. The eligibility
-job has read-only PR access and performs no checkout before calling the pinned
-runtime. The runtime resolves the current patch once for each accepted request.
+comments and untrusted requests do not start model execution. The repository's
+pinned caller performs its own eligibility check. Runtime also
+classifies command lines before review starts and can post usage guidance without
+checking out PR code. The runtime resolves the current patch once for each accepted request.
 
-Manual requests support [optional Opus and effort selection](consumer-workflows.md#optional-model-and-effort-selection).
-Model evidence is diagnostic: a different observed model produces a notice,
+Short model and effort selections include
+`/claude-review opus`, `/claude-review high`, and `/claude-review opus high`.
+Models are Opus, Sonnet, or Haiku; effort is Low, Medium, High, Xhigh, or Max.
+See [model and effort defaults](consumer-workflows.md#model-and-effort-defaults)
+and [manual command forms](consumer-workflows.md#optional-model-and-effort-selection).
+Model evidence is diagnostic: a different primary model produces a notice,
 without changing completion or finding verification.
 
-The command deliberately avoids a Claude mention. `@claude review` can invoke
-Anthropic's separate managed review service and does not invoke this checkout's
-manual entrypoint or this repository’s callers.
-Provider-bot reactions on comments are preserved and are not this runtime's
-progress or completion signals.
+`@claude review` does not invoke Runtime’s manual entrypoint or this repository’s callers.
 
 ## Read the result
 
@@ -56,8 +57,22 @@ accepted attempt, including its captured head/base and workflow run. Checks and
 workflow runs retain earlier attempts. Incomplete and cancelled reviews show
 a concise explanation and recovery link above Details. Verified unread inputs
 take precedence over workflow-change context. Details retain the reason receipt
-and captured attempt identity. A comment API or permission failure is reported in
-the Check/run when publication is possible. Accepted manual requests also receive
+and captured attempt identity. Resolved Model and Effort appear in each
+run’s Details, above its baseline and Runtime provenance. Model labels use
+Sonnet, Opus, or Haiku; full execution identifiers stay in the recorded metadata. Each current or
+previous attempt retains its own settings; a status refresh does not apply
+today’s defaults to an older review, and missing historical settings are not
+filled in. New attempts resolve
+each field from a valid manual override, then a valid workflow input, then
+Runtime’s Sonnet / Medium defaults. Every nonblank workflow input must be valid,
+including inputs overridden by a manual request. Invalid workflow configuration
+fails the Actions configuration step before Claude starts, with an error and run
+summary; it does not replace an existing review result or Check. Invalid manual
+arguments reject the whole request before review starts. Eligible commenters receive a separate usage
+response without changing an existing review result or Check. Current model warnings stay above Details. A previous run’s
+recorded model mismatch appears inside Previous completed review before its
+settings, using only that run’s captured evidence. A comment API or permission
+failure is reported in the Check/run when publication is possible. Accepted manual requests also receive
 runtime reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
 publication. For a manual review, 👍 means the captured patch review completed

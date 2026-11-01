@@ -53,7 +53,7 @@ class StatusPresentationTests(unittest.TestCase):
                         self.assertIn(f'| {check.commit_link(HEAD)} |', visible)
                         self.assertNotIn(check.commit_link(OTHER), visible)
                         self.assertNotIn('Completed', visible)
-                        self.assertIn('### Previous completed review', details)
+                        self.assertIn('**Previous completed review**', details)
                         self.assertIn(check.commit_link(OTHER), details)
                         self.assertIn(check.relative_time('2026-10-06T19:00:00Z'), details)
                         if owner:
@@ -81,7 +81,7 @@ class StatusPresentationTests(unittest.TestCase):
                         self.assertEqual(check.status_state({'body': body}), state)
                         self.assertEqual(check.status_owner({'body': body}), owner)
                         if has_history:
-                            current, previous = details.split('### Previous completed review')
+                            current, previous = details.split('**Previous completed review**')
                             self.assertNotIn(check.CAPTURED_PATCH_SCOPE, current)
                             self.assertNotIn(check.CAPTURED_PATCH_SCOPE, previous)
                             self.assertIn(check.commit_link(OTHER), previous)
@@ -167,7 +167,7 @@ class StatusPresentationTests(unittest.TestCase):
                     self.assertIn('## Claude Review', visible)
                     self.assertIn(f'Claude is reviewing captured commit {check.commit_link(HEAD)}.', visible)
                     self.assertIn(f'The current PR commit {check.commit_link(OTHER)} is not covered by this attempt.', visible)
-                    self.assertIn('### Previous completed review', body.split('<details>', 1)[1])
+                    self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
                     self.assertEqual(check.status_state(self.api.status), 'stale')
                     self.assertTrue(check.status_owner_running(self.api.status))
                     self.assertEqual(visible.count('Running'), 1)
@@ -187,7 +187,7 @@ class StatusPresentationTests(unittest.TestCase):
                     else:
                         self.assertIn('authoritative Check publication is unavailable.', visible)
                     if history:
-                        self.assertIn('### Previous completed review', body.split('<details>', 1)[1])
+                        self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
                         self.assertNotIn('✅ **Completed**', visible)
                     else:
                         self.assertIn('| 🔄 **[Running](https://github.com/owner/repo/actions/runs/5)** |', visible)
@@ -201,7 +201,7 @@ class StatusPresentationTests(unittest.TestCase):
                 visible = self.visible(body)
                 fallback = 'This review did not complete reliably; this commit is not approved by it.'
                 self.assertIn('## Claude Review', visible)
-                self.assertIn('### Previous completed review', body.split('<details>', 1)[1])
+                self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
                 if reason == check.STATUS_REASONS['incomplete']:
                     self.assertIn('| ❌ **Incomplete**', visible)
                     self.assertNotIn('**Reason:**', visible)
@@ -382,8 +382,8 @@ class DetailsProvenanceTests(unittest.TestCase):
                 self.assertIn('](https://github.com/owner/repo/actions/runs/', details)
                 blocks = details.split('\n\n')
                 if history and state not in ('success', 'action_required'):
-                    for heading in ('### Current attempt', '### Previous completed review'):
-                        self.assertIn(heading + '\n**', details)
+                    for heading in ('**Current attempt**', '**Previous completed review**'):
+                        self.assertIn(heading + '  \n**', details)
                         self.assertNotIn(heading + '\n\n', details)
                 for block in blocks:
                     if block.startswith('**'):
@@ -427,8 +427,8 @@ class DetailsProvenanceTests(unittest.TestCase):
                 visible, details = body.split('<details>', 1)
                 self.assertIn(f'| {check.commit_link(HEAD)} |', visible)
                 self.assertNotIn(check.commit_link(OTHER), visible)
-                current, previous = details.split('### Previous completed review')
-                self.assertIn('### Current attempt', current)
+                current, previous = details.split('**Previous completed review**')
+                self.assertIn('**Current attempt**', current)
                 self.assertIn('**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:**', current)
                 self.assertIn('**Commit:** ' + check.commit_link(OTHER), previous)
                 self.assertIn('**Review trigger:** Draft marked ready', previous)
@@ -471,8 +471,8 @@ class DetailsProvenanceTests(unittest.TestCase):
                 self.assertNotIn('**Attempt baseline:**', body)
                 self.assertIn(f'**[Reviewed]({url}) against:**', body)
                 if state != 'stale':
-                    current, previous = body.split('### Previous completed review')
-                    self.assertIn('### Current attempt', current)
+                    current, previous = body.split('**Previous completed review**')
+                    self.assertIn('**Current attempt**', current)
                     self.assertIn('**Turns:** unavailable', current)
                     self.assertIn('**Turns:** unavailable', previous)
                     self.assertIn(f'**[Running]({url})**' if state == 'in_progress' else f'**[Attempt]({url}) started:**', current)
@@ -490,8 +490,8 @@ class DetailsProvenanceTests(unittest.TestCase):
             body = check.status_comment_body(HEAD, 'main', state, owner=owner,
                 last_review=(OTHER, 'release/old', 'success'),
                 last_review_details={'run_url': url})
-            current, previous = body.split('### Previous completed review')
-            self.assertIn('### Current attempt', current)
+            current, previous = body.split('**Previous completed review**')
+            self.assertIn('**Current attempt**', current)
             self.assertIn(f'**[Attempt]({url}) baseline:**', current)
             self.assertIn(f'**[Reviewed]({url}) target:**', previous)
             self.assertNotIn('[Reviewed]', current)

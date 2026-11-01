@@ -17,7 +17,8 @@ Supports both Claude account tokens and Anthropic API keys; follow the
 
 Reviews run automatically when a PR becomes ready for review. Authorized users
 can also comment `/claude-review` on a PR to request an on-demand review.
-Manual requests also support [Opus and effort selection](docs/consumer-workflows.md#optional-model-and-effort-selection).
+Set [model and effort defaults](docs/consumer-workflows.md#model-and-effort-defaults)
+in your workflow, and [override them per request](docs/consumer-workflows.md#optional-model-and-effort-selection).
 
 A standing status comment is updated as automatic and manual reviews progress.
 👀 and 👍 reactions appear on the PR and on manual review request
@@ -37,6 +38,8 @@ For actual usage, see Ballin’s
 and [pull-request reviews](https://github.com/JBallin/ballin-scripts/pulls).
 
 ## Alternatives
+
+Read [Choosing a Claude code-review approach](docs/choosing-a-review-approach.md) to compare fit, operation, and costs.
 
 - [Claude Code GitHub Action](https://code.claude.com/docs/en/github-actions):
   Use the underlying GitHub Action directly.
