@@ -37,7 +37,11 @@ class WorkflowConfigurationTests(unittest.TestCase):
     def test_preflight_functions_match_helper_and_run_before_any_review_state(self):
         for path in (w.AUTOMATIC, w.MANUAL):
             named = w.steps(w.job(path, "start-check"))
-            self.assertEqual(next(iter(named)), "Validate workflow configuration")
+            # The manual author check is read-only. Configuration must still
+            # precede every remaining step, including all review-state writes.
+            prefix = (["Verify original requester permission"] if path == w.MANUAL else [])
+            prefix += ["Validate workflow configuration"]
+            self.assertEqual(list(named)[:len(prefix)], prefix)
             step = named["Validate workflow configuration"]
             source = w.run_block(step).split("\n", 1)[1].rsplit("PY_CONFIGURATION", 1)[0]
             tree = ast.parse(source)
