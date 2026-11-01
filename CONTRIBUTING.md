@@ -3,6 +3,7 @@
 Start with the [consumer guide](docs/consumer-workflows.md),
 [review contract](docs/review-guide.md), and
 [validation boundaries](docs/validation.md).
+See [design notes](docs/design-notes.md) for implementation tradeoffs and rationale.
 
 ## Proposing changes
 

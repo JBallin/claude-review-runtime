@@ -7,7 +7,7 @@ from test_claude_review_check import check, HEAD, OTHER
 import test_presentation_ownership as ownership
 
 DONE = "2026-10-07T13:09:19Z"
-HEADER = "| Status | Reviewed commit | Review trigger |"
+HEADER = "| Status | Commit | Review trigger |"
 
 
 class StatusTableTests(unittest.TestCase):

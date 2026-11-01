@@ -27,6 +27,19 @@ def sample_items():
 
 
 class PresentationGalleryTests(unittest.TestCase):
+    def test_turn_limit_sample_is_manual_and_keeps_failure_evidence(self):
+        case = next(case for case in gallery.gallery_samples() if case.case_id == "turn-limit")
+        owner = gallery.check.status_owner({"body": case.body})
+        self.assertEqual(owner["kind"], "issue_comment")
+        self.assertIn("Manual request", case.body)
+        self.assertIn("101 turns", case.body)
+        self.assertIn("the runtime’s 100-turn limit", case.body)
+        self.assertIn("❌ **Incomplete**", case.body)
+        self.assertNotIn("likely caused", case.body)
+        self.assertNotIn("manual-clean-completion", case.body)
+        self.assertNotIn(gallery.check.EXECUTION_DIAGNOSTIC_PREFIX,
+                         gallery.strip_operational_markers(case.body))
+
     def test_deterministic_complete_gallery(self):
         body = gallery.render_gallery()
         self.assertEqual(body, gallery.render_gallery())
@@ -34,9 +47,9 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 60)
+        self.assertEqual(len(gallery.gallery_samples()), 62)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 61)))
+                         list(range(1, 63)))
         # This committed audit file is not posted as one GitHub comment.
         self.assertLess(len(body.encode("utf-8")), 300_000)
 
@@ -49,7 +62,7 @@ class PresentationGalleryTests(unittest.TestCase):
             self.assertNotRegex(case.title, r"^(?:[A-Z]+[0-9]*|[0-9]+) — ")
         anchors = [anchor for case_id in case_ids for anchor in
                    (case_id, *gallery.CASE_ANCHOR_ALIASES.get(case_id, ()))]
-        self.assertEqual(len(anchors), 69)
+        self.assertEqual(len(anchors), 70)
         self.assertEqual(len(set(anchors)), len(anchors))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', gallery.render_gallery(), re.MULTILINE),
                          anchors)
@@ -70,7 +83,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 62)))
+                         list(range(1, 64)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [anchor for case in changed_order for anchor in
                           (case.case_id, *gallery.CASE_ANCHOR_ALIASES.get(case.case_id, ()))])
@@ -91,7 +104,7 @@ class PresentationGalleryTests(unittest.TestCase):
                          gallery.GROUP_ORDER)
         case_ids = [case.case_id for case in samples]
         for related in (
-                ["incomplete-unknown", "inline-tool-partial", "inline-tool-zero",
+                ["incomplete-unknown", "turn-limit", "inline-tool-partial", "inline-tool-zero",
                  "inline-tool-unknown-count", "inline-tool-stale", "unread-automatic", "unread-manual",
                  "workflow-changed", "workflow-changed-superseded"],
                 ["running-history-clean", "running-history-findings", "running-history-manual"],
@@ -106,7 +119,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 57)
+        self.assertEqual(status.call_count, 58)
         self.assertEqual(completion.call_count, 5)
         self.assertEqual([call.kwargs.get("observed_base_sha") for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER, None])
@@ -331,6 +344,16 @@ class PresentationGalleryTests(unittest.TestCase):
         for case_id in ("running-history-clean", "legacy-history-run", "legacy-history-no-links"):
             self.assertNotIn("Model mismatch", cases[case_id])
 
+    def test_completed_sample_turns_are_fixed_without_changing_uncertainty(self):
+        cases = dict(sample_items())
+        for key in ('current-clean', 'current-findings', 'opus-observed', 'selection-receipt',
+                    'compact-clean', 'compact-differing-baseline', 'manual-pin-recovery'):
+            self.assertIn('**Turns:** 30', cases[key], key)
+            self.assertNotIn('**Turns:** `', cases[key])
+        for key in ('opus-legacy', 'selection-running'):
+            self.assertIn('**Turns:** unavailable', cases[key])
+        self.assertIn('**Turns:** 101', cases['turn-limit'])
+
     def test_current_findings_completion_has_current_commit_run_and_evidence(self):
         check = gallery.check
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
@@ -343,7 +366,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("last_review", call.kwargs)
         visible, details = raw.split("<details>", 1)
         self.assertIn("⚠️ **Findings**", visible)
-        self.assertIn("| Reviewed commit |", visible)
+        self.assertIn("| Commit |", visible)
         self.assertIn(check.commit_link(gallery.fixtures.HEAD, gallery.fixtures.REPO), visible)
         self.assertIn("PR opened for review", visible)
         self.assertIn(gallery.COMPLETED_AT, visible)
@@ -404,12 +427,12 @@ class PresentationGalleryTests(unittest.TestCase):
                     receipt = "<!--\n**Reason:** " + gallery.check.STATUS_REASONS["base_advanced"] + "\n-->"
                     self.assertIn(receipt, body)
                     self.assertIn("**Current target commit:**", body)
-                    self.assertIn("| Reviewed commit |", body)
+                    self.assertIn("| Commit |", body)
                     self.assertEqual(body.count(
                         "⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed."
                     ), 1)
             elif case_id == "incomplete-unknown":
-                self.assertIn("| Attempt commit |", raw)
+                self.assertIn("| Commit |", raw)
             elif case_id == "compact-clean":
                 self.assertNotIn("The observed target differed from the reviewed baseline.", raw)
                 self.assertIn("Claude Review: No findings. 🎉", raw)
@@ -418,7 +441,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn("target commit:**", raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
-                self.assertIn("**Runtime used:** [`JBallin/claude-review-runtime@fffffff`]", raw.split("<details>")[1])
+                self.assertIn("**Runtime:** [`JBallin/claude-review-runtime@fffffff`]", raw.split("<details>")[1])
             elif case_id == "compact-differing-baseline":
                 visible, details = raw.split("<details>", 1)
                 self.assertNotIn("The observed target differed", visible)
@@ -438,17 +461,17 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn("Claude Review: No findings. 🎉", headline)
         self.assertNotIn("Synthetic recovery context", headline)
         self.assertNotIn("proposed pin", headline)
-        runtime_line = next(line for line in details.splitlines() if line.startswith("**Runtime used:**"))
-        self.assertIn(runtime_line + "\nThis review used the deployed Runtime, not the proposed pin.", details)
+        runtime_line = next(line for line in details.splitlines() if line.startswith("**Runtime:**"))
+        self.assertTrue(details.startswith("\n<summary>ℹ️ Details</summary>\n\nThis review used the deployed Runtime, not the proposed pin.\n\n**[Reviewed]"))
         self.assertTrue(runtime_line.endswith("  "))
         self.assertNotIn("from `fffffff`", details)
-        self.assertIn("**Runtime used:** [`JBallin/claude-review-runtime@fffffff`]", recovery)
+        self.assertIn("**Runtime:** [`JBallin/claude-review-runtime@fffffff`]", recovery)
         for key in ("compact-clean", "compact-differing-baseline"):
             self.assertNotIn("deployed Runtime", cases[key])
             self.assertNotIn("proposed pin", cases[key])
         for key, body in cases.items():
             if not key.startswith("legacy-"):
-                self.assertIn("**Runtime used:**", body, key)
+                self.assertIn("**Runtime:**", body, key)
         self.assertNotIn("owner/runtime", gallery.render_gallery())
 
     def test_publication_failures_and_unavailable_check_variants_use_current_attempt(self):
@@ -459,7 +482,7 @@ class PresentationGalleryTests(unittest.TestCase):
             for case_id, body in cases:
                 with self.subTest(case_id=case_id):
                     visible, details = body.split("<details>", 1)
-                    self.assertIn("| Attempt commit |", visible)
+                    self.assertIn("| Commit |", visible)
                     self.assertIn("| " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO)
                                   + (" | Manual request |" if case_id.endswith("-manual") else " | Draft marked ready |"), visible)
                     self.assertNotIn("✅ **Completed**", visible)
@@ -524,7 +547,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", previous)
                     self.assertNotIn(reviewed, current)
                     self.assertNotIn(attempt, previous)
-                elif case_id.startswith("inline-tool-") or case_id in ("selection-running", "selection-incomplete", "selection-tooling-unavailable", "workflow-default-running"):
+                elif case_id.startswith("inline-tool-") or case_id in ("turn-limit", "selection-running", "selection-incomplete", "selection-tooling-unavailable", "workflow-default-running"):
                     self.assertIn(f"**[Attempt]({reviewed}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
                 elif case_id.startswith(("publication-incomplete-", "publication-unavailable-", "unread-", "workflow-changed")) or case_id == "incomplete-unknown":

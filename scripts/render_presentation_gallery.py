@@ -33,7 +33,6 @@ CASE_ANCHOR_ALIASES = {
     "current-clean": ("workflow-default-observed", "inherited-model-observed"),
     "plain-selection": ("manual-partial-default",),
     "opus-observed": ("opus-multiple",),
-    "opus-unknown": ("opus-legacy",),
     "manual-invalid-model": ("manual-invalid-effort", "manual-reversed-values",
                              "manual-unsupported-suffix", "manual-unsupported-keyword"),
 }
@@ -94,6 +93,11 @@ def presentation_samples():
     """Keep input fixtures available to tests independently of gallery selection."""
     with fixture_environment(), mock.patch.object(check, "now", return_value=COMPLETED_AT):
         owner = fixtures.presentation_owner(started=STARTED)
+        def sample_execution(sample_owner):
+            return {"version": 2, "generation": sample_owner["generation"], "run": sample_owner["run"],
+                    "attempt": sample_owner["attempt"], "execution": "observed",
+                    "reason": "execution_observed", "num_turns": 30, "max_turns": None}
+
         details = {
             "base_sha": fixtures.BASE_TIP,
             "run_url": "https://github.com/owner/repo/actions/runs/5",
@@ -101,6 +105,7 @@ def presentation_samples():
             "trigger": "PR opened for review",
             "generation": owner["generation"],
             "runtime": check.executing_runtime(),
+            "execution": {"owner": owner, "record": sample_execution(owner)},
         }
 
         def status(state, *, head=fixtures.HEAD, base_ref="main", **options):
@@ -115,6 +120,7 @@ def presentation_samples():
             return check.status_comment_body(
                 head, base_ref, state, **{
                     "owner": owner,
+                    "execution_record": sample_execution(options.get("owner", owner)) if state in ("success", "action_required") and options.get("owner", owner) else None,
                     "trigger_label": "PR opened for review",
                     "completed_at": COMPLETED_AT,
                     "runtime": check.executing_runtime() if options.get("owner", owner) else None,
@@ -133,6 +139,10 @@ def presentation_samples():
         }
         request_owner = fixtures.presentation_owner(kind="issue_comment", target=12, started=STARTED)
         manual_owner = request_owner
+        def completed_receipt(*args, receipt_owner=manual_owner, **kwargs):
+            return check.completion_comment_body(*args, owner=receipt_owner,
+                execution_record=sample_execution(receipt_owner), **kwargs)
+
         def selected(models, evidence="observed", attempt=1, model="opus", effort="high", state="success", primary=None, legacy=False, receipt=False, **options):
             record = {"generation": manual_owner["generation"], "requested_model": model,
                       "requested_effort": effort, "models": models,
@@ -147,10 +157,12 @@ def presentation_samples():
                     check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                             fixtures.BASE_TIP, fixtures.MERGE_BASE),
                     "https://github.com/owner/repo/actions/runs/5",
-                    observed_base_sha=fixtures.BASE_TIP, selection=record)
+                    observed_base_sha=fixtures.BASE_TIP, selection=record, owner=manual_owner, execution_record=sample_execution(manual_owner))
             return check.status_comment_body(fixtures.HEAD, "main", state, owner=manual_owner,
                                             trigger_label="Manual request", completed_at=COMPLETED_AT,
-                                            selection=record, runtime=check.executing_runtime(), **options)
+                                            selection=record, runtime=check.executing_runtime(),
+                                            execution_record=sample_execution(manual_owner) if state in ("success", "action_required") and not legacy else None, **options)
+
 
         def configured(record_owner, config, primary=None):
             return {
@@ -213,15 +225,22 @@ def presentation_samples():
                 base_sha=fixtures.BASE_TIP, **stale_options)),
             GallerySample("incomplete-unknown", "incomplete", "Incomplete attempt without completed history", status(
                 "failure", reason=check.STATUS_REASONS["incomplete"])),
+            GallerySample("turn-limit", "incomplete", "Historical configured-cap failure (nondefault)", status(
+                "failure", reason=check.STATUS_REASONS["turn_limit"],
+                owner=manual_owner, trigger_label="Manual request",
+                execution_diagnostic={"version": 1, "generation": manual_owner["generation"],
+                                      "run": manual_owner["run"], "attempt": manual_owner["attempt"],
+                                      "execution": "observed", "reason": "over_limit_success",
+                                      "num_turns": 101, "max_turns": 100})),
             GallerySample("selection-receipt", "compact-completion", "Historical manual receipt with primary Opus and auxiliary Haiku", selected(["claude-haiku-4-5", "claude-opus-5-5"], "mixed", primary=["claude-opus-5-5"], receipt=True)),
             GallerySample("selection-receipt-mismatch", "compact-completion", "Historical manual receipt with primary model mismatch", selected(["claude-sonnet-5-5"], receipt=True)),
-            GallerySample("compact-clean", "compact-completion", "Compact clean completion, matching baseline", check.completion_comment_body(
+            GallerySample("compact-clean", "compact-completion", "Compact clean completion, matching baseline", completed_receipt(
                 fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
                 check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                         fixtures.BASE_TIP, fixtures.MERGE_BASE),
                 "https://github.com/owner/repo/actions/runs/5",
                 observed_base_sha=fixtures.BASE_TIP)),
-            GallerySample("compact-differing-baseline", "compact-completion", "Compact clean completion, differing baseline", check.completion_comment_body(
+            GallerySample("compact-differing-baseline", "compact-completion", "Compact clean completion, differing baseline", completed_receipt(
                 fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
                 check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                         fixtures.BASE_TIP, fixtures.MERGE_BASE),
@@ -230,17 +249,14 @@ def presentation_samples():
         ]
         # This fixture explicitly supplies the pin-change context. Generic manual
         # receipts know the executed Runtime, but cannot infer a proposed pin.
-        pin_recovery = check.completion_comment_body(
+        pin_recovery = completed_receipt(
             fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
             check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                     fixtures.BASE_TIP, fixtures.MERGE_BASE),
-            "https://github.com/owner/repo/actions/runs/5")
-        pin_context = "This review used the deployed Runtime, not the proposed pin."
-        runtime_line = check.runtime_used_line(check.runtime_provenance(
-            "JBallin/claude-review-runtime", "f" * 40, ".github/workflows/claude.yml"))
+            "https://github.com/owner/repo/actions/runs/5", pin_change_context=True)
         samples.append(GallerySample(
             "manual-pin-recovery", "manual-recovery", "Manual recovery after a Runtime pin change (synthetic)",
-            pin_recovery.replace(runtime_line, runtime_line + "  \n" + pin_context)))
+            pin_recovery))
         for count, label in ((1, "partial"), (0, "zero"), (None, "unknown-count")):
             samples.append(GallerySample(f"inline-tool-{label}", "incomplete",
                 f"Inline-comment tool failure: {label}", status(

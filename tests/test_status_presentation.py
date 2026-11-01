@@ -30,7 +30,15 @@ class StatusPresentationTests(unittest.TestCase):
                                              ['## Claude Review'])
                             self.assertEqual(check.status_state({'body': body}), state)
                             self.assertEqual(check.status_owner({'body': body}), owner)
+                            self.assertIn('| Status | Commit | Review trigger |', body)
                             self.assertIn('<summary>ℹ️ Details</summary>\n\n', body)
+
+    def test_legacy_states_without_an_owner_also_use_commit_heading(self):
+        for state in ('in_progress', 'success', 'action_required', 'failure', 'publication_incomplete', 'stale'):
+            with self.subTest(state=state):
+                body = check.status_comment_body(HEAD, 'main', state)
+                self.assertIn('| Status | Commit | Review trigger |', body)
+                self.assertIn(check.commit_link(HEAD), body.split('<details>', 1)[0])
 
     def test_current_running_attempt_stays_separate_from_history(self):
         for owner in (None, self.start(PRESENTATION_START=1791316369000000000)):
@@ -250,7 +258,7 @@ class StatusPresentationTests(unittest.TestCase):
                                             completed_at='2026-10-07T13:09:19Z')
             visible = self.visible(body)
             self.assertIn('## Claude Review', visible)
-            self.assertIn('| Status | Reviewed commit | Review trigger |', visible)
+            self.assertIn('| Status | Commit | Review trigger |', visible)
             self.assertIn(f'| {label} ' + check.relative_time('2026-10-07T13:09:19Z'), visible)
             self.assertNotIn('| Review |', visible)
             self.assertNotIn('<br>', visible)
@@ -422,7 +430,7 @@ class DetailsProvenanceTests(unittest.TestCase):
                 current, previous = details.split('**Previous completed review**')
                 self.assertIn('**Current attempt**', current)
                 self.assertIn('**[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:**', current)
-                self.assertIn('**Reviewed commit:** ' + check.commit_link(OTHER), previous)
+                self.assertIn('**Commit:** ' + check.commit_link(OTHER), previous)
                 self.assertIn('**Review trigger:** Draft marked ready', previous)
                 self.assertIn('**[Reviewed](https://github.com/owner/repo/actions/runs/4) against:** ' + check.commit_link('c' * 40) + ' on `release/old`', previous)
                 self.assertNotIn('https://github.com/owner/repo/actions/runs/6', previous)
@@ -464,7 +472,9 @@ class DetailsProvenanceTests(unittest.TestCase):
                 self.assertIn(f'**[Reviewed]({url}) against:**', body)
                 if state != 'stale':
                     current, previous = body.split('**Previous completed review**')
-                    self.assertEqual('**Current attempt**' in current, state != 'in_progress')
+                    self.assertIn('**Current attempt**', current)
+                    self.assertIn('**Turns:** unavailable', current)
+                    self.assertIn('**Turns:** unavailable', previous)
                     self.assertIn(f'**[Running]({url})**' if state == 'in_progress' else f'**[Attempt]({url}) started:**', current)
                     self.assertNotIn(f'[Reviewed]({url})', current)
                     self.assertIn(f'**[Reviewed]({url}) against:**', previous)

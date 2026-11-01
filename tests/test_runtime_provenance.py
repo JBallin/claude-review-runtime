@@ -24,11 +24,11 @@ class RuntimeProvenanceTests(unittest.TestCase):
             with self.subTest(state=state):
                 body = check.status_comment_body(HEAD, "main", state, owner=owner, runtime=runtime)
                 visible, details = body.split("<details>", 1)
-                self.assertNotIn("**Runtime used:**", visible)
+                self.assertNotIn("**Runtime:**", visible)
                 self.assertEqual(details.count(check.runtime_used_line(runtime)), 1)
                 self.assertNotIn("proposed pin", body)
                 unknown = check.status_comment_body(HEAD, "main", state, owner=owner)
-                self.assertNotIn("**Runtime used:**", unknown)
+                self.assertNotIn("**Runtime:**", unknown)
 
     def test_manual_settings_and_runtime_provenance_keep_their_own_locations(self):
         runtime = self.configure()
@@ -45,8 +45,27 @@ class RuntimeProvenanceTests(unittest.TestCase):
         self.assertIn(reviewed, visible)
         self.assertNotIn("**Model:**", visible)
         self.assertIn("**Model:** Opus · **Effort:** High", details)
-        self.assertNotIn("Runtime used", visible)
+        self.assertNotIn("Runtime", visible)
         self.assertEqual(details.count(check.runtime_used_line(runtime)), 1)
+
+    def test_interpretation_notes_lead_details_without_changing_the_main_notice(self):
+        self.configure()
+        args = (REPO, HEAD, "main", BASE_TIP, "synthetic-marker", "https://github.com/owner/repo/actions/runs/5")
+        plain = check.completion_comment_body(*args)
+        observed = "The observed target differed from the reviewed baseline."
+        pin = "This review used the deployed Runtime, not the proposed pin."
+        for changed, pin_context, expected in ((False, False, []), (True, False, [observed]),
+                                              (False, True, [pin]), (True, True, [observed, pin])):
+            body = check.completion_comment_body(*args, observed_base_sha=OTHER if changed else BASE_TIP,
+                                                 pin_change_context=pin_context)
+            main, details = body.split("<details>\n<summary>ℹ️ Details</summary>\n\n", 1)
+            self.assertEqual(main, plain.split("<details>", 1)[0])
+            paragraphs = details.split("\n\n")
+            self.assertEqual(paragraphs[:len(expected)], expected)
+            self.assertTrue(paragraphs[len(expected)].startswith("**[Reviewed]"))
+            self.assertEqual(body.count(pin), int(pin_context))
+        os.environ.pop("RUNTIME_SHA")
+        self.assertNotIn(pin, check.completion_comment_body(*args, pin_change_context=True))
 
     def test_stale_refresh_preserves_executed_runtime_not_refresher(self):
         executed = self.configure()
@@ -59,6 +78,23 @@ class RuntimeProvenanceTests(unittest.TestCase):
         self.assertNotIn(check.runtime_used_line(refresher), self.api.status["body"])
         self.assertEqual(check.status_runtime(self.api.status, owner), executed)
         self.assertEqual(check.last_completed_review_details(self.api.status)["runtime"], executed)
+
+    def test_legacy_labels_refresh_with_the_same_provenance_and_no_ambiguous_runtime(self):
+        executed = self.configure()
+        owner = self.start()
+        check.best_effort_status(HEAD, "success", completed_at="2026-10-07T13:09:19Z")
+        self.api.status["body"] = self.api.status["body"].replace("**Runtime:**", "**Runtime used:**").replace(
+            "| Status | Commit |", "| Status | Reviewed commit |")
+        self.assertEqual(check.status_runtime(self.api.status, owner), executed)
+        mixed = self.api.status["body"] + "\n" + check.runtime_used_line(executed)
+        self.assertIsNone(check.rendered_runtime(mixed))
+        self.api.pr["head"]["sha"] = OTHER
+        check.best_effort_status(OTHER, "stale")
+        self.assertEqual(check.status_runtime(self.api.status, owner), executed)
+        self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", "success"))
+        self.assertIn("**Commit:** " + check.commit_link(HEAD, REPO), self.api.status["body"])
+        self.assertNotIn("| Status | Reviewed commit |", self.api.status["body"])
+        self.assertNotIn("**Runtime used:**", self.api.status["body"])
 
     def test_inline_failure_refresh_retains_its_count_and_executed_runtime(self):
         executed = self.configure()

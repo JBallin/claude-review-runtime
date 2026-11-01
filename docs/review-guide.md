@@ -191,10 +191,9 @@ unverifiable owner evidence suppresses presentation writes. A start can establis
 ownership on a legacy status; finalization cannot. Duplicate starts do not reset
 a completed result or reclaim presentation from a newer request.
 
-The status presents one row with Status, a context-sensitive commit column
-(Reviewed commit, Attempt commit, or PR commit), and Review trigger.
+The status presents one row with Status, Commit, and Review trigger.
 For a verified clean or findings result, Status shows its persisted completion time
-and Reviewed commit identifies the reviewed SHA. The current-version or integration caveat
+and Commit identifies the reviewed SHA. The current-version or integration caveat
 appears below the row; newer running, failed, or incomplete attempts remain prominent
 in the main table. Previous completed-review evidence moves inside Details,
 separate from the current attempt’s metadata. Workflow links are grouped with
@@ -364,7 +363,7 @@ Runtime revision in the resulting Check and workflow run. A pin update alone
 does not require manual review, and a manual request is not guaranteed to succeed.
 
 Distinguish the PR's proposed pin from the caller and Runtime actually executing
-each attempt. Status and manual receipt Details link the exact **Runtime used** when trusted
+each attempt. Status and manual receipt Details link the exact **Runtime** when trusted
 provenance is available; unknown provenance is omitted. Status refreshes retain
 the recorded attempt’s Runtime rather than substituting the refresher’s revision. The Check's
 `runtime_repository`, `runtime_sha`, and `runtime_workflow_path` retain the same
@@ -394,6 +393,22 @@ runner preparation can prevent
 model execution or publication. Resolve the reported prerequisite before
 requesting another approved review; do not switch credentials or expand access
 to bypass a rejection.
+
+### Turn-limit failures
+
+Automatic and manual reviews omit an explicit turn cap and retain a 20-minute
+review-job timeout. See [Execution limits](design-notes.md#execution-limits) for
+the controls, evidence, and tradeoff.
+
+When trusted execution evidence establishes a turn-limit error, the Check and
+status explain it. Historical configured-cap attempts can also have SDK success
+rejected by the Action's count comparison and remain incomplete. **Turns** in
+collapsed Details and the Actions summary is the validated SDK-reported count
+for that attempt, or unavailable. It does not measure API rounds, tokens, cost,
+quota, or the native budget. Missing or malformed evidence does not
+establish a specific cause, and a turn-limit diagnosis does not establish complete
+input reading or satisfy review completion. Inspect the linked attempt before
+requesting an approved retry.
 
 ### Incomplete captured-input reads
 

@@ -1726,7 +1726,7 @@ class StatusCommentTests(ScriptTestCase):
                 else:
                     self.assertNotIn("**Note:**", body)
                 self.assertIn(HEAD, body)
-                self.assertIn("| Status | " + ("Reviewed commit" if expected in ("success", "action_required") else "Attempt commit") + " | Review trigger |", body)
+                self.assertIn("| Status | Commit | Review trigger |", body)
                 self.assertIn(f"| {check.commit_link(HEAD, REPO)} |", body)
                 self.assertNotIn("unresolved", body)
 
@@ -2373,9 +2373,9 @@ class ManualCompletionTests(ScriptTestCase):
             "<details>\n<summary>ℹ️ Details</summary>\n\n"
             f"**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** "
             f"[`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`  \n"
-            "**Runtime used:** [`example/review-runtime@fffffff`]"
+            "**Runtime:** [`example/review-runtime@fffffff`]"
             f"(https://github.com/example/review-runtime/blob/{'f' * 40}/.github/workflows/claude-review.yml)"
-            "\n\n</details>"
+            "  \n**Turns:** unavailable\n\n</details>"
         ))
         visible, details = body.split("<details>", 1)
         self.assertIn(f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})", visible)

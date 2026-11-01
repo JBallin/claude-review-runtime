@@ -197,8 +197,9 @@ class ManualBaselineTests(unittest.TestCase):
                               + check.commit_link(BASE_TIP, REPO), details)
                 if observed and observed != BASE_TIP:
                     self.assertEqual(body.count(note), 1)
+                    self.assertTrue(details.startswith("\n<summary>ℹ️ Details</summary>\n\n" + note + "\n\n**[Reviewed]"))
                     self.assertIn("**Observed target commit:** " + check.commit_link(observed, REPO)
-                                  + " on `main`\n\n" + note + "\n\n</details>", details)
+                                  + " on `main`  \n**Turns:** unavailable\n\n</details>", details)
                 else:
                     self.assertNotIn(note, body)
                     self.assertNotIn("**Observed target commit:**", body)
@@ -225,11 +226,11 @@ class ManualBaselineTests(unittest.TestCase):
                 self.notice()
                 body = self.api.notices[0]["body"]
                 visible, details = body.split("<details>", 1)
-                self.assertNotIn("Runtime used", visible)
+                self.assertNotIn("Runtime", visible)
                 self.assertIn(check.commit_link(HEAD, REPO), visible)
                 self.assertIn(check.commit_link(BASE_TIP, REPO), details)
-                self.assertEqual(details.count("**Runtime used:**"), 1)
-                self.assertIn("**Runtime used:** [`review/runtime@fffffff`]"
+                self.assertEqual(details.count("**Runtime:**"), 1)
+                self.assertIn("**Runtime:** [`review/runtime@fffffff`]"
                               f"(https://github.com/review/runtime/blob/{runtime_sha}/.github/workflows/claude.yml)",
                               details)
                 self.assertNotIn("current main", body.lower())
@@ -250,7 +251,7 @@ class ManualBaselineTests(unittest.TestCase):
                 os.environ[key] = value
                 body = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, marker,
                                                      os.environ["DETAILS_URL"])
-                self.assertNotIn("**Runtime used:**", body)
+                self.assertNotIn("**Runtime:**", body)
                 self.assertIn(check.commit_link(HEAD, REPO), body)
 
     def test_later_runtime_does_not_rewrite_or_duplicate_historical_manual_receipt(self):

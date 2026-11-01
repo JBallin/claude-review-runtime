@@ -16,6 +16,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
+<!-- claude-review-runtime:execution-diagnostic:%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22PR%20opened%20for%20review%22%5D -->
@@ -31,7 +33,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -40,7 +42,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 **Model:** Sonnet · **Effort:** Medium\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -55,6 +58,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
+<!-- claude-review-runtime:execution-diagnostic:%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
@@ -70,7 +75,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -79,7 +84,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 **Model:** Sonnet · **Effort:** Medium\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -93,6 +99,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
+<!-- claude-review-runtime:execution-diagnostic:%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
@@ -108,7 +116,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22manual%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -117,7 +125,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 **Model:** Sonnet · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -132,6 +141,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
+<!-- claude-review-runtime:execution-diagnostic:%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-opus-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-opus-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
@@ -147,7 +158,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-opus-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-opus-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -156,7 +167,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -170,6 +182,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
+<!-- claude-review-runtime:execution-diagnostic:%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
@@ -185,7 +199,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -196,14 +210,14 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
 ---
 
 <a id="opus-unknown"></a>
-<a id="opus-legacy"></a>
 
 ### 6 — Completed review with unknown model
 
@@ -211,6 +225,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
+<!-- claude-review-runtime:execution-diagnostic:%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22execution_attempt%22%3Anull%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
@@ -226,7 +242,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22execution_attempt%22%3Anull%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -237,7 +253,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -251,6 +268,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:action_required -->
+<!-- claude-review-runtime:execution-diagnostic:%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22PR%20opened%20for%20review%22%5D -->
@@ -266,7 +285,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -275,7 +294,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 **Model:** Sonnet · **Effort:** Medium\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -293,6 +313,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:action_required -->
+<!-- claude-review-runtime:execution-diagnostic:%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-opus-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-opus-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
@@ -308,7 +330,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-opus-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-opus-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -317,7 +339,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -337,7 +360,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:presentation-owner-phase:running -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -346,7 +369,8 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 
 **Model:** Opus · **Effort:** High\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -366,7 +390,7 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -380,7 +404,8 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 **Model:** Opus · **Effort:** High\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -400,7 +425,7 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -418,7 +443,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 **Model:** Opus · **Effort:** High\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -432,6 +458,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:success -->
+<!-- claude-review-runtime:execution-diagnostic:%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%2C%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-opus-5-5%22%2C%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-opus-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
@@ -447,7 +475,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%2C%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-opus-5-5%22%2C%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-opus-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
@@ -458,7 +486,49 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
+
+</details>
+
+---
+
+<a id="opus-legacy"></a>
+
+### 13 — Legacy receipt without primary evidence
+
+<!-- claude-review-runtime:claude-review-status -->
+<!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
+<!-- claude-review-runtime:claude-review-status-base-ref:main -->
+<!-- claude-review-runtime:claude-review-status-state:success -->
+<!-- claude-review-runtime:selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
+<!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
+<!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
+<!-- claude-review-runtime:presentation-owner-phase:terminal -->
+<!-- claude-review-runtime:claude-review-last-reviewed-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
+<!-- claude-review-runtime:claude-review-last-reviewed-base-ref:main -->
+<!-- claude-review-runtime:claude-review-last-reviewed-result:success -->
+<!-- claude-review-runtime:claude-review-last-reviewed-base-sha:dddddddddddddddddddddddddddddddddddddddd -->
+<!-- claude-review-runtime:claude-review-last-reviewed-run-url:https%3A%2F%2Fgithub.com%2Fowner%2Frepo%2Factions%2Fruns%2F5 -->
+<!-- claude-review-runtime:claude-review-last-reviewed-trigger:Manual%20request -->
+<!-- claude-review-runtime:claude-review-last-reviewed-completed-at:2026-10-07T13:09:19Z -->
+<!-- claude-review-runtime:claude-review-last-reviewed-generation:2ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea -->
+<!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22execution_attempt%22%3A1%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-opus-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
+## Claude Review
+
+| Status | Commit | Review trigger |
+| --- | --- | --- |
+| ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
+
+⚠️ **Model unknown:** primary evidence missing
+
+<details>
+<summary>ℹ️ Details</summary>
+
+**Model:** Opus · **Effort:** High\
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -466,7 +536,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="workflow-default-running"></a>
 
-### 13 — Automatic review running with configured defaults
+### 14 — Automatic review running with configured defaults
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -478,7 +548,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <!-- claude-review-runtime:presentation-owner-phase:running -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -487,7 +557,8 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -495,7 +566,7 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 
 <a id="workflow-invalid-setting"></a>
 
-### 14 — Invalid workflow configuration, Actions run summary
+### 15 — Invalid workflow configuration, Actions run summary
 
 **Invalid workflow model.** Use `haiku`, `sonnet`, or `opus`.
 
@@ -509,7 +580,7 @@ No review was started. Correct the workflow input before requesting a review.
 <a id="manual-unsupported-suffix"></a>
 <a id="manual-unsupported-keyword"></a>
 
-### 15 — Invalid manual arguments rejected without starting a review
+### 16 — Invalid manual arguments rejected without starting a review
 
 I couldn't use those review arguments. Please use a supported model and effort, with the model first when both are given.
 
@@ -521,7 +592,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="manual-unknown-value"></a>
 
-### 16 — Multiple command lines rejected with one usage response
+### 17 — Multiple command lines rejected with one usage response
 
 Please use one review command per comment.
 
@@ -533,12 +604,13 @@ Omit either setting to use its default. No review was started.
 
 <a id="baseline-clean"></a>
 
-### 17 — Clean completion, changed target branch
+### 18 — Clean completion, changed target branch
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:stale -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -553,7 +625,7 @@ Omit either setting to use its default. No review was started.
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -569,7 +641,8 @@ Omit either setting to use its default. No review was started.
 **Model:** Sonnet · **Effort:** Medium\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -577,12 +650,13 @@ Omit either setting to use its default. No review was started.
 
 <a id="baseline-findings"></a>
 
-### 18 — Findings, changed target branch
+### 19 — Findings, changed target branch
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:stale -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -597,7 +671,7 @@ Omit either setting to use its default. No review was started.
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -613,7 +687,8 @@ Omit either setting to use its default. No review was started.
 **Model:** Sonnet · **Effort:** Medium\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -621,12 +696,13 @@ Omit either setting to use its default. No review was started.
 
 <a id="changed-head"></a>
 
-### 19 — PR commit changed after clean completion
+### 20 — PR commit changed after clean completion
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:stale -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -641,7 +717,7 @@ Omit either setting to use its default. No review was started.
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -657,7 +733,8 @@ Omit either setting to use its default. No review was started.
 **Model:** Sonnet · **Effort:** Medium\
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -665,7 +742,7 @@ Omit either setting to use its default. No review was started.
 
 <a id="incomplete-unknown"></a>
 
-### 20 — Incomplete attempt without completed history
+### 21 — Incomplete attempt without completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -677,7 +754,7 @@ Omit either setting to use its default. No review was started.
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -695,7 +772,48 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
+
+</details>
+
+---
+
+<a id="turn-limit"></a>
+
+### 22 — Historical configured-cap failure (nondefault)
+
+<!-- claude-review-runtime:claude-review-status -->
+<!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
+<!-- claude-review-runtime:claude-review-status-base-ref:main -->
+<!-- claude-review-runtime:claude-review-status-state:failure -->
+<!-- claude-review-runtime:execution-diagnostic:%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22max_turns%22%3A100%2C%22num_turns%22%3A101%2C%22reason%22%3A%22over_limit_success%22%2C%22run%22%3A5%2C%22version%22%3A1%7D -->
+<!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
+<!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3A12%2C%22version%22%3A1%7D -->
+<!-- claude-review-runtime:attempt-trigger:%5B%222ff707153b4e87de3dec078e09597dbf195612a7cd9695bf64860913837e7fea%22%2C%22Manual%20request%22%5D -->
+<!-- claude-review-runtime:presentation-owner-phase:terminal -->
+## Claude Review
+
+| Status | Commit | Review trigger |
+| --- | --- | --- |
+| ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
+
+⚠️ **Model unknown:** primary evidence missing
+
+Claude reported success after 101 turns, exceeding the runtime’s 100-turn limit. The Action rejected this result; the review remains incomplete. [Attempt logs](https://github.com/owner/repo/actions/runs/5/attempts/1). [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
+<details>
+<summary>ℹ️ Details</summary>
+
+<!--
+**Reason:** The review reached its configured turn limit.
+-->
+
+**Model:** Sonnet · **Effort:** Medium\
+**Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
+**[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 101
 
 </details>
 
@@ -703,7 +821,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="inline-tool-partial"></a>
 
-### 21 — Inline-comment tool failure: partial
+### 23 — Inline-comment tool failure: partial
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -716,7 +834,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -734,7 +852,8 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -742,7 +861,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 
 <a id="inline-tool-zero"></a>
 
-### 22 — Inline-comment tool failure: zero
+### 24 — Inline-comment tool failure: zero
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -755,7 +874,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -773,7 +892,8 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -781,7 +901,7 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 
 <a id="inline-tool-unknown-count"></a>
 
-### 23 — Inline-comment tool failure: unknown-count
+### 25 — Inline-comment tool failure: unknown-count
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -794,7 +914,7 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -812,7 +932,8 @@ An inline-comment tool call failed. This review is incomplete. [Attempt Check](h
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -820,7 +941,7 @@ An inline-comment tool call failed. This review is incomplete. [Attempt Check](h
 
 <a id="inline-tool-stale"></a>
 
-### 24 — Inline-comment tool failure after the PR commit changes
+### 26 — Inline-comment tool failure after the PR commit changes
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -832,7 +953,7 @@ An inline-comment tool call failed. This review is incomplete. [Attempt Check](h
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
@@ -851,7 +972,8 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -859,7 +981,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 
 <a id="unread-automatic"></a>
 
-### 25 — Required inputs unread, automatic attempt
+### 27 — Required inputs unread, automatic attempt
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -871,7 +993,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -889,7 +1011,8 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -897,7 +1020,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="unread-manual"></a>
 
-### 26 — Required inputs unread, manual attempt with workflow changes
+### 28 — Required inputs unread, manual attempt with workflow changes
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -909,7 +1032,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
@@ -927,7 +1050,8 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -935,7 +1059,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="workflow-changed"></a>
 
-### 27 — Relevant review workflow changed, likely cause unconfirmed
+### 29 — Relevant review workflow changed, likely cause unconfirmed
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -947,7 +1071,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -965,7 +1089,8 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -973,7 +1098,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 
 <a id="workflow-changed-superseded"></a>
 
-### 28 — Workflow-change context retained for a superseded attempt
+### 30 — Workflow-change context retained for a superseded attempt
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -984,7 +1109,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
@@ -1003,7 +1128,8 @@ The review of [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaa
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -1011,7 +1137,7 @@ The review of [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaa
 
 <a id="selection-receipt"></a>
 
-### 29 — Historical manual receipt with primary Opus and auxiliary Haiku
+### 31 — Historical manual receipt with primary Opus and auxiliary Haiku
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1023,7 +1149,8 @@ Claude Review: No findings. 🎉
 
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1031,7 +1158,7 @@ Claude Review: No findings. 🎉
 
 <a id="selection-receipt-mismatch"></a>
 
-### 30 — Historical manual receipt with primary model mismatch
+### 32 — Historical manual receipt with primary model mismatch
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1045,7 +1172,8 @@ Claude Review: No findings. 🎉
 
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1053,7 +1181,7 @@ Claude Review: No findings. 🎉
 
 <a id="compact-clean"></a>
 
-### 31 — Compact clean completion, matching baseline
+### 33 — Compact clean completion, matching baseline
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1064,7 +1192,8 @@ Claude Review: No findings. 🎉
 <summary>ℹ️ Details</summary>
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1072,7 +1201,7 @@ Claude Review: No findings. 🎉
 
 <a id="compact-differing-baseline"></a>
 
-### 32 — Compact clean completion, differing baseline
+### 34 — Compact clean completion, differing baseline
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1082,11 +1211,12 @@ Claude Review: No findings. 🎉
 <details>
 <summary>ℹ️ Details</summary>
 
+The observed target differed from the reviewed baseline.
+
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Observed target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
-
-The observed target differed from the reviewed baseline.
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1094,7 +1224,7 @@ The observed target differed from the reviewed baseline.
 
 <a id="manual-pin-recovery"></a>
 
-### 33 — Manual recovery after a Runtime pin change (synthetic)
+### 35 — Manual recovery after a Runtime pin change (synthetic)
 
 <!-- claude-review-runtime:manual-clean-completion:%5B%22owner%2Frepo%22%2C%227%22%2C%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22main%22%2C%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22cccccccccccccccccccccccccccccccccccccccc%22%5D -->
 Claude Review: No findings. 🎉
@@ -1104,9 +1234,11 @@ Claude Review: No findings. 🎉
 <details>
 <summary>ℹ️ Details</summary>
 
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 This review used the deployed Runtime, not the proposed pin.
+
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1114,12 +1246,13 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-clean"></a>
 
-### 34 — Running attempt with older completed history: clean
+### 36 — Running attempt with older completed history: clean
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:in_progress -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -1135,7 +1268,7 @@ This review used the deployed Runtime, not the proposed pin.
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22repository%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22repository%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1145,16 +1278,18 @@ This review used the deployed Runtime, not the proposed pin.
 **Current attempt**\
 **Model:** Opus · **Effort:** High\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1162,12 +1297,13 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-findings"></a>
 
-### 35 — Running attempt with older completed history: findings
+### 37 — Running attempt with older completed history: findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:in_progress -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -1183,7 +1319,7 @@ This review used the deployed Runtime, not the proposed pin.
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1193,16 +1329,18 @@ This review used the deployed Runtime, not the proposed pin.
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1210,12 +1348,13 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-manual"></a>
 
-### 36 — Manual current attempt with previous completed review: running
+### 38 — Manual current attempt with previous completed review: running
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:in_progress -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3A11%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22Manual%20request%22%5D -->
@@ -1231,7 +1370,7 @@ This review used the deployed Runtime, not the proposed pin.
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
@@ -1241,16 +1380,18 @@ This review used the deployed Runtime, not the proposed pin.
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1258,12 +1399,13 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="running-history-model-mismatch"></a>
 
-### 37 — Current Sonnet attempt with a previous model mismatch
+### 39 — Current Sonnet attempt with a previous model mismatch
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:in_progress -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -1279,7 +1421,7 @@ This review used the deployed Runtime, not the proposed pin.
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22workflow%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22workflow%22%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22high%22%2C%22requested_model%22%3A%22opus%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1289,17 +1431,19 @@ This review used the deployed Runtime, not the proposed pin.
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 ⚠️ **Model mismatch:** Sonnet observed\
 **Model:** Opus · **Effort:** High\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1307,12 +1451,13 @@ This review used the deployed Runtime, not the proposed pin.
 
 <a id="incomplete-history-clean"></a>
 
-### 38 — Incomplete attempt with older completed history: clean
+### 40 — Incomplete attempt with older completed history: clean
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:failure -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -1328,7 +1473,7 @@ This review used the deployed Runtime, not the proposed pin.
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1347,16 +1492,18 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1364,12 +1511,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="incomplete-history-findings"></a>
 
-### 39 — Incomplete attempt with older completed history: findings
+### 41 — Incomplete attempt with older completed history: findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:failure -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -1385,7 +1533,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1404,16 +1552,18 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1421,12 +1571,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="incomplete-history-manual"></a>
 
-### 40 — Manual current attempt with previous completed review: incomplete
+### 42 — Manual current attempt with previous completed review: incomplete
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:failure -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3A11%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22Manual%20request%22%5D -->
@@ -1442,7 +1593,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
@@ -1461,16 +1612,18 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1478,12 +1631,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="retargeted-clean"></a>
 
-### 41 — Retargeted provenance: clean
+### 43 — Retargeted provenance: clean
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:release -->
 <!-- claude-review-runtime:claude-review-status-state:stale -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -1498,7 +1652,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -1515,7 +1669,8 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed against this target\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1523,12 +1678,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="retargeted-findings"></a>
 
-### 42 — Retargeted provenance: findings
+### 44 — Retargeted provenance: findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
 <!-- claude-review-runtime:claude-review-status-base-ref:release -->
 <!-- claude-review-runtime:claude-review-status-state:stale -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
@@ -1543,7 +1699,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
@@ -1560,7 +1716,8 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed against this target\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1568,7 +1725,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="publication-incomplete-none"></a>
 
-### 43 — Authoritative Check publication incomplete: no completed history
+### 45 — Authoritative Check publication incomplete: no completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1580,7 +1737,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1598,7 +1755,8 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -1606,12 +1764,13 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-success"></a>
 
-### 44 — Authoritative Check publication incomplete: previous clean review
+### 46 — Authoritative Check publication incomplete: previous clean review
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:publication_incomplete -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -1627,7 +1786,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1646,16 +1805,18 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1663,12 +1824,13 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-action-required"></a>
 
-### 45 — Authoritative Check publication incomplete: previous findings
+### 47 — Authoritative Check publication incomplete: previous findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:publication_incomplete -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -1684,7 +1846,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1703,16 +1865,18 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1720,12 +1884,13 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-incomplete-manual"></a>
 
-### 46 — Manual current attempt with previous completed review: publication unavailable
+### 48 — Manual current attempt with previous completed review: publication unavailable
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:publication_incomplete -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3A11%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22Manual%20request%22%5D -->
@@ -1741,7 +1906,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
@@ -1760,16 +1925,18 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1777,7 +1944,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 
 <a id="publication-unavailable-none"></a>
 
-### 47 — Completion with unavailable Check publication: no completed history
+### 49 — Completion with unavailable Check publication: no completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1789,7 +1956,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 <!-- claude-review-runtime:presentation-owner-phase:terminal -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1807,7 +1974,8 @@ Review completion cannot be established because authoritative Check publication 
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -1815,12 +1983,13 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="publication-unavailable-success"></a>
 
-### 48 — Completion with unavailable Check publication: previous clean review
+### 50 — Completion with unavailable Check publication: previous clean review
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:publication_incomplete -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -1836,7 +2005,7 @@ Review completion cannot be established because authoritative Check publication 
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1855,16 +2024,18 @@ Review completion cannot be established because authoritative Check publication 
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1872,12 +2043,13 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="publication-unavailable-action-required"></a>
 
-### 49 — Completion with unavailable Check publication: previous findings
+### 51 — Completion with unavailable Check publication: previous findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:publication_incomplete -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -1893,7 +2065,7 @@ Review completion cannot be established because authoritative Check publication 
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1912,16 +2084,18 @@ Review completion cannot be established because authoritative Check publication 
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -1929,7 +2103,7 @@ Review completion cannot be established because authoritative Check publication 
 
 <a id="running-unavailable-none"></a>
 
-### 50 — Running with unavailable Check publication: no completed history
+### 52 — Running with unavailable Check publication: no completed history
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -1943,7 +2117,7 @@ Review completion cannot be established because authoritative Check publication 
 
 Claude is reviewing this commit, but authoritative Check publication is unavailable.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1952,7 +2126,8 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -1960,12 +2135,13 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="running-unavailable-success"></a>
 
-### 51 — Running with unavailable Check publication: previous clean review
+### 53 — Running with unavailable Check publication: previous clean review
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:in_progress -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -1983,7 +2159,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 Claude is reviewing this commit, but authoritative Check publication is unavailable.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -1993,16 +2169,18 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -2010,12 +2188,13 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="running-unavailable-action-required"></a>
 
-### 52 — Running with unavailable Check publication: previous findings
+### 54 — Running with unavailable Check publication: previous findings
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:in_progress -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22754a803132f62e8c6956e9a394a9e613d744a99d4b267bab986597ace1656572%22%2C%22Draft%20marked%20ready%22%5D -->
@@ -2033,7 +2212,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 Claude is reviewing this commit, but authoritative Check publication is unavailable.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
@@ -2043,16 +2222,18 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** Findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -2060,12 +2241,13 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="shared-run-in-progress"></a>
 
-### 53 — Shared workflow run, matching historical baseline: running
+### 55 — Shared workflow run, matching historical baseline: running
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:in_progress -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22bc6588e8cad9ca45b8105014af17540a594f2d9d1a0fa03db2c13fc09959813a%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22bc6588e8cad9ca45b8105014af17540a594f2d9d1a0fa03db2c13fc09959813a%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22bc6588e8cad9ca45b8105014af17540a594f2d9d1a0fa03db2c13fc09959813a%22%2C%22PR%20opened%20for%20review%22%5D -->
@@ -2081,7 +2263,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **[Running](https://github.com/owner/repo/actions/runs/5)** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | PR opened for review |
 
@@ -2090,16 +2272,18 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -2107,12 +2291,13 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 
 <a id="shared-run-failure"></a>
 
-### 54 — Shared workflow run, matching historical baseline: incomplete
+### 56 — Shared workflow run, matching historical baseline: incomplete
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:failure -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%22bc6588e8cad9ca45b8105014af17540a594f2d9d1a0fa03db2c13fc09959813a%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22bc6588e8cad9ca45b8105014af17540a594f2d9d1a0fa03db2c13fc09959813a%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378600000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%22bc6588e8cad9ca45b8105014af17540a594f2d9d1a0fa03db2c13fc09959813a%22%2C%22PR%20opened%20for%20review%22%5D -->
@@ -2128,7 +2313,7 @@ Claude is reviewing this commit, but authoritative Check publication is unavaila
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 ## Claude Review
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | PR opened for review |
 
@@ -2146,16 +2331,18 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>
 
@@ -2163,7 +2350,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 <a id="legacy-history-run"></a>
 
-### 55 — Legacy completed history without recorded attempt metadata
+### 57 — Legacy completed history without recorded attempt metadata
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -2177,7 +2364,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 
 **Last completed review**
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
@@ -2187,7 +2374,8 @@ The applicability of this completed review to the current PR cannot be confirmed
 <summary>ℹ️ Details</summary>
 
 **[Attempt](https://github.com/owner/repo/actions/runs/6) status:** Not recorded\
-**[Reviewed](https://github.com/owner/repo/actions/runs/5) target:** `main`
+**[Reviewed](https://github.com/owner/repo/actions/runs/5) target:** `main`\
+**Turns:** unavailable
 
 </details>
 
@@ -2195,7 +2383,7 @@ The applicability of this completed review to the current PR cannot be confirmed
 
 <a id="legacy-history-no-links"></a>
 
-### 56 — Legacy completed review without workflow links
+### 58 — Legacy completed review without workflow links
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2207,7 +2395,7 @@ The applicability of this completed review to the current PR cannot be confirmed
 <!-- claude-review-runtime:claude-review-last-reviewed-base-sha:dddddddddddddddddddddddddddddddddddddddd -->
 ## Claude Review
 
-| Status | Reviewed commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | ✅ **Completed** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
@@ -2221,7 +2409,8 @@ The applicability of this completed review to the current PR cannot be confirmed
 -->
 
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
-**Reviewed against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`
+**Reviewed against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
+**Turns:** unavailable
 
 </details>
 
@@ -2229,7 +2418,7 @@ The applicability of this completed review to the current PR cannot be confirmed
 
 <a id="stale-running-head"></a>
 
-### 57 — Stale running attempt without completed history: changed head
+### 59 — Stale running attempt without completed history: changed head
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
@@ -2243,7 +2432,7 @@ The applicability of this completed review to the current PR cannot be confirmed
 
 Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa). The current PR commit [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) is not covered by this attempt.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Draft marked ready |
 
@@ -2257,7 +2446,8 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 **Model:** Sonnet · **Effort:** Medium\
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -2265,7 +2455,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-running-base"></a>
 
-### 58 — Stale running attempt without completed history: changed base
+### 60 — Stale running attempt without completed history: changed base
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -2279,7 +2469,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa). Its captured baseline is [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`; the current target commit is [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb).
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Draft marked ready |
 
@@ -2293,7 +2483,8 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -2301,7 +2492,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-running-ref"></a>
 
-### 59 — Stale running attempt without completed history: changed ref
+### 61 — Stale running attempt without completed history: changed ref
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa -->
@@ -2315,7 +2506,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa). This attempt targets `main`; the PR now targets `release`.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Draft marked ready |
 
@@ -2330,7 +2521,8 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 **PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed against this target\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 </details>
 
@@ -2338,12 +2530,13 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 <a id="stale-manual"></a>
 
-### 60 — Stale manual attempt with distinct completed-review trigger
+### 62 — Stale manual attempt with distinct completed-review trigger
 
 <!-- claude-review-runtime:claude-review-status -->
 <!-- claude-review-runtime:claude-review-status-head:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb -->
 <!-- claude-review-runtime:claude-review-status-base-ref:main -->
 <!-- claude-review-runtime:claude-review-status-state:stale -->
+<!-- claude-review-runtime:last-reviewed-execution:%7B%22owner%22%3A%7B%22attempt%22%3A1%2C%22base%22%3A%22dddddddddddddddddddddddddddddddddddddddd%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22head%22%3A%22aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%22%2C%22kind%22%3A%22automatic%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A5%2C%22started%22%3A1791378000000000000%2C%22target%22%3Anull%2C%22version%22%3A1%7D%2C%22record%22%3A%7B%22attempt%22%3A1%2C%22execution%22%3A%22observed%22%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22max_turns%22%3Anull%2C%22num_turns%22%3A30%2C%22reason%22%3A%22execution_observed%22%2C%22run%22%3A5%2C%22version%22%3A2%7D%7D -->
 <!-- claude-review-runtime:selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3Anull%2C%22generation%22%3A%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22model_evidence%22%3A%22unknown%22%2C%22models%22%3A%5B%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3Anull%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 <!-- claude-review-runtime:presentation-owner:%7B%22attempt%22%3A1%2C%22base%22%3A%22eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee%22%2C%22base_ref%22%3A%22main%22%2C%22generation%22%3A%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22head%22%3A%22bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb%22%2C%22kind%22%3A%22issue_comment%22%2C%22pr%22%3A7%2C%22repo%22%3A%22owner%2Frepo%22%2C%22run%22%3A6%2C%22started%22%3A1791378600000000000%2C%22target%22%3A11%2C%22version%22%3A1%7D -->
 <!-- claude-review-runtime:attempt-trigger:%5B%2211767d942027addc1a044b4e74952236ea329ad3fddd987f94448c65bba23e29%22%2C%22Manual%20request%22%5D -->
@@ -2361,7 +2554,7 @@ Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/co
 
 Claude is reviewing captured commit [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb). This attempt's coverage of the current PR cannot be confirmed.
 
-| Status | Attempt commit | Review trigger |
+| Status | Commit | Review trigger |
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
@@ -2375,15 +2568,17 @@ Claude is reviewing captured commit [`bbbbbbb`](https://github.com/owner/repo/co
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** unavailable
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
 **Result:** No findings.\
-**Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
+**Commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `main`\
 **Completed:** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time>\
 **Review trigger:** PR opened for review\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime used:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
+**Turns:** 30
 
 </details>

@@ -344,7 +344,7 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(details.strip().splitlines()[0].rstrip(), settings)
         self.assertNotIn('<br', details)
         self.assertLess(details.index(settings), details.index('against:**'))
-        self.assertLess(details.index(settings), details.index('**Runtime used:**'))
+        self.assertLess(details.index(settings), details.index('**Runtime:**'))
         self.assertEqual(record, original)
 
     def test_immutable_completion_receipt_keeps_settings_in_details_and_warning_visible(self):

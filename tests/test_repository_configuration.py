@@ -478,7 +478,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                     self.assertEqual(details.splitlines()[0].rstrip(), settings)
                     self.assertNotIn("<br", details)
                     self.assertLess(details.index(settings), details.index("baseline"))
-                    self.assertLess(details.index(settings), details.index("**Runtime used:**"))
+                    self.assertLess(details.index(settings), details.index("**Runtime:**"))
                     self.assertEqual(check.current_selection(owner, {"body": rendered}), original)
             self.assertEqual(record, original)
 

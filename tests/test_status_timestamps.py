@@ -269,7 +269,7 @@ class StatusTimestampTests(unittest.TestCase):
             if not line.startswith(check.STATUS_REVIEWED_GENERATION_PREFIX))
         original = {"user":{"login":check.STATUS_AUTHOR,"type":"Bot"}, "body":body}
         for workflow in (AUTOMATIC, MANUAL):
-            script = re.search(r"legacy_generation=.*?python3 -c '(.*?)' \"\$PRESENTATION_OWNER\"",
+            script = re.search(r"historical_provenance=.*?python3 -c '(.*?)' \"\$PRESENTATION_OWNER\"",
                                workflow.read_text(), re.DOTALL).group(1)
             script = textwrap.dedent(script)
             for mutation in ("valid", "duplicate_result", "other_head", "other_base", "other_run", "untrusted", "duplicate_state", "duplicate_phase"):
