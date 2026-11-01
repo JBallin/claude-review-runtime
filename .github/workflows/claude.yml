@@ -1246,10 +1246,11 @@ jobs:
               fi
             fi
             # Preserve provenance of an undated legacy completion before the
-            # emergency repair replaces its terminal state. The owner gate above
-            # has already bound this trusted comment to the captured attempt.
-            legacy_generation=$(printf '%s' "$comment" | python3 -c '
-          import json, re, sys
+            # emergency repair replaces its terminal state, and retain bounded
+            # execution provenance only when its historical identity is valid.
+            # The owner gate already bound this comment to the captured attempt.
+            historical_provenance=$(printf '%s' "$comment" | python3 -c '
+          import hashlib, json, re, sys
           from urllib.parse import quote, unquote
           comment = json.load(sys.stdin)
           owner = json.loads(sys.argv[1])
@@ -1278,9 +1279,100 @@ jobs:
                       and (not base or base == [owner["base"]])
                       and (not runs or len(runs) == 1 and unquote(runs[0]) == expected_run)):
                   print(prefix + "last-reviewed-generation:" + owner["generation"] + " -->")
+              # Mirror the production owner/diagnostic contracts: this fallback must not
+              # retain arbitrary payloads when the trusted helper is unavailable.
+              EXECUTION_TURN_LIMIT = 1_000_000
+              def unique_json_object(pairs):
+                  result = {}
+                  for key, value in pairs:
+                      if key in result:
+                          raise ValueError("duplicate JSON key")
+                      result[key] = value
+                  return result
+
+              def validate_owner(owner):
+                  fields = {"version", "repo", "pr", "run", "attempt", "kind", "target", "head", "base", "base_ref", "started", "generation"}
+                  if not isinstance(owner, dict) or set(owner) != fields or type(owner["version"]) is not int or owner["version"] != 1:
+                      raise ValueError("invalid presentation owner")
+                  if not isinstance(owner["repo"], str) or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", owner["repo"]):
+                      raise ValueError("invalid owner repository")
+                  for key in ("pr", "run", "attempt"):
+                      if type(owner[key]) is not int or not 0 < owner[key] <= 9007199254740991:
+                          raise ValueError("invalid owner integer")
+                  if owner["kind"] not in ("automatic", "issue_comment", "pull_request_review_comment"):
+                      raise ValueError("invalid owner target type")
+                  if owner["kind"] == "automatic":
+                      if owner["target"] is not None:
+                          raise ValueError("automatic owner has a trigger")
+                  elif type(owner["target"]) is not int or not 0 < owner["target"] <= 9007199254740991:
+                      raise ValueError("invalid owner target")
+                  for key in ("head", "base"):
+                      if not isinstance(owner[key], str) or not re.fullmatch(r"[0-9a-f]{40}", owner[key]):
+                          raise ValueError("invalid owner patch")
+                  if not isinstance(owner["base_ref"], str) or not owner["base_ref"] or len(owner["base_ref"]) > 255:
+                      raise ValueError("invalid owner base ref")
+                  if type(owner["started"]) is not int or not 0 < owner["started"] < 10**20:
+                      raise ValueError("invalid start token")
+                  identity = {key: value for key, value in owner.items() if key != "generation"}
+                  digest = hashlib.sha256(json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+                  if owner["generation"] != digest:
+                      raise ValueError("invalid owner generation")
+                  return owner
+
+              def valid_execution_diagnostic(record, owner):
+                  fields = {"version", "generation", "run", "attempt", "reason", "execution", "num_turns", "max_turns"}
+                  if (not owner or not isinstance(record, dict) or set(record) != fields
+                          or type(record["version"]) is not int or record["version"] not in (1, 2)
+                          or record["generation"] != owner["generation"]
+                          or any(type(record[k]) is not int or record[k] != owner[k] for k in ("run", "attempt"))
+                          or record["reason"] not in ("unavailable", "malformed", "execution_observed",
+                                                       "error_max_turns", "over_limit_success", "conflicting")
+                          or record["execution"] not in ("observed", "unknown")
+                          or record["reason"] == "unavailable" and record["execution"] != "unknown"
+                          or record["reason"] not in ("unavailable", "malformed") and record["execution"] != "observed"):
+                      return None
+                  count, maximum = record["num_turns"], record["max_turns"]
+                  if (count is not None and (type(count) is not int or not 0 <= count <= EXECUTION_TURN_LIMIT)
+                          or maximum is not None and (type(maximum) is not int or not 0 < maximum <= EXECUTION_TURN_LIMIT)
+                          or record["reason"] in ("unavailable", "malformed", "conflicting") and count is not None
+                          or record["version"] == 1 and record["reason"] == "conflicting"
+                          or record["version"] == 1 and record["reason"] == "execution_observed" and count is not None
+                          or record["reason"] == "over_limit_success"
+                          and (count is None or maximum is None or count <= maximum)):
+                      return None
+                  return record
+
+              receipt_prefix = "<!-- claude-review-runtime:last-reviewed-execution:"
+              receipts = re.findall(re.escape(receipt_prefix) + r"(.*?) -->", body)
+              try:
+                  if body.count(receipt_prefix) == 1 and len(receipts) == 1 and len(receipts[0]) <= 4096:
+                      value = json.loads(unquote(receipts[0]), object_pairs_hook=unique_json_object)
+                      if not isinstance(value, dict) or set(value) != {"owner", "record"}:
+                          raise ValueError("invalid historical execution receipt")
+                      current = validate_owner(owner)
+                      prior = validate_owner(value["owner"])
+                      record = valid_execution_diagnostic(value["record"], prior)
+                      expected = {
+                          "last-reviewed-head": prior["head"],
+                          "last-reviewed-base-ref": quote(prior["base_ref"], safe=""),
+                          "last-reviewed-base-sha": prior["base"],
+                          "last-reviewed-generation": prior["generation"],
+                          "last-reviewed-run-url": quote("https://github.com/" + prior["repo"] + "/actions/runs/" + str(prior["run"]), safe=""),
+                      }
+                      history = sys.argv[3]
+                      names = (*expected, "last-reviewed-result")
+                      canonical = quote(json.dumps(value, sort_keys=True, separators=(",", ":")), safe="")
+                      if (record and (prior["repo"], prior["pr"]) == (current["repo"], current["pr"])
+                              and all(history.count(prefix + name + ":") == 1 for name in names)
+                              and all(exact(name, expected_value) for name, expected_value in expected.items())
+                              and values("last-reviewed-result") in (["success"], ["action_required"])
+                              and canonical == receipts[0]):
+                          print(receipt_prefix + canonical + " -->")
+              except (ValueError, TypeError, KeyError, RecursionError):
+                  pass
           ' "$PRESENTATION_OWNER" "${GITHUB_SERVER_URL:-https://github.com}" "$reviewed_markers") || return 0
-            if [ -n "$legacy_generation" ]; then
-              reviewed_markers="$reviewed_markers"$'\n'"$legacy_generation"
+            if [ -n "$historical_provenance" ]; then
+              reviewed_markers="$reviewed_markers"$'\n'"$historical_provenance"
             fi
             if [ -n "$reviewed_markers" ]; then
               reviewed_markers="$reviewed_markers"$'\n'

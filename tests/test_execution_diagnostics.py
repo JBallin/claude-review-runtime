@@ -177,6 +177,90 @@ class ExecutionDiagnosticTests(unittest.TestCase):
                              "${{ needs.review.outputs.execution_diagnostic }}")
 
 
+
+class EmergencyExecutionRetentionTests(unittest.TestCase):
+    def setUp(self):
+        path = os.environ["PATH"]
+        ownership.OwnershipTests.setUp(self)
+        os.environ["PATH"] = path
+
+    def scenario(self, workflow):
+        self.api.pr["head"]["sha"] = fixtures.HEAD
+        prior = fixtures.presentation_owner()
+        current = fixtures.presentation_owner(run=6, started=3,
+            kind="automatic" if workflow == workflows.AUTOMATIC else "issue_comment",
+            target=None if workflow == workflows.AUTOMATIC else 12)
+        record = receipt(prior, reason="execution_observed", count=33, maximum=None)
+        details = {"base_sha": prior["base"], "generation": prior["generation"],
+                   "run_url": f"https://github.com/{prior['repo']}/actions/runs/{prior['run']}",
+                   "execution": {"owner": prior, "record": record}}
+        body = check.status_comment_body(fixtures.HEAD, "main", "in_progress", owner=current,
+            last_review=(fixtures.HEAD, "main", "success"), last_review_details=details)
+        return prior, current, record, body
+
+    def repair(self, workflow, owner, body):
+        owned = {"id": 55, "user": {"login": check.STATUS_AUTHOR, "type": "Bot"}, "body": body}
+        run, calls = workflows.ToolingFallbackScriptTests().run_fallback(workflow,
+            OWNER_FIXTURE=owner, REPO=owner["repo"], PR_NUMBER="7", STATUS_COMMENT_ID="55",
+            GITHUB_RUN_ID=str(owner["run"]), GITHUB_RUN_ATTEMPT=str(owner["attempt"]),
+            responses={"STATUS": [{"stdout": json.dumps(owned)}],
+                       "PR": [{"stdout": json.dumps(self.api.pr)}]})
+        self.assertEqual(run.returncode, 1, run.stderr)
+        repaired = [c["body"]["body"] for c in calls if c["method"] == "PATCH"
+                    and any("issues/comments/55" in a for a in c["args"])]
+        self.assertTrue(repaired, run.stdout + run.stderr + str(calls))
+        return repaired[-1]
+
+    def test_emergency_rewrite_preserves_prior_receipt_for_normal_refresh(self):
+        for workflow in (workflows.AUTOMATIC, workflows.MANUAL):
+            with self.subTest(workflow=workflow.name):
+                prior, current, record, body = self.scenario(workflow)
+                repaired = self.repair(workflow, current, body)
+                self.api.status = {"id": 55, "user": {"login": check.STATUS_AUTHOR, "type": "Bot"},
+                                   "body": repaired}
+                self.assertEqual(check.last_completed_review_details(self.api.status)["execution"],
+                                 {"owner": prior, "record": record})
+                self.assertIsNone(check.status_execution_record(self.api.status, current))
+                os.environ.update(PRESENTATION_OWNER=json.dumps(current), GITHUB_RUN_ID="6",
+                    PRESENTATION_START="3", DETAILS_URL=f"https://github.com/{current['repo']}/actions/runs/6")
+                self.api.pr["head"]["sha"] = fixtures.OTHER
+                check.best_effort_status(fixtures.OTHER, "stale")
+                self.assertEqual(check.last_completed_review_details(self.api.status)["execution"]["record"], record)
+                self.assertIn("**Turns:** 33", self.api.status["body"])
+                self.assertIn("**Turns:** unavailable", self.api.status["body"])
+
+    def test_emergency_rejects_untrusted_or_ambiguous_historical_receipts(self):
+        from urllib.parse import quote
+        for workflow in (workflows.AUTOMATIC, workflows.MANUAL):
+            prior, current, record, body = self.scenario(workflow)
+            original = re.search(re.escape(check.REVIEWED_EXECUTION_PREFIX) + r".*? -->", body)[0]
+            def marker(value):
+                return check.REVIEWED_EXECUTION_PREFIX + quote(json.dumps(value, sort_keys=True,
+                    separators=(",", ":")), safe="") + " -->"
+            wrong = fixtures.presentation_owner(repo="other/repo")
+            wrong_run = fixtures.presentation_owner(run=9)
+            wrong_pr = fixtures.presentation_owner(pr=8)
+            candidates = [
+                "broken", "x" * 4097,
+                marker({"owner": wrong, "record": receipt(wrong)}),
+                marker({"owner": wrong_pr, "record": receipt(wrong_pr)}),
+                marker({"owner": wrong_run, "record": receipt(wrong_run)}),
+                marker({"owner": prior, "record": {**record, "generation": current["generation"]}}),
+                marker({"owner": prior, "record": {**record, "num_turns": True}}),
+                marker({"owner": {**prior, "generation": "0" * 64}, "record": record}),
+                original + "\n" + original,
+                check.REVIEWED_EXECUTION_PREFIX + quote('{"owner":{},"owner":{},"record":{}}', safe="") + " -->",
+            ]
+            for candidate in candidates:
+                with self.subTest(workflow=workflow.name, candidate=candidate[:80]):
+                    replacement = candidate if candidate.startswith(check.REVIEWED_EXECUTION_PREFIX) else check.REVIEWED_EXECUTION_PREFIX + candidate + " -->"
+                    repaired = self.repair(workflow, current, body.replace(original, replacement))
+                    self.assertNotIn(check.REVIEWED_EXECUTION_PREFIX, repaired)
+                    comment = {"user": {"login": check.STATUS_AUTHOR, "type": "Bot"}, "body": repaired}
+                    self.assertNotIn("execution", check.last_completed_review_details(comment))
+                    self.assertEqual(check.last_completed_review(comment), (fixtures.HEAD, "main", "success"))
+
+
 class DiagnosticPresentationTests(unittest.TestCase):
     setUp = ownership.OwnershipTests.setUp
     start = ownership.OwnershipTests.start
