@@ -10,8 +10,11 @@ permissions: {}
 
 jobs:
   eligibility:
+    # Forward candidate text; the pinned Runtime owns command parsing and admission.
     if: >-
-      contains(fromJSON('["/claude-review","/claude-review opus","/claude-review sonnet","/claude-review haiku","/claude-review low","/claude-review medium","/claude-review high","/claude-review xhigh","/claude-review max","/claude-review opus low","/claude-review sonnet low","/claude-review haiku low","/claude-review opus medium","/claude-review sonnet medium","/claude-review haiku medium","/claude-review opus high","/claude-review sonnet high","/claude-review haiku high","/claude-review opus xhigh","/claude-review sonnet xhigh","/claude-review haiku xhigh","/claude-review opus max","/claude-review sonnet max","/claude-review haiku max"]'), github.event.comment.body) &&
+      contains(github.event.comment.body, '/claude-review') &&
+      github.event.comment.user.type == 'User' &&
+      github.event.sender.type == 'User' &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
       (github.event_name == 'pull_request_review_comment' || github.event.issue.pull_request)
     runs-on: ubuntu-26.04

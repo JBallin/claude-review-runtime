@@ -19,7 +19,7 @@ the executing runtime's repository, SHA, and workflow path.
 | Caller | Events | Eligibility and behavior |
 | --- | --- | --- |
 | [Automatic](../.github/workflows/self-review-automatic.yml) | PR `opened`, `ready_for_review` | Open, non-draft, same-repository PRs; Dependabot-triggered runs are excluded. |
-| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted entire-comment command accepted by the pinned caller, followed by a read-only check for an open, non-draft, same-repository PR. |
+| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted human comment containing the command keyword, followed by a read-only check for an open, non-draft, same-repository PR. Runtime parses command lines and verifies the original author’s current access. |
 | [Status](../.github/workflows/self-review-status.yml) | PR `synchronize`, `edited` | Open, same-repository PRs; refreshes existing presentation after head changes or base-ref retargeting. |
 
 Stacked PRs are eligible; the callers do not restrict the base branch. The pinned
@@ -52,6 +52,16 @@ Model evidence is diagnostic: a different primary model produces a notice,
 without changing completion or finding verification.
 
 `@claude review` does not invoke Runtime’s manual entrypoint or this repository’s callers.
+
+### Check the installed caller's command forms
+
+This repository's [manual caller](../.github/workflows/self-review-manual.yml)
+follows the [canonical setup](consumer-workflows.md#manual-review): it forwards
+candidate text and lets the pinned Runtime classify command lines. Its supported
+forms therefore come from that immutable revision, including commands with
+surrounding whitespace or prose on other lines. Older consumer callers may have
+stricter filters; check both the installed caller and its Runtime pin before
+assuming source-revision syntax or usage feedback is available.
 
 ## Read the result
 

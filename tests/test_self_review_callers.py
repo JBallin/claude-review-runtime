@@ -14,15 +14,6 @@ PIN = "396f9f74195fe7df2b3081dca3d1550f2fb2e574"
 AUTOMATIC = w.WORKFLOWS / "self-review-automatic.yml"
 MANUAL = w.WORKFLOWS / "self-review-manual.yml"
 STATUS = w.WORKFLOWS / "self-review-status.yml"
-# Complete grammar adopted from the selected immutable Runtime revision.
-MANUAL_COMMANDS = {"/claude-review"}
-for model in ("opus", "sonnet", "haiku"):
-    MANUAL_COMMANDS.add(f"/claude-review {model}")
-for effort in ("low", "medium", "high", "xhigh", "max"):
-    MANUAL_COMMANDS.add(f"/claude-review {effort}")
-    for model in ("opus", "sonnet", "haiku"):
-        MANUAL_COMMANDS.add(f"/claude-review {model} {effort}")
-
 CALLERS = ((AUTOMATIC, "review", "claude-review.yml"),
            (MANUAL, "review", "claude.yml"),
            (STATUS, "status", "claude-review-status.yml"))
@@ -93,38 +84,92 @@ class CallerBoundaryTests(unittest.TestCase):
                 self.assertEqual(bool(w.evaluate(review, event)), allowed_review)
                 self.assertEqual(bool(w.evaluate(status, event)), allowed_status)
 
-    def test_manual_requires_trusted_exact_command_on_pr_comments(self):
+    def test_manual_forwards_candidate_text_without_duplicating_runtime_grammar(self):
         gate = w.folded(w.job(MANUAL, "eligibility"), "if", 4)
-        declared = re.search(r"contains\(fromJSON\('([^']+)'\), github.event.comment.body\)", gate)
-        self.assertIsNotNone(declared)
-        commands = json.loads(declared.group(1))
-        self.assertEqual(len(commands), len(MANUAL_COMMANDS))
-        self.assertEqual(set(commands), MANUAL_COMMANDS)
-        accepted = sorted(MANUAL_COMMANDS | {body.upper() for body in MANUAL_COMMANDS}
-                          | {body.title() for body in MANUAL_COMMANDS})
-        rejected = [variant for body in sorted(MANUAL_COMMANDS) for variant in (
-            " " + body, body + " ", body + "\n", "\t" + body, "`" + body + "`",
-            "> " + body, body + " now", body.replace(" ", "  ")) if variant != body]
-        rejected += ["/claude-review ultra", "/claude-review unknown",
-                     "/claude-review effort high", "/claude-review opus effort high",
-                     "/claude-review high opus",
-                     "/claude-review effort high opus", "/claude-review opus effort",
-                     "/claude-review opus effort $(id)", "/claude-review opus; echo bad",
-                     "@claude review", "Please @CLAUDE review this", "ordinary text", "", None]
+        self.assertIn("contains(github.event.comment.body, '/claude-review')", gate)
+        self.assertNotRegex(gate, r"fromJSON.*github.event.comment.body")
+        candidates = ("/claude-review", "/CLAUDE-REVIEW SONNET MEDIUM",
+                      "Context\n  /claude-review opus high \nThanks",
+                      "/claude-review opus effort high", "/claude-review high opus",
+                      "/claude-review\n/claude-review opus", "please /claude-review",
+                      "`/claude-review`", "> /claude-review", "```\n/claude-review\n```",
+                      "/claude-reviewing")
         for factory in (w.issue_comment_event, w.review_comment_event):
-            for association in ("OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR", "NONE",
-                                "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR"):
-                for body in accepted + rejected:
-                    with self.subTest(event=factory.__name__, association=association, body=body):
+            for association in ("OWNER", "MEMBER", "COLLABORATOR", "CONTRIBUTOR", "NONE"):
+                for body in candidates + ("ordinary text", "", None):
+                    for author_type, sender_type in (("User", "User"), ("Bot", "User"),
+                                                     ("User", "Bot"), ("", "User")):
+                        event = factory(body=body, association=association)
+                        event["event"]["comment"]["user"]["type"] = author_type
+                        event["event"]["sender"] = {"type": sender_type}
                         expected = (association in ("OWNER", "MEMBER", "COLLABORATOR")
-                                    and isinstance(body, str) and body.lower() in MANUAL_COMMANDS)
-                        self.assertEqual(bool(w.evaluate(gate, factory(body=body, association=association))), expected)
-        for body in accepted:
-            self.assertFalse(w.evaluate(gate, w.issue_comment_event(body=body, on_pr=False)))
+                                    and author_type == sender_type == "User"
+                                    and isinstance(body, str) and "/claude-review" in body.lower())
+                        with self.subTest(event=factory.__name__, association=association,
+                                          body=body, author_type=author_type, sender_type=sender_type):
+                            self.assertEqual(bool(w.evaluate(gate, event)), expected)
+            event = w.issue_comment_event(on_pr=False)
+            event["event"]["sender"] = {"type": "User"}
+            self.assertFalse(w.evaluate(gate, event))
         review = w.scalar(w.job(MANUAL, "review"), "if", 4)
         for result in ("true", "false", "", None):
             self.assertEqual(w.Evaluator(review, {"needs": {"eligibility": {
                 "outputs": {"eligible": result}}}}).evaluate(), result == "true")
+
+    def test_forwarded_invalid_and_ignored_text_cannot_acquire_review_state(self):
+        from test_manual_requests import usage_probe
+        from test_requester_permission import probe
+        samples = (("Context\n /claude-review opus medium \nThanks", "valid"),
+                   ("/claude-review opus effort high", "invalid"),
+                   ("/claude-review\n/claude-review high", "invalid"),
+                   ("please /claude-review", "ignored"),
+                   ("```\n/claude-review\n```", "ignored"),
+                   ("> /claude-review", "ignored"))
+        gate = w.folded(w.job(MANUAL, "eligibility"), "if", 4)
+        for body, classification in samples:
+            event = w.issue_comment_event(body=body)
+            event["event"]["sender"] = {"type": "User"}
+            self.assertTrue(w.evaluate(gate, event))
+            result, values, calls = usage_probe(event=event)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(values["classification"], classification)
+            self.assertEqual([c["method"] for c in calls],
+                             ["GET", "GET", "POST"] if classification == "invalid" else [])
+            start = w.scalar(w.job(w.MANUAL, "start-check"), "if", 4)
+            self.assertEqual(bool(w.Evaluator(start, {"needs": {"request": {
+                "outputs": values}}}).evaluate()), classification == "valid")
+            if classification != "valid":
+                publish = w.scalar(w.job(w.MANUAL, "publish-status"), "if", 4)
+                context = {"needs": {"request": {"result": "success", "outputs": values},
+                    "start-check": {"result": "failure", "outputs": {"configuration_valid": "true",
+                        "selection_accepted": "true", "tooling_unavailable": "true",
+                        "request_recognized": "true"}}}}
+                self.assertFalse(w.Evaluator(publish, context).evaluate())
+                self.assertNotIn("claude-review-runtime:", json.dumps(calls))
+        # The valid path still rechecks the original author before every phase,
+        # including model execution and normal/emergency publication.
+        for phase in ("request", "start-check", "review", "publish-status"):
+            result, calls, after, before = probe({"permission": "read", "user": {
+                "login": "comment-author", "id": 17}}, job=phase)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(after, before)
+            self.assertTrue(all(len(call) == 2 for call in calls))
+
+    def test_canonical_manual_example_keeps_the_same_admission_boundary(self):
+        guide = (w.WORKFLOWS.parent.parent / "docs" / "consumer-workflows.md").read_text()
+        example = guide.split("## Manual review\n", 1)[1].split("```yaml\n", 1)[1].split("```", 1)[0]
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "manual.yml"
+            path.write_text(example)
+            canonical = w.job(path, "eligibility")
+            installed = w.job(MANUAL, "eligibility")
+            self.assertEqual(canonical, installed)
+            canonical_review, installed_review = w.job(path, "review"), w.job(MANUAL, "review")
+            for field in ("needs", "if"):
+                self.assertEqual(w.scalar(canonical_review, field, 4), w.scalar(installed_review, field, 4))
+            self.assertEqual(w.block(canonical_review, "permissions", 4),
+                             w.block(installed_review, "permissions", 4))
+
 
 
 class ManualEligibilityTests(unittest.TestCase):
