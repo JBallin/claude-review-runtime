@@ -10,9 +10,9 @@ review completed, and whether the results are still current.
 
 ## Start here
 
-Read the [plain-language introduction](docs/what-is-claude-review-runtime.md) for
-an overview, then follow the [setup checklist](docs/consumer-workflows.md#first-review-checklist)
-to add Runtime to your repository.
+- **Understand Runtime:** read the [plain-language introduction](docs/what-is-claude-review-runtime.md).
+- **Set it up:** follow the [setup checklist](docs/consumer-workflows.md#first-review-checklist).
+- **Use the results:** see the [review guide](docs/review-guide.md#read-the-result).
 
 ## Usage
 
@@ -52,7 +52,3 @@ Read [Choosing a Claude code-review approach](docs/choosing-a-review-approach.md
   Anthropic-hosted reviews for eligible Team and Enterprise plans.
 - [Datadog’s code review action](https://github.com/DataDog/code-review-action):
   Another GitHub Actions option.
-
-## Contributing
-
-See the [contribution guide](CONTRIBUTING.md) for development and validation guidance.
