@@ -1,5 +1,9 @@
 # Integrated runtime audit
 
+This historical report records the revisions and evidence for a bounded audit.
+For current behavior and limitations, use the [review guide](review-guide.md)
+and [validation summary](validation.md).
+
 This audit addresses [issue 12](https://github.com/JBallin/claude-review-runtime/issues/12).
 It reviews the integrated source and deterministic offline contracts. It does
 not establish live model behavior, deployment readiness, or merge approval.
@@ -26,8 +30,10 @@ remains a separate delivery; this audit changes no caller pins.
 
 ## Findings and dispositions
 
-**Check history did not consistently fail closed on missing or malformed API
-evidence.** `check_run_history()` accepted successful empty output and `{}` as
+### Missing or malformed Check history
+
+Check history did not consistently fail closed on missing or malformed API
+evidence. `check_run_history()` accepted successful empty output and `{}` as
 an empty history. A completed review with no currently visible comments could
 therefore publish `success` without establishing whether prior exact-diff
 findings had been recorded and subsequently deleted. Malformed JSON or a null
@@ -43,6 +49,8 @@ history. Valid empty collections, extra API fields, multiple pages and nullable
 optional output fields remain supported. There is no change to permissions,
 model tools, credentials, caller eligibility or publication authority.
 
+### Nullable application metadata
+
 The first published correction was too strict about application metadata.
 Claude's review of `2d094f61006c7b914f9d0b51d6b8b668bcc42d7a` identified that
 GitHub's [official OpenAPI schema](https://github.com/github/rest-api-description/blob/main/descriptions/api.github.com/api.github.com.json)
@@ -53,6 +61,8 @@ types. It also checks the consumed conclusion field's non-null type. Missing/nul
 app metadata never grants trusted finding attribution. Regressions cover clean
 classification alongside such runs, preserved sticky findings from a separate
 trusted run, and rejection of invalid app/slug/conclusion types.
+
+### Incomplete history listings
 
 Codex's review of the same initial published head identified two further
 completeness gaps, both reproduced independently on subsequent revision
@@ -138,6 +148,8 @@ question: Read coverage currently combines successful returned lines, whereas
 inline publication requires exactly one receipt. No practical producer or
 attacker-controlled path was established; this is not reported as a vulnerability.
 A future offline stress pass may investigate it without relaxing completion.
+
+### Operational limits
 
 Existing limitations remain: GitHub provides no atomic compare-and-write for
 presentation; concurrency and immediate ownership/patch readbacks reduce races

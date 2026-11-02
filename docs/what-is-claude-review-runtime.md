@@ -12,5 +12,13 @@ whether the review is running, finished, or failed. Developers can see whether
 the review covers the latest changes without piecing together the review
 history themselves.
 
-See the [review presentation gallery](review-presentation-gallery.md) for
-illustrative examples of review progress and results.
+A completed review means Claude read the captured changes and Runtime verified
+the result and any attempted finding publication. It does not guarantee that
+every bug was found or approve a merge.
+
+## Next steps
+
+- [See examples](review-presentation-gallery.md) of review progress and results.
+- [Compare review approaches](choosing-a-review-approach.md) to decide whether
+  Runtime fits your needs.
+- [Set up Runtime](consumer-workflows.md#first-review-checklist) in your repository.
