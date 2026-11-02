@@ -32,7 +32,12 @@ diff changes, and assess whether a changed base invalidates previous evidence.
 Post `/claude-review` or one of its optional forms on its own line in a top-level
 or inline PR comment. Surrounding whitespace and prose on other lines are allowed;
 quoted and fenced examples are ignored. Matching is case-insensitive. The commenter must have an owner, member, or collaborator
-association; the action also checks actor/access eligibility. Ordinary issue
+association and current write or admin permission on the repository. Runtime verifies
+the original comment author, including on reruns, before admission, before starting
+the review, and before publishing results. Missing or unavailable permission
+evidence suppresses trusted Check, status, and reaction changes, including emergency
+publication. Access can change between these separate API checks and writes;
+they are not atomic. The action also checks actor/access eligibility. Ordinary issue
 comments and untrusted requests do not start model execution. The repository's
 pinned caller performs its own eligibility check. Runtime also
 classifies command lines before review starts and can post usage guidance without

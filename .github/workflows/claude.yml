@@ -156,6 +156,41 @@ jobs:
               output.write("classification=" + result["status"] + "\n")
               output.write("response=" + json.dumps(manual_usage_response(result["reason"]) if result["status"] == "invalid" else "") + "\n")
           PY_REQUEST
+      - name: Verify original requester permission
+        id: requester-permission
+        if: steps.request.outputs.classification == 'valid'
+        # Re-read the ORIGINAL comment author's access, never the rerun actor's.
+        # Independent of helper availability, captured PR code, and model output.
+        timeout-minutes: 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          COMMENTER_ID: ${{ github.event.comment.user.id }}
+        run: |
+          python3 - <<'PY_PERMISSION'
+          import json, os, re, subprocess
+          from urllib.parse import quote
+
+          try:
+              repo, login, user_id = (os.environ[name] for name in ("REPO", "COMMENTER", "COMMENTER_ID"))
+              if (not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo)
+                      or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,38}", login)
+                      or not re.fullmatch(r"[1-9][0-9]*", user_id)):
+                  raise ValueError("invalid original requester identity")
+              result = subprocess.run(
+                  ["gh", "api", f"repos/{repo}/collaborators/{quote(login, safe='')}/permission"],
+                  check=True, capture_output=True, text=True, timeout=30)
+              permission = json.loads(result.stdout)
+              user = permission.get("user", {})
+              if (permission.get("permission") not in ("write", "admin")
+                      or user.get("login") != login or type(user.get("id")) is not int
+                      or user["id"] != int(user_id)):
+                  raise ValueError("original requester write access was not verified")
+          except (AttributeError, KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError):
+              print("::error::Original requester's current write access could not be verified; no review state may be changed.")
+              raise SystemExit(1)
+          PY_PERMISSION
       - name: Explain invalid manual request
         if: steps.request.outputs.classification == 'invalid'
         env:
@@ -241,6 +276,40 @@ jobs:
     # published as that check's failure. A failure before the head SHA is
     # known cannot be attached to any commit and only fails the job.
     steps:
+      - name: Verify original requester permission
+        id: requester-permission
+        # Re-read the ORIGINAL comment author's access, never the rerun actor's.
+        # Independent of helper availability, captured PR code, and model output.
+        timeout-minutes: 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          COMMENTER_ID: ${{ github.event.comment.user.id }}
+        run: |
+          python3 - <<'PY_PERMISSION'
+          import json, os, re, subprocess
+          from urllib.parse import quote
+
+          try:
+              repo, login, user_id = (os.environ[name] for name in ("REPO", "COMMENTER", "COMMENTER_ID"))
+              if (not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo)
+                      or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,38}", login)
+                      or not re.fullmatch(r"[1-9][0-9]*", user_id)):
+                  raise ValueError("invalid original requester identity")
+              result = subprocess.run(
+                  ["gh", "api", f"repos/{repo}/collaborators/{quote(login, safe='')}/permission"],
+                  check=True, capture_output=True, text=True, timeout=30)
+              permission = json.loads(result.stdout)
+              user = permission.get("user", {})
+              if (permission.get("permission") not in ("write", "admin")
+                      or user.get("login") != login or type(user.get("id")) is not int
+                      or user["id"] != int(user_id)):
+                  raise ValueError("original requester write access was not verified")
+          except (AttributeError, KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError):
+              print("::error::Original requester's current write access could not be verified; no review state may be changed.")
+              raise SystemExit(1)
+          PY_PERMISSION
       - name: Validate workflow configuration
         id: configuration
         # Trusted, helper-independent validation must precede all review state.
@@ -498,6 +567,40 @@ jobs:
       finding_publication: ${{ steps.verify.outputs.finding_publication }}
       selection_evidence: ${{ steps.verify.outputs.selection_evidence }}
     steps:
+      - name: Verify original requester permission
+        id: requester-permission
+        # Re-read the ORIGINAL comment author's access, never the rerun actor's.
+        # Independent of helper availability, captured PR code, and model output.
+        timeout-minutes: 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          COMMENTER_ID: ${{ github.event.comment.user.id }}
+        run: |
+          python3 - <<'PY_PERMISSION'
+          import json, os, re, subprocess
+          from urllib.parse import quote
+
+          try:
+              repo, login, user_id = (os.environ[name] for name in ("REPO", "COMMENTER", "COMMENTER_ID"))
+              if (not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo)
+                      or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,38}", login)
+                      or not re.fullmatch(r"[1-9][0-9]*", user_id)):
+                  raise ValueError("invalid original requester identity")
+              result = subprocess.run(
+                  ["gh", "api", f"repos/{repo}/collaborators/{quote(login, safe='')}/permission"],
+                  check=True, capture_output=True, text=True, timeout=30)
+              permission = json.loads(result.stdout)
+              user = permission.get("user", {})
+              if (permission.get("permission") not in ("write", "admin")
+                      or user.get("login") != login or type(user.get("id")) is not int
+                      or user["id"] != int(user_id)):
+                  raise ValueError("original requester write access was not verified")
+          except (AttributeError, KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError):
+              print("::error::Original requester's current write access could not be verified; no review state may be changed.")
+              raise SystemExit(1)
+          PY_PERMISSION
       - name: Check out repository
         # v7.0.1
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -983,6 +1086,40 @@ jobs:
       checks: write
       issues: write
     steps:
+      - name: Verify original requester permission
+        id: requester-permission
+        # Re-read the ORIGINAL comment author's access, never the rerun actor's.
+        # Independent of helper availability, captured PR code, and model output.
+        timeout-minutes: 1
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          COMMENTER: ${{ github.event.comment.user.login }}
+          COMMENTER_ID: ${{ github.event.comment.user.id }}
+        run: |
+          python3 - <<'PY_PERMISSION'
+          import json, os, re, subprocess
+          from urllib.parse import quote
+
+          try:
+              repo, login, user_id = (os.environ[name] for name in ("REPO", "COMMENTER", "COMMENTER_ID"))
+              if (not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo)
+                      or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,38}", login)
+                      or not re.fullmatch(r"[1-9][0-9]*", user_id)):
+                  raise ValueError("invalid original requester identity")
+              result = subprocess.run(
+                  ["gh", "api", f"repos/{repo}/collaborators/{quote(login, safe='')}/permission"],
+                  check=True, capture_output=True, text=True, timeout=30)
+              permission = json.loads(result.stdout)
+              user = permission.get("user", {})
+              if (permission.get("permission") not in ("write", "admin")
+                      or user.get("login") != login or type(user.get("id")) is not int
+                      or user["id"] != int(user_id)):
+                  raise ValueError("original requester write access was not verified")
+          except (AttributeError, KeyError, OSError, TypeError, ValueError, subprocess.SubprocessError):
+              print("::error::Original requester's current write access could not be verified; no review state may be changed.")
+              raise SystemExit(1)
+          PY_PERMISSION
       - name: Check review tooling
         id: tooling-ready
         if: always()
@@ -1047,7 +1184,7 @@ jobs:
         # a missing helper cannot omit the failure Check; if GitHub's
         # API stays unavailable, publishing may still fail and fail the job.
         # Uses only gh and jq from the runner image, with no checkout of its own.
-        if: always() && (steps.tooling-ready.outcome != 'success' || needs.start-check.outputs.tooling_unavailable == 'true')
+        if: always() && steps.requester-permission.outcome == 'success' && (steps.tooling-ready.outcome != 'success' || needs.start-check.outputs.tooling_unavailable == 'true')
         timeout-minutes: 5
         env:
           PRESENTATION_OWNER: ${{ needs.start-check.outputs.presentation_owner }}

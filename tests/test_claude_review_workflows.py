@@ -540,6 +540,7 @@ class JobStructureTests(unittest.TestCase):
             AUTOMATIC: ["Validate workflow configuration", "Capture presentation start", "Check review tooling", "Select review configuration",
                         "Start Claude Review check", "Require valid review configuration", "Fetch PR review inputs"],
             MANUAL: [
+                "Verify original requester permission",
                 "Validate workflow configuration",
                 "Resolve PR under review",
                 "Capture presentation start",
@@ -560,7 +561,7 @@ class JobStructureTests(unittest.TestCase):
 
     def test_fork_evidence_failures_cannot_skip_the_manual_review(self):
         named = steps(job(MANUAL, "start-check"))
-        required = ["Validate workflow configuration", "Resolve PR under review", "Require valid review configuration", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
+        required = ["Verify original requester permission", "Validate workflow configuration", "Resolve PR under review", "Require valid review configuration", "Validate manual patch authority", "Capture PR review snapshot", "Upload review snapshot"]
         evidence_only = [
             "Check review tooling",
             "Start Claude Review check",
@@ -686,7 +687,7 @@ class JobStructureTests(unittest.TestCase):
                 expected_fallback = "always() && steps.tooling-ready.outcome != 'success'"
                 if path == MANUAL:
                     expected_publish += " && needs.start-check.outputs.tooling_unavailable != 'true'"
-                    expected_fallback = ("always() && (steps.tooling-ready.outcome != 'success' || "
+                    expected_fallback = ("always() && steps.requester-permission.outcome == 'success' && (steps.tooling-ready.outcome != 'success' || "
                                          "needs.start-check.outputs.tooling_unavailable == 'true')")
                 self.assertEqual(scalar(named["Publish Claude Review result"], "if", 8), expected_publish)
                 fallback = named["Record failure without review tooling"]
@@ -857,7 +858,7 @@ class JobStructureTests(unittest.TestCase):
                     self.assertIn("REVIEW_HELPER: ${{ steps.tooling-ready.outputs.helper-path }}", "\n".join(job(path, name)))
         fallback = steps(job(MANUAL, "publish-status"))["Record failure without review tooling"]
         self.assertIs(Evaluator(scalar(fallback, "if", 8),
-                               {"steps": {"tooling-ready": {"outcome": "skipped"}}}).evaluate(), True)
+                               {"steps": {"requester-permission": {"outcome": "success"}, "tooling-ready": {"outcome": "skipped"}}}).evaluate(), True)
         normal = scalar(steps(job(MANUAL, "publish-status"))["Publish Claude Review result"], "if", 8)
         self.assertIs(Evaluator(normal, {"steps": {"tooling-ready": {"outcome": "success"}}}).evaluate(), True)
 
@@ -1157,7 +1158,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     if name == "publish-status":
                         publish = scalar(steps(job(path, name))["Publish Claude Review result"], "if", 8)
                         fallback = scalar(steps(job(path, name))[FALLBACK_STEP], "if", 8)
-                        context = {"steps": {"tooling-ready": {"outcome": "failure"}}}
+                        context = {"steps": {"requester-permission": {"outcome": "success"}, "tooling-ready": {"outcome": "failure"}}}
                         self.assertIs(Evaluator(publish, context).evaluate(), False)
                         self.assertIs(Evaluator(fallback.removeprefix("always() && "), context).evaluate(), True)
                         result, calls = self.run_fallback(path, STATUS_COMMENT_ID="")
@@ -1196,7 +1197,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                    for key in ("configuration_valid", "request_recognized", "tooling_unavailable", "selection_accepted")}
         context = {"needs": {"request": request, "start-check": {"result": "failure" if select_outcome != "success" else "success",
                                              "outputs": outputs}},
-                   "steps": {"tooling-ready": {"outcome": publish_tooling}}}
+                   "steps": {"requester-permission": {"outcome": "success"}, "tooling-ready": {"outcome": publish_tooling}}}
         publication = job(MANUAL, "publish-status")
         allowed = Evaluator(scalar(publication, "if", 4), context).evaluate()
         named = steps(publication)
