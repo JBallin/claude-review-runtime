@@ -14,7 +14,7 @@ jobs:
       contains(fromJSON('["/claude-review","/claude-review opus","/claude-review effort low","/claude-review effort medium","/claude-review effort high","/claude-review effort xhigh","/claude-review effort max","/claude-review opus effort low","/claude-review opus effort medium","/claude-review opus effort high","/claude-review opus effort xhigh","/claude-review opus effort max"]'), github.event.comment.body) &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
       (github.event_name == 'pull_request_review_comment' || github.event.issue.pull_request)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 2
     permissions:
       pull-requests: read

@@ -23,7 +23,7 @@ class BaseAdvancePresentationTests(unittest.TestCase):
         self.assertIn("## Claude Review", body)
         self.assertNotIn("**Last completed review**", body)
         self.assertIn("✅ **Completed**" if result == "success" else "⚠️ **Findings**", body)
-        self.assertIn("| Status | Reviewed commit | Review trigger |", body)
+        self.assertIn("| Status | Commit | Review trigger |", body)
         self.assertIn(f"**Current target commit:** {check.commit_link(self.api.base_tip)} on `main`", body)
         self.assertEqual(body.count(check.TARGET_TIP_WARNING), 1)
         self.assertIn("<!--\n**Reason:** " + check.STATUS_REASONS["base_advanced"] + "\n-->", body)
