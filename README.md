@@ -8,17 +8,12 @@ Built on [Anthropic’s Claude Code Action](https://github.com/anthropics/claude
 Claude Review Runtime helps you see which commits Claude reviewed, whether the
 review completed, and whether the results are still current.
 
-## Start here
-
-- **Understand Runtime:** read the [plain-language introduction](docs/what-is-claude-review-runtime.md).
-- **Set it up:** follow the [setup checklist](docs/consumer-workflows.md#first-review-checklist).
-- **Use the results:** see the [review guide](docs/review-guide.md#read-the-result).
+Read the [plain-language introduction](docs/what-is-claude-review-runtime.md).
 
 ## Usage
 
-Use the `main` branch for Claude account tokens or the separate `api-key` branch
-for Anthropic API keys. The API-key variant has not been live-tested; see the
-[setup prerequisites](docs/consumer-workflows.md#prerequisites).
+Supports both Claude account tokens and Anthropic API keys; follow the
+[consumer setup guide](docs/consumer-workflows.md#first-review-checklist) to get started.
 
 Reviews run automatically when a PR becomes ready for review. Authorized users
 can also comment `/claude-review` on a PR to request an on-demand review.
