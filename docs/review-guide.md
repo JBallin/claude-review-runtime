@@ -19,7 +19,7 @@ the executing runtime's repository, SHA, and workflow path.
 | Caller | Events | Eligibility and behavior |
 | --- | --- | --- |
 | [Automatic](../.github/workflows/self-review-automatic.yml) | PR `opened`, `ready_for_review` | Open, non-draft, same-repository PRs; Dependabot-triggered runs are excluded. |
-| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted exact [manual command](#request-a-manual-review), including optional Opus/effort selection, followed by a read-only check for an open, non-draft, same-repository PR. |
+| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted entire-comment command accepted by the pinned caller, followed by a read-only check for an open, non-draft, same-repository PR. |
 | [Status](../.github/workflows/self-review-status.yml) | PR `synchronize`, `edited` | Open, same-repository PRs; refreshes existing presentation after head changes or base-ref retargeting. |
 
 Stacked PRs are eligible; the callers do not restrict the base branch. The pinned
@@ -29,23 +29,29 @@ diff changes, and assess whether a changed base invalidates previous evidence.
 
 ## Request a manual review
 
-Post `/claude-review` or one of its optional forms as the entire top-level or
-inline PR comment, without surrounding whitespace, quotes, or unrelated text. Matching is
-case-insensitive. The commenter must have an owner, member, or collaborator
-association; the action also checks actor/access eligibility. Ordinary issue
-comments and untrusted requests do not start model execution. The eligibility
-job has read-only PR access and performs no checkout before calling the pinned
-runtime. The runtime resolves the current patch once for each accepted request.
+Post `/claude-review` or one of its optional forms on its own line in a top-level
+or inline PR comment. Surrounding whitespace and prose on other lines are allowed;
+quoted and fenced examples are ignored. Matching is case-insensitive. The commenter must have an owner, member, or collaborator
+association and current write or admin permission on the repository. Runtime verifies
+the original comment author, including on reruns, before admission, before starting
+the review, and before publishing results. Missing or unavailable permission
+evidence suppresses trusted Check, status, and reaction changes, including emergency
+publication. Access can change between these separate API checks and writes;
+they are not atomic. The action also checks actor/access eligibility. Ordinary issue
+comments and untrusted requests do not start model execution. The repository's
+pinned caller performs its own eligibility check. Runtime also
+classifies command lines before review starts and can post usage guidance without
+checking out PR code. The runtime resolves the current patch once for each accepted request.
 
-Manual requests support [optional Opus and effort selection](consumer-workflows.md#optional-model-and-effort-selection).
-Model evidence is diagnostic: a different observed model produces a notice,
+Short model and effort selections include
+`/claude-review opus`, `/claude-review high`, and `/claude-review opus high`.
+Models are Opus, Sonnet, or Haiku; effort is Low, Medium, High, Xhigh, or Max.
+See [model and effort defaults](consumer-workflows.md#model-and-effort-defaults)
+and [manual command forms](consumer-workflows.md#optional-model-and-effort-selection).
+Model evidence is diagnostic: a different primary model produces a notice,
 without changing completion or finding verification.
 
-The command deliberately avoids a Claude mention. `@claude review` can invoke
-Anthropic's separate managed review service and does not invoke this checkout's
-manual entrypoint or this repository’s callers.
-Provider-bot reactions on comments are preserved and are not this runtime's
-progress or completion signals.
+`@claude review` does not invoke Runtime’s manual entrypoint or this repository’s callers.
 
 ## Read the result
 
@@ -56,8 +62,22 @@ accepted attempt, including its captured head/base and workflow run. Checks and
 workflow runs retain earlier attempts. Incomplete and cancelled reviews show
 a concise explanation and recovery link above Details. Verified unread inputs
 take precedence over workflow-change context. Details retain the reason receipt
-and captured attempt identity. A comment API or permission failure is reported in
-the Check/run when publication is possible. Accepted manual requests also receive
+and captured attempt identity. Resolved Model and Effort appear in each
+run’s Details, above its baseline and Runtime provenance. Model labels use
+Sonnet, Opus, or Haiku; full execution identifiers stay in the recorded metadata. Each current or
+previous attempt retains its own settings; a status refresh does not apply
+today’s defaults to an older review, and missing historical settings are not
+filled in. New attempts resolve
+each field from a valid manual override, then a valid workflow input, then
+Runtime’s Sonnet / Medium defaults. Every nonblank workflow input must be valid,
+including inputs overridden by a manual request. Invalid workflow configuration
+fails the Actions configuration step before Claude starts, with an error and run
+summary; it does not replace an existing review result or Check. Invalid manual
+arguments reject the whole request before review starts. Eligible commenters receive a separate usage
+response without changing an existing review result or Check. Current model warnings stay above Details. A previous run’s
+recorded model mismatch appears inside Previous completed review before its
+settings, using only that run’s captured evidence. A comment API or permission
+failure is reported in the Check/run when publication is possible. Accepted manual requests also receive
 runtime reactions on their top-level or inline trigger comment: 👀 while running and 👍
 only after verified clean completion and successful authoritative Check
 publication. For a manual review, 👍 means the captured patch review completed
@@ -176,10 +196,9 @@ unverifiable owner evidence suppresses presentation writes. A start can establis
 ownership on a legacy status; finalization cannot. Duplicate starts do not reset
 a completed result or reclaim presentation from a newer request.
 
-The status presents one row with Status, a context-sensitive commit column
-(Reviewed commit, Attempt commit, or PR commit), and Review trigger.
+The status presents one row with Status, Commit, and Review trigger.
 For a verified clean or findings result, Status shows its persisted completion time
-and Reviewed commit identifies the reviewed SHA. The current-version or integration caveat
+and Commit identifies the reviewed SHA. The current-version or integration caveat
 appears below the row; newer running, failed, or incomplete attempts remain prominent
 in the main table. Previous completed-review evidence moves inside Details,
 separate from the current attempt’s metadata. Workflow links are grouped with
@@ -304,6 +323,24 @@ presence, not credential validity or successful live App/OIDC execution. The
 caller setup does not install an App or configure credentials. New credentials
 or access grants require a separate decision.
 
+When the trusted verifier reports an inline-comment tool failure, the review
+remains incomplete even if the action and workflow succeeded. Assess any posted
+findings; they remain recorded independently of this attempt's completion.
+The status links to that attempt's Check and shows the number posted only when
+trusted discovery and the pre-review snapshot establish it. An unavailable count
+does not mean zero findings. Repeated finalization preserves an established
+count for the same attempt after comment deletion; legacy or conflicting count
+evidence stays unknown. This category does not establish the underlying
+provider, network, or authentication cause.
+
+For a final candidate with no applicable review in progress, request one approved
+fresh full review through the deployed [manual caller](#request-a-manual-review).
+Verify its captured patch and completion in the resulting Check. Rerunning only
+the publisher cannot repair missing model or tool completion. If the failure
+repeats, stop and investigate the permitted upstream evidence; this guidance
+does not authorize broader credentials, logging, or access. Earlier failed Checks
+and posted findings remain historical evidence.
+
 Default Anthropic App/OIDC validation can reject a new or modified caller
 workflow until it exists with matching content on the default branch. A rejected
 caller may skip model execution even when Actions orchestration is green; the
@@ -311,26 +348,35 @@ trusted `Claude Review` Check remains incomplete or failed, and required review
 remains unsatisfied. This condition does not mean every first run fails or every
 PR changing a workflow is unreviewable.
 
-Related upstream proposal: [claude-code-action #1879](https://github.com/anthropics/claude-code-action/pull/1879)
-would expose an explicit workflow-validation skip as an action output. It is
-an open proposal, not an available fix or a Runtime dependency.
+The pinned action does not expose a structured workflow-validation result, so
+Runtime cannot confirm this cause automatically. [Issue #9](https://github.com/JBallin/claude-review-runtime/issues/9)
+tracks the limitation; [claude-code-action #1879](https://github.com/anthropics/claude-code-action/pull/1879)
+proposes the missing signal and remains open and unmerged.
 
-An incomplete review may flag changes to its caller or Runtime workflow as
-context, not a confirmed cause. The warning reflects that attempt's captured
-patch; unrelated changes don't trigger it. If the relevant evidence is
-unavailable or ambiguous, the explanation stays generic.
+When the captured patch changes a relevant review workflow, the Incomplete
+message identifies that change as a likely cause, not a confirmed rejection.
+Check the linked attempt's logs to confirm. Unrelated workflow changes do not
+trigger this explanation; unavailable or ambiguous evidence stays generic.
 
-Reconcile the automatic review's Check and workflow run before requesting
-recovery. After a confirmed caller-validation rejection, use the already deployed
-trusted manual caller only when no applicable review request is completed or
-pending. Follow its documented command and verify the captured head, base, and
-executing Runtime revision in the resulting Check and workflow run. A pin update
-alone does not require manual review; this recovery applies to the confirmed
-rejection, not every caller change.
+Before requesting recovery, reconcile the authoritative Check and workflow run.
+After checking the attempt's logs, an authorized user can try the trusted manual
+caller already deployed on the default branch, if this repository has one and
+the PR meets its eligibility rules. Post the supported
+[`/claude-review` command](#request-a-manual-review) only when no applicable review
+request is completed or pending. Verify the captured head, base, and executing
+Runtime revision in the resulting Check and workflow run. A pin update alone
+does not require manual review, and a manual request is not guaranteed to succeed.
 
 Distinguish the PR's proposed pin from the caller and Runtime actually executing
-each attempt. Inspect the linked run's caller and referenced workflows, then
-the Check's `runtime_repository`, `runtime_sha`, and `runtime_workflow_path`.
+each attempt. Status and manual receipt Details link the exact **Runtime** when trusted
+provenance is available; unknown provenance is omitted. Status refreshes retain
+the recorded attempt’s Runtime rather than substituting the refresher’s revision. The Check's
+`runtime_repository`, `runtime_sha`, and `runtime_workflow_path` retain the same
+provenance. Inspect the linked run's caller and referenced workflows as needed.
+Runtime metadata alone does not identify a pin-change recovery. Compare the
+captured pin change with that attempt's executed revision before concluding
+that the deployed Runtime ran instead of the proposed pin. Generic manual
+receipts do not make this inference.
 A deployed manual caller can execute its previously installed Runtime while
 reviewing the proposed patch. A clean review through that older revision does
 not establish live adoption of the proposed pin. Automatic and manual attempts
@@ -352,6 +398,22 @@ runner preparation can prevent
 model execution or publication. Resolve the reported prerequisite before
 requesting another approved review; do not switch credentials or expand access
 to bypass a rejection.
+
+### Turn-limit failures
+
+Automatic and manual reviews omit an explicit turn cap and retain a 20-minute
+review-job timeout. See [Execution limits](design-notes.md#execution-limits) for
+the controls, evidence, and tradeoff.
+
+When trusted execution evidence establishes a turn-limit error, the Check and
+status explain it. Historical configured-cap attempts can also have SDK success
+rejected by the Action's count comparison and remain incomplete. **Turns** in
+collapsed Details and the Actions summary is the validated SDK-reported count
+for that attempt, or unavailable. It does not measure API rounds, tokens, cost,
+quota, or the native budget. Missing or malformed evidence does not
+establish a specific cause, and a turn-limit diagnosis does not establish complete
+input reading or satisfy review completion. Inspect the linked attempt before
+requesting an approved retry.
 
 ### Incomplete captured-input reads
 

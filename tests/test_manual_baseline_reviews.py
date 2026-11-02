@@ -197,8 +197,9 @@ class ManualBaselineTests(unittest.TestCase):
                               + check.commit_link(BASE_TIP, REPO), details)
                 if observed and observed != BASE_TIP:
                     self.assertEqual(body.count(note), 1)
+                    self.assertTrue(details.startswith("\n<summary>ℹ️ Details</summary>\n\n" + note + "\n\n**[Reviewed]"))
                     self.assertIn("**Observed target commit:** " + check.commit_link(observed, REPO)
-                                  + " on `main`\n\n" + note + "\n\n</details>", details)
+                                  + " on `main`  \n**Turns:** unavailable\n\n</details>", details)
                 else:
                     self.assertNotIn(note, body)
                     self.assertNotIn("**Observed target commit:**", body)
@@ -212,6 +213,122 @@ class ManualBaselineTests(unittest.TestCase):
         self.assertNotIn("integration", self.api.notices[0]["body"].lower())
         self.assertNotIn("merge approval", self.api.notices[0]["body"].lower())
         self.assertIn(BASE_TIP, self.api.notices[0]["body"])
+
+    def test_manual_receipt_distinguishes_runtime_from_reviewed_patch_and_baseline(self):
+        runtime_sha = "f" * 40
+        for kind in ("issue_comment", "pull_request_review_comment"):
+            with self.subTest(kind=kind):
+                self.reset_manual(kind)
+                os.environ.update(RUNTIME_REPOSITORY="review/runtime", RUNTIME_SHA=runtime_sha,
+                                  RUNTIME_WORKFLOW_PATH=".github/workflows/claude.yml")
+                self.start()
+                self.finish()
+                self.notice()
+                body = self.api.notices[0]["body"]
+                visible, details = body.split("<details>", 1)
+                self.assertNotIn("Runtime", visible)
+                self.assertIn(check.commit_link(HEAD, REPO), visible)
+                self.assertIn(check.commit_link(BASE_TIP, REPO), details)
+                self.assertEqual(details.count("**Runtime:**"), 1)
+                self.assertIn("**Runtime:** [`review/runtime@fffffff`]"
+                              f"(https://github.com/review/runtime/blob/{runtime_sha}/.github/workflows/claude.yml)",
+                              details)
+                self.assertNotIn("current main", body.lower())
+                self.assertIn(check.completion_marker(REPO, 7, HEAD, "main", BASE_TIP, MERGE_BASE), body)
+                identity = check.review_identity(HEAD)
+                self.assertEqual(identity["runtime_sha"], runtime_sha)
+                self.assertEqual(identity["reviewed_sha"], HEAD)
+
+    def test_missing_or_unsafe_runtime_provenance_does_not_invent_a_runtime_link(self):
+        valid = {"RUNTIME_REPOSITORY": "review/runtime", "RUNTIME_SHA": "f" * 40,
+                 "RUNTIME_WORKFLOW_PATH": ".github/workflows/claude.yml"}
+        marker = check.completion_marker(REPO, 7, HEAD, "main", BASE_TIP, MERGE_BASE)
+        for key, value in (("RUNTIME_REPOSITORY", ""), ("RUNTIME_SHA", ""),
+                           ("RUNTIME_WORKFLOW_PATH", ""), ("RUNTIME_REPOSITORY", "evil/repo](https://bad.invalid)"),
+                           ("RUNTIME_SHA", "main"), ("RUNTIME_WORKFLOW_PATH", "../claude.yml")):
+            with self.subTest(key=key, value=value):
+                os.environ.update(valid)
+                os.environ[key] = value
+                body = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, marker,
+                                                     os.environ["DETAILS_URL"])
+                self.assertNotIn("**Runtime:**", body)
+                self.assertIn(check.commit_link(HEAD, REPO), body)
+
+    def test_later_runtime_does_not_rewrite_or_duplicate_historical_manual_receipt(self):
+        os.environ.update(RUNTIME_REPOSITORY="review/runtime", RUNTIME_SHA="f" * 40,
+                          RUNTIME_WORKFLOW_PATH=".github/workflows/claude.yml")
+        self.start()
+        self.finish()
+        self.notice()
+        original = copy.deepcopy(self.api.notices)
+        self.assertIn("review/runtime@fffffff", original[0]["body"])
+        os.environ["RUNTIME_SHA"] = NEWER
+        self.api.calls.clear()
+        self.notice()
+        self.assertEqual(self.api.notices, original)
+        self.assertFalse(any(method in ("POST", "PATCH") and "comments" in path
+                             for method, path, _ in self.api.calls))
+
+    def test_selection_survives_standing_status_receipt_and_stale_refresh(self):
+        for model, expected in (
+                ('claude-opus-5-5', '**Model:** Opus · **Effort:** High'),
+                ('claude-sonnet-4-6', 'Model mismatch:** Sonnet observed'),
+                (None, 'primary evidence missing')):
+            with self.subTest(model=model):
+                self.reset_manual()
+                os.environ['TRIGGER_COMMENT'] = '/claude-review opus high'
+                owner = self.start()
+                self.assertIn('**Model:** Opus · **Effort:** High', self.api.status['body'])
+                record = check.selection_record(owner)
+                if model:
+                    record.update(models=sorted(['claude-haiku-4-5', model]),
+                                  model_evidence='mixed', execution_attempt=1,
+                                  primary_model_evidence={'initialization': model,
+                                                          'assistant': [model], 'attempt': 1})
+                os.environ['SELECTION_EVIDENCE'] = json.dumps(record)
+                self.finish()
+                self.notice()
+                self.assertEqual(len(self.api.notices), 1)
+                for body in (self.api.status['body'], self.api.notices[0]['body']):
+                    main, details = body.split('<details>', 1)
+                    self.assertIn(expected, details if model == 'claude-opus-5-5' else main)
+                    self.assertIn('**Effort:** High', details)
+                    self.assertNotIn('**Effort:**', main)
+                    self.assertNotIn('Haiku', body.split('<details>')[0])
+                    self.assertNotIn('**Observed effort:**', body)
+                receipt = self.api.notices[0]['body'].split('<details>')[0]
+                self.assertIn('**Reviewed commit:** ' + check.commit_link(HEAD, REPO), receipt)
+                for notice in check.selection_notice(record):
+                    self.assertIn(notice, receipt)
+                os.environ.pop('TRIGGER_COMMENT')
+                os.environ.pop('SELECTION_EVIDENCE')
+                self.api.base_tip = OTHER
+                check.cmd_stale()
+                self.assertIn(expected, self.api.status['body'])
+                self.assertEqual(check.current_selection(owner, self.api.status), record)
+
+    def test_completed_settings_follow_captured_patch_when_head_or_ref_moves_before_finish(self):
+        for movement in ("head", "ref"):
+            for state in ("success", "action_required"):
+                with self.subTest(movement=movement, state=state):
+                    self.reset_manual()
+                    os.environ['TRIGGER_COMMENT'] = '/claude-review opus high'
+                    owner = self.start()
+                    record = check.selection_record(owner)
+                    record.update(models=['claude-opus-5-5'], model_evidence='observed', execution_attempt=1,
+                                  primary_model_evidence={'initialization': 'claude-opus-5-5',
+                                                          'assistant': ['claude-opus-5-5'], 'attempt': 1})
+                    os.environ['SELECTION_EVIDENCE'] = json.dumps(record)
+                    if movement == "head":
+                        self.api.pr['head']['sha'] = OTHER
+                    else:
+                        self.api.pr['base']['ref'] = 'release'
+                    self.finish(state)
+                    self.assertEqual(check.status_state(self.api.status), 'stale')
+                    details = self.api.status['body'].split('<details>', 1)[1]
+                    self.assertIn('**Model:** Opus · **Effort:** High', details)
+                    self.assertEqual(check.last_completed_review_details(self.api.status)['selection'], record)
+                    os.environ.pop('SELECTION_EVIDENCE')
 
     def test_status_refresh_cannot_recreate_removed_clean_signals(self):
         owner = self.start()

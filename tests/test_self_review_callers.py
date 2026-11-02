@@ -10,15 +10,18 @@ from pathlib import Path
 
 import test_claude_review_workflows as w
 
-PIN = "b9a56eae9db8d11b67f5b6c5682c349146124711"
+PIN = "396f9f74195fe7df2b3081dca3d1550f2fb2e574"
 AUTOMATIC = w.WORKFLOWS / "self-review-automatic.yml"
 MANUAL = w.WORKFLOWS / "self-review-manual.yml"
 STATUS = w.WORKFLOWS / "self-review-status.yml"
 # Complete grammar adopted from the selected immutable Runtime revision.
-MANUAL_COMMANDS = {"/claude-review", "/claude-review opus"}
+MANUAL_COMMANDS = {"/claude-review"}
+for model in ("opus", "sonnet", "haiku"):
+    MANUAL_COMMANDS.add(f"/claude-review {model}")
 for effort in ("low", "medium", "high", "xhigh", "max"):
-    MANUAL_COMMANDS.add(f"/claude-review effort {effort}")
-    MANUAL_COMMANDS.add(f"/claude-review opus effort {effort}")
+    MANUAL_COMMANDS.add(f"/claude-review {effort}")
+    for model in ("opus", "sonnet", "haiku"):
+        MANUAL_COMMANDS.add(f"/claude-review {model} {effort}")
 
 CALLERS = ((AUTOMATIC, "review", "claude-review.yml"),
            (MANUAL, "review", "claude.yml"),
@@ -102,7 +105,9 @@ class CallerBoundaryTests(unittest.TestCase):
         rejected = [variant for body in sorted(MANUAL_COMMANDS) for variant in (
             " " + body, body + " ", body + "\n", "\t" + body, "`" + body + "`",
             "> " + body, body + " now", body.replace(" ", "  ")) if variant != body]
-        rejected += ["/claude-review effort ultra", "/claude-review sonnet",
+        rejected += ["/claude-review ultra", "/claude-review unknown",
+                     "/claude-review effort high", "/claude-review opus effort high",
+                     "/claude-review high opus",
                      "/claude-review effort high opus", "/claude-review opus effort",
                      "/claude-review opus effort $(id)", "/claude-review opus; echo bad",
                      "@claude review", "Please @CLAUDE review this", "ordinary text", "", None]

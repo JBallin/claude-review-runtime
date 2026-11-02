@@ -28,6 +28,14 @@ HEADING = "SAMPLE ONLY — Claude Review gallery"
 GALLERY = ROOT / "docs" / "review-presentation-gallery.md"
 REGENERATE = "python3 -B scripts/render_presentation_gallery.py --write"
 FINDINGS_SAMPLE = "current-findings"
+# Retain links to input variants that share one rendered presentation.
+CASE_ANCHOR_ALIASES = {
+    "current-clean": ("workflow-default-observed", "inherited-model-observed"),
+    "plain-selection": ("manual-partial-default",),
+    "opus-observed": ("opus-multiple",),
+    "manual-invalid-model": ("manual-invalid-effort", "manual-reversed-values",
+                             "manual-unsupported-suffix", "manual-unsupported-keyword"),
+}
 SYNTHETIC_FINDING = (
     "`src/cache.py:42` — **[P2] Invalidate cached entries after deletion.** "
     "Deleting an item removes it from storage but leaves its cached value intact, "
@@ -49,7 +57,7 @@ class GallerySample(NamedTuple):
 # Reading order is separate from stable case identities and display numbers.
 GROUP_ORDER = (
     "current-completion", "baseline-completion", "changed-head", "incomplete",
-    "compact-completion", "running-history", "incomplete-history", "retargeted",
+    "compact-completion", "manual-recovery", "running-history", "incomplete-history", "retargeted",
     "publication-incomplete", "publication-unavailable", "running-unavailable",
     "shared-run", "legacy-history", "stale-running",
 )
@@ -65,6 +73,9 @@ def fixture_environment():
         "BASE_SHA": fixtures.BASE_TIP,
         "DETAILS_URL": "https://github.com/owner/repo/actions/runs/5",
         "GITHUB_SERVER_URL": "https://github.com",
+        "RUNTIME_REPOSITORY": "JBallin/claude-review-runtime",
+        "RUNTIME_SHA": "f" * 40,
+        "RUNTIME_WORKFLOW_PATH": ".github/workflows/claude.yml",
     })
     try:
         yield
@@ -78,24 +89,41 @@ def strip_operational_markers(body):
     return OPERATIONAL_MARKER.sub("", body)
 
 
-def gallery_samples():
-    """Return stable cases grouped for reading, using raw production output."""
+def presentation_samples():
+    """Keep input fixtures available to tests independently of gallery selection."""
     with fixture_environment(), mock.patch.object(check, "now", return_value=COMPLETED_AT):
         owner = fixtures.presentation_owner(started=STARTED)
+        def sample_execution(sample_owner):
+            return {"version": 2, "generation": sample_owner["generation"], "run": sample_owner["run"],
+                    "attempt": sample_owner["attempt"], "execution": "observed",
+                    "reason": "execution_observed", "num_turns": 30, "max_turns": None}
+
         details = {
             "base_sha": fixtures.BASE_TIP,
             "run_url": "https://github.com/owner/repo/actions/runs/5",
             "completed_at": COMPLETED_AT,
             "trigger": "PR opened for review",
             "generation": owner["generation"],
+            "runtime": check.executing_runtime(),
+            "execution": {"owner": owner, "record": sample_execution(owner)},
         }
 
         def status(state, *, head=fixtures.HEAD, base_ref="main", **options):
+            record_owner = options.get("owner", owner)
+            if record_owner and "selection" not in options:
+                config = check.resolve_configuration(
+                    "/claude-review", automatic=record_owner["kind"] == "automatic")
+                observed = state in ("success", "action_required") or (
+                    state == "stale" and options.get("owner_running") is False)
+                options["selection"] = configured(
+                    record_owner, config, "claude-sonnet-5-5" if observed else None)
             return check.status_comment_body(
                 head, base_ref, state, **{
                     "owner": owner,
+                    "execution_record": sample_execution(options.get("owner", owner)) if state in ("success", "action_required") and options.get("owner", owner) else None,
                     "trigger_label": "PR opened for review",
                     "completed_at": COMPLETED_AT,
+                    "runtime": check.executing_runtime() if options.get("owner", owner) else None,
                     **options,
                 }
             )
@@ -109,27 +137,83 @@ def gallery_samples():
             "reason": check.STATUS_REASONS["stale"],
             "completed_owner_verified": True,
         }
-        manual_owner = fixtures.presentation_owner(kind="issue_comment", target=12, started=STARTED)
-        def selected(models, evidence="observed", attempt=1, model="opus", effort="high", state="success", **options):
+        request_owner = fixtures.presentation_owner(kind="issue_comment", target=12, started=STARTED)
+        manual_owner = request_owner
+        def completed_receipt(*args, receipt_owner=manual_owner, **kwargs):
+            return check.completion_comment_body(*args, owner=receipt_owner,
+                execution_record=sample_execution(receipt_owner), **kwargs)
+
+        def selected(models, evidence="observed", attempt=1, model="opus", effort="high", state="success", primary=None, legacy=False, receipt=False, **options):
             record = {"generation": manual_owner["generation"], "requested_model": model,
                       "requested_effort": effort, "models": models,
                       "model_evidence": evidence, "execution_attempt": attempt, "observed_effort": None}
+            if not legacy:
+                primary = primary if primary is not None else models
+                record["primary_model_evidence"] = ({"initialization": primary[0], "assistant": primary,
+                                                     "attempt": attempt} if primary else None)
+            if receipt:
+                return check.completion_comment_body(
+                    fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
+                    check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
+                                            fixtures.BASE_TIP, fixtures.MERGE_BASE),
+                    "https://github.com/owner/repo/actions/runs/5",
+                    observed_base_sha=fixtures.BASE_TIP, selection=record, owner=manual_owner, execution_record=sample_execution(manual_owner))
             return check.status_comment_body(fixtures.HEAD, "main", state, owner=manual_owner,
                                             trigger_label="Manual request", completed_at=COMPLETED_AT,
-                                            selection=record, **options)
+                                            selection=record, runtime=check.executing_runtime(),
+                                            execution_record=sample_execution(manual_owner) if state in ("success", "action_required") and not legacy else None, **options)
+
+
+        def configured(record_owner, config, primary=None):
+            return {
+                "generation": record_owner["generation"],
+                "requested_model": config["requested_model"],
+                "requested_effort": config["requested_effort"],
+                "configuration": config,
+                "models": [primary] if primary else [],
+                "model_evidence": "observed" if primary else "unknown",
+                "execution_attempt": 1 if primary else None,
+                "observed_effort": None,
+                "primary_model_evidence": {
+                    "initialization": primary, "assistant": [primary], "attempt": 1,
+                } if primary else None,
+            }
+
+        details["selection"] = configured(
+            owner, check.resolve_configuration("", automatic=True), "claude-sonnet-5-5")
+        workflow_config = check.resolve_configuration("", "sonnet", "medium", automatic=True)
+        workflow_record = configured(owner, workflow_config, "claude-sonnet-5-5")
+        historical_config = {**workflow_config, "model_source": "repository", "effort_source": "repository"}
+        historical_record = configured(owner, historical_config, "claude-sonnet-5-5")
         samples = [
             GallerySample("selection-running", "current-completion", "Running with explicit selection", selected([], "unknown", None, state="in_progress")),
             GallerySample("selection-findings", "current-completion", "Findings with explicit selection", selected(["claude-opus-5-5"], state="action_required")),
             GallerySample("selection-tooling-unavailable", "current-completion", "Review tooling unavailable with explicit selection", selected([], "unknown", None, state="failure", reason=check.STATUS_REASONS["tooling_unavailable"])),
             GallerySample("selection-incomplete", "current-completion", "Incomplete with explicit selection", selected([], "unknown", None, state="failure")),
-            GallerySample("plain-selection", "current-completion", "Plain manual request", selected(["claude-sonnet-5-5"], model="", effort="")),
-            GallerySample("effort-only", "current-completion", "Effort-only request", selected(["claude-sonnet-5-5"], model="")),
+            GallerySample("plain-selection", "current-completion", "Plain manual request", status(
+                "success", owner=manual_owner, trigger_label="Manual request",
+                selection=configured(manual_owner, check.resolve_configuration("/claude-review"), "claude-sonnet-5-5"))),
+            GallerySample("effort-only", "current-completion", "Effort-only request", status(
+                "success", owner=manual_owner, trigger_label="Manual request",
+                selection=configured(manual_owner, check.resolve_configuration("/claude-review high"), "claude-sonnet-5-5"))),
             GallerySample("opus-observed", "current-completion", "Opus observed with requested effort", selected(["claude-opus-5-5"])),
             GallerySample("opus-mismatch", "current-completion", "Completed review with model mismatch", selected(["claude-sonnet-5-5"])),
             GallerySample("opus-unknown", "current-completion", "Completed review with unknown model", selected([], "unknown", None)),
-            GallerySample("opus-multiple", "current-completion", "Completed review with multiple models", selected(["claude-haiku-5-5", "claude-opus-5-5"], "mixed")),
+            GallerySample("opus-multiple", "current-completion", "Opus primary review with auxiliary Haiku usage", selected(["claude-haiku-4-5", "claude-opus-5-5"], "mixed", primary=["claude-opus-5-5"])),
+            GallerySample("opus-ambiguous", "current-completion", "Completed review with conflicting primary models", selected(["claude-opus-5-5", "claude-sonnet-5-5"])),
+            GallerySample("opus-legacy", "current-completion", "Legacy receipt without primary evidence", selected(["claude-opus-5-5"], legacy=True)),
             GallerySample("current-clean", "current-completion", "Completed review", status("success")),
             GallerySample(FINDINGS_SAMPLE, "current-completion", "Review with findings", status("action_required")),
+            GallerySample("workflow-default-running", "current-completion", "Automatic review running with configured defaults", status(
+                "in_progress", selection=configured(owner, workflow_config))),
+            GallerySample("workflow-default-observed", "current-completion", "Automatic review completed with configured defaults", status(
+                "success", selection=workflow_record)),
+            GallerySample("inherited-model-observed", "current-completion", "Automatic review with built-in defaults", status(
+                "success", selection=configured(owner, check.resolve_configuration("", automatic=True), "claude-sonnet-5-5"))),
+            GallerySample("manual-partial-default", "current-completion", "Manual model override retaining the configured effort default", status(
+                "success", owner=manual_owner, trigger_label="Manual request",
+                selection=configured(manual_owner, check.resolve_configuration(
+                    "/claude-review haiku", "sonnet", "medium"), "claude-haiku-5-5"))),
             GallerySample("baseline-clean", "baseline-completion", "Clean completion, changed target branch", status(
                 "stale", last_review=history("success"), base_sha=fixtures.OTHER,
                 **stale_options)),
@@ -141,19 +225,48 @@ def gallery_samples():
                 base_sha=fixtures.BASE_TIP, **stale_options)),
             GallerySample("incomplete-unknown", "incomplete", "Incomplete attempt without completed history", status(
                 "failure", reason=check.STATUS_REASONS["incomplete"])),
-            GallerySample("compact-clean", "compact-completion", "Compact clean completion, matching baseline", check.completion_comment_body(
+            GallerySample("turn-limit", "incomplete", "Historical configured-cap failure (nondefault)", status(
+                "failure", reason=check.STATUS_REASONS["turn_limit"],
+                owner=manual_owner, trigger_label="Manual request",
+                execution_diagnostic={"version": 1, "generation": manual_owner["generation"],
+                                      "run": manual_owner["run"], "attempt": manual_owner["attempt"],
+                                      "execution": "observed", "reason": "over_limit_success",
+                                      "num_turns": 101, "max_turns": 100})),
+            GallerySample("selection-receipt", "compact-completion", "Historical manual receipt with primary Opus and auxiliary Haiku", selected(["claude-haiku-4-5", "claude-opus-5-5"], "mixed", primary=["claude-opus-5-5"], receipt=True)),
+            GallerySample("selection-receipt-mismatch", "compact-completion", "Historical manual receipt with primary model mismatch", selected(["claude-sonnet-5-5"], receipt=True)),
+            GallerySample("compact-clean", "compact-completion", "Compact clean completion, matching baseline", completed_receipt(
                 fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
                 check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                         fixtures.BASE_TIP, fixtures.MERGE_BASE),
                 "https://github.com/owner/repo/actions/runs/5",
                 observed_base_sha=fixtures.BASE_TIP)),
-            GallerySample("compact-differing-baseline", "compact-completion", "Compact clean completion, differing baseline", check.completion_comment_body(
+            GallerySample("compact-differing-baseline", "compact-completion", "Compact clean completion, differing baseline", completed_receipt(
                 fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
                 check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
                                         fixtures.BASE_TIP, fixtures.MERGE_BASE),
                 "https://github.com/owner/repo/actions/runs/5",
                 observed_base_sha=fixtures.OTHER)),
         ]
+        # This fixture explicitly supplies the pin-change context. Generic manual
+        # receipts know the executed Runtime, but cannot infer a proposed pin.
+        pin_recovery = completed_receipt(
+            fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
+            check.completion_marker(fixtures.REPO, 7, fixtures.HEAD, "main",
+                                    fixtures.BASE_TIP, fixtures.MERGE_BASE),
+            "https://github.com/owner/repo/actions/runs/5", pin_change_context=True)
+        samples.append(GallerySample(
+            "manual-pin-recovery", "manual-recovery", "Manual recovery after a Runtime pin change (synthetic)",
+            pin_recovery))
+        for count, label in ((1, "partial"), (0, "zero"), (None, "unknown-count")):
+            samples.append(GallerySample(f"inline-tool-{label}", "incomplete",
+                f"Inline-comment tool failure: {label}", status(
+                    "failure", reason=check.STATUS_REASONS["inline_tool_failed"],
+                    inline_failure={"generation": owner["generation"], "check_run_id": 99, "posted_count": count})))
+        samples.append(GallerySample("inline-tool-stale", "incomplete",
+            "Inline-comment tool failure after the PR commit changes", status(
+                "stale", head=fixtures.OTHER, owner_running=False,
+                reason=check.stale_status_reason(check.STATUS_REASONS["inline_tool_failed"]),
+                inline_failure={"generation": owner["generation"], "check_run_id": 99, "posted_count": 1})))
         newer_owner = fixtures.presentation_owner(
             head=fixtures.OTHER, base=fixtures.NEWER, run=6,
             started=STARTED + 600_000_000_000,
@@ -163,9 +276,16 @@ def gallery_samples():
                 ("failure", "incomplete-history", "Incomplete attempt with older completed history")):
             for result, label in (("success", "clean"), ("action_required", "findings")):
                 options = {"reason": check.STATUS_REASONS["incomplete"]} if state == "failure" else {}
+                historical_details = details
+                if state == "in_progress" and result == "success":
+                    # Each generation keeps its own settings; the current
+                    # workflow input must not replace completed history.
+                    options["selection"] = configured(newer_owner, check.resolve_configuration(
+                        "", "opus", "high", automatic=True))
+                    historical_details = {**details, "selection": historical_record}
                 samples.append(GallerySample(f"{group}-{label}", group, f"{description}: {label}", status(
                     state, head=fixtures.OTHER, owner=newer_owner, trigger_label="Draft marked ready",
-                    last_review=history(result), last_review_details=details, **options)))
+                    last_review=history(result), last_review_details=historical_details, **options)))
         for result, label in (("success", "clean"), ("action_required", "findings")):
             samples.append(GallerySample(f"retargeted-{label}", "retargeted", f"Retargeted provenance: {label}", status(
                 "stale", base_ref="release", last_review=history(result),
@@ -194,11 +314,14 @@ def gallery_samples():
             GallerySample("unread-manual", "incomplete", "Required inputs unread, manual attempt with workflow changes", status(
                 "failure", head=fixtures.OTHER, owner=manual_owner, trigger_label="Manual request",
                 reason=check.STATUS_REASONS["unread_inputs"])),
-            GallerySample("workflow-changed", "incomplete", "Relevant review workflow changed, cause unknown", status(
+            GallerySample("workflow-changed", "incomplete", "Relevant review workflow changed, likely cause unconfirmed", status(
                 "failure", reason=check.STATUS_REASONS["workflow_changed"])),
             GallerySample("workflow-changed-superseded", "incomplete", "Workflow-change context retained for a superseded attempt", status(
                 "stale", head=fixtures.OTHER, owner_running=False,
                 reason=check.stale_status_reason(check.STATUS_REASONS["workflow_changed"]))),
+            GallerySample("workflow-invalid-setting", "current-completion", "Invalid workflow configuration, Actions run summary", check.configuration_error_body(("model",))),
+            GallerySample("manual-invalid-model", "current-completion", "Invalid manual arguments rejected without starting a review", check.manual_usage_response("arguments")),
+            GallerySample("manual-unknown-value", "current-completion", "Multiple command lines rejected with one usage response", check.manual_usage_response("multiple")),
         ]
         for group, state, result in (("running-history", "in_progress", "success"),
                                      ("incomplete-history", "failure", "action_required"),
@@ -208,6 +331,16 @@ def gallery_samples():
                 last_review=history(result), last_review_details=details,
                 **({"reason": check.STATUS_REASONS["check_publication_failed"] if state == "publication_incomplete"
                     else check.STATUS_REASONS["incomplete"]} if state != "in_progress" else {}))))
+        previous_mismatch = configured(owner, check.resolve_configuration(
+            "", "opus", "high", automatic=True), "claude-sonnet-5-5")
+        samples.append(GallerySample(
+            "running-history-model-mismatch", "running-history",
+            "Current Sonnet attempt with a previous model mismatch", status(
+                "in_progress", head=fixtures.OTHER, owner=newer_owner,
+                trigger_label="Draft marked ready", last_review=history("success"),
+                last_review_details={**details, "selection": previous_mismatch},
+                selection=configured(newer_owner, check.resolve_configuration(
+                    "", "sonnet", "medium", automatic=True), "claude-sonnet-5-5"))))
         shared_owner = fixtures.presentation_owner(
             head=fixtures.OTHER, base=fixtures.BASE_TIP, run=5,
             started=STARTED + 600_000_000_000,
@@ -250,6 +383,12 @@ def gallery_samples():
         return [*[by_id[key] for key in first], *[case for case in ordered if case.case_id not in first]]
 
 
+def gallery_samples():
+    """Display one representative per distinct presentation, retaining old anchors."""
+    consolidated = {alias for aliases in CASE_ANCHOR_ALIASES.values() for alias in aliases}
+    return [case for case in presentation_samples() if case.case_id not in consolidated]
+
+
 def sample_markdown(body):
     """Preserve rendered hard breaks without trailing whitespace in Git diffs."""
     return body.replace("  \n", "\\\n")
@@ -258,14 +397,17 @@ def sample_markdown(body):
 def render_gallery():
     sections = ["\n\n".join([
         f"# {HEADING}",
-        "All sample repository, commit, run, and timestamp identities are synthetic. "
+        "All sample revisions, runs, timestamps, and consumer repositories are synthetic. "
+        "Runtime repository names identify this project; their sample revisions are synthetic. "
         "Sample links may intentionally have no live destination. The raw Markdown "
         "retains complete synthetic production metadata for auditing.",
         f"Generated with `{REGENERATE}`. Edit the generator or sample inputs, then regenerate.",
     ])]
     for number, case in enumerate(gallery_samples(), start=1):
         sample_body = sample_markdown(case.body)
-        sections.append(f'<a id="{case.case_id}"></a>\n\n### {number} — {case.title.replace(": in_progress", ": running").replace(": failure", ": incomplete").replace(": publication_incomplete", ": publication unavailable")}\n\n{sample_body}')
+        anchors = "\n".join(f'<a id="{anchor}"></a>' for anchor in
+                            (case.case_id, *CASE_ANCHOR_ALIASES.get(case.case_id, ())))
+        sections.append(f'{anchors}\n\n### {number} — {case.title.replace(": in_progress", ": running").replace(": failure", ": incomplete").replace(": publication_incomplete", ": publication unavailable")}\n\n{sample_body}')
         if case.case_id == FINDINGS_SAMPLE:
             # Findings live in inline threads, outside the status renderer.
             sections[-1] += ("\n\n**Synthetic inline finding context (separate from the status comment):**\n\n"
