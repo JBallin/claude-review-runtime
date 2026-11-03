@@ -1,5 +1,3 @@
-<a id="review-behavior-and-repository-self-review"></a>
-
 # Review guide
 
 *Use this guide to interpret review results and recover incomplete reviews.
