@@ -184,6 +184,8 @@ with:
   effort: high
 ```
 
+For examples of setting model and effort, see Ballin’s [automatic](https://github.com/JBallin/ballin-scripts/blob/2081cdad866990f3d76205f5bd68e7a0dd1beb62/.github/workflows/claude-review.yml#L23-L25) and [manual](https://github.com/JBallin/ballin-scripts/blob/2081cdad866990f3d76205f5bd68e7a0dd1beb62/.github/workflows/claude.yml#L73-L75) review workflows.
+
 | Input | Supported values | Built-in default |
 | --- | --- | --- |
 | `model` | `opus`, `sonnet`, `haiku` | `sonnet` |
