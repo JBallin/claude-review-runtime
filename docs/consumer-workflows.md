@@ -184,6 +184,11 @@ with:
   effort: high
 ```
 
+**Optional consumer example:** [Ballin's workflow at the merged PR 641 commit](https://github.com/JBallin/ballin-scripts/blob/2081cdad866990f3d76205f5bd68e7a0dd1beb62/.github/workflows/claude-review.yml#L23-L25)
+sets `opus` and `medium`. This fixed snapshot supplements the self-contained
+example above; it does not define Runtime's built-in defaults or track Ballin's
+latest workflow.
+
 | Input | Supported values | Built-in default |
 | --- | --- | --- |
 | `model` | `opus`, `sonnet`, `haiku` | `sonnet` |
