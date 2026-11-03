@@ -27,7 +27,7 @@ the executing runtime's repository, SHA, and workflow path.
 | Caller | Events | Eligibility and behavior |
 | --- | --- | --- |
 | [Automatic](../.github/workflows/self-review-automatic.yml) | PR `opened`, `ready_for_review` | Open, non-draft, same-repository PRs; Dependabot-triggered runs are excluded. |
-| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted entire-comment command accepted by the pinned caller, followed by a read-only check for an open, non-draft, same-repository PR. |
+| [Manual](../.github/workflows/self-review-manual.yml) | Top-level or inline PR comment `created` | Trusted human comment containing the command keyword, followed by a read-only check for an open, non-draft, same-repository PR. Runtime parses command lines and verifies the original author’s current access. |
 | [Status](../.github/workflows/self-review-status.yml) | PR `synchronize`, `edited` | Open, same-repository PRs; refreshes existing presentation after head changes or base-ref retargeting. |
 
 Stacked PRs are eligible; the callers do not restrict the base branch. The pinned
@@ -69,13 +69,13 @@ callers.
 
 ### Check the installed caller's command forms
 
-The forms above describe the Runtime source in this revision. This repository's
-[pinned manual caller](../.github/workflows/self-review-manual.yml) uses an older
-Runtime and accepts only an exact, entire-comment command: `/claude-review`,
-`/claude-review opus`, or either of those followed by `effort` and a supported
-effort value. For example, it accepts `/claude-review opus effort high`, while
-the current source uses `/claude-review opus high`. Do not assume newer syntax
-works before the caller and its pin are updated.
+This repository's [manual caller](../.github/workflows/self-review-manual.yml)
+follows the [canonical setup](consumer-workflows.md#manual-review): it forwards
+candidate text and lets the pinned Runtime classify command lines. Its supported
+forms therefore come from that immutable revision, including commands with
+surrounding whitespace or prose on other lines. Older consumer callers may have
+stricter filters; check both the installed caller and its Runtime pin before
+assuming source-revision syntax or usage feedback is available.
 
 ## Read the result
 

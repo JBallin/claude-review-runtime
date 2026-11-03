@@ -220,16 +220,16 @@ for diagnosis and recovery.
 
 ## Manual review
 
-Use this caller to accept manual review requests. Runtime captures the current
-patch once per accepted request; ordinary issue comments and untrusted requests
-do not start model execution.
-
-The [command forms below](#optional-model-and-effort-selection) describe this
-source revision. Check the pinned revision and any caller-level restrictions
-before requesting a review.
+Use this caller for trusted human requests on open, non-draft, same-repository
+PRs. A read-only preflight checks PR eligibility before invoking Runtime. Keep
+command parsing in Runtime rather than copying its supported forms into the
+caller; the pinned revision owns the [manual command contract](#optional-model-and-effort-selection).
+Use a reviewed Runtime revision with strict request classification and original-author
+permission checks; the keyword filter alone provides neither.
 
 ```yaml
 name: Manual Claude review
+
 on:
   issue_comment:
     types: [created]
@@ -239,7 +239,36 @@ on:
 permissions: {}
 
 jobs:
+  eligibility:
+    # Forward candidate text; the pinned Runtime owns command parsing and admission.
+    if: >-
+      contains(github.event.comment.body, '/claude-review') &&
+      github.event.comment.user.type == 'User' &&
+      github.event.sender.type == 'User' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
+      (github.event_name == 'pull_request_review_comment' || github.event.issue.pull_request)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 2
+    permissions:
+      pull-requests: read
+    outputs:
+      eligible: ${{ steps.eligibility.outputs.eligible }}
+    steps:
+      - name: Check PR eligibility
+        id: eligibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+        run: |
+          pr=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
+          eligible=$(printf '%s' "$pr" | jq -r --arg repo "$REPO" '
+            .state == "open" and .draft == false and .head.repo.full_name == $repo')
+          echo "eligible=$eligible" >> "$GITHUB_OUTPUT"
+
   review:
+    needs: eligibility
+    if: needs.eligibility.outputs.eligible == 'true'
     permissions:
       contents: read
       pull-requests: write
@@ -253,6 +282,18 @@ jobs:
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
+
+The keyword filter is intentionally coarse: matching prose, quoted examples,
+fenced examples, and invalid commands can start the eligibility job and, for an
+eligible PR, Runtime's queued classification job. This uses Actions runner time
+and API calls even when no model runs, and can wait behind an active review.
+Runtime ignores examples and prose without a command line; invalid requests may
+post a separate permission-checked usage response. Neither outcome starts a
+model or changes review Checks, status, or reactions. A valid whole-line command
+still needs the original comment author's current write or admin permission and
+valid model configuration before review execution or publication. Consumers may
+add repository-specific validation and timeout setup without duplicating the
+command grammar or weakening these gates.
 
 ### Optional model and effort selection
 
