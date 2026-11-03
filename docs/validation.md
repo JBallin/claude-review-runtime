@@ -2,13 +2,6 @@
 
 ## Configurations
 
-PR Details and the Actions run summary display **Turns** from the same bounded,
-captured-attempt SDK `num_turns` receipt, independently of any configured cap.
-Only a strictly validated integer from a unique same-session terminal result is
-accepted; missing historical data remains unavailable. Counts do not establish
-completion or measure API rounds, tokens, cost, quota, or the native turn budget.
-See [Execution limits](design-notes.md#execution-limits) for the design rationale.
-
 Runtime jobs explicitly select `ubuntu-26.04`. This fixes the Ubuntu release;
 GitHub can still update the image and bundled tools. CI logs its actual image
 and selected tool versions for compatibility diagnosis.
@@ -36,11 +29,15 @@ alone does not establish live authentication, model completion, or publication.
 
 ## Coverage limits
 
+### What offline tests exercise
+
 Deterministic tests use separate helper processes and persisted synthetic API
 state to exercise patch restoration, process restarts, competing writers,
 history outages, and lost or partial receipts. They check that missing or
 ambiguous evidence stays non-clean, recorded findings remain sticky, and obsolete
 writers cannot replace a newer owner's presentation in the tested schedules.
+
+### What remains unverified
 
 Synthetic recovery tests do not establish behavior under real service outages,
 actual runner cancellation or queue delivery, artifact transport, or sustained
@@ -70,6 +67,15 @@ can also skip model execution while Actions succeeds. Missing execution alone
 does not identify the cause, and a skipped or incomplete run does not satisfy
 required review. Use the [incomplete-review guidance](review-guide.md#installation-and-incomplete-reviews)
 to investigate; keep independent review and merge requirements in place.
+
+## Turn-count evidence
+
+PR Details and the Actions run summary display **Turns** from the same bounded,
+captured-attempt SDK `num_turns` receipt, independently of any configured cap.
+Only a strictly validated integer from a unique same-session terminal result is
+accepted; missing historical data remains unavailable. Counts do not establish
+completion or measure API rounds, tokens, cost, quota, or the native turn budget.
+See [Execution limits](design-notes.md#execution-limits) for the design rationale.
 
 ## Selection evidence
 

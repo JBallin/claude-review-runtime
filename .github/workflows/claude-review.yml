@@ -316,8 +316,8 @@ jobs:
           fi
       - name: Review pull request
         id: review
-        # v1.0.253
-        uses: anthropics/claude-code-action@5eb090f3c3afd701a0672cd32981197ca27688f6
+        # v1.0.266
+        uses: anthropics/claude-code-action@d535f5172dec02b204866b393d6b20b9b2aaf98d
         # Runs any subagent in the foreground, as a backstop to --tools below:
         # a background task lets the run end early on an interim result.
         env:
