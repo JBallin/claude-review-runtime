@@ -1,5 +1,11 @@
 # Design notes
 
+These notes explain implementation tradeoffs. For setup and day-to-day use,
+start with the [consumer guide](consumer-workflows.md) or [review guide](review-guide.md).
+
+- [Execution limits](#execution-limits): why reviews use a timeout without an explicit turn cap.
+- [Model and effort selection](#review-model-and-effort-selection): why invalid choices stop the review.
+
 ## Execution limits
 
 Automatic and manual reviews omit an explicit turn cap and retain a 20-minute
@@ -55,7 +61,6 @@ Raising the cap would retain a fast-loop backstop but still depend on uncertain
 counter relationships. Patching or replacing the Action would add maintenance and
 dependency review. Omitting the cap avoids its post-success rejection without
 changing the pinned Action or weakening Runtime's independent completion checks.
-The earlier 100-turn proposal is superseded.
 
 ### Visibility and when to reconsider
 
@@ -79,6 +84,8 @@ preferences. Substituting another setting after an invalid value could spend
 quota on a review the owner did not request. Runtime therefore rejects invalid
 explicit settings before Claude starts. Defaults apply only to omitted values.
 
+### Validate before applying defaults
+
 All nonblank workflow inputs must be supported, including an input overridden by
 a valid manual choice. This keeps a one-off override from concealing a broken
 workflow configuration. After validation, each field resolves from the manual
@@ -92,6 +99,8 @@ and a run summary. Invalid manual requests use the separate usage-response path
 for eligible commenters. Neither rejection starts a model review, creates a
 Claude Review Check, or replaces a completed result. Existing authorization,
 immutable capture and receipt ownership still apply.
+
+### Keep configuration separate from execution evidence
 
 Post-run model evidence has a different role. When completion is independently
 verified, missing or contradictory primary-model evidence remains a model warning
