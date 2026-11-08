@@ -1,9 +1,9 @@
 # Contributing
 
-Start with the [consumer guide](docs/consumer-workflows.md),
-[review contract](docs/review-guide.md), and
-[validation boundaries](docs/validation.md).
-See [design notes](docs/design-notes.md) for implementation tradeoffs and rationale.
+Start with the [consumer guide](../docs/consumer-workflows.md),
+[review contract](../docs/review-guide.md), and
+[validation boundaries](../docs/validation.md).
+See [design notes](../docs/design-notes.md) for implementation tradeoffs and rationale.
 
 ## Proposing changes
 
@@ -13,8 +13,8 @@ details out of public issues and pull requests. See [SECURITY.md](SECURITY.md) f
 
 ## Development
 
-See [AGENTS.md](AGENTS.md) for development commands, validation requirements,
+See [AGENTS.md](../AGENTS.md) for development commands, validation requirements,
 and presentation-gallery guidance.
 
 For periodic or explicitly requested API-key variant maintenance, maintainers
-should follow the [procedure in AGENTS.md](AGENTS.md#api-key-variant-maintenance).
+should follow the [procedure in AGENTS.md](../AGENTS.md#api-key-variant-maintenance).

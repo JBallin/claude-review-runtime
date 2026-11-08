@@ -72,7 +72,7 @@ runner location alone does not establish privacy or compliance suitability.
 
 Runtime is open source, and issues and contributions are welcome. You can
 inspect and adapt it under the [MIT License](../LICENSE), read the
-[contribution guide](../CONTRIBUTING.md), or [report an issue](https://github.com/JBallin/claude-review-runtime/issues).
+[contribution guide](../.github/CONTRIBUTING.md), or [report an issue](https://github.com/JBallin/claude-review-runtime/issues).
 
 ## Evaluate cost
 

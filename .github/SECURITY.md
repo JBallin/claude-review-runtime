@@ -16,5 +16,5 @@ or finding-publication evidence must remain non-clean. Only trusted jobs may
 publish Checks and status. Superseded attempts must not replace another request's
 current presentation; preserve historical findings and unrelated comments/reactions.
 
-These are intended contracts, not guarantees. See the [review guide](docs/review-guide.md)
+These are intended contracts, not guarantees. See the [review guide](../docs/review-guide.md)
 for authentication and publication boundaries.
