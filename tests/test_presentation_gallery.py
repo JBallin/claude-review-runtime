@@ -665,9 +665,11 @@ class PresentationGalleryTests(unittest.TestCase):
             self.assertNotIn("[Previous completed review]", body)
             with self.subTest(case_id=case_id):
                 if case_id.startswith("shared-run-"):
-                    current, previous = body.split("**Previous completed review**")
+                    quick, details = review_parts(review_parts(body)[1])
+                    self.assertNotIn(run, quick)
+                    current, previous = details.split("**Previous completed review**")
                     self.assertIn("**Current attempt**", current)
-                    anchor = "Running" if case_id == "shared-run-in-progress" else "Attempt"
+                    anchor = "Attempt run" if case_id == "shared-run-in-progress" else "Attempt"
                     self.assertIn(f"[{anchor}]({run})", current)
                     self.assertIn(f"**[Reviewed]({run}) against:**", previous)
                     self.assertNotIn("**Attempt baseline:**", current)
