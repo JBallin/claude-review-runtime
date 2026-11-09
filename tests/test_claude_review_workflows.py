@@ -1863,11 +1863,16 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         SELECTION_CONFIG=json.dumps(selected_config))
                     self.assertEqual(result.returncode, 1)
                     after = self.repaired_status(calls)
-                    details = after.split("<details>", 1)[1]
+                    collapsed, details = review_parts(after)
                     current, previous = details.split("**Previous completed review**  \n", 1)
                     current_group = current.split("**Current attempt**  \n", 1)[1]
                     if known:
-                        self.assertTrue(current_group.startswith("**Model:** Haiku · **Effort:** High  \n**Current commit:**"))
+                        self.assertTrue(current_group.startswith(
+                            "**Model:** Haiku · **Effort:** High  \n"
+                            "⚠️ **Model unknown:** primary evidence missing  \n"
+                            "**Current commit:**"))
+                        self.assertNotIn("primary evidence missing", collapsed)
+                        self.assertNotIn("primary evidence missing", previous)
                         self.assertTrue(previous.startswith("**Model:** Sonnet · **Effort:** Low  \n**Last reviewed"))
                         self.assertNotIn("**Effort:** Low", current)
                         self.assertNotIn("**Effort:** High", previous)
@@ -1876,6 +1881,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertTrue(previous.startswith("**Last reviewed"))
                         self.assertNotIn("**Model:**", details)
                         self.assertNotIn("**Effort:**", details)
+                        self.assertNotIn("primary evidence missing", after)
                     self.assertNotIn("<br", details.lower())
                     self.assertNotIn("**Current attempt**  \n\n", details)
                     self.assertNotIn("**Previous completed review**  \n\n", details)
