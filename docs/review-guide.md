@@ -93,8 +93,8 @@ Check is authoritative; the status comment and reactions help you follow progres
 
 The shared status comment shows the latest accepted attempt and links its
 captured head/base and workflow run. Checks and workflow runs retain earlier
-attempts. Expand an incomplete or cancelled review for diagnostics and general
-troubleshooting and any specific recovery steps. Coverage warnings stay visible.
+attempts. Open **Details** for diagnostics and recovery guidance on an
+incomplete or cancelled review. Coverage warnings stay visible.
 Verified unread inputs take precedence over workflow-change context. Details
 retain the reason receipt and captured attempt identity. A comment API or
 permission failure appears in the Check or run when publication is possible.
@@ -140,7 +140,8 @@ an existing historical 👍 but cannot recreate a removed one.
 
 The collapsed **Claude Review** summary shows the latest outcome. Coverage
 warnings stay visible, including when the target changes after a review completes.
-Expand the summary to see **Status**, **Commit**, and **Review trigger**. A
+Expand the summary to see **Status**, **Commit**, and **Review trigger**. Open
+**Details** for the captured baseline, run, settings, and review history. A
 completed review shows its recorded completion time and reviewed SHA.
 Newer running, failed, or incomplete attempts remain prominent; previous
 completed evidence moves inside Details, with links grouped by attempt.

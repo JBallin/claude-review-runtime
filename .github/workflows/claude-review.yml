@@ -1501,7 +1501,7 @@ jobs:
           [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
           </details>'
-            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s\n<details>\n<summary><strong>Claude Review</strong>: %s</summary>\n\n<!--\n**Reason:** %s\n-->\n\n%s\n\n%s\n\n%s\n\n</details>%s' \
+            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s\n<details>\n<summary><strong>Claude Review</strong>: %s</summary>\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<!--\n**Reason:** %s\n-->\n\n%s\n\n%s\n\n%s\n\n</details>\n\n</details>%s' \
               "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$outcome" "$reason" "$metadata" "$recovery" "$about" "${selection_warning:+$'\n\n'"$selection_warning"}")
             body=$(jq -n --arg body "$rendered" '{body: $body}')
             verify_presentation_owner || return 0

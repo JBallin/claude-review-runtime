@@ -56,7 +56,7 @@ class SelectionTests(unittest.TestCase):
                 original = copy.deepcopy(record)
                 for state in ('in_progress', 'success'):
                     body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=record)
-                    self.assertIn('**Model:** Opus · **Effort:** ' + display, body.split('<details>')[1])
+                    self.assertIn('**Model:** Opus · **Effort:** ' + display, review_parts(body)[1])
                     self.assertNotIn('**Effort:**', review_parts(body)[0])
                     self.assertEqual(check.current_selection(owner, {'body': body}), original)
                 self.assertEqual(record, original)
@@ -98,7 +98,7 @@ class SelectionTests(unittest.TestCase):
             self.assertNotIn('**Observed effort:**', body)
             self.assertIn('**Model:** Opus', body)
             if models == ('claude-opus-4-7',):
-                self.assertIn('**Model:** Opus · **Effort:** High', body.split('<details>')[1])
+                self.assertIn('**Model:** Opus · **Effort:** High', review_parts(body)[1])
             else:
                 self.assertIn('⚠️ **Model', review_parts(body)[0])
             if models == ('claude-sonnet-4-6',):
@@ -152,7 +152,7 @@ class SelectionTests(unittest.TestCase):
                 self.assertNotIn('**Effort:**', visible)
                 self.assertNotIn('Haiku', visible)
                 self.assertNotIn('requested', visible)
-                details = re.sub(r'<!--.*?-->', '', body.split('<details>')[1], flags=re.DOTALL)
+                details = re.sub(r'<!--.*?-->', '', review_parts(body)[1], flags=re.DOTALL)
                 self.assertIn('**Model:** Opus · **Effort:** High', details)
                 self.assertNotIn('Haiku', details)
         self.assertEqual(check.current_selection(owner, {'body': body}), record)

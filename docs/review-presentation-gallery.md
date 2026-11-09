@@ -39,6 +39,9 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Sonnet · **Effort:** Medium\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -52,6 +55,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -91,6 +96,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Sonnet · **Effort:** Medium\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -104,6 +112,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -142,6 +152,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Sonnet · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -155,6 +168,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -194,6 +209,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -207,6 +225,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -245,6 +265,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -258,6 +281,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -298,6 +323,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -311,6 +339,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -351,6 +381,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Sonnet · **Effort:** Medium\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -364,6 +397,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -406,6 +441,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -419,6 +457,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -446,6 +486,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Opus · **Effort:** High\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -459,6 +502,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -486,6 +531,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 ⚠️ **Model unknown:** primary evidence missing\
 **Model:** Opus · **Effort:** High\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
@@ -503,6 +551,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -530,6 +580,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably.
 -->
@@ -551,6 +604,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -589,6 +644,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -602,6 +660,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -640,6 +700,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Opus · **Effort:** High\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -653,6 +716,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -682,6 +747,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -695,6 +763,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -769,6 +839,9 @@ Omit either setting to use its default. No review was started.
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The target baseline differs; integration with the current baseline has not been reviewed.
 -->
@@ -787,6 +860,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -825,6 +900,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The target baseline differs; integration with the current baseline has not been reviewed.
 -->
@@ -843,6 +921,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -881,6 +961,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -899,6 +982,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -928,6 +1013,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The review was cancelled before verified completion.
 -->
@@ -949,6 +1037,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -976,6 +1066,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The review did not complete with reliable execution and finding evidence.
 -->
@@ -997,6 +1090,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1025,6 +1120,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The review reached its configured turn limit.
 -->
@@ -1048,6 +1146,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1078,6 +1178,9 @@ Claude executed, but this review did not complete reliably. [Attempt logs](https
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** An inline-comment tool call failed.
 -->
@@ -1099,6 +1202,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1129,6 +1234,9 @@ The review did not complete. One posted finding remains recorded.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** An inline-comment tool call failed.
 -->
@@ -1150,6 +1258,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1180,6 +1290,9 @@ The review did not complete. This attempt posted no findings.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** An inline-comment tool call failed.
 -->
@@ -1201,6 +1314,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1230,6 +1345,9 @@ The review did not complete.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt. An inline-comment tool call failed.
 -->
@@ -1251,6 +1369,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1282,6 +1402,9 @@ The review did not complete. One posted finding remains recorded.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** Required review inputs were not fully read.
 -->
@@ -1301,6 +1424,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1330,6 +1455,9 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** Required review inputs were not fully read.
 -->
@@ -1349,6 +1477,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1378,6 +1508,9 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The captured patch changes the review workflow; the cause of the incomplete review is unknown.
 -->
@@ -1404,6 +1537,8 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
+</details>
+
 ---
 
 <a id="workflow-changed-superseded"></a>
@@ -1424,6 +1559,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
+
+<details>
+<summary>ℹ️ Details</summary>
 
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt. The captured patch changes the review workflow; the cause of the incomplete review is unknown.
@@ -1446,6 +1584,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1649,6 +1789,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Current attempt**\
 **Model:** Opus · **Effort:** High\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -1673,6 +1816,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1710,6 +1855,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -1734,6 +1882,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1771,6 +1921,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -1795,6 +1948,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1832,6 +1987,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -1857,6 +2015,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -1894,6 +2054,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The review did not complete with reliable execution and finding evidence.
 -->
@@ -1931,6 +2094,8 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
+</details>
+
 ---
 
 <a id="incomplete-history-findings"></a>
@@ -1962,6 +2127,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | Status | Commit | Review trigger |
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
+
+<details>
+<summary>ℹ️ Details</summary>
 
 <!--
 **Reason:** The review did not complete with reliable execution and finding evidence.
@@ -1995,6 +2163,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2032,6 +2202,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The review did not complete with reliable execution and finding evidence.
 -->
@@ -2069,6 +2242,8 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
+</details>
+
 ---
 
 <a id="retargeted-clean"></a>
@@ -2100,6 +2275,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ✅ **Completed** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -2119,6 +2297,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2157,6 +2337,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ⚠️ **Findings** <relative-time datetime="2026-10-07T13:09:19Z">2026-10-07T13:09:19Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -2176,6 +2359,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2205,6 +2390,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The authoritative Check result could not be published.
 -->
@@ -2226,6 +2414,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2265,6 +2455,9 @@ The result could not be published to the Claude Review Check.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The authoritative Check result could not be published.
 -->
@@ -2297,6 +2490,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2336,6 +2531,9 @@ The result could not be published to the Claude Review Check.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The authoritative Check result could not be published.
 -->
@@ -2368,6 +2566,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2407,6 +2607,9 @@ The result could not be published to the Claude Review Check.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The authoritative Check result could not be published.
 -->
@@ -2444,6 +2647,8 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
+</details>
+
 The result could not be published to the Claude Review Check.
 
 ---
@@ -2468,6 +2673,9 @@ The result could not be published to the Claude Review Check.
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The authoritative Check result could not be published.
 -->
@@ -2489,6 +2697,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2528,6 +2738,9 @@ The Claude Review Check is unavailable for this attempt. Completion is unverifie
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The authoritative Check result could not be published.
 -->
@@ -2560,6 +2773,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2599,6 +2814,9 @@ The Claude Review Check is unavailable for this attempt. Completion is unverifie
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The authoritative Check result could not be published.
 -->
@@ -2636,6 +2854,8 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
+</details>
+
 The Claude Review Check is unavailable for this attempt. Completion is unverified.
 
 ---
@@ -2660,6 +2880,9 @@ The Claude Review Check is unavailable for this attempt. Completion is unverifie
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -2673,6 +2896,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2712,6 +2937,9 @@ This attempt can’t publish a Claude Review Check.
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -2736,6 +2964,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2775,6 +3005,9 @@ This attempt can’t publish a Claude Review Check.
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -2799,6 +3032,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2836,10 +3071,14 @@ This attempt can’t publish a Claude Review Check.
 
 | Status | Commit | Review trigger |
 | --- | --- | --- |
-| 🔄 **[Running](https://github.com/owner/repo/actions/runs/5)** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | PR opened for review |
+| 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | PR opened for review |
+
+<details>
+<summary>ℹ️ Details</summary>
 
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
+**[Attempt run](https://github.com/owner/repo/actions/runs/5)**\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
@@ -2861,6 +3100,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2898,6 +3139,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ❌ **Incomplete** | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | PR opened for review |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The review did not complete with reliable execution and finding evidence.
 -->
@@ -2934,6 +3178,8 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
+</details>
+
 ---
 
 <a id="legacy-history-run"></a>
@@ -2958,6 +3204,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ✅ **Completed** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 **[Attempt](https://github.com/owner/repo/actions/runs/6) status:** Not recorded\
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) target:** `main`\
 **Turns:** unavailable
@@ -2970,6 +3219,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -2999,6 +3250,9 @@ Coverage of the current PR is unconfirmed.
 | --- | --- | --- |
 | ✅ **Completed** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Not recorded |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -3015,6 +3269,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -3044,6 +3300,9 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -3062,6 +3321,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -3091,6 +3352,9 @@ This attempt does not cover the current PR commit.
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -3109,6 +3373,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -3138,6 +3404,9 @@ This attempt does not cover integration with the current target commit.
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time> | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Draft marked ready |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -3157,6 +3426,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 
@@ -3196,6 +3467,9 @@ This attempt does not cover the PR’s current target branch.
 | --- | --- | --- |
 | 🔄 **Running** started <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time> | [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) | Manual request |
 
+<details>
+<summary>ℹ️ Details</summary>
+
 <!--
 **Reason:** The captured head or base was superseded; the current patch is not reviewed by this attempt.
 -->
@@ -3224,6 +3498,8 @@ When configured, automatic reviews start for eligible PRs opened for review or m
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
 [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+
+</details>
 
 </details>
 

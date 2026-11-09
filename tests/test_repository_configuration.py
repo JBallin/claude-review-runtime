@@ -473,10 +473,10 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 with self.subTest(kind=kind, state=state), mock.patch.dict(os.environ, environment, clear=True):
                     rendered = check.status_comment_body(HEAD, "main", state, owner=owner, selection=record,
                         runtime=check.executing_runtime(), base_sha=BASE_TIP)
-                    details = review_parts(rendered)[1]
+                    _, expanded = review_parts(rendered)
+                    _, details = review_parts(expanded)
                     settings = "**Model:** Sonnet · **Effort:** Medium"
-                    self.assertEqual(next(line.rstrip() for line in details.splitlines()
-                                          if line and not line.startswith("| ")), settings)
+                    self.assertEqual(details.lstrip().splitlines()[0].rstrip(), settings)
                     self.assertNotIn("<br", details)
                     self.assertLess(details.index(settings), details.index("baseline"))
                     self.assertLess(details.index(settings), details.index("**Runtime:**"))

@@ -1395,7 +1395,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 if response.get("stdout") == pr_identity("b" * 40):
                     repaired = calls[-1]["body"]["body"]
                     self.assertEqual(check.status_state({"body": repaired}), "stale")
-                    self.assertIn("current patch is not reviewed", repaired)
+                    self.assertIn("This attempt does not cover the current PR patch.", review_parts(repaired)[0])
                 else:
                     self.assertEqual(self.methods(calls)[-1], "GET")
 
@@ -1476,7 +1476,11 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertEqual(self.methods(calls)[-1], "PATCH")
                 repaired = next(call for call in calls if call["method"] == "PATCH" and any("issues/comments/55" in arg for arg in call["args"]))
                 body = repaired["body"]["body"]
-                visible, details = review_parts(body)
+                visible, expanded = review_parts(body)
+                quick_status, details = review_parts(expanded)
+                self.assertIn("<summary>ℹ️ Details</summary>", quick_status)
+                self.assertNotIn("**Current commit:**", quick_status)
+                self.assertNotIn("About Claude Review Runtime", quick_status)
                 self.assertIn("<summary><strong>Claude Review</strong>: ❌ Incomplete</summary>", visible)
                 self.assertIn(HEAD, body)
                 self.assertNotIn("**Reason:**", visible)

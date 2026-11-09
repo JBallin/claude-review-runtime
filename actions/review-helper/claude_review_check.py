@@ -1870,7 +1870,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             and last_review_details["generation"] != owner["generation"])
     )
     history_in_details = last_review is not None and current_attempt
-    lines += [""]
+    lines += ["", "<details>", "<summary>ℹ️ Details</summary>", ""]
     if reason:
         # Existing parsers recover this exact receipt from the raw Markdown.
         # Do not add hard-break whitespace to the Reason line.
@@ -1944,11 +1944,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                 break
         else:
             if not show_review:
-                # Shared-baseline active attempts already show timing/status in
-                # the table; link that status without adding duplicate metadata.
-                label = "Running" if active else "Incomplete" if incomplete else "Not reviewed"
-                linked_status = row_status.replace(f"**{label}**", f"**[{label}]({attempt_link})**", 1)
-                lines = [line.replace(f"| {row_status} |", f"| {linked_status} |", 1) for line in lines]
+                metadata.append(f"**[Attempt run]({attempt_link})**")
             else:
                 # Legacy history may retain a different attempt URL but no
                 # trusted attempt timing or baseline. Do not invent either.
@@ -1980,7 +1976,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines += ["**Previous completed review**  ", "  \n".join(previous), ""]
     for diagnostic in diagnostics:
         lines += [diagnostic, ""]
-    lines += [about_review_details(), "", "</details>"]
+    lines += [about_review_details(), "", "</details>", "", "</details>"]
     for notice in notices:
         lines += ["", notice]
     return "\n".join(lines)

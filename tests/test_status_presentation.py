@@ -50,7 +50,7 @@ class StatusPresentationTests(unittest.TestCase):
                             owner_running=True, last_review=(OTHER, 'main', result),
                             last_review_details={'completed_at': '2026-10-06T19:00:00Z'})
                         visible, details = review_parts(body)
-                        self.assertIn('| 🔄 **Running**' if owner else '| 🔄 **[Running](https://github.com/owner/repo/actions/runs/5)**', review_parts(body)[1])
+                        self.assertIn('| 🔄 **Running**', review_parts(body)[1])
                         self.assertIn(f'| {check.commit_link(HEAD)} |', review_parts(body)[1])
                         self.assertNotIn(check.commit_link(OTHER), visible)
                         self.assertNotIn('Completed', visible)
@@ -100,7 +100,7 @@ class StatusPresentationTests(unittest.TestCase):
             last_review=(OTHER, 'main', 'success'),
             last_review_details={'generation': 'f' * 64, 'trigger': 'Draft marked ready'})
         self.assertIn('| Not recorded |', review_parts(body)[1])
-        self.assertIn('**Review trigger:** Draft marked ready', body.split('<details>')[1])
+        self.assertIn('**Review trigger:** Draft marked ready', review_parts(body)[1])
 
     def test_changed_head_leads_with_history_and_visible_coverage(self):
         for result in ('success', 'action_required'):
@@ -188,7 +188,7 @@ class StatusPresentationTests(unittest.TestCase):
                         self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
                         self.assertNotIn('✅ **Completed**', visible)
                     else:
-                        self.assertIn('| 🔄 **[Running](https://github.com/owner/repo/actions/runs/5)** |', review_parts(body)[1])
+                        self.assertIn('| 🔄 **Running** |', review_parts(body)[1])
 
     def test_failure_reason_replaces_repetition_but_missing_reason_keeps_fallback(self):
         owner = self.start()
@@ -270,7 +270,7 @@ class StatusPresentationTests(unittest.TestCase):
             self.assertNotIn('Last completed review', visible)
             if state == 'success':
                 self.assertNotIn('no findings', visible.lower())
-                self.assertNotIn('**Result:** No findings.', body.split('<details>')[1])
+                self.assertNotIn('**Result:** No findings.', review_parts(body)[1])
             else:
                 self.assertNotIn('Assess the recorded findings', visible)
 
@@ -282,9 +282,10 @@ class StatusPresentationTests(unittest.TestCase):
             with self.subTest(state=state):
                 body = check.status_comment_body(HEAD, 'main', state)
                 visible = self.visible(body)
-                word = 'Running' if state == 'in_progress' else 'Not reviewed' if state == 'stale' else 'Incomplete'
-                linked_label = label.replace(f'**{word}**', f'**[{word}](https://github.com/owner/repo/actions/runs/5)**')
-                self.assertIn(f'| {linked_label} | {check.commit_link(HEAD)} | Not recorded |', review_parts(body)[1])
+                quick, details = review_parts(review_parts(body)[1])
+                self.assertIn(f'| {label} | {check.commit_link(HEAD)} | Not recorded |', quick)
+                self.assertNotIn('/actions/runs/', quick)
+                self.assertIn('**[Attempt run](https://github.com/owner/repo/actions/runs/5)**', details)
                 self.assertNotIn('<relative-time', visible)
 
     def test_workflow_links_are_collapsed_and_keep_attempt_association(self):
@@ -299,7 +300,7 @@ class StatusPresentationTests(unittest.TestCase):
                     last_review_details={'run_url': reviewed_url})
                 self.assertNotIn('workflow run', self.visible(body).lower())
                 self.assertEqual(body.count('<br/>'), 0)
-                details = body.split('<details>')[1].split('</details>')[0]
+                details = review_parts(body)[1]
                 label = 'Reviewed' if state in ('success', 'action_required') else 'Attempt'
                 self.assertIn(f'[{label}]({attempt_url})', details)
                 if state == 'stale':
@@ -362,7 +363,7 @@ class DetailsProvenanceTests(unittest.TestCase):
                                         completed_at='2026-10-07T13:09:19Z')
         url = f"https://github.com/owner/repo/commit/{HEAD}"
         self.assertIn(f'| [`{HEAD[:7]}`]({url}) |', review_parts(body)[1])
-        details = body.split('<details>')[1].split('</details>')[0]
+        details = review_parts(body)[1]
         self.assertNotIn('**Current commit:**', details)
         self.assertNotIn('**PR commit:**', details)
         self.assertNotIn('**Started:**', details)
@@ -380,7 +381,7 @@ class DetailsProvenanceTests(unittest.TestCase):
                     owner_running=state in ('in_progress', 'stale'), last_review=history,
                     last_review_details={'base_sha': 'c' * 40, 'run_url': 'https://github.com/owner/repo/actions/runs/4'},
                     base_sha='e' * 40, reason=check.STATUS_REASONS['stale'] if state == 'stale' else None)
-                details = body.split('<details>')[1].split('</details>')[0]
+                details = review_parts(body)[1]
                 self.assertIn('\n\n| Status |', details)
                 self.assertEqual(body.count('<br/>'), 0)
                 self.assertNotIn('\n\n[Review run]', details)
@@ -480,7 +481,7 @@ class DetailsProvenanceTests(unittest.TestCase):
                     self.assertIn('**Current attempt**', current)
                     self.assertIn('**Turns:** unavailable', current)
                     self.assertIn('**Turns:** unavailable', previous)
-                    self.assertIn(f'**[Running]({url})**' if state == 'in_progress' else f'**[Attempt]({url}) started:**', current)
+                    self.assertIn(f'**[Attempt run]({url})**' if state == 'in_progress' else f'**[Attempt]({url}) started:**', current)
                     self.assertNotIn(f'[Reviewed]({url})', current)
                     self.assertIn(f'**[Reviewed]({url}) against:**', previous)
                 else:

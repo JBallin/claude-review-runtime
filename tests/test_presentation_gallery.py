@@ -164,7 +164,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertIn('**Reviewed commit:** ' + gallery.check.commit_link(gallery.fixtures.HEAD,
                       gallery.fixtures.REPO) + '\n\n', receipt)
         self.assertNotIn('**Model:**', receipt)
-        self.assertIn('**Model:** Opus · **Effort:** High', cases['selection-receipt'].split('<details>')[1])
+        self.assertIn('**Model:** Opus · **Effort:** High', review_parts(cases['selection-receipt'])[1])
 
     def test_settings_lead_each_details_group_without_extra_opening_space(self):
         checked_groups = 0
@@ -172,7 +172,10 @@ class PresentationGalleryTests(unittest.TestCase):
             with self.subTest(case_id=case_id):
                 details = raw.split("<details>", 1)[1]
                 self.assertNotRegex(details, r"</summary>\s*<br\s*/?>")
-                visible = re.sub(r"<!--.*?-->", "", review_parts(raw)[1], flags=re.DOTALL)
+                expanded = review_parts(raw)[1]
+                if "<summary><strong>Claude Review</strong>:" in raw:
+                    _, expanded = review_parts(expanded)
+                visible = re.sub(r"<!--.*?-->", "", expanded, flags=re.DOTALL)
                 self.assertNotRegex(visible, r"(?m)^#{1,6} ")
                 groups = re.split(r"(?m)^\*\*(?:Current attempt|Previous completed review)\*\*[ \t]*$", visible)
                 for group in groups:
@@ -188,8 +191,11 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertGreater(checked_groups, len(gallery.gallery_samples()))
         cases = dict(sample_items())
         for case_id in ("current-clean", "plain-selection", "selection-receipt"):
-            details = re.sub(r"<!--.*?-->", "", cases[case_id].split("</summary>", 1)[1], flags=re.DOTALL)
-            self.assertTrue(next(line for line in details.splitlines() if line and not line.startswith("| ")).startswith("**Model:**"))
+            _, expanded = review_parts(cases[case_id])
+            if case_id != "selection-receipt":
+                _, expanded = review_parts(expanded)
+            details = re.sub(r"<!--.*?-->", "", expanded, flags=re.DOTALL)
+            self.assertTrue(details.lstrip().startswith("**Model:**"))
         for case_id in ("legacy-history-run", "legacy-history-no-links"):
             details = re.sub(r"<!--.*?-->", "", cases[case_id].split("</summary>", 1)[1], flags=re.DOTALL)
             self.assertNotIn("**Model:**", details)
@@ -444,7 +450,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn("target commit:**", raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
                 self.assertNotIn("This is not merge approval.", raw)
-                self.assertIn("**Runtime:** [`JBallin/claude-review-runtime@fffffff`]", raw.split("<details>")[1])
+                self.assertIn("**Runtime:** [`JBallin/claude-review-runtime@fffffff`]", review_parts(raw)[1])
             elif case_id == "compact-differing-baseline":
                 visible, details = review_parts(raw)
                 self.assertEqual(visible.count(gallery.check.OBSERVED_TARGET_WARNING), 1)
@@ -523,8 +529,11 @@ class PresentationGalleryTests(unittest.TestCase):
             if case_id in ("current-clean", "baseline-clean", "baseline-findings", "compact-clean",
                            "compact-differing-baseline", "retargeted-clean", "retargeted-findings"):
                 with self.subTest(case_id=case_id):
-                    details = body.split("<details>")[1]
-                    self.assertNotIn("\n\n[", details)
+                    _, details = review_parts(body)
+                    if "<summary><strong>Claude Review</strong>:" in body:
+                        _, details = review_parts(details)
+                    metadata, _ = review_parts(details)
+                    self.assertNotIn("\n\n[", metadata)
                     self.assertIn("**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:**", details)
                     if case_id in ("current-clean", "baseline-clean"):
                         self.assertNotIn("**Result:** No findings.", details)
@@ -537,7 +546,7 @@ class PresentationGalleryTests(unittest.TestCase):
         attempt = "https://github.com/owner/repo/actions/runs/6"
         for case_id, body in sample_items():
             with self.subTest(case_id=case_id):
-                details = body.split("<details>")[1]
+                details = review_parts(body)[1]
                 self.assertNotIn("workflow run]", details)
                 self.assertNotIn("[Current attempt]", details)
                 self.assertNotIn("[Previous completed review]", details)
@@ -594,6 +603,24 @@ class PresentationGalleryTests(unittest.TestCase):
                 if case_id == "selection-receipt-mismatch":
                     self.assertIn("Model mismatch", collapsed)
                     self.assertIn("**Reviewed commit:**", collapsed)
+
+    def test_standing_summary_expands_to_table_then_details_then_about(self):
+        cases = dict(sample_items())
+        for case_id in ("current-clean", "baseline-clean", "inline-tool-partial", "running-history-clean"):
+            with self.subTest(case_id=case_id):
+                collapsed, expanded = review_parts(cases[case_id])
+                quick_status, details = review_parts(expanded)
+                self.assertNotIn("| Status |", collapsed)
+                self.assertIn("| Status | Commit | Review trigger |", quick_status)
+                self.assertIn("<summary>ℹ️ Details</summary>", quick_status)
+                self.assertNotIn("**Turns:**", quick_status)
+                self.assertNotIn("**Previous completed review**", quick_status)
+                self.assertNotIn("About Claude Review Runtime", quick_status)
+                self.assertIn("**Turns:**", details)
+                details_closed, about = review_parts(details)
+                self.assertIn("<summary><strong>About Claude Review Runtime</strong></summary>", details_closed)
+                self.assertIn("[Read the review guide]", about)
+                self.assertNotIn("<details open", cases[case_id])
 
     def test_routine_failure_diagnostics_stay_collapsed(self):
         cases = dict(sample_items())
@@ -691,7 +718,7 @@ class PresentationGalleryTests(unittest.TestCase):
             body = cases[case_id]
             self.assertNotIn("changed the review workflow", review_parts(body)[0])
             self.assertIn("which may have contributed", review_parts(body)[1])
-            self.assertIn("**Reason:** ", body.split("<details>")[1])
+            self.assertIn("**Reason:** ", review_parts(body)[1])
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):
         original = os.environ.copy()

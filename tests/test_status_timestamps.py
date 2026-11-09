@@ -40,7 +40,7 @@ class StatusTimestampTests(unittest.TestCase):
                     self.assertIn(" started " + check.relative_time(START), initial)
                     check.best_effort_status(HEAD, "in_progress", check_available=available)
                     visible, details = review_parts(self.body())
-                    running = "**[Running](https://github.com/owner/repo/actions/runs/6)**" if history else "**Running**"
+                    running = "**Running**"
                     self.assertIn(running + " started " + check.relative_time(START), details)
                     self.assertEqual(details.count(check.relative_time(START)), 1)
                     self.assertIn("In progress</summary>", visible)
@@ -49,7 +49,7 @@ class StatusTimestampTests(unittest.TestCase):
                     self.assertEqual(check.status_owner(self.api.status), owner)
                     if history:
                         self.assertNotIn(check.relative_time(DONE), visible)
-                        self.assertIn(check.relative_time(DONE), self.body().split("<details>")[1])
+                        self.assertIn(check.relative_time(DONE), review_parts(self.body())[1])
                         self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", history))
                     if not available:
                         self.assertIn("This attempt can’t publish a Claude Review Check.", visible)
