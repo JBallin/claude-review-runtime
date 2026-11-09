@@ -486,11 +486,14 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 | --- | --- | --- |
 | ❌ **Incomplete** | [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) | Manual request |
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Opus · **Effort:** High\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
+
+This review did not complete reliably; this commit is not approved by it. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
@@ -504,10 +507,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
-
-This review did not complete reliably; this commit is not approved by it. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 ---
 
@@ -535,11 +534,14 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 **Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Opus · **Effort:** High\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
+
+Trusted review tooling was unavailable; the review could not be finalized reliably. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
@@ -553,10 +555,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
-
-Trusted review tooling was unavailable; the review could not be finalized reliably. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 ---
 
@@ -934,11 +932,14 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 **Reason:** The review was cancelled before verified completion.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
+
+The review was cancelled before verified completion. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
@@ -952,10 +953,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
-
-The review was cancelled before verified completion. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 ---
 
@@ -983,11 +980,14 @@ The review was cancelled before verified completion. [Troubleshoot incomplete re
 **Reason:** The review did not complete with reliable execution and finding evidence.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
+
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
@@ -1001,10 +1001,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
-
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 ---
 
@@ -1033,6 +1029,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Reason:** The review reached its configured turn limit.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -1040,6 +1037,8 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Turns:** 101
 
 Claude reported success after 101 turns, exceeding the runtime’s 100-turn limit. The Action rejected this result; the review remains incomplete.
+
+[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
@@ -1054,9 +1053,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-⚠️ **Model unknown:** primary evidence missing
-
-Claude executed, but this review did not complete reliably. [Attempt logs](https://github.com/owner/repo/actions/runs/5/attempts/1). [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+Claude executed, but this review did not complete reliably. [Attempt logs](https://github.com/owner/repo/actions/runs/5/attempts/1).
 
 ---
 
@@ -1085,6 +1082,7 @@ Claude executed, but this review did not complete reliably. [Attempt logs](https
 **Reason:** An inline-comment tool call failed.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -1103,8 +1101,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
 
 An inline-comment tool call failed. 1 finding was posted and remains recorded; this review is incomplete. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1135,6 +1131,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 **Reason:** An inline-comment tool call failed.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -1153,8 +1150,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
 
 An inline-comment tool call failed. No findings were posted by this attempt; this review is incomplete. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1185,6 +1180,7 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 **Reason:** An inline-comment tool call failed.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -1203,8 +1199,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
 
 An inline-comment tool call failed. This review is incomplete. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1284,6 +1278,7 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 **Reason:** Required review inputs were not fully read.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -1302,8 +1297,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
 
 Required review inputs were not fully read. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#incomplete-captured-input-reads).
 
@@ -1333,6 +1326,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 **Reason:** Required review inputs were not fully read.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -1351,8 +1345,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
 
 Required review inputs were not fully read. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#incomplete-captured-input-reads).
 
@@ -1382,6 +1374,7 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 **Reason:** The captured patch changes the review workflow; the cause of the incomplete review is unknown.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:00:00Z">2026-10-07T13:00:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
@@ -1400,8 +1393,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
 
 ⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. [Check this attempt’s logs](https://github.com/owner/repo/actions/runs/5/attempts/1) to confirm. Retry with `/claude-review`. See [recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
@@ -1562,10 +1553,10 @@ Claude Review: No findings. 🎉
 
 **Reviewed commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)
 
+⚠️ The observed target differed from the reviewed baseline. Integration with that target wasn’t reviewed.
+
 <details>
 <summary>ℹ️ Details</summary>
-
-The observed target differed from the reviewed baseline.
 
 **[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Observed target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
@@ -1900,6 +1891,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 -->
 
 **Current attempt**\
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -1916,6 +1908,8 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 30
 
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -1928,10 +1922,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
-
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 ---
 
@@ -1970,6 +1960,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 -->
 
 **Current attempt**\
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -1986,6 +1977,8 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 30
 
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -1998,10 +1991,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
-
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 ---
 
@@ -2040,6 +2029,7 @@ The review did not complete with reliable execution and finding evidence. [Troub
 -->
 
 **Current attempt**\
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -2056,6 +2046,8 @@ The review did not complete with reliable execution and finding evidence. [Troub
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 30
 
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -2068,10 +2060,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
-
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 ---
 
@@ -2213,11 +2201,14 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 **Reason:** The authoritative Check result could not be published.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
+
+[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
@@ -2232,9 +2223,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-⚠️ **Model unknown:** primary evidence missing
-
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+The authoritative Check result could not be published. Treat this commit as not reviewed.
 
 ---
 
@@ -2273,6 +2262,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 -->
 
 **Current attempt**\
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -2289,6 +2279,8 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 30
 
+[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -2302,9 +2294,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-⚠️ **Model unknown:** primary evidence missing
-
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+The authoritative Check result could not be published. Treat this commit as not reviewed.
 
 ---
 
@@ -2343,6 +2333,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 -->
 
 **Current attempt**\
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -2359,6 +2350,8 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 30
 
+[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -2372,9 +2365,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-⚠️ **Model unknown:** primary evidence missing
-
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+The authoritative Check result could not be published. Treat this commit as not reviewed.
 
 ---
 
@@ -2413,6 +2404,7 @@ The authoritative Check result could not be published. Treat this commit as not 
 -->
 
 **Current attempt**\
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -2429,6 +2421,8 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 30
 
+[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -2442,9 +2436,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-⚠️ **Model unknown:** primary evidence missing
-
-The authoritative Check result could not be published. Treat this commit as not reviewed. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+The authoritative Check result could not be published. Treat this commit as not reviewed.
 
 ---
 
@@ -2472,11 +2464,14 @@ The authoritative Check result could not be published. Treat this commit as not 
 **Reason:** The authoritative Check result could not be published.
 -->
 
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
+
+[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
@@ -2491,9 +2486,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-⚠️ **Model unknown:** primary evidence missing
-
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.
 
 ---
 
@@ -2532,6 +2525,7 @@ Review completion cannot be established because authoritative Check publication 
 -->
 
 **Current attempt**\
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -2548,6 +2542,8 @@ Review completion cannot be established because authoritative Check publication 
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 30
 
+[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -2561,9 +2557,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-⚠️ **Model unknown:** primary evidence missing
-
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.
 
 ---
 
@@ -2602,6 +2596,7 @@ Review completion cannot be established because authoritative Check publication 
 -->
 
 **Current attempt**\
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **Attempt started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
@@ -2618,6 +2613,8 @@ Review completion cannot be established because authoritative Check publication 
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 30
 
+[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -2631,9 +2628,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-⚠️ **Model unknown:** primary evidence missing
-
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.
 
 ---
 
@@ -2900,6 +2895,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 -->
 
 **Current attempt**\
+⚠️ **Model unknown:** primary evidence missing\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) started:** <relative-time datetime="2026-10-07T13:10:00Z">2026-10-07T13:10:00Z</relative-time>\
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
@@ -2915,6 +2911,8 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** 30
 
+The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -2927,10 +2925,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ **Model unknown:** primary evidence missing
-
-The review did not complete with reliable execution and finding evidence. [Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 ---
 

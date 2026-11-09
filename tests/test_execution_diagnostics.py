@@ -380,7 +380,9 @@ class DiagnosticPresentationTests(unittest.TestCase):
                         summary, details = review_parts(visible)
                         self.assertIn(expected, details)
                         self.assertNotIn(expected, summary)
-                        self.assertIn("[Recovery guidance]", summary)
+                        self.assertIn("[Attempt logs]", summary)
+                        self.assertIn(check.GENERIC_RECOVERY, details)
+                        self.assertNotIn(check.INCOMPLETE_RECOVERY, summary)
                         self.assertNotIn("**Reason:**", details)
                         paragraphs = [p.strip() for p in details.split("\n\n") if p.strip()]
                         self.assertTrue(paragraphs[0].startswith("| Status |"))

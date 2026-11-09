@@ -48,18 +48,19 @@ class RuntimeProvenanceTests(unittest.TestCase):
         self.assertNotIn("Runtime", visible)
         self.assertEqual(details.count(check.runtime_used_line(runtime)), 1)
 
-    def test_interpretation_notes_lead_details_without_changing_the_main_notice(self):
+    def test_target_warning_stays_visible_and_pin_context_stays_in_details(self):
         self.configure()
         args = (REPO, HEAD, "main", BASE_TIP, "synthetic-marker", "https://github.com/owner/repo/actions/runs/5")
         plain = check.completion_comment_body(*args)
-        observed = "The observed target differed from the reviewed baseline."
+        observed = check.OBSERVED_TARGET_WARNING
         pin = "This review used the deployed Runtime, not the proposed pin."
-        for changed, pin_context, expected in ((False, False, []), (True, False, [observed]),
-                                              (False, True, [pin]), (True, True, [observed, pin])):
+        for changed, pin_context, expected in ((False, False, []), (True, False, []),
+                                              (False, True, [pin]), (True, True, [pin])):
             body = check.completion_comment_body(*args, observed_base_sha=OTHER if changed else BASE_TIP,
                                                  pin_change_context=pin_context)
             main, details = body.split("<details>\n<summary>ℹ️ Details</summary>\n\n", 1)
-            self.assertEqual(main, plain.split("<details>", 1)[0])
+            self.assertEqual(main, plain.split("<details>", 1)[0].rstrip()
+                             + ("\n\n" + observed if changed else "") + "\n\n")
             paragraphs = details.split("\n\n")
             self.assertEqual(paragraphs[:len(expected)], expected)
             self.assertTrue(paragraphs[len(expected)].startswith("**[Reviewed]"))

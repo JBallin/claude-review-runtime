@@ -1478,7 +1478,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertIn(HEAD, body)
                 self.assertNotIn("**Reason:**", visible)
                 self.assertIn("https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md"
-                              "#installation-and-incomplete-reviews", visible)
+                              "#installation-and-incomplete-reviews", details)
+                self.assertNotIn("Troubleshoot incomplete reviews", visible)
                 self.assertIn(check.about_review_details(), details)
                 self.assertEqual(body.count("<br/>"), 0)
                 reason = "**Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably."
@@ -1589,7 +1590,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 visible, details = review_parts(body)
                 self.assertIn(expected, details)
                 self.assertNotIn("**Effort:**", visible)
-                self.assertIn("primary evidence missing", visible)
+                self.assertIn("primary evidence missing", details)
+                self.assertNotIn("primary evidence missing", visible)
                 record = check.current_selection(owner, {"body": body})
                 self.assertEqual(record["requested_model"], "opus")
                 self.assertEqual(record["requested_effort"], command.rsplit(" ", 1)[1])
@@ -1621,7 +1623,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertNotIn("**Effort:**", visible)
                     if model:
                         self.assertIn("**Model:** " + model.title(), details)
-                        self.assertIn("⚠️ **Model unknown:** primary evidence missing", visible)
+                        self.assertIn("⚠️ **Model unknown:** primary evidence missing", details)
+                        self.assertNotIn("⚠️ **Model unknown:** primary evidence missing", visible)
                     else:
                         self.assertNotIn("**Model:**", body)
                     if effort:
@@ -1911,7 +1914,8 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     after = self.repaired_status(calls)
                     visible, details = review_parts(after)
                     current, previous = details.split("**Previous completed review**  \n", 1)
-                    self.assertIn("⚠️ **Model unknown:** primary evidence missing", visible)
+                    self.assertIn("⚠️ **Model unknown:** primary evidence missing", details)
+                    self.assertNotIn("⚠️ **Model unknown:** primary evidence missing", visible)
                     self.assertNotIn("Opus selected", visible + current)
                     self.assertNotIn("Model mismatch", visible + current)
                     self.assertIn("**Model:** Opus · **Effort:** High  \n", previous)

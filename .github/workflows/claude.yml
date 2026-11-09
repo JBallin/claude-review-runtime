@@ -1798,8 +1798,6 @@ jobs:
                   warnings = []
                   if current.get("configuration"):
                       warnings.extend(configuration_notices(current["configuration"]))
-                  if current["requested_model"]:
-                      warnings.append("⚠️ **Model unknown:** primary evidence missing")
                   if MANUAL_USAGE in warnings:
                       warnings.remove(MANUAL_USAGE)
                       warnings.append(MANUAL_USAGE)
@@ -1821,7 +1819,10 @@ jobs:
                       previous = None
           except (ValueError, TypeError, KeyError):
               pass
-          print(json.dumps({"marker": marker, "notice": details(current), "warning": warning, "previous": details(previous),
+          current_details = details(current)
+          if current and current["requested_model"]:
+              current_details += "  \n⚠️ **Model unknown:** primary evidence missing"
+          print(json.dumps({"marker": marker, "notice": current_details, "warning": warning, "previous": details(previous),
                             "previous_warning": previous_mismatch(previous)}))
           ' "$reviewed_markers") || return 0
             selection_notice=$(printf '%s' "$selection_payload" | jq -r '.notice')
@@ -1830,7 +1831,12 @@ jobs:
             previous_warning=$(printf '%s' "$selection_payload" | jq -r '.previous_warning')
             selection_marker=$(printf '%s' "$selection_payload" | jq -r '.marker')
             [ -z "$selection_marker" ] || reviewed_markers="$reviewed_markers$selection_marker"$'\n'
-            [ -z "$selection_warning" ] || message="$message"$'\n\n'"$selection_warning"
+            recovery="$reason $recovery"
+            if [ "$state" = failure ]; then
+              recovery="$message $recovery"
+            else
+              selection_warning="$message"${selection_warning:+$'\n\n'"$selection_warning"}
+            fi
             metadata="**Current commit:** \`${display_head:0:7}\`$trigger_line$captured_line"
             metadata=${metadata//$'\n'/$'  \n'}
             [ -z "$selection_notice" ] || metadata="$selection_notice"$'  \n'"$metadata"
@@ -1889,8 +1895,8 @@ jobs:
           [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
           </details>'
-            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s\n<details>\n<summary><strong>Claude Review</strong>: %s</summary>\n\n<!--\n**Reason:** %s\n-->\n\n%s\n\n%s\n\n</details>\n\n%s\n\n%s %s' \
-              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$outcome" "$reason" "$metadata" "$about" "$message" "$reason" "$recovery")
+            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s\n<details>\n<summary><strong>Claude Review</strong>: %s</summary>\n\n<!--\n**Reason:** %s\n-->\n\n%s\n\n%s\n\n%s\n\n</details>%s' \
+              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$outcome" "$reason" "$metadata" "$recovery" "$about" "${selection_warning:+$'\n\n'"$selection_warning"}")
             body=$(jq -n --arg body "$rendered" '{body: $body}')
             verify_presentation_owner || return 0
             observed_patch=$(verify_known_patch) || return 0

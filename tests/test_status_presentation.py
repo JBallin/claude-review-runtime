@@ -210,16 +210,21 @@ class StatusPresentationTests(unittest.TestCase):
                     self.assertNotIn(fallback, visible)
                     self.assertEqual(check.terminal_status_reason({**self.api.status, 'body': body}, owner), reason)
                 else:
-                    self.assertIn(fallback, visible)
+                    self.assertNotIn(fallback, visible)
+                    self.assertIn(fallback, review_parts(body)[1])
                     self.assertNotIn('**Reason:**', visible)
 
-    def test_visible_reason_and_recovery_precede_collapsed_receipt(self):
+    def test_specific_recovery_stays_visible_and_generic_recovery_is_collapsed(self):
         owner = self.start()
         for reason in (check.STATUS_REASONS['incomplete'], check.STATUS_REASONS['unread_inputs'],
                        check.STATUS_REASONS['workflow_changed']):
             body = check.status_comment_body(HEAD, 'main', 'failure', owner=owner, reason=reason)
             visible, details = review_parts(body)
-            self.assertIn('guidance]' if reason != check.STATUS_REASONS['incomplete'] else 'reviews]', visible)
+            if reason == check.STATUS_REASONS['incomplete']:
+                self.assertNotIn(check.INCOMPLETE_RECOVERY, visible)
+                self.assertIn(check.GENERIC_RECOVERY, details)
+            else:
+                self.assertIn('guidance]', visible)
             self.assertIn('**Reason:** ' + reason, details)
             self.assertNotIn('**Reason:**', visible)
             self.assertNotIn('**Note:**', body)

@@ -93,11 +93,10 @@ Check is authoritative; the status comment and reactions help you follow progres
 
 The shared status comment shows the latest accepted attempt and links its
 captured head/base and workflow run. Checks and workflow runs retain earlier
-attempts. An incomplete or cancelled attempt shows an explanation and recovery
-link without expanding the summary. Verified unread inputs take precedence over
-workflow-change context; Details retain the reason receipt and captured attempt
-identity.
-A comment API or permission failure appears in the Check/run when publication
+attempts. Expand an incomplete or cancelled review for diagnostics and general
+troubleshooting. Specific recovery steps and coverage warnings stay visible.
+Verified unread inputs take precedence over workflow-change context. Details
+retain the reason receipt and captured attempt identity. A comment API or permission failure appears in the Check/run when publication
 is possible.
 
 ### Read Details and model warnings
@@ -108,10 +107,10 @@ execution identifiers remain in recorded metadata. Current and previous attempts
 each retain their own settings. A refresh neither applies today's defaults to
 an older review nor fills missing historical settings.
 
-Current model warnings stay visible when the summary is collapsed. A previous
+Current model warnings stay visible when the summary is collapsed. If an attempt
+is already incomplete, missing model evidence is shown in Details. A previous
 run's recorded model mismatch appears inside Previous completed review, before
-that run's settings,
-and uses only its captured evidence. Model warnings do not change completion or
+that run's settings, and uses only its captured evidence. Model warnings do not change completion or
 finding verification.
 
 For defaults, precedence, and rejected settings, see
@@ -172,10 +171,10 @@ After a verified clean manual review and successful Check publication, trusted
 finalization may add 👍 and a completion notice even when the validated target
 tip differs from the captured baseline. The notice identifies its captured head,
 base commit, and workflow run. When the observed target differs from the reviewed
-baseline, the notice records that target snapshot in Details and notes the
-historical difference. The shared status comment carries the warning that
-integration with the current target has not been reviewed. Automatic reviews update the shared status comment without adding a
-separate completion notice.
+baseline, a visible warning explains that integration with the observed target
+was not reviewed. Details link to that target snapshot. The standing status
+comment reflects coverage of the current target. Automatic reviews update the
+standing comment without adding a separate completion notice.
 
 Reserve this runtime's namespaced comment markers for its trusted publication jobs.
 

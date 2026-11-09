@@ -447,8 +447,8 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn("**Runtime:** [`JBallin/claude-review-runtime@fffffff`]", raw.split("<details>")[1])
             elif case_id == "compact-differing-baseline":
                 visible, details = review_parts(raw)
-                self.assertNotIn("The observed target differed", visible)
-                self.assertEqual(details.count("The observed target differed from the reviewed baseline."), 1)
+                self.assertEqual(visible.count(gallery.check.OBSERVED_TARGET_WARNING), 1)
+                self.assertNotIn(gallery.check.OBSERVED_TARGET_WARNING, details)
                 self.assertIn("Claude Review: No findings. 🎉", raw)
                 self.assertNotIn(gallery.check.TARGET_TIP_WARNING, raw)
                 self.assertNotIn(gallery.check.CAPTURED_PATCH_SCOPE, raw)
@@ -593,6 +593,20 @@ class PresentationGalleryTests(unittest.TestCase):
                 if case_id == "selection-receipt-mismatch":
                     self.assertIn("Model mismatch", collapsed)
                     self.assertIn("**Reviewed commit:**", collapsed)
+
+    def test_routine_failure_diagnostics_stay_collapsed(self):
+        cases = dict(sample_items())
+        for case_id in ("incomplete-unknown", "cancelled", "selection-tooling-unavailable"):
+            with self.subTest(case_id=case_id):
+                collapsed, expanded = review_parts(cases[case_id])
+                self.assertNotIn(gallery.check.GENERIC_RECOVERY, collapsed)
+                self.assertNotIn(gallery.check.MISSING_MODEL_EVIDENCE, collapsed)
+                self.assertIn(gallery.check.GENERIC_RECOVERY, expanded)
+                self.assertIn(gallery.check.MISSING_MODEL_EVIDENCE, expanded)
+        collapsed, expanded = review_parts(cases["publication-incomplete-none"])
+        self.assertIn("The authoritative Check result could not be published.", collapsed)
+        self.assertNotIn(gallery.check.GENERIC_RECOVERY, collapsed)
+        self.assertIn(gallery.check.GENERIC_RECOVERY, expanded)
 
     def test_incomplete_explanations_are_visible_and_keep_diagnostics_collapsed(self):
         for case_id, body in sample_items():

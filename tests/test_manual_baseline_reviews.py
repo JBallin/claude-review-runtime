@@ -111,8 +111,8 @@ class ManualBaselineTests(unittest.TestCase):
                 self.assertIn(check.TARGET_TIP_WARNING, review_parts(self.api.status["body"])[0])
                 self.assertNotIn(check.TARGET_TIP_WARNING, body)
                 visible, details = review_parts(body)
-                self.assertNotIn("The observed target differed", visible)
-                self.assertIn("The observed target differed from the reviewed baseline.", details)
+                self.assertIn(check.OBSERVED_TARGET_WARNING, visible)
+                self.assertNotIn(check.OBSERVED_TARGET_WARNING, details)
                 self.assertIn("Claude Review: No findings. 🎉", body)
                 self.assertIn("**Reviewed commit:** " + check.commit_link(HEAD, REPO), body)
                 self.assertIn("**Observed target commit:** " + check.commit_link(OTHER, REPO), body)
@@ -131,9 +131,9 @@ class ManualBaselineTests(unittest.TestCase):
                     self.finish()
                     self.notice()
                     if receipt_format != "current":
-                        # Earlier receipts did not have the historical Details note.
+                        # Earlier receipts did not have the historical warning.
                         self.api.notices[0]["body"] = self.api.notices[0]["body"].replace(
-                            "\n\nThe observed target differed from the reviewed baseline.", "")
+                            "\n\n" + check.OBSERVED_TARGET_WARNING, "")
                     if receipt_format == "legacy_warning":
                         # Simulate an already-published receipt from the original renderer.
                         self.api.notices[0]["body"] = self.api.notices[0]["body"].replace(
@@ -180,8 +180,8 @@ class ManualBaselineTests(unittest.TestCase):
                     self.assertIn("Findings", self.api.status["body"])
                     self.assertNotIn("reviewed clean", self.api.status["body"])
 
-    def test_receipt_baseline_note_is_conditional_and_details_only(self):
-        note = "The observed target differed from the reviewed baseline."
+    def test_receipt_baseline_warning_is_conditional_and_visible(self):
+        note = check.OBSERVED_TARGET_WARNING
         marker = check.completion_marker(REPO, 7, HEAD, "main", BASE_TIP, MERGE_BASE)
         for observed in (None, "", BASE_TIP, OTHER, NEWER, MERGE_BASE):
             with self.subTest(observed=observed):
@@ -190,14 +190,16 @@ class ManualBaselineTests(unittest.TestCase):
                     observed_base_sha=observed)
                 visible, details = body.split("<details>", 1)
                 self.assertEqual(visible, marker + "\nClaude Review: No findings. 🎉\n\n"
-                                 + "**Reviewed commit:** " + check.commit_link(HEAD, REPO) + "\n\n")
+                                 + "**Reviewed commit:** " + check.commit_link(HEAD, REPO)
+                                 + ("\n\n" + note if observed and observed != BASE_TIP else "") + "\n\n")
                 self.assertNotIn(check.TARGET_TIP_WARNING, body)
                 self.assertNotIn("**Current target commit:**", body)
                 self.assertIn("**[Reviewed](" + os.environ["DETAILS_URL"] + ") against:** "
                               + check.commit_link(BASE_TIP, REPO), details)
                 if observed and observed != BASE_TIP:
                     self.assertEqual(body.count(note), 1)
-                    self.assertTrue(details.startswith("\n<summary>ℹ️ Details</summary>\n\n" + note + "\n\n**[Reviewed]"))
+                    self.assertNotIn(note, details)
+                    self.assertTrue(details.startswith("\n<summary>ℹ️ Details</summary>\n\n**[Reviewed]"))
                     self.assertIn("**Observed target commit:** " + check.commit_link(observed, REPO)
                                   + " on `main`  \n**Turns:** unavailable\n\n<details>", details)
                 else:

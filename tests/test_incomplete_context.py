@@ -144,7 +144,12 @@ class IncompletePresentationTests(unittest.TestCase):
             with self.subTest(reason=key):
                 body = context.status_comment_body(CAPTURED_HEAD, "main", "failure",
                                                    owner=owner, reason=context.STATUS_REASONS[key])
-                self.assertIn(guide + "#" + anchor, review_parts(body)[0])
+                collapsed, expanded = review_parts(body)
+                if key == "incomplete":
+                    self.assertIn(guide + "#" + anchor, expanded)
+                    self.assertNotIn(guide + "#" + anchor, collapsed)
+                else:
+                    self.assertIn(guide + "#" + anchor, collapsed)
                 self.assertIn(context.commit_link(CAPTURED_HEAD), body)
                 self.assertEqual(context.status_owner({"body": body}), owner)
                 if key == "workflow_changed":
@@ -193,10 +198,11 @@ class IncompletePresentationTests(unittest.TestCase):
                     with mock.patch.object(context, "workflow_changed", return_value=changed) as paths:
                         context.best_effort_status(CAPTURED_HEAD, "failure")
                     paths.assert_called_once()
-                    visible = review_parts(self.api.status["body"])[0]
+                    visible, details = review_parts(self.api.status["body"])
                     self.assertEqual("likely caused" in visible, changed is True)
                     self.assertEqual("`/claude-review`" in visible, changed is True)
-                    self.assertIn(context.INCOMPLETE_RECOVERY, visible)
+                    self.assertIn(context.INCOMPLETE_RECOVERY, visible if changed else details)
+                    self.assertEqual(context.INCOMPLETE_RECOVERY in visible, changed is True)
                     self.assertNotIn("expected", visible)
                     if changed:
                         self.assertIn("to confirm.", visible)
@@ -220,8 +226,9 @@ class IncompletePresentationTests(unittest.TestCase):
             with mock.patch.object(context, "workflow_changed", return_value=True) as paths:
                 context.best_effort_status(CAPTURED_HEAD, "failure")
             paths.assert_not_called()
-            visible = review_parts(self.api.status["body"])[0]
-            self.assertIn(context.STATUS_REASONS["incomplete"], visible)
+            visible, details = review_parts(self.api.status["body"])
+            self.assertIn(context.STATUS_REASONS["incomplete"], details)
+            self.assertNotIn(context.STATUS_REASONS["incomplete"], visible)
             self.assertNotIn("validation rejection", visible)
             self.assertNotIn("likely caused", visible)
             self.assertNotIn("`/claude-review`", visible)
