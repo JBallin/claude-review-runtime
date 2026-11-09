@@ -19,6 +19,8 @@ import unittest
 from pathlib import Path
 from urllib.parse import quote
 
+from test_claude_review_check import review_parts
+
 WORKFLOWS = Path(__file__).resolve().parent.parent / ".github" / "workflows"
 AUTOMATIC = WORKFLOWS / "claude-review.yml"
 MANUAL = WORKFLOWS / "claude.yml"
@@ -1471,19 +1473,19 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                 self.assertEqual(self.methods(calls)[-1], "PATCH")
                 repaired = next(call for call in calls if call["method"] == "PATCH" and any("issues/comments/55" in arg for arg in call["args"]))
                 body = repaired["body"]["body"]
-                visible, details = body.split("<details>", 1)
-                self.assertIn("### Claude Review\n", visible)
+                visible, details = review_parts(body)
+                self.assertIn("<summary><strong>Claude Review</strong>: ❌ Incomplete</summary>", visible)
                 self.assertIn(HEAD, body)
                 self.assertNotIn("**Reason:**", visible)
                 self.assertIn("https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md"
                               "#installation-and-incomplete-reviews", visible)
-                self.assertIn("<summary>ℹ️ Details</summary>\n\n", details)
+                self.assertIn(check.about_review_details(), details)
                 self.assertEqual(body.count("<br/>"), 0)
                 reason = "**Reason:** Trusted review tooling was unavailable; the review could not be finalized reliably."
                 metadata = f"**Current commit:** `{HEAD[:7]}`  \n**Trigger:** Not recorded  \n"
                 self.assertIn("<!--\n" + reason + "\n-->\n\n" + metadata, details)
                 self.assertNotIn("Authority:", body)
-                self.assertNotIn("Check", body)
+                self.assertNotIn("Check", visible)
 
     def test_fallback_keeps_current_and_historical_runtime_provenance(self):
         from test_claude_review_check import presentation_owner
@@ -1512,7 +1514,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     self.assertEqual(check.status_runtime(after, owner), current)
                     if with_history:
                         self.assertEqual(check.last_completed_review_details(after)["runtime"], previous)
-                    self.assertNotIn("**Runtime:**", repaired.split("<details>")[0])
+                    self.assertNotIn("**Runtime:**", review_parts(repaired)[0])
                     self.assertEqual(repaired.count("**Turns:** unavailable"), 2 if with_history else 1)
                     self.assertNotIn("**Runtime used:**", repaired)
 
@@ -1584,7 +1586,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
             body = repaired["body"]["body"]
             self.assertEqual(check.status_owner({"body": body}), owner)
             if expected:
-                visible, details = body.split("<details>", 1)
+                visible, details = review_parts(body)
                 self.assertIn(expected, details)
                 self.assertNotIn("**Effort:**", visible)
                 self.assertIn("primary evidence missing", visible)
@@ -1615,7 +1617,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                                                        SELECTION_CONFIG=json.dumps(captured))
                     self.assertEqual(result.returncode, 1)
                     body = self.repaired_status(calls)
-                    visible, details = body.split("<details>", 1)
+                    visible, details = review_parts(body)
                     self.assertNotIn("**Effort:**", visible)
                     if model:
                         self.assertIn("**Model:** " + model.title(), details)
@@ -1647,7 +1649,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                     body = self.repaired_status(calls)
                     self.assertIn(expected, body.split("<details>", 1)[1])
                     self.assertNotIn(absent, body)
-                    self.assertIn("⚠️ **Invalid configured " + captured["errors"][0] + "**", body.split("<details>", 1)[0])
+                    self.assertIn("⚠️ **Invalid configured " + captured["errors"][0] + "**", review_parts(body)[0])
 
     def test_fallback_resolved_defaults_and_per_field_diagnostics_are_retained(self):
         from test_claude_review_check import presentation_owner
@@ -1675,7 +1677,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                                                        PR_NUMBER="7", SELECTION_CONFIG=json.dumps(captured))
                     self.assertEqual(result.returncode, 1)
                     body = self.repaired_status(calls)
-                    visible, details = body.split("<details>", 1)
+                    visible, details = review_parts(body)
                     self.assertIn("**Model:** " + model.title() + " · **Effort:** " + effort.capitalize(), details)
                     self.assertNotIn("**Effort:**", visible)
                     record = check.current_selection(owner, {"body": body})
@@ -1718,7 +1720,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                                                        SELECTION_CONFIG=json.dumps(config))
                     self.assertEqual(result.returncode, 1)
                     body = self.repaired_status(calls)
-                    visible, details = body.split("<details>", 1)
+                    visible, details = review_parts(body)
                     self.assertIn("**Model:** " + model.title() + " · **Effort:** Low", details)
                     for notice in check.configuration_notices(config):
                         self.assertIn(notice, visible)
@@ -1907,7 +1909,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         SELECTION_CONFIG=json.dumps(current_config))
                     self.assertEqual(result.returncode, 1)
                     after = self.repaired_status(calls)
-                    visible, details = after.split("<details>", 1)
+                    visible, details = review_parts(after)
                     current, previous = details.split("**Previous completed review**  \n", 1)
                     self.assertIn("⚠️ **Model unknown:** primary evidence missing", visible)
                     self.assertNotIn("Opus selected", visible + current)
@@ -2085,7 +2087,7 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertIn(f"**Captured commit:** `{HEAD}`", repaired)
                         self.assertIn("**Reason:**", repaired)
                         self.assertNotIn("**Note:**", repaired)
-                        self.assertNotIn("**Reason:**", repaired.split("<details>", 1)[0])
+                        self.assertNotIn("**Reason:**", review_parts(repaired)[0])
                     else:
                         self.assertEqual(len(patches), 1)
                     self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")

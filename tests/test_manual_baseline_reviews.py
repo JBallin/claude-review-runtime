@@ -4,7 +4,7 @@ import json
 import os
 import unittest
 
-from test_claude_review_check import check, HEAD, OTHER, NEWER, BASE_TIP, MERGE_BASE, REPO
+from test_claude_review_check import check, HEAD, OTHER, NEWER, BASE_TIP, MERGE_BASE, REPO, review_parts
 import test_presentation_ownership as ownership
 
 
@@ -108,9 +108,9 @@ class ManualBaselineTests(unittest.TestCase):
                 self.assertIn(HEAD, body)
                 self.assertIn(MERGE_BASE, body)
                 self.assertEqual(self.api.base_tip, OTHER)
-                self.assertIn(check.TARGET_TIP_WARNING, self.api.status["body"].split("<details>")[0])
+                self.assertIn(check.TARGET_TIP_WARNING, review_parts(self.api.status["body"])[0])
                 self.assertNotIn(check.TARGET_TIP_WARNING, body)
-                visible, details = body.split("<details>", 1)
+                visible, details = review_parts(body)
                 self.assertNotIn("The observed target differed", visible)
                 self.assertIn("The observed target differed from the reviewed baseline.", details)
                 self.assertIn("Claude Review: No findings. 🎉", body)
@@ -199,7 +199,7 @@ class ManualBaselineTests(unittest.TestCase):
                     self.assertEqual(body.count(note), 1)
                     self.assertTrue(details.startswith("\n<summary>ℹ️ Details</summary>\n\n" + note + "\n\n**[Reviewed]"))
                     self.assertIn("**Observed target commit:** " + check.commit_link(observed, REPO)
-                                  + " on `main`  \n**Turns:** unavailable\n\n</details>", details)
+                                  + " on `main`  \n**Turns:** unavailable\n\n<details>", details)
                 else:
                     self.assertNotIn(note, body)
                     self.assertNotIn("**Observed target commit:**", body)
@@ -225,7 +225,7 @@ class ManualBaselineTests(unittest.TestCase):
                 self.finish()
                 self.notice()
                 body = self.api.notices[0]["body"]
-                visible, details = body.split("<details>", 1)
+                visible, details = review_parts(body)
                 self.assertNotIn("Runtime", visible)
                 self.assertIn(check.commit_link(HEAD, REPO), visible)
                 self.assertIn(check.commit_link(BASE_TIP, REPO), details)
@@ -290,13 +290,13 @@ class ManualBaselineTests(unittest.TestCase):
                 self.notice()
                 self.assertEqual(len(self.api.notices), 1)
                 for body in (self.api.status['body'], self.api.notices[0]['body']):
-                    main, details = body.split('<details>', 1)
+                    main, details = review_parts(body)
                     self.assertIn(expected, details if model == 'claude-opus-5-5' else main)
                     self.assertIn('**Effort:** High', details)
                     self.assertNotIn('**Effort:**', main)
-                    self.assertNotIn('Haiku', body.split('<details>')[0])
+                    self.assertNotIn('Haiku', review_parts(body)[0])
                     self.assertNotIn('**Observed effort:**', body)
-                receipt = self.api.notices[0]['body'].split('<details>')[0]
+                receipt = review_parts(self.api.notices[0]['body'])[0]
                 self.assertIn('**Reviewed commit:** ' + check.commit_link(HEAD, REPO), receipt)
                 for notice in check.selection_notice(record):
                     self.assertIn(notice, receipt)

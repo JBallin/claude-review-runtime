@@ -9,6 +9,8 @@ import sys
 import textwrap
 import tempfile
 import unittest
+
+from test_claude_review_check import review_parts
 from unittest import mock
 
 import test_claude_review_check as fixtures
@@ -334,7 +336,7 @@ class DiagnosticPresentationTests(unittest.TestCase):
             body = check.completion_comment_body(fixtures.REPO, fixtures.HEAD, "main", fixtures.BASE_TIP,
                 "synthetic-marker", "https://github.com/owner/repo/actions/runs/5", owner=owner,
                 execution_record=candidate)
-            visible, details = body.split("<details>", 1)
+            visible, details = review_parts(body)
             self.assertNotIn("**Turns:**", visible)
             self.assertIn("**Turns:** " + expected, details)
 
@@ -375,13 +377,15 @@ class DiagnosticPresentationTests(unittest.TestCase):
                         self.assertEqual(check.terminal_status_reason(self.api.status, owner), reason)
                         self.assertEqual(check.status_execution_diagnostic(self.api.status, owner), diagnostic)
                         visible = re.sub(r"<!--.*?-->", "", body, flags=re.S)
-                        summary, details = visible.split("<details>", 1)
-                        self.assertIn(expected, summary)
+                        summary, details = review_parts(visible)
+                        self.assertIn(expected, details)
+                        self.assertNotIn(expected, summary)
+                        self.assertIn("[Recovery guidance]", summary)
                         self.assertNotIn("**Reason:**", details)
                         paragraphs = [p.strip() for p in details.split("\n\n") if p.strip()]
-                        self.assertEqual(paragraphs[0], "<summary>ℹ️ Details</summary>")
-                        self.assertTrue(paragraphs[1].startswith("**PR commit:**" if stale else "**Started:**"),
-                                        paragraphs[1])
+                        self.assertTrue(paragraphs[0].startswith("| Status |"))
+                        self.assertTrue(any(p.startswith("**PR commit:**" if stale else "**Started:**")
+                                            for p in paragraphs[1:]), paragraphs)
                         if stale:
                             self.assertIn("Current head and base coverage is not established by this attempt.", summary)
                             self.assertIn("— not reviewed", details)

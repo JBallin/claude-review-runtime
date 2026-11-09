@@ -4,7 +4,7 @@ import os
 import unittest
 
 import test_presentation_ownership as ownership
-from test_claude_review_check import check, HEAD, OTHER, NEWER, BASE_TIP, REPO
+from test_claude_review_check import check, HEAD, OTHER, NEWER, BASE_TIP, REPO, review_parts
 
 
 class RuntimeProvenanceTests(unittest.TestCase):
@@ -23,7 +23,7 @@ class RuntimeProvenanceTests(unittest.TestCase):
         for state in ("in_progress", "success", "action_required", "failure", "publication_incomplete"):
             with self.subTest(state=state):
                 body = check.status_comment_body(HEAD, "main", state, owner=owner, runtime=runtime)
-                visible, details = body.split("<details>", 1)
+                visible, details = review_parts(body)
                 self.assertNotIn("**Runtime:**", visible)
                 self.assertEqual(details.count(check.runtime_used_line(runtime)), 1)
                 self.assertNotIn("proposed pin", body)
@@ -40,7 +40,7 @@ class RuntimeProvenanceTests(unittest.TestCase):
         body = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP,
             check.completion_marker(REPO, 7, HEAD, "main", BASE_TIP, "c" * 40),
             "https://github.com/owner/repo/actions/runs/5", selection=selection)
-        visible, details = body.split("<details>", 1)
+        visible, details = review_parts(body)
         reviewed = "**Reviewed commit:** " + check.commit_link(HEAD, REPO)
         self.assertIn(reviewed, visible)
         self.assertNotIn("**Model:**", visible)

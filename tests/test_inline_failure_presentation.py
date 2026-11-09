@@ -6,7 +6,7 @@ import os
 import unittest
 from unittest import mock
 
-from test_claude_review_check import check, HEAD, OTHER, presentation_owner
+from test_claude_review_check import check, HEAD, OTHER, presentation_owner, review_parts
 import test_presentation_ownership as ownership
 
 
@@ -35,12 +35,12 @@ class InlineFailureTests(unittest.TestCase):
                     with mock.patch.object(check, "workflow_changed") as paths:
                         body = self.finalize_failure(count)
                     paths.assert_not_called()
-                    visible = body.split("<details>", 1)[0]
+                    visible = review_parts(body)[0]
                     self.assertIn(check.inline_failure_explanation(count), visible)
                     self.assertIn("/pull/7/checks?check_run_id=99", visible)
                     self.assertIn(check.INCOMPLETE_RECOVERY, visible)
                     self.assertIn("For a final candidate with no review in progress", visible)
-                    self.assertIn("❌ **Incomplete**", visible)
+                    self.assertIn("❌ Incomplete</summary>", visible)
                     self.assertNotIn("manual-clean-completion", body)
                     self.assertEqual(check.status_inline_failure(self.api.status, owner)["posted_count"], count)
                     self.assertFalse(check.status_owner_running(self.api.status))
@@ -125,7 +125,7 @@ class InlineFailureTests(unittest.TestCase):
                 self.assertIsNone(check.status_inline_failure(self.api.status, owner))
                 self.api.pr["head"]["sha"] = OTHER
                 check.best_effort_status(OTHER, "stale")
-                visible = self.api.status["body"].split("<details>", 1)[0]
+                visible = review_parts(self.api.status["body"])[0]
                 self.assertNotIn("1 finding was posted", visible)
                 self.assertNotIn("check_run_id=99", visible)
         self.api.status["body"] = good

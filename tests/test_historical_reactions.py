@@ -2,7 +2,7 @@
 import os
 import unittest
 
-from test_claude_review_check import check, HEAD, OTHER, BASE_TIP, REPO, reaction
+from test_claude_review_check import check, HEAD, OTHER, BASE_TIP, REPO, reaction, review_parts
 import test_presentation_ownership as ownership
 
 DONE = "2026-10-07T13:09:19Z"
@@ -69,9 +69,9 @@ class HistoricalReactionTests(unittest.TestCase):
                                 self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", result))
                                 self.assertEqual(check.last_completed_review_details(self.api.status)["completed_at"], DONE)
                                 self.assertEqual(check.status_state(self.api.status), "stale")
-                                visible = self.api.status["body"].split("<details>")[0]
-                                self.assertIn("| Status | Commit | Review trigger |", visible)
-                                self.assertIn(check.relative_time(DONE), visible)
+                                visible, details = review_parts(self.api.status["body"])
+                                self.assertIn("| Status | Commit | Review trigger |", details)
+                                self.assertIn(check.relative_time(DONE), details)
                                 self.assertIn(check.TARGET_TIP_WARNING
                                               if field == "base" else "The current PR commit"
                                               if field == "head" else "current target `release`", visible)

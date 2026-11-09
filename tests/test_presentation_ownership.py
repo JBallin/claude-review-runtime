@@ -7,7 +7,7 @@ import os
 import unittest
 from unittest import mock
 
-from test_claude_review_check import check, HEAD, OTHER, NEWER, BASE_TIP, MERGE_BASE, REPO, reaction, presentation_owner
+from test_claude_review_check import check, HEAD, OTHER, NEWER, BASE_TIP, MERGE_BASE, REPO, reaction, presentation_owner, review_parts
 
 
 class PresentationAPI:
@@ -838,7 +838,7 @@ class OwnershipTests(unittest.TestCase):
                             check.cmd_stale()
                             self.assertEqual(check.terminal_status_reason(self.api.status,owner),expected)
                             self.assertEqual(self.api.status["body"].count(check.STATUS_REASONS["stale"]),1)
-                            visible, details = self.api.status["body"].split("<details>", 1)
+                            visible, details = review_parts(self.api.status["body"])
                             self.assertEqual(visible.count(check.STATUS_REASONS[reason_key]), 1)
                             self.assertEqual(details.count("**Reason:**"), 1)
                             self.assertIn(check.STATUS_REASONS[reason_key], details)

@@ -1,9 +1,9 @@
-"""One visible status row retains the event that produced its completed result."""
+"""One expandable status row retains the event that produced its completed result."""
 import copy
 import os
 import unittest
 
-from test_claude_review_check import check, HEAD, OTHER
+from test_claude_review_check import check, HEAD, OTHER, review_parts
 import test_presentation_ownership as ownership
 
 DONE = "2026-10-07T13:09:19Z"
@@ -22,10 +22,10 @@ class StatusTableTests(unittest.TestCase):
         check.best_effort_status(HEAD, result, completed_at=DONE)
 
     def visible(self):
-        return self.api.status["body"].split("<details>")[0]
+        return review_parts(self.api.status["body"])[0]
 
     def row(self):
-        visible = self.visible()
+        visible = review_parts(self.api.status["body"])[1]
         header = next(line for line in visible.splitlines() if line.startswith("| Status |"))
         self.assertEqual(visible.count(header), 1)
         rows = [line for line in visible.splitlines()
@@ -73,7 +73,8 @@ class StatusTableTests(unittest.TestCase):
                             caveat = (check.TARGET_TIP_WARNING
                                       if movement == "base" else "The current PR commit"
                                       if movement == "head" else "current target `release`")
-                            self.assertGreater(self.visible().index(caveat), self.visible().index(HEADER))
+                            self.assertIn(caveat, self.visible())
+                            self.assertNotIn(HEADER, self.visible())
 
     def test_repeat_neither_relabels_nor_backfills_legacy_event(self):
         for recorded in (True, False):

@@ -6,7 +6,7 @@ import os
 import unittest
 from unittest import mock
 
-from test_claude_review_check import check as context
+from test_claude_review_check import check as context, review_parts
 from test_claude_review_check import HEAD as CAPTURED_HEAD, OTHER
 import test_presentation_ownership as ownership
 
@@ -144,7 +144,7 @@ class IncompletePresentationTests(unittest.TestCase):
             with self.subTest(reason=key):
                 body = context.status_comment_body(CAPTURED_HEAD, "main", "failure",
                                                    owner=owner, reason=context.STATUS_REASONS[key])
-                self.assertIn(guide + "#" + anchor, body.split("<details>", 1)[0])
+                self.assertIn(guide + "#" + anchor, review_parts(body)[0])
                 self.assertIn(context.commit_link(CAPTURED_HEAD), body)
                 self.assertEqual(context.status_owner({"body": body}), owner)
                 if key == "workflow_changed":
@@ -169,7 +169,7 @@ class IncompletePresentationTests(unittest.TestCase):
                         context.best_effort_status(CAPTURED_HEAD, "failure")
                     paths.assert_not_called()
                     body = self.api.status["body"]
-                    visible, details = body.split("<details>", 1)
+                    visible, details = review_parts(body)
                     self.assertIn(context.STATUS_REASONS["unread_inputs"], visible)
                     self.assertIn(context.UNREAD_RECOVERY, visible)
                     self.assertNotIn("validation rejection", visible)
@@ -193,7 +193,7 @@ class IncompletePresentationTests(unittest.TestCase):
                     with mock.patch.object(context, "workflow_changed", return_value=changed) as paths:
                         context.best_effort_status(CAPTURED_HEAD, "failure")
                     paths.assert_called_once()
-                    visible = self.api.status["body"].split("<details>", 1)[0]
+                    visible = review_parts(self.api.status["body"])[0]
                     self.assertEqual("likely caused" in visible, changed is True)
                     self.assertEqual("`/claude-review`" in visible, changed is True)
                     self.assertIn(context.INCOMPLETE_RECOVERY, visible)
@@ -220,7 +220,7 @@ class IncompletePresentationTests(unittest.TestCase):
             with mock.patch.object(context, "workflow_changed", return_value=True) as paths:
                 context.best_effort_status(CAPTURED_HEAD, "failure")
             paths.assert_not_called()
-            visible = self.api.status["body"].split("<details>", 1)[0]
+            visible = review_parts(self.api.status["body"])[0]
             self.assertIn(context.STATUS_REASONS["incomplete"], visible)
             self.assertNotIn("validation rejection", visible)
             self.assertNotIn("likely caused", visible)
@@ -236,7 +236,7 @@ class IncompletePresentationTests(unittest.TestCase):
             paths.assert_not_called()
             self.assertNotIn("validation rejection", self.api.status["body"])
             self.assertNotIn("likely caused", self.api.status["body"])
-            self.assertNotIn("`/claude-review`", self.api.status["body"])
+            self.assertNotIn("`/claude-review`", review_parts(self.api.status["body"])[0])
 
     def test_stale_refresh_retains_only_the_same_owners_reason_without_new_inspection(self):
         for key in ("unread_inputs", "workflow_changed", "incomplete"):
@@ -251,11 +251,12 @@ class IncompletePresentationTests(unittest.TestCase):
                 context.best_effort_status(OTHER, "stale")
             paths.assert_not_called()
             body = self.api.status["body"]
-            visible = body.split("<details>", 1)[0]
+            visible, details = review_parts(body)
             self.assertEqual(context.status_owner(self.api.status), owner)
             self.assertEqual(context.status_head(self.api.status), OTHER)
-            self.assertIn(context.commit_link(CAPTURED_HEAD), visible)
-            self.assertIn("| ❌ **Incomplete**", visible)
+            self.assertIn(context.commit_link(CAPTURED_HEAD), details)
+            self.assertIn("⚠️ Stale</summary>", visible)
+            self.assertIn("| ❌ **Incomplete**", details)
             self.assertIn("**Reason:** " + context.STATUS_REASONS["stale"] + " " + context.STATUS_REASONS[key], body)
             self.assertEqual("likely caused" in visible, key == "workflow_changed")
             self.assertNotIn("`/claude-review`", visible)

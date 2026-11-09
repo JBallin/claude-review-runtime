@@ -1587,6 +1587,21 @@ def incomplete_status_reason(owner, execution_record=None):
     return STATUS_REASONS["workflow_changed"] if changed is True else STATUS_REASONS["incomplete"]
 
 
+def about_review_details():
+    return (
+        "<details>\n<summary><strong>About Claude Review Runtime</strong></summary>\n\n"
+        "When configured, automatic reviews start for eligible PRs opened for review "
+        "or marked ready. With the manual caller installed, authorized users can request a review "
+        "with `/claude-review` on its own line.\n\n"
+        "Claude reviews a captured PR diff and posts any findings. Status refreshes can flag "
+        "coverage changes without starting another review. The 👀 reaction signals progress; "
+        "👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact "
+        "commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.\n\n"
+        f"[Read the review guide]({RECOVERY_GUIDE}).\n\n"
+        "</details>"
+    )
+
+
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
                         last_review_details=None, base_sha=None, trigger_label=None,
                         owner=None, owner_running=None, reason=None, completed_at=None,
@@ -1734,7 +1749,8 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     adverse = state in ("in_progress", "failure", "publication_incomplete")
     current_attempt = active or incomplete or adverse
     show_review = last_review is not None and not current_attempt
-    lines += ["## Claude Review", ""]
+    notices = []
+    diagnostics = []
     specific_reason = reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
     if state == "stale" and owner_running:
         repo = owner["repo"] if owner else None
@@ -1749,7 +1765,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                             f"the current target commit is {commit_link(base_sha, repo)}.")
         else:
             explanation += "This attempt's coverage of the current PR cannot be confirmed."
-        lines += [explanation, ""]
+        notices.append(explanation)
     elif (state == "stale" and owner and owner["head"] != head_sha
           and reason == stale_status_reason(STATUS_REASONS["workflow_changed"])):
         messages["stale"] = (f"The review of {commit_link(owner['head'], owner['repo'])} did not complete. "
@@ -1757,7 +1773,27 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     elif state == "stale" and show_review and not (base_advanced or superseded_review):
         messages["stale"] = "The applicability of this completed review to the current PR cannot be confirmed."
     if state == "in_progress" and not check_available:
-        lines += [messages[state], ""]
+        notices.append(messages[state])
+    attempt_reason = (reason or "").removeprefix(STATUS_REASONS["stale"] + " ")
+    if active:
+        outcome = "🔄 In progress — stale" if state == "stale" else "🔄 In progress"
+    elif state == "stale" and not base_advanced:
+        outcome = "⚠️ Stale"
+    elif state == "publication_incomplete":
+        outcome = "❌ Check unavailable"
+    elif attempt_reason == STATUS_REASONS["cancelled"]:
+        outcome = "❌ Cancelled"
+    elif attempt_reason in (STATUS_REASONS["preparation_failed"], STATUS_REASONS["execution_failed"]):
+        outcome = "❌ Failed"
+    elif incomplete:
+        outcome = "❌ Incomplete"
+    elif show_review and last_review[2] == "action_required":
+        outcome = "⚠️ Findings with warning" if base_advanced else "⚠️ Findings"
+    elif show_review:
+        outcome = "⚠️ Completed with warning" if base_advanced else "✅ Completed"
+    else:
+        outcome = "Not reviewed"
+    lines += ["", "<details>", f"<summary><strong>Claude Review</strong>: {outcome}</summary>", ""]
     if show_review:
         if state == "stale" and not (base_advanced or superseded_review):
             lines += ["**Last completed review**", ""]
@@ -1779,17 +1815,22 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
     notice = selection_notice(selection, running=state == "in_progress" or owner_running is True)
-    lines += ["", "  \n".join(notice)] if notice else []
+    if notice:
+        notices.append("  \n".join(notice))
     if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
-        lines += ["", messages[state]]
+        notices.append(messages[state])
     if base_advanced:
-        lines += ["", TARGET_TIP_WARNING]
+        notices.append(TARGET_TIP_WARNING)
     if incomplete and not active:
         if execution_diagnostic:
             explanation = execution_failure_explanation(execution_diagnostic)
             run = (f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}"
                    f"/actions/runs/{owner['run']}/attempts/{owner['attempt']}")
-            explanation += f" [Attempt logs]({run}). [Recovery guidance]({INCOMPLETE_RECOVERY})."
+            if explanation != attempt_reason:
+                diagnostics.append(explanation)
+            summary = (STATUS_REASONS["execution_failed"] if diagnostics else attempt_reason)
+            explanation = (f"{summary} [Attempt logs]({run}). "
+                           f"[Recovery guidance]({INCOMPLETE_RECOVERY}).")
         elif inline_failure:
             check_url = (f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/pull/{owner['pr']}"
                          f"/checks?check_run_id={inline_failure['check_run_id']}")
@@ -1800,7 +1841,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             explanation = messages[state] + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
         else:
             explanation = incomplete_explanation(reason, owner)
-        lines += ["", explanation]
+        notices.append(explanation)
     attempt_url = (env("DETAILS_URL") if not owner else
                    f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
     historical = last_review is not None and state not in ("success", "action_required")
@@ -1811,7 +1852,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             and last_review_details["generation"] != owner["generation"])
     )
     history_in_details = last_review is not None and current_attempt
-    lines += ["", "<details>", "<summary>ℹ️ Details</summary>", ""]
+    lines += [""]
     if reason:
         # Existing parsers recover this exact receipt from the raw Markdown.
         # Do not add hard-break whitespace to the Reason line.
@@ -1917,7 +1958,11 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines += ["  \n".join(metadata), ""]
     if previous:
         lines += ["**Previous completed review**  ", "  \n".join(previous), ""]
-    lines += ["</details>"]
+    for diagnostic in diagnostics:
+        lines += [diagnostic, ""]
+    lines += [about_review_details(), "", "</details>"]
+    for notice in notices:
+        lines += ["", notice]
     return "\n".join(lines)
 
 
@@ -2678,7 +2723,7 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
         "Claude Review: No findings. 🎉\n\n"
         f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}){settings}\n\n"
         "<details>\n<summary>ℹ️ Details</summary>\n\n"
-        f"{details}\n\n</details>"
+        f"{details}\n\n{about_review_details()}\n\n</details>"
     )
 
 

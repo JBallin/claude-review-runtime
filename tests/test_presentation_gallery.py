@@ -12,7 +12,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
 from unittest import mock
+
+from test_claude_review_check import review_parts
 
 sys.dont_write_bytecode = True
 SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "render_presentation_gallery.py"
@@ -47,9 +50,9 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertNotIn("Source revision", body)
         self.assertNotIn("Pending —", body)
         self.assertNotIn("Visual-QA observations", body)
-        self.assertEqual(len(gallery.gallery_samples()), 62)
+        self.assertEqual(len(gallery.gallery_samples()), 63)
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", body, re.MULTILINE)],
-                         list(range(1, 63)))
+                         list(range(1, 64)))
         # This committed audit file is not posted as one GitHub comment.
         self.assertLess(len(body.encode("utf-8")), 300_000)
 
@@ -62,7 +65,7 @@ class PresentationGalleryTests(unittest.TestCase):
             self.assertNotRegex(case.title, r"^(?:[A-Z]+[0-9]*|[0-9]+) — ")
         anchors = [anchor for case_id in case_ids for anchor in
                    (case_id, *gallery.CASE_ANCHOR_ALIASES.get(case_id, ()))]
-        self.assertEqual(len(anchors), 70)
+        self.assertEqual(len(anchors), 71)
         self.assertEqual(len(set(anchors)), len(anchors))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', gallery.render_gallery(), re.MULTILINE),
                          anchors)
@@ -83,7 +86,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(gallery, "gallery_samples", return_value=changed_order):
             changed = gallery.render_gallery()
         self.assertEqual([int(number) for number in re.findall(r"^### ([0-9]+) — ", changed, re.MULTILINE)],
-                         list(range(1, 64)))
+                         list(range(1, 65)))
         self.assertEqual(re.findall(r'^<a id="([^"]+)"></a>$', changed, re.MULTILINE),
                          [anchor for case in changed_order for anchor in
                           (case.case_id, *gallery.CASE_ANCHOR_ALIASES.get(case.case_id, ()))])
@@ -104,7 +107,7 @@ class PresentationGalleryTests(unittest.TestCase):
                          gallery.GROUP_ORDER)
         case_ids = [case.case_id for case in samples]
         for related in (
-                ["incomplete-unknown", "turn-limit", "inline-tool-partial", "inline-tool-zero",
+                ["cancelled", "incomplete-unknown", "turn-limit", "inline-tool-partial", "inline-tool-zero",
                  "inline-tool-unknown-count", "inline-tool-stale", "unread-automatic", "unread-manual",
                  "workflow-changed", "workflow-changed-superseded"],
                 ["running-history-clean", "running-history-findings", "running-history-manual"],
@@ -119,7 +122,7 @@ class PresentationGalleryTests(unittest.TestCase):
         with mock.patch.object(check, "status_comment_body", wraps=check.status_comment_body) as status:
             with mock.patch.object(check, "completion_comment_body", wraps=check.completion_comment_body) as completion:
                 samples = gallery.gallery_samples()
-        self.assertEqual(status.call_count, 58)
+        self.assertEqual(status.call_count, 59)
         self.assertEqual(completion.call_count, 5)
         self.assertEqual([call.kwargs.get("observed_base_sha") for call in completion.call_args_list],
                          [gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.BASE_TIP, gallery.fixtures.OTHER, None])
@@ -135,7 +138,7 @@ class PresentationGalleryTests(unittest.TestCase):
         for case_id in ('selection-running', 'opus-observed', 'opus-multiple', 'selection-receipt'):
             for hidden in ('', '<!--\nAuxiliary Haiku model evidence\n-->\n'):
                 with self.subTest(case_id=case_id, multiline_comment=bool(hidden)):
-                    main, details = (hidden + cases[case_id]).split('<details>', 1)
+                    main, details = review_parts(hidden + cases[case_id])
                     visible = re.sub(r'<!--.*?-->', '', main, flags=re.DOTALL)
                     self.assertNotIn('**Model:**', visible)
                     self.assertNotIn('**Effort:**', visible)
@@ -149,7 +152,7 @@ class PresentationGalleryTests(unittest.TestCase):
                                    ('opus-unknown', 'Model unknown:** primary evidence missing'),
                                    ('opus-legacy', 'Model unknown:** primary evidence missing'),
                                    ('opus-ambiguous', 'Model ambiguous:** Opus / Sonnet observed')):
-            visible = re.sub(r'<!--.*?-->', '', cases[case_id].split('<details>')[0], flags=re.DOTALL)
+            visible = re.sub(r'<!--.*?-->', '', review_parts(cases[case_id])[0], flags=re.DOTALL)
             self.assertIn('⚠️ **' + exception, visible)
         mixed = gallery.check.current_selection(
             gallery.fixtures.presentation_owner(kind='issue_comment', target=12, started=gallery.STARTED),
@@ -157,7 +160,7 @@ class PresentationGalleryTests(unittest.TestCase):
         self.assertEqual(mixed['models'], ['claude-haiku-4-5', 'claude-opus-5-5'])
         self.assertEqual(mixed['primary_model_evidence']['assistant'], ['claude-opus-5-5'])
         self.assertIsNone(mixed['observed_effort'])
-        receipt = cases['selection-receipt'].split('<details>')[0]
+        receipt = review_parts(cases['selection-receipt'])[0]
         self.assertIn('**Reviewed commit:** ' + gallery.check.commit_link(gallery.fixtures.HEAD,
                       gallery.fixtures.REPO) + '\n\n', receipt)
         self.assertNotIn('**Model:**', receipt)
@@ -169,12 +172,11 @@ class PresentationGalleryTests(unittest.TestCase):
             with self.subTest(case_id=case_id):
                 details = raw.split("<details>", 1)[1]
                 self.assertNotRegex(details, r"</summary>\s*<br\s*/?>")
-                visible = re.sub(r"<!--.*?-->", "", details, flags=re.DOTALL)
-                visible = visible.split("</summary>", 1)[1].removesuffix("</details>")
+                visible = re.sub(r"<!--.*?-->", "", review_parts(raw)[1], flags=re.DOTALL)
                 self.assertNotRegex(visible, r"(?m)^#{1,6} ")
                 groups = re.split(r"(?m)^\*\*(?:Current attempt|Previous completed review)\*\*[ \t]*$", visible)
                 for group in groups:
-                    lines = [line.strip() for line in group.splitlines() if line.strip()]
+                    lines = [line.strip() for line in group.splitlines() if line.strip() and not line.startswith("| ")]
                     settings = [line for line in lines if line.startswith(("**Model:**", "**Effort:**"))]
                     if settings:
                         checked_groups += 1
@@ -187,7 +189,7 @@ class PresentationGalleryTests(unittest.TestCase):
         cases = dict(sample_items())
         for case_id in ("current-clean", "plain-selection", "selection-receipt"):
             details = re.sub(r"<!--.*?-->", "", cases[case_id].split("</summary>", 1)[1], flags=re.DOTALL)
-            self.assertTrue(details.lstrip().startswith("**Model:**"))
+            self.assertTrue(next(line for line in details.splitlines() if line and not line.startswith("| ")).startswith("**Model:**"))
         for case_id in ("legacy-history-run", "legacy-history-no-links"):
             details = re.sub(r"<!--.*?-->", "", cases[case_id].split("</summary>", 1)[1], flags=re.DOTALL)
             self.assertNotIn("**Model:**", details)
@@ -201,7 +203,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 ('inherited-model-observed', '**Model:** Sonnet · **Effort:** Medium'),
                 ('manual-partial-default', '**Model:** Haiku · **Effort:** Medium')):
             with self.subTest(case_id=case_id):
-                main, details = cases[case_id].split('<details>', 1)
+                main, details = review_parts(cases[case_id])
                 main = re.sub(r'<!--.*?-->', '', main, flags=re.DOTALL)
                 self.assertNotIn('**Model:**', main)
                 self.assertNotIn('**Effort:**', main)
@@ -228,8 +230,8 @@ class PresentationGalleryTests(unittest.TestCase):
         for case_id, trigger in (("current-clean", "PR opened for review"),
                                  ("plain-selection", "Manual request")):
             raw = cases[case_id]
-            main, details = raw.split("<details>", 1)
-            self.assertIn("| " + trigger + " |", main)
+            main, details = review_parts(raw)
+            self.assertIn("| " + trigger + " |", details)
             self.assertIn("**Model:** Sonnet · **Effort:** Medium", details)
             self.assertNotIn("Sonnet 5.5", details)
             with mock.patch.dict(os.environ, {}, clear=True):
@@ -285,7 +287,7 @@ class PresentationGalleryTests(unittest.TestCase):
             raw = gallery.check.status_comment_body(gallery.fixtures.HEAD, 'main', 'success',
                 owner=owner, trigger_label='Manual request', completed_at=gallery.COMPLETED_AT,
                 selection=selection, runtime=gallery.check.executing_runtime())
-        main, details = raw.split('<details>', 1)
+        main, details = review_parts(raw)
         visible = re.sub(r'<!--.*?-->', '', main, flags=re.DOTALL)
         self.assertNotIn('**Model:**', visible + details)
         self.assertNotIn('Model ambiguous', visible)
@@ -320,7 +322,7 @@ class PresentationGalleryTests(unittest.TestCase):
     def test_previous_model_mismatch_is_scoped_to_previous_details(self):
         cases = dict(sample_items())
         raw = cases["running-history-model-mismatch"]
-        main, details = raw.split("<details>", 1)
+        main, details = review_parts(raw)
         current, previous = details.split("**Previous completed review**", 1)
         self.assertIn("**Current attempt**  \n**Model:** Sonnet · **Effort:** Medium", current)
         self.assertNotIn("⚠️ **Model", main + current)
@@ -364,12 +366,13 @@ class PresentationGalleryTests(unittest.TestCase):
                     if call.args == (gallery.fixtures.HEAD, "main", "action_required"))
         self.assertEqual(call.args, (gallery.fixtures.HEAD, "main", "action_required"))
         self.assertNotIn("last_review", call.kwargs)
-        visible, details = raw.split("<details>", 1)
-        self.assertIn("⚠️ **Findings**", visible)
-        self.assertIn("| Commit |", visible)
-        self.assertIn(check.commit_link(gallery.fixtures.HEAD, gallery.fixtures.REPO), visible)
-        self.assertIn("PR opened for review", visible)
-        self.assertIn(gallery.COMPLETED_AT, visible)
+        visible, details = review_parts(raw)
+        self.assertIn("⚠️ Findings</summary>", visible)
+        self.assertIn("⚠️ **Findings**", details)
+        self.assertIn("| Commit |", details)
+        self.assertIn(check.commit_link(gallery.fixtures.HEAD, gallery.fixtures.REPO), details)
+        self.assertIn("PR opened for review", details)
+        self.assertIn(gallery.COMPLETED_AT, details)
         self.assertNotIn("Assess the recorded findings in the inline review threads.", visible)
         self.assertNotIn("No findings", raw)
         self.assertNotIn("Previous completed review", raw)
@@ -431,7 +434,7 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertEqual(body.count(
                         "⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed."
                     ), 1)
-            elif case_id == "incomplete-unknown":
+            elif case_id in ("cancelled", "incomplete-unknown"):
                 self.assertIn("| Commit |", raw)
             elif case_id == "compact-clean":
                 self.assertNotIn("The observed target differed from the reviewed baseline.", raw)
@@ -443,7 +446,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertNotIn("This is not merge approval.", raw)
                 self.assertIn("**Runtime:** [`JBallin/claude-review-runtime@fffffff`]", raw.split("<details>")[1])
             elif case_id == "compact-differing-baseline":
-                visible, details = raw.split("<details>", 1)
+                visible, details = review_parts(raw)
                 self.assertNotIn("The observed target differed", visible)
                 self.assertEqual(details.count("The observed target differed from the reviewed baseline."), 1)
                 self.assertIn("Claude Review: No findings. 🎉", raw)
@@ -457,12 +460,12 @@ class PresentationGalleryTests(unittest.TestCase):
     def test_pin_recovery_is_explicitly_synthetic_and_separate_from_generic_receipts(self):
         cases = dict(sample_items())
         recovery = cases["manual-pin-recovery"]
-        headline, details = recovery.split("<details>", 1)
+        headline, details = review_parts(recovery)
         self.assertIn("Claude Review: No findings. 🎉", headline)
         self.assertNotIn("Synthetic recovery context", headline)
         self.assertNotIn("proposed pin", headline)
         runtime_line = next(line for line in details.splitlines() if line.startswith("**Runtime:**"))
-        self.assertTrue(details.startswith("\n<summary>ℹ️ Details</summary>\n\nThis review used the deployed Runtime, not the proposed pin.\n\n**[Reviewed]"))
+        self.assertTrue(details.startswith("\n\nThis review used the deployed Runtime, not the proposed pin.\n\n**[Reviewed]"))
         self.assertTrue(runtime_line.endswith("  "))
         self.assertNotIn("from `fffffff`", details)
         self.assertIn("**Runtime:** [`JBallin/claude-review-runtime@fffffff`]", recovery)
@@ -481,13 +484,13 @@ class PresentationGalleryTests(unittest.TestCase):
             self.assertEqual(len(cases), 4 if group == "publication-incomplete" else 3)
             for case_id, body in cases:
                 with self.subTest(case_id=case_id):
-                    visible, details = body.split("<details>", 1)
-                    self.assertIn("| Commit |", visible)
+                    visible, details = review_parts(body)
+                    self.assertIn("| Commit |", details)
                     self.assertIn("| " + gallery.check.commit_link(gallery.fixtures.OTHER, gallery.fixtures.REPO)
-                                  + (" | Manual request |" if case_id.endswith("-manual") else " | Draft marked ready |"), visible)
+                                  + (" | Manual request |" if case_id.endswith("-manual") else " | Draft marked ready |"), details)
                     self.assertNotIn("✅ **Completed**", visible)
                     self.assertNotIn("⚠️ **Findings**", visible)
-                    self.assertIn("🔄 **Running**" if group == "running-unavailable" else "❌ **Incomplete**", visible)
+                    self.assertIn("🔄 In progress</summary>" if group == "running-unavailable" else "❌ Check unavailable</summary>", visible)
                     if group == "publication-incomplete":
                         self.assertIn("The authoritative Check result could not be published.", visible)
                     else:
@@ -550,8 +553,8 @@ class PresentationGalleryTests(unittest.TestCase):
                 elif case_id.startswith("inline-tool-") or case_id in ("turn-limit", "selection-running", "selection-incomplete", "selection-tooling-unavailable", "workflow-default-running"):
                     self.assertIn(f"**[Attempt]({reviewed}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
-                elif case_id.startswith(("publication-incomplete-", "publication-unavailable-", "unread-", "workflow-changed")) or case_id == "incomplete-unknown":
-                    url = reviewed if case_id in ("incomplete-unknown", "unread-automatic",
+                elif case_id.startswith(("publication-incomplete-", "publication-unavailable-", "unread-", "workflow-changed")) or case_id in ("cancelled", "incomplete-unknown"):
+                    url = reviewed if case_id in ("cancelled", "incomplete-unknown", "unread-automatic",
                                                    "workflow-changed", "workflow-changed-superseded") else attempt
                     self.assertIn(f"**[Attempt]({url}) baseline:**", details)
                     self.assertNotIn("[Reviewed]", details)
@@ -561,13 +564,43 @@ class PresentationGalleryTests(unittest.TestCase):
                 else:
                     self.assertIn(f"**[Reviewed]({reviewed}) against:**", details)
 
+    def test_collapsed_outcomes_keep_warnings_and_about_in_the_right_place(self):
+        cases = dict(sample_items())
+        for case_id, outcome in {
+            "current-clean": "✅ Completed",
+            "current-findings": "⚠️ Findings",
+            "selection-running": "🔄 In progress",
+            "incomplete-unknown": "❌ Incomplete",
+            "cancelled": "❌ Cancelled",
+            "changed-head": "⚠️ Stale",
+            "baseline-clean": "⚠️ Completed with warning",
+            "baseline-findings": "⚠️ Findings with warning",
+            "running-history-clean": "🔄 In progress",
+        }.items():
+            with self.subTest(case_id=case_id):
+                collapsed, expanded = review_parts(cases[case_id])
+                self.assertIn(f"<summary><strong>Claude Review</strong>: {outcome}</summary>", collapsed)
+                self.assertNotIn("| Status |", collapsed)
+                self.assertIn("| Status | Commit | Review trigger |", expanded)
+                if case_id.startswith("baseline-"):
+                    self.assertIn(gallery.check.TARGET_TIP_WARNING, collapsed)
+        for case_id in ("current-clean", "compact-clean", "selection-receipt-mismatch"):
+            with self.subTest(case_id=case_id):
+                collapsed, expanded = review_parts(cases[case_id])
+                self.assertNotIn("About Claude Review Runtime", collapsed)
+                self.assertRegex(expanded, r"<details>\n<summary><strong>About Claude Review Runtime</strong></summary>")
+                self.assertIn(f"[Read the review guide]({gallery.check.RECOVERY_GUIDE})", expanded)
+                if case_id == "selection-receipt-mismatch":
+                    self.assertIn("Model mismatch", collapsed)
+                    self.assertIn("**Reviewed commit:**", collapsed)
+
     def test_incomplete_explanations_are_visible_and_keep_diagnostics_collapsed(self):
         for case_id, body in sample_items():
             if case_id not in ("unread-automatic", "unread-manual", "workflow-changed", "workflow-changed-superseded"):
                 continue
-            visible, details = body.split("<details>", 1)
+            visible, details = review_parts(body)
             with self.subTest(case_id=case_id):
-                self.assertIn("❌ **Incomplete**", visible)
+                self.assertIn("⚠️ Stale</summary>" if case_id.endswith("-superseded") else "❌ Incomplete</summary>", visible)
                 self.assertIn("recovery guidance]", visible.lower())
                 self.assertIn("**Reason:**", details)
                 self.assertNotIn("**Reason:**", visible)
@@ -614,7 +647,7 @@ class PresentationGalleryTests(unittest.TestCase):
             owner = gallery.check.status_owner(record)
             label = "Manual request" if case_id == "stale-manual" else "Draft marked ready"
             self.assertEqual(gallery.check.status_attempt_trigger(record, owner), label)
-            self.assertIn("| " + label + " |", body.split("<details>")[0])
+            self.assertIn("| " + label + " |", review_parts(body)[1])
             if case_id == "stale-manual":
                 self.assertIn("**Review trigger:** PR opened for review", body)
 
@@ -632,15 +665,15 @@ class PresentationGalleryTests(unittest.TestCase):
         }
         for case_id, expected in expectations.items():
             with self.subTest(case_id=case_id):
-                self.assertIn(expected, cases[case_id].split("<details>")[0])
+                self.assertIn(expected, review_parts(cases[case_id])[0])
         for case_id in ("stale-running-head", "stale-running-base", "stale-running-ref", "stale-manual"):
             receipt = "**Reason:** " + check.STATUS_REASONS["stale"]
             self.assertIn("<!--\n" + receipt + "\n-->", cases[case_id])
         for case_id in ("workflow-changed", "workflow-changed-superseded"):
             body = cases[case_id]
-            self.assertIn("likely caused this incomplete review", body.split("<details>")[0])
-            self.assertIn("to confirm.", body.split("<details>")[0])
-            self.assertEqual("`/claude-review`" in body, case_id == "workflow-changed")
+            self.assertIn("likely caused this incomplete review", review_parts(body)[0])
+            self.assertIn("to confirm.", review_parts(body)[0])
+            self.assertEqual("`/claude-review`" in review_parts(body)[0], case_id == "workflow-changed")
             self.assertIn("**Reason:** ", body.split("<details>")[1])
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):

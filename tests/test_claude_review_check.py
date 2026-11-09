@@ -1721,7 +1721,7 @@ class StatusCommentTests(ScriptTestCase):
                 body = self.calls("PATCH")[-1]["body"]["body"]
                 self.assertIn(phrase, body)
                 if expected == "failure":
-                    self.assertNotIn("**Reason:**", body.split("<details>", 1)[0])
+                    self.assertNotIn("**Reason:**", review_parts(body)[0])
                     self.assertNotIn("**Note:**", body)
                 else:
                     self.assertNotIn("**Note:**", body)
@@ -1884,7 +1884,7 @@ class StatusCommentTests(ScriptTestCase):
                 self.assertNotIn("Authority:", body)
                 self.assertNotIn("**Trigger:**", body)
                 if state in ("in_progress", "success", "action_required", "failure", "stale") and available:
-                    self.assertNotIn("Check", body)
+                    self.assertNotIn("Check", review_parts(body)[0])
         for state in ("in_progress", "publication_incomplete"):
             body = check.status_comment_body(HEAD, "main", state, check_available=False)
             self.assertIn("authoritative Check publication is unavailable", body)
@@ -1940,7 +1940,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual(self.calls("POST")[-1]["body"], {"content": "eyes"})
         self.assert_pr_reactions_only()
-        self.assertIn("## Claude Review", self.calls("POST")[-2]["body"]["body"])
+        self.assertIn("<summary><strong>Claude Review</strong>:", self.calls("POST")[-2]["body"]["body"])
 
         self.log.unlink()
         result = self.start(
@@ -1968,7 +1968,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
                          [f"repos/{REPO}/issues/7/reactions/70"])
         self.assertEqual(self.calls("POST")[-1]["body"], {"content": "eyes"})
-        self.assertIn("## Claude Review", self.calls("PATCH")[0]["body"]["body"])
+        self.assertIn("<summary><strong>Claude Review</strong>:", self.calls("PATCH")[0]["body"]["body"])
         self.assert_pr_reactions_only()
 
         self.log.unlink()
@@ -2099,10 +2099,11 @@ class PRReactionTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0, result.stdout)
         body = self.calls("PATCH")[0]["body"]["body"]
-        self.assertIn("## Claude Review", body)
+        self.assertIn("<summary><strong>Claude Review</strong>:", body)
         self.assertIn(f"**PR commit:** {check.commit_link(OTHER, REPO)} on `main` — not reviewed", body)
-        visible, details = body.split("<details>", 1)
-        self.assertIn("| ❌ **Incomplete**", visible)
+        visible, details = review_parts(body)
+        self.assertIn("⚠️ Stale</summary>", visible)
+        self.assertIn("| ❌ **Incomplete**", details)
         self.assertIn("**Previous completed review**", details)
         self.assertIn("**Result:** No findings.", details)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "success"))
@@ -2260,8 +2261,9 @@ class PRReactionTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0)
         body = self.calls("PATCH")[0]["body"]["body"]
-        visible, details = body.split("<details>", 1)
-        self.assertIn("| ❌ **Incomplete**", visible)
+        visible, details = review_parts(body)
+        self.assertIn("⚠️ Stale</summary>", visible)
+        self.assertIn("| ❌ **Incomplete**", details)
         self.assertIn("**Previous completed review**", details)
         self.assertIn("**Result:** Findings.", details)
         self.assertEqual(check.last_completed_review({"body": body}), (HEAD, "main", "action_required"))
@@ -2375,9 +2377,9 @@ class ManualCompletionTests(ScriptTestCase):
             f"[`ddddddd`](https://github.com/{REPO}/commit/{BASE_TIP}) on `main`  \n"
             "**Runtime:** [`example/review-runtime@fffffff`]"
             f"(https://github.com/example/review-runtime/blob/{'f' * 40}/.github/workflows/claude-review.yml)"
-            "  \n**Turns:** unavailable\n\n</details>"
+            f"  \n**Turns:** unavailable\n\n{check.about_review_details()}\n\n</details>"
         ))
-        visible, details = body.split("<details>", 1)
+        visible, details = review_parts(body)
         self.assertIn(f"[`aaaaaaa`](https://github.com/{REPO}/commit/{HEAD})", visible)
         self.assertEqual(body.count(f"/commit/{HEAD}"), 1)
         self.assertNotIn("Compared against", visible)
@@ -2660,7 +2662,7 @@ class ManualCompletionTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertEqual([call["path"] for call in self.calls("PATCH")],
                          [f"repos/{REPO}/issues/comments/55"])
-        self.assertIn("## Claude Review", self.calls("PATCH")[0]["body"]["body"])
+        self.assertIn("<summary><strong>Claude Review</strong>:", self.calls("PATCH")[0]["body"]["body"])
         self.assertFalse(self.calls("POST"))
         self.assertFalse(self.calls("DELETE"))
 
@@ -2687,13 +2689,23 @@ class ManualCompletionTests(ScriptTestCase):
                 self.assertEqual(result.returncode, 0, result.stdout)
                 body = self.calls("POST")[0]["body"]["body"]
                 marker = check.completion_marker(REPO, "7", HEAD, base_ref, OTHER, MERGE_BASE)
-                visible, details = body.split("<details>", 1)
+                visible, details = review_parts(body)
                 self.assertIn(marker, visible)
                 self.assertIn("Claude Review: No findings. 🎉", visible)
                 self.assertIn(f"**[Reviewed](https://github.com/owner/repo/actions/runs/5) against:** [`bbbbbbb`](https://github.com/{REPO}/commit/{OTHER}) on {rendered_ref}", details)
                 self.assertNotIn("[Review run]", details)
                 self.assertTrue(body.endswith("</details>"))
                 self.assertNotIn(f"/commit/{MERGE_BASE}", body)
+
+
+def review_parts(body):
+    """Return collapsed and expanded Markdown for the outer disclosure."""
+    before, opening, content = body.partition("<details>")
+    label, summary_end, content = content.partition("</summary>")
+    details, closing, after = content.rpartition("</details>")
+    if not (opening and summary_end and closing):
+        raise AssertionError("Review comment has an incomplete disclosure")
+    return before + label + summary_end + after, details
 
 
 if __name__ == "__main__":

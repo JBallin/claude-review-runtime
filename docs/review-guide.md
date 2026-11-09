@@ -94,8 +94,9 @@ Check is authoritative; the status comment and reactions help you follow progres
 The shared status comment shows the latest accepted attempt and links its
 captured head/base and workflow run. Checks and workflow runs retain earlier
 attempts. An incomplete or cancelled attempt shows an explanation and recovery
-link above Details. Verified unread inputs take precedence over workflow-change
-context; Details retain the reason receipt and captured attempt identity.
+link without expanding the summary. Verified unread inputs take precedence over
+workflow-change context; Details retain the reason receipt and captured attempt
+identity.
 A comment API or permission failure appears in the Check/run when publication
 is possible.
 
@@ -107,8 +108,9 @@ execution identifiers remain in recorded metadata. Current and previous attempts
 each retain their own settings. A refresh neither applies today's defaults to
 an older review nor fills missing historical settings.
 
-Current model warnings appear above Details. A previous run's recorded model
-mismatch appears inside Previous completed review, before that run's settings,
+Current model warnings stay visible when the summary is collapsed. A previous
+run's recorded model mismatch appears inside Previous completed review, before
+that run's settings,
 and uses only its captured evidence. Model warnings do not change completion or
 finding verification.
 
@@ -137,8 +139,10 @@ an existing historical 👍 but cannot recreate a removed one.
 
 ### Read timestamps and history
 
-The status table shows **Status**, **Commit**, and **Review trigger**. A completed
-clean or findings review shows its recorded completion time and reviewed SHA.
+The collapsed **Claude Review** summary shows the latest outcome. Coverage
+warnings stay visible, including when the target changes after a review completes.
+Expand the summary to see **Status**, **Commit**, and **Review trigger**. A
+completed review shows its recorded completion time and reviewed SHA.
 Newer running, failed, or incomplete attempts remain prominent; previous
 completed evidence moves inside Details, with links grouped by attempt.
 

@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from test_claude_review_check import check, HEAD, presentation_owner
+from test_claude_review_check import check, HEAD, presentation_owner, review_parts
 import test_claude_review_workflows as w
 
 
@@ -57,7 +57,7 @@ class SelectionTests(unittest.TestCase):
                 for state in ('in_progress', 'success'):
                     body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=record)
                     self.assertIn('**Model:** Opus · **Effort:** ' + display, body.split('<details>')[1])
-                    self.assertNotIn('**Effort:**', body.split('<details>')[0])
+                    self.assertNotIn('**Effort:**', review_parts(body)[0])
                     self.assertEqual(check.current_selection(owner, {'body': body}), original)
                 self.assertEqual(record, original)
                 self.assertIsNone(record['observed_effort'])
@@ -100,7 +100,7 @@ class SelectionTests(unittest.TestCase):
             if models == ('claude-opus-4-7',):
                 self.assertIn('**Model:** Opus · **Effort:** High', body.split('<details>')[1])
             else:
-                self.assertIn('⚠️ **Model', body.split('<details>')[0])
+                self.assertIn('⚠️ **Model', review_parts(body)[0])
             if models == ('claude-sonnet-4-6',):
                 self.assertIn('⚠️ **Model', body)
             with mock.patch.dict(os.environ, {}, clear=True):
@@ -147,7 +147,7 @@ class SelectionTests(unittest.TestCase):
         body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
         for hidden in ('', '<!--\nHaiku requested by an auxiliary call\n-->\n'):
             with self.subTest(multiline_comment=bool(hidden)):
-                visible = re.sub(r'<!--.*?-->', '', (hidden + body).split('<details>')[0], flags=re.DOTALL)
+                visible = re.sub(r'<!--.*?-->', '', review_parts(hidden + body)[0], flags=re.DOTALL)
                 self.assertNotIn('**Model:**', visible)
                 self.assertNotIn('**Effort:**', visible)
                 self.assertNotIn('Haiku', visible)
@@ -253,7 +253,7 @@ class SelectionTests(unittest.TestCase):
         owner, record = self.record(models=('claude-sonnet-5-5',), requested_model='sonnet', requested_effort='medium')
         for state in ('success', 'in_progress', 'failure', 'stale'):
             body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=record)
-            main, details = body.split('<details>')
+            main, details = review_parts(body)
             self.assertNotIn('**Model:**', main)
             self.assertIn('**Model:** Sonnet · **Effort:** Medium', details)
             self.assertNotIn('Sonnet 5.5', details)
@@ -270,7 +270,7 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(check.selection_notice(record), [])
         self.assertEqual(check.selection_details(record), ['**Model:** Sonnet · **Effort:** High'])
         self.assertNotIn('No override requested', body)
-        self.assertNotIn('**Model:**', body.split('<details>')[0])
+        self.assertNotIn('**Model:**', review_parts(body)[0])
         self.assertEqual(check.current_selection(owner, {'body': body}), record)
         self.assertNotIn('**Observed effort:**', body)
         with mock.patch.dict(os.environ, {'TRIGGER_COMMENT': '/claude-review high'}, clear=True):
@@ -282,7 +282,7 @@ class SelectionTests(unittest.TestCase):
         owner, record = self.record()
         for state in ('in_progress', 'success', 'action_required', 'failure'):
             body = check.status_comment_body(HEAD, 'main', state, owner=owner, selection=record)
-            main, details = body.split('<details>')
+            main, details = review_parts(body)
             self.assertNotIn('**Model:**', main)
             self.assertNotIn('**Effort:**', main)
             self.assertEqual(details.count('**Model:**'), 1)
@@ -304,7 +304,7 @@ class SelectionTests(unittest.TestCase):
         body = check.status_comment_body(HEAD, 'main', 'success', owner=owner, selection=record)
         with mock.patch.dict(os.environ, {}, clear=True):
             self.assertEqual(check.current_selection(owner, {'body': body}), record)
-        main, details = body.split('<details>')
+        main, details = review_parts(body)
         self.assertIn('primary evidence missing', main)
         self.assertIn('**Model:** Opus · **Effort:** High', details)
         self.assertNotIn('Opus 4.7', details)
@@ -357,7 +357,7 @@ class SelectionTests(unittest.TestCase):
                     body = check.completion_comment_body(
                         'owner/repo', HEAD, 'main', 'b' * 40, '<!-- completion -->',
                         'https://github.com/owner/repo/actions/runs/5', selection=record)
-                main, details = body.split('<details>')
+                main, details = review_parts(body)
                 self.assertEqual('Model mismatch' in main, warning)
                 self.assertNotIn('**Effort:**', main)
                 if not warning:
