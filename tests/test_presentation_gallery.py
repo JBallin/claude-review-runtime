@@ -403,7 +403,7 @@ class PresentationGalleryTests(unittest.TestCase):
         samples = dict(sample_items())
         for label, count in (("partial", 1), ("zero", 0), ("unknown-count", None), ("stale", 1)):
             body = samples["inline-tool-" + label]
-            self.assertIn(gallery.check.inline_failure_explanation(count), body)
+            self.assertIn(gallery.check.inline_failure_notice(count), review_parts(body)[0])
             self.assertIn("/pull/7/checks?check_run_id=99", body)
             self.assertIn(gallery.check.INCOMPLETE_RECOVERY, body)
             self.assertEqual("request an approved fresh" in body, label != "stale")
@@ -492,9 +492,10 @@ class PresentationGalleryTests(unittest.TestCase):
                     self.assertNotIn("⚠️ **Findings**", visible)
                     self.assertIn("🔄 In progress</summary>" if group == "running-unavailable" else "❌ Check unavailable</summary>", visible)
                     if group == "publication-incomplete":
-                        self.assertIn("The authoritative Check result could not be published.", visible)
+                        self.assertIn("The result could not be published to the Claude Review Check.", visible)
                     else:
-                        self.assertIn("authoritative Check publication is unavailable", visible)
+                        self.assertIn("This attempt can’t publish a Claude Review Check." if group == "running-unavailable"
+                                      else "The Claude Review Check is unavailable for this attempt.", visible)
                     if case_id.endswith("-none"):
                         self.assertNotIn("**Previous completed review**", details)
                     else:
@@ -604,7 +605,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn(gallery.check.GENERIC_RECOVERY, expanded)
                 self.assertIn(gallery.check.MISSING_MODEL_EVIDENCE, expanded)
         collapsed, expanded = review_parts(cases["publication-incomplete-none"])
-        self.assertIn("The authoritative Check result could not be published.", collapsed)
+        self.assertIn("The result could not be published to the Claude Review Check.", collapsed)
         self.assertNotIn(gallery.check.GENERIC_RECOVERY, collapsed)
         self.assertIn(gallery.check.GENERIC_RECOVERY, expanded)
 
@@ -615,18 +616,19 @@ class PresentationGalleryTests(unittest.TestCase):
             visible, details = review_parts(body)
             with self.subTest(case_id=case_id):
                 self.assertIn("⚠️ Stale</summary>" if case_id.endswith("-superseded") else "❌ Incomplete</summary>", visible)
-                self.assertIn("recovery guidance]", visible.lower())
                 self.assertIn("**Reason:**", details)
                 self.assertNotIn("**Reason:**", visible)
                 self.assertNotIn("**Note:**", body)
                 if case_id in ("unread-automatic", "unread-manual"):
                     self.assertIn("Required review inputs were not fully read.", visible)
                     self.assertIn("#incomplete-captured-input-reads", visible)
+                    self.assertNotIn("Required review inputs were not fully read.", re.sub(r"<!--.*?-->", "", details, flags=re.S))
                     self.assertNotIn("validation rejection", body)
                 else:
-                    self.assertIn("likely caused this incomplete review", visible)
-                    self.assertIn("to confirm.", visible)
-                    self.assertIn("/actions/runs/5/attempts/1", visible)
+                    self.assertNotIn("changed the review workflow", visible)
+                    self.assertIn("which may have contributed", details)
+                    self.assertIn("/actions/runs/5/attempts/1", details)
+                    self.assertIn("recovery guidance]", details)
                     self.assertIn("cause of the incomplete review is unknown", details)
 
     def test_edge_samples_keep_plain_headings_and_exact_run_association(self):
@@ -668,26 +670,27 @@ class PresentationGalleryTests(unittest.TestCase):
     def test_stale_explanations_identify_only_known_comparisons(self):
         cases = dict(sample_items())
         check = gallery.check
-        commit = lambda sha: check.commit_link(sha, gallery.fixtures.REPO)
         expectations = {
-            "stale-running-head": f"The current PR commit {commit(gallery.fixtures.OTHER)} is not covered by this attempt.",
-            "stale-running-base": f"Its captured baseline is {commit(gallery.fixtures.BASE_TIP)} on `main`; the current target commit is {commit(gallery.fixtures.OTHER)}.",
-            "stale-running-ref": "This attempt targets `main`; the PR now targets `release`.",
-            "stale-manual": "This attempt's coverage of the current PR cannot be confirmed.",
-            "legacy-history-run": "The applicability of this completed review to the current PR cannot be confirmed.",
-            "workflow-changed-superseded": f"The review of {commit(gallery.fixtures.HEAD)} did not complete. The PR is now at {commit(gallery.fixtures.OTHER)}, which this attempt hasn’t reviewed.",
+            "stale-running-head": "This attempt does not cover the current PR commit.",
+            "stale-running-base": "This attempt does not cover integration with the current target commit.",
+            "stale-running-ref": "This attempt does not cover the PR’s current target branch.",
+            "stale-manual": "This attempt’s coverage of the current PR is unconfirmed.",
+            "legacy-history-run": "Coverage of the current PR is unconfirmed.",
+            "workflow-changed-superseded": "The review did not complete and does not cover the current PR patch.",
         }
         for case_id, expected in expectations.items():
             with self.subTest(case_id=case_id):
-                self.assertIn(expected, review_parts(cases[case_id])[0])
+                collapsed, details = review_parts(cases[case_id])
+                self.assertIn(expected, collapsed)
+                self.assertNotIn(expected, details)
+                self.assertNotIn("Claude is reviewing captured commit", collapsed)
         for case_id in ("stale-running-head", "stale-running-base", "stale-running-ref", "stale-manual"):
             receipt = "**Reason:** " + check.STATUS_REASONS["stale"]
             self.assertIn("<!--\n" + receipt + "\n-->", cases[case_id])
         for case_id in ("workflow-changed", "workflow-changed-superseded"):
             body = cases[case_id]
-            self.assertIn("likely caused this incomplete review", review_parts(body)[0])
-            self.assertIn("to confirm.", review_parts(body)[0])
-            self.assertEqual("`/claude-review`" in review_parts(body)[0], case_id == "workflow-changed")
+            self.assertNotIn("changed the review workflow", review_parts(body)[0])
+            self.assertIn("which may have contributed", review_parts(body)[1])
             self.assertIn("**Reason:** ", body.split("<details>")[1])
 
     def test_generation_is_offline_without_writes_or_publication_and_restores_environment(self):

@@ -1376,8 +1376,11 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertEqual(self.methods(calls)[-1], "PATCH")
         body = next(call["body"]["body"] for call in calls if call["method"] == "PATCH")
-        self.assertIn("Review completion cannot be established", body)
-        self.assertIn("Check publication is unavailable", body)
+        collapsed, expanded = review_parts(body)
+        message = "The Claude Review Check is unavailable for this attempt. Completion is unverified."
+        self.assertIn(message, collapsed)
+        self.assertNotIn(message, expanded)
+        self.assertIn("Trusted review tooling was unavailable", expanded)
         self.assertIn("claude-review-status-base-ref:main", body)
 
     def test_manual_fork_no_check_repairs_known_moved_head_but_skips_unknown_authority(self):
@@ -2097,7 +2100,10 @@ class ToolingFallbackScriptTests(unittest.TestCase):
                         self.assertIn(f"**Captured commit:** `{HEAD}`", repaired)
                         self.assertIn("**Reason:**", repaired)
                         self.assertNotIn("**Note:**", repaired)
-                        self.assertNotIn("**Reason:**", review_parts(repaired)[0])
+                        collapsed, expanded = review_parts(repaired)
+                        self.assertNotIn("**Reason:**", collapsed)
+                        self.assertIn("This attempt does not cover the current PR patch.", collapsed)
+                        self.assertNotIn("This attempt does not cover the current PR patch.", expanded)
                     else:
                         self.assertEqual(len(patches), 1)
                     self.assertEqual(self.check_patch(calls)["body"]["conclusion"], "failure")
@@ -2115,10 +2121,11 @@ class ToolingFallbackScriptTests(unittest.TestCase):
         self.assertEqual(result.returncode, 1)
         self.assertEqual(self.methods(calls)[-1], "PATCH")
         repaired = next(call for call in calls if call["method"] == "PATCH" and any("issues/comments/55" in arg for arg in call["args"]))
-        self.assertIn("could not be published", repaired["body"]["body"])
-        self.assertNotIn("Authority:", repaired["body"]["body"])
-        self.assertIn("authoritative Check result could not be published", repaired["body"]["body"])
-        self.assertIn("**Trigger:** Not recorded", repaired["body"]["body"])
+        collapsed, expanded = review_parts(repaired["body"]["body"])
+        message = "The result could not be published to the Claude Review Check."
+        self.assertIn(message, collapsed)
+        self.assertNotIn(message, expanded)
+        self.assertIn("**Trigger:** Not recorded", expanded)
 
     def test_fallback_worst_case_fits_its_step_timeout(self):
         for path in (AUTOMATIC, MANUAL):

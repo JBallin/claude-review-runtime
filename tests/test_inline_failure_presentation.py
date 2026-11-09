@@ -35,11 +35,20 @@ class InlineFailureTests(unittest.TestCase):
                     with mock.patch.object(check, "workflow_changed") as paths:
                         body = self.finalize_failure(count)
                     paths.assert_not_called()
-                    visible = review_parts(body)[0]
-                    self.assertIn(check.inline_failure_explanation(count), visible)
-                    self.assertIn("/pull/7/checks?check_run_id=99", visible)
-                    self.assertIn(check.INCOMPLETE_RECOVERY, visible)
-                    self.assertIn("For a final candidate with no review in progress", visible)
+                    visible, details = review_parts(body)
+                    expected = {
+                        None: "The review did not complete.",
+                        0: "This attempt posted no findings.",
+                        1: "One posted finding remains recorded.",
+                        2: "2 posted findings remain recorded.",
+                    }[count]
+                    self.assertIn(expected, visible)
+                    self.assertNotIn(expected, details)
+                    self.assertIn("/pull/7/checks?check_run_id=99", details)
+                    self.assertIn(check.INCOMPLETE_RECOVERY, details)
+                    self.assertIn("For a final candidate with no review in progress", details)
+                    self.assertNotIn("Attempt Check", visible)
+                    self.assertNotIn("request an approved fresh", visible)
                     self.assertIn("❌ Incomplete</summary>", visible)
                     self.assertNotIn("manual-clean-completion", body)
                     self.assertEqual(check.status_inline_failure(self.api.status, owner)["posted_count"], count)
@@ -60,7 +69,7 @@ class InlineFailureTests(unittest.TestCase):
         self.assertEqual(self.api.status["body"], once)
         self.assertEqual(check.status_owner(self.api.status), owner)
         self.assertEqual(check.status_head(self.api.status), OTHER)
-        self.assertIn(check.inline_failure_explanation(1), once)
+        self.assertIn(check.inline_failure_notice(1), once)
         self.assertIn("/pull/7/checks?check_run_id=99", once)
         self.assertIn(check.commit_link(HEAD), once)
         self.assertIn("not reviewed", once)
@@ -139,7 +148,7 @@ class InlineFailureTests(unittest.TestCase):
         body = self.finalize_failure(2)
         self.assertEqual(check.status_state(self.api.status), "stale")
         self.assertEqual(check.status_owner(self.api.status), owner)
-        self.assertIn(check.inline_failure_explanation(2), body)
+        self.assertIn(check.inline_failure_notice(2), body)
         self.assertNotIn("request an approved fresh", body)
 
 

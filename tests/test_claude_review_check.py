@@ -681,7 +681,7 @@ class FinalizeTests(ScriptTestCase):
                 status = next(c["body"]["body"] for c in patches if c["path"].endswith("/issues/comments/55"))
                 expected_count = 1 if snapshot == "[]" else None
                 self.assertIn(check.inline_failure_explanation(expected_count), check_body["output"]["summary"])
-                self.assertIn(check.inline_failure_explanation(expected_count), status)
+                self.assertIn(check.inline_failure_notice(expected_count), status)
                 self.assertIn("/pull/7/checks?check_run_id=99", status)
                 self.assertEqual(check.status_state({"body": status}), "failure")
                 self.assertEqual(check_body["conclusion"], "failure")
@@ -1860,7 +1860,7 @@ class StatusCommentTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0)
         body = self.calls("POST")[-1]["body"]["body"]
-        self.assertIn("Check publication is unavailable", body)
+        self.assertIn("This attempt can’t publish a Claude Review Check.", review_parts(body)[0])
         self.assertIn(HEAD, body)
 
     def test_fork_finalization_without_check_does_not_claim_a_review_result(self):
@@ -1871,8 +1871,8 @@ class StatusCommentTests(ScriptTestCase):
         )
         self.assertEqual(result.returncode, 0)
         body = self.calls("PATCH")[0]["body"]["body"]
-        self.assertIn("Review completion cannot be established", body)
-        self.assertIn("Check publication is unavailable", body)
+        self.assertIn("Completion is unverified.", body)
+        self.assertIn("Claude Review Check is unavailable", body)
 
     def test_all_status_messages_are_exact_sha_scoped_without_a_known_trigger(self):
         for state in ("in_progress", "success", "action_required", "failure", "publication_incomplete", "stale"):
@@ -1887,9 +1887,10 @@ class StatusCommentTests(ScriptTestCase):
                     self.assertNotIn("Check", review_parts(body)[0])
         for state in ("in_progress", "publication_incomplete"):
             body = check.status_comment_body(HEAD, "main", state, check_available=False)
-            self.assertIn("authoritative Check publication is unavailable", body)
+            self.assertIn("This attempt can’t publish a Claude Review Check." if state == "in_progress"
+                          else "The Claude Review Check is unavailable for this attempt.", body)
         incomplete = check.status_comment_body(HEAD, "main", "publication_incomplete")
-        self.assertIn("authoritative Check result could not be published", incomplete)
+        self.assertIn("result could not be published to the Claude Review Check", incomplete)
 
     def test_known_trigger_is_in_run_table_and_unknown_for_unrecorded_history(self):
         for label in ("Manual request", "Draft marked ready", "PR opened for review"):
@@ -2201,7 +2202,7 @@ class PRReactionTests(ScriptTestCase):
         self.assertEqual(result.returncode, 0)
         comment_body = next(call["body"]["body"] for call in self.calls("POST")
                             if call["path"] == f"repos/{REPO}/issues/7/comments")
-        self.assertIn("Check publication is unavailable", comment_body)
+        self.assertIn("This attempt can’t publish a Claude Review Check.", review_parts(comment_body)[0])
         self.assertEqual(self.calls("POST")[-1]["body"], {"content": "eyes"})
         self.assertEqual([call["path"] for call in self.calls("DELETE")],
                          [f"repos/{REPO}/issues/7/reactions/70"])

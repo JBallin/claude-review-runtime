@@ -62,7 +62,7 @@ class StatusPresentationTests(unittest.TestCase):
                         else:
                             self.assertNotIn(' started ', visible)
                         if state == 'stale':
-                            self.assertIn("This attempt's coverage of the current PR cannot be confirmed.", visible)
+                            self.assertIn("This attempt’s coverage of the current PR is unconfirmed.", visible)
 
     def test_manual_scope_follows_completed_history_not_unfinished_attempt(self):
         from test_claude_review_check import presentation_owner, BASE_TIP, NEWER
@@ -148,7 +148,7 @@ class StatusPresentationTests(unittest.TestCase):
                 check.best_effort_status(OTHER, 'stale')
                 body = self.api.status['body']
                 visible = self.visible(body)
-                latest = ('Claude is reviewing captured commit' if state == 'in_progress'
+                latest = ('This attempt does not cover the current PR commit.' if state == 'in_progress'
                           else '⚠️ Stale</summary>')
                 self.assertIn(latest, visible)
                 self.assertNotIn('✅ **Completed**', visible)
@@ -164,13 +164,12 @@ class StatusPresentationTests(unittest.TestCase):
                     self.assertEqual(check.terminal_status_reason(self.api.status, check.status_owner(self.api.status)), reason)
                 else:
                     self.assertIn('<summary><strong>Claude Review</strong>:', visible)
-                    self.assertIn(f'Claude is reviewing captured commit {check.commit_link(HEAD)}.', visible)
-                    self.assertIn(f'The current PR commit {check.commit_link(OTHER)} is not covered by this attempt.', visible)
+                    self.assertIn('This attempt does not cover the current PR commit.', visible)
                     self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
                     self.assertEqual(check.status_state(self.api.status), 'stale')
                     self.assertTrue(check.status_owner_running(self.api.status))
                     self.assertIn('In progress — stale</summary>', visible)
-                    self.assertEqual(visible.count('not covered by this attempt'), 1)
+                    self.assertEqual(visible.count('does not cover the current PR commit'), 1)
 
     def test_running_copy_is_compact_but_unavailable_check_warning_remains(self):
         for history in (None, (OTHER, 'main', 'success')):
@@ -184,7 +183,7 @@ class StatusPresentationTests(unittest.TestCase):
                     if available:
                         self.assertNotIn('Claude is reviewing this commit', visible)
                     else:
-                        self.assertIn('authoritative Check publication is unavailable.', visible)
+                        self.assertIn('This attempt can’t publish a Claude Review Check.', visible)
                     if history:
                         self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
                         self.assertNotIn('✅ **Completed**', visible)
@@ -223,8 +222,11 @@ class StatusPresentationTests(unittest.TestCase):
             if reason == check.STATUS_REASONS['incomplete']:
                 self.assertNotIn(check.INCOMPLETE_RECOVERY, visible)
                 self.assertIn(check.GENERIC_RECOVERY, details)
-            else:
+            elif reason == check.STATUS_REASONS['unread_inputs']:
                 self.assertIn('guidance]', visible)
+            else:
+                self.assertNotIn('guidance]', visible)
+                self.assertIn('guidance]', details)
             self.assertIn('**Reason:** ' + reason, details)
             self.assertNotIn('**Reason:**', visible)
             self.assertNotIn('**Note:**', body)
@@ -246,13 +248,12 @@ class StatusPresentationTests(unittest.TestCase):
         check.best_effort_status(OTHER, 'stale')
         visible, details = review_parts(self.api.status['body'])
         self.assertIn('🔄 In progress — stale</summary>', visible)
-        self.assertIn(f'captured commit {check.commit_link(HEAD)}', visible)
-        self.assertIn(f'The current PR commit {check.commit_link(OTHER)} is not covered by this attempt.', visible)
+        self.assertIn('This attempt does not cover the current PR commit.', visible)
         self.assertNotIn('**Last completed review**', visible)
         started = check.relative_time(check.owner_start_time(check.status_owner(self.api.status)))
         self.assertIn(f'| 🔄 **Running** started {started} | {check.commit_link(HEAD)} | Not recorded |', details)
         self.assertNotIn('Not reviewed', visible)
-        self.assertEqual(visible.count('not covered by this attempt'), 1)
+        self.assertEqual(visible.count('does not cover the current PR commit'), 1)
         self.assertEqual(check.status_state(self.api.status), 'stale')
         self.assertTrue(check.status_owner_running(self.api.status))
 

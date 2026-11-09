@@ -1259,6 +1259,15 @@ def inline_failure_explanation(posted_count):
     return text + f" {findings} posted and {verb} recorded; this review is incomplete."
 
 
+def inline_failure_notice(posted_count):
+    if posted_count is None:
+        return "The review did not complete."
+    if posted_count == 0:
+        return "The review did not complete. This attempt posted no findings."
+    recorded = "One posted finding remains" if posted_count == 1 else f"{posted_count} posted findings remain"
+    return f"The review did not complete. {recorded} recorded."
+
+
 def inline_failure_recovery(*, fresh_review_hint=True):
     hint = (" For a final candidate with no review in progress, request an approved fresh full manual review."
             if fresh_review_hint else "")
@@ -1552,17 +1561,14 @@ def execution_failure_explanation(record):
 
 def incomplete_explanation(reason, owner):
     """Render fixed, owner-bound diagnostics; never infer a provider rejection."""
-    stale = reason and reason.startswith(STATUS_REASONS["stale"] + " ")
-    if stale:
+    if reason and reason.startswith(STATUS_REASONS["stale"] + " "):
         reason = reason[len(STATUS_REASONS["stale"]) + 1:]
     if reason == STATUS_REASONS["unread_inputs"]:
         return reason + f" [Recovery guidance]({UNREAD_RECOVERY})."
     if reason == STATUS_REASONS["workflow_changed"] and owner:
         run = f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}/attempts/{owner['attempt']}"
-        manual = "Retry with `/claude-review`. " if not stale else ""
-        return ("⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. "
-                f"[Check this attempt’s logs]({run}) to confirm. "
-                f"{manual}See [recovery guidance]({INCOMPLETE_RECOVERY}).")
+        return ("The captured patch changed the review workflow, which may have contributed. "
+                f"[Check this attempt’s logs]({run}) and see [recovery guidance]({INCOMPLETE_RECOVERY}).")
     if reason not in STATUS_REASONS.values() or reason == STATUS_REASONS["workflow_changed"]:
         reason = STATUS_REASONS["incomplete"]
     return reason
@@ -1614,17 +1620,15 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                         runtime=None, inline_failure=None, execution_diagnostic=None, execution_record=None):
     """Render trusted informational state without affecting Check authority."""
     messages = {
-        "in_progress": "Claude is reviewing this commit.",
+        "in_progress": "This attempt can’t publish a Claude Review Check.",
         "action_required": "",
         "failure": "This review did not complete reliably; this commit is not approved by it.",
-        "publication_incomplete": "The authoritative Check result could not be published. Treat this commit as not reviewed.",
+        "publication_incomplete": "The result could not be published to the Claude Review Check.",
         "stale": "Current head and base coverage is not established by this attempt.",
     }
     if not check_available:
-        messages["in_progress"] = "Claude is reviewing this commit, but authoritative Check publication is unavailable."
         messages["publication_incomplete"] = (
-            "Review completion cannot be established because authoritative Check publication is unavailable. "
-            "Consult the workflow run and inline review threads."
+            "The Claude Review Check is unavailable for this attempt. Completion is unverified."
         )
     execution_record = valid_execution_diagnostic(execution_record or execution_diagnostic, owner)
     if state == "in_progress" or owner_running:
@@ -1758,25 +1762,18 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     diagnostics = []
     specific_reason = reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
     if state == "stale" and owner_running:
-        repo = owner["repo"] if owner else None
-        explanation = f"Claude is reviewing captured commit {commit_link(owner['head'] if owner else head_sha, repo)}. "
         if owner and owner["head"] != head_sha:
-            explanation += f"The current PR commit {commit_link(head_sha, repo)} is not covered by this attempt."
+            notices.append("This attempt does not cover the current PR commit.")
         elif owner and owner["base_ref"] != base_ref:
-            explanation += (f"This attempt targets {inline_code(owner['base_ref'])}; "
-                            f"the PR now targets {inline_code(base_ref)}.")
+            notices.append("This attempt does not cover the PR’s current target branch.")
         elif owner and isinstance(base_sha, str) and re.fullmatch(r"[0-9a-f]{40}", base_sha) and owner["base"] != base_sha:
-            explanation += (f"Its captured baseline is {commit_link(owner['base'], repo)} on {inline_code(base_ref)}; "
-                            f"the current target commit is {commit_link(base_sha, repo)}.")
+            notices.append("This attempt does not cover integration with the current target commit.")
         else:
-            explanation += "This attempt's coverage of the current PR cannot be confirmed."
-        notices.append(explanation)
-    elif (state == "stale" and owner and owner["head"] != head_sha
-          and reason == stale_status_reason(STATUS_REASONS["workflow_changed"])):
-        messages["stale"] = (f"The review of {commit_link(owner['head'], owner['repo'])} did not complete. "
-                             f"The PR is now at {commit_link(head_sha, owner['repo'])}, which this attempt hasn’t reviewed.")
+            notices.append("This attempt’s coverage of the current PR is unconfirmed.")
+    elif state == "stale" and reason == stale_status_reason(STATUS_REASONS["workflow_changed"]):
+        messages["stale"] = "The review did not complete and does not cover the current PR patch."
     elif state == "stale" and show_review and not (base_advanced or superseded_review):
-        messages["stale"] = "The applicability of this completed review to the current PR cannot be confirmed."
+        messages["stale"] = "Coverage of the current PR is unconfirmed."
     if state == "in_progress" and not check_available:
         notices.append(messages[state])
     attempt_reason = (reason or "").removeprefix(STATUS_REASONS["stale"] + " ")
@@ -1842,10 +1839,9 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         elif inline_failure:
             check_url = (f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/pull/{owner['pr']}"
                          f"/checks?check_run_id={inline_failure['check_run_id']}")
-            explanation = (inline_failure_explanation(inline_failure["posted_count"])
-                           + f" [Attempt Check]({check_url})."
-                           + inline_failure_recovery(fresh_review_hint=state == "failure"))
-            notices.append(explanation)
+            explanation = f"{STATUS_REASONS['inline_tool_failed']} [Attempt Check]({check_url})."
+            diagnostics.append(explanation + inline_failure_recovery(fresh_review_hint=state == "failure"))
+            notices.append(inline_failure_notice(inline_failure["posted_count"]))
         elif state == "publication_incomplete":
             explanation = messages[state]
             notices.append(explanation)
@@ -1855,9 +1851,10 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             diagnostics.append(f"{explanation} {GENERIC_RECOVERY}")
         else:
             explanation = incomplete_explanation(reason, owner)
-            if attempt_reason == STATUS_REASONS["unread_inputs"] or (
-                    attempt_reason == STATUS_REASONS["workflow_changed"] and owner):
+            if attempt_reason == STATUS_REASONS["unread_inputs"]:
                 notices.append(explanation)
+            elif attempt_reason == STATUS_REASONS["workflow_changed"] and owner:
+                diagnostics.append(explanation)
             elif state == "stale":
                 notices.append(explanation)
                 diagnostics.append(GENERIC_RECOVERY)

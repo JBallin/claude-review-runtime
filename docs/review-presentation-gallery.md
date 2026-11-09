@@ -1089,6 +1089,8 @@ Claude executed, but this review did not complete reliably. [Attempt logs](https
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
+An inline-comment tool call failed. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -1102,7 +1104,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-An inline-comment tool call failed. 1 finding was posted and remains recorded; this review is incomplete. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+The review did not complete. One posted finding remains recorded.
 
 ---
 
@@ -1138,6 +1140,8 @@ An inline-comment tool call failed. 1 finding was posted and remains recorded; t
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
+An inline-comment tool call failed. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -1151,7 +1155,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-An inline-comment tool call failed. No findings were posted by this attempt; this review is incomplete. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+The review did not complete. This attempt posted no findings.
 
 ---
 
@@ -1187,6 +1191,8 @@ An inline-comment tool call failed. No findings were posted by this attempt; thi
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
+An inline-comment tool call failed. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -1200,7 +1206,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-An inline-comment tool call failed. This review is incomplete. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). For a final candidate with no review in progress, request an approved fresh full manual review. [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+The review did not complete.
 
 ---
 
@@ -1235,6 +1241,8 @@ An inline-comment tool call failed. This review is incomplete. [Attempt Check](h
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
+An inline-comment tool call failed. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -1250,7 +1258,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 Current head and base coverage is not established by this attempt.
 
-An inline-comment tool call failed. 1 finding was posted and remains recorded; this review is incomplete. [Attempt Check](https://github.com/owner/repo/pull/7/checks?check_run_id=99). [Recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+The review did not complete. One posted finding remains recorded.
 
 ---
 
@@ -1381,6 +1389,8 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
+The captured patch changed the review workflow, which may have contributed. [Check this attempt’s logs](https://github.com/owner/repo/actions/runs/5/attempts/1) and see [recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -1393,8 +1403,6 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 </details>
 
 </details>
-
-⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. [Check this attempt’s logs](https://github.com/owner/repo/actions/runs/5/attempts/1) to confirm. Retry with `/claude-review`. See [recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
 
 ---
 
@@ -1428,6 +1436,8 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 **Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
 **Turns:** unavailable
 
+The captured patch changed the review workflow, which may have contributed. [Check this attempt’s logs](https://github.com/owner/repo/actions/runs/5/attempts/1) and see [recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
@@ -1441,9 +1451,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-The review of [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) did not complete. The PR is now at [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb), which this attempt hasn’t reviewed.
-
-⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. [Check this attempt’s logs](https://github.com/owner/repo/actions/runs/5/attempts/1) to confirm. See [recovery guidance](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).
+The review did not complete and does not cover the current PR patch.
 
 ---
 
@@ -2223,7 +2231,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-The authoritative Check result could not be published. Treat this commit as not reviewed.
+The result could not be published to the Claude Review Check.
 
 ---
 
@@ -2294,7 +2302,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-The authoritative Check result could not be published. Treat this commit as not reviewed.
+The result could not be published to the Claude Review Check.
 
 ---
 
@@ -2365,7 +2373,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-The authoritative Check result could not be published. Treat this commit as not reviewed.
+The result could not be published to the Claude Review Check.
 
 ---
 
@@ -2436,7 +2444,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-The authoritative Check result could not be published. Treat this commit as not reviewed.
+The result could not be published to the Claude Review Check.
 
 ---
 
@@ -2486,7 +2494,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.
+The Claude Review Check is unavailable for this attempt. Completion is unverified.
 
 ---
 
@@ -2557,7 +2565,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.
+The Claude Review Check is unavailable for this attempt. Completion is unverified.
 
 ---
 
@@ -2628,7 +2636,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.
+The Claude Review Check is unavailable for this attempt. Completion is unverified.
 
 ---
 
@@ -2670,7 +2678,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-Claude is reviewing this commit, but authoritative Check publication is unavailable.
+This attempt can’t publish a Claude Review Check.
 
 ---
 
@@ -2733,7 +2741,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-Claude is reviewing this commit, but authoritative Check publication is unavailable.
+This attempt can’t publish a Claude Review Check.
 
 ---
 
@@ -2796,7 +2804,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-Claude is reviewing this commit, but authoritative Check publication is unavailable.
+This attempt can’t publish a Claude Review Check.
 
 ---
 
@@ -2967,7 +2975,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-The applicability of this completed review to the current PR cannot be confirmed.
+Coverage of the current PR is unconfirmed.
 
 ---
 
@@ -3059,7 +3067,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa). The current PR commit [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) is not covered by this attempt.
+This attempt does not cover the current PR commit.
 
 ---
 
@@ -3106,7 +3114,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa). Its captured baseline is [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`; the current target commit is [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb).
+This attempt does not cover integration with the current target commit.
 
 ---
 
@@ -3154,7 +3162,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-Claude is reviewing captured commit [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa). This attempt targets `main`; the PR now targets `release`.
+This attempt does not cover the PR’s current target branch.
 
 ---
 
@@ -3221,4 +3229,4 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 </details>
 
-Claude is reviewing captured commit [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb). This attempt's coverage of the current PR cannot be confirmed.
+This attempt’s coverage of the current PR is unconfirmed.

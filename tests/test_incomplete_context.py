@@ -145,7 +145,7 @@ class IncompletePresentationTests(unittest.TestCase):
                 body = context.status_comment_body(CAPTURED_HEAD, "main", "failure",
                                                    owner=owner, reason=context.STATUS_REASONS[key])
                 collapsed, expanded = review_parts(body)
-                if key == "incomplete":
+                if key in ("incomplete", "workflow_changed"):
                     self.assertIn(guide + "#" + anchor, expanded)
                     self.assertNotIn(guide + "#" + anchor, collapsed)
                 else:
@@ -199,18 +199,13 @@ class IncompletePresentationTests(unittest.TestCase):
                         context.best_effort_status(CAPTURED_HEAD, "failure")
                     paths.assert_called_once()
                     visible, details = review_parts(self.api.status["body"])
-                    self.assertEqual("likely caused" in visible, changed is True)
-                    self.assertEqual("`/claude-review`" in visible, changed is True)
-                    self.assertIn(context.INCOMPLETE_RECOVERY, visible if changed else details)
-                    self.assertEqual(context.INCOMPLETE_RECOVERY in visible, changed is True)
-                    self.assertNotIn("expected", visible)
+                    self.assertNotIn("changed the review workflow", visible)
+                    self.assertEqual("which may have contributed" in details, changed is True)
+                    self.assertNotIn("Retry with", details)
+                    self.assertIn(context.INCOMPLETE_RECOVERY, details)
+                    self.assertNotIn(context.INCOMPLETE_RECOVERY, visible)
                     if changed:
-                        self.assertIn("to confirm.", visible)
-                        self.assertIn("Retry with `/claude-review`.", visible)
-                        self.assertIn("See [recovery guidance]", visible)
-                        self.assertNotIn("an authorized user", visible)
-                        self.assertNotIn("no applicable review", visible)
-                        self.assertIn("/actions/runs/5/attempts/1", visible)
+                        self.assertIn("/actions/runs/5/attempts/1", details)
                         self.assertIn("**Reason:** " + context.STATUS_REASONS["workflow_changed"],
                                       self.api.status["body"])
 
@@ -265,7 +260,8 @@ class IncompletePresentationTests(unittest.TestCase):
             self.assertIn("⚠️ Stale</summary>", visible)
             self.assertIn("| ❌ **Incomplete**", details)
             self.assertIn("**Reason:** " + context.STATUS_REASONS["stale"] + " " + context.STATUS_REASONS[key], body)
-            self.assertEqual("likely caused" in visible, key == "workflow_changed")
+            self.assertNotIn("changed the review workflow", visible)
+            self.assertEqual("which may have contributed" in details, key == "workflow_changed")
             self.assertNotIn("`/claude-review`", visible)
 
     def test_unread_check_summary_remains_failed_and_retains_findings(self):

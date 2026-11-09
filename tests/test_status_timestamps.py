@@ -52,7 +52,7 @@ class StatusTimestampTests(unittest.TestCase):
                         self.assertIn(check.relative_time(DONE), self.body().split("<details>")[1])
                         self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", history))
                     if not available:
-                        self.assertIn("authoritative Check publication is unavailable", visible)
+                        self.assertIn("This attempt can’t publish a Claude Review Check.", visible)
 
     def test_running_refreshes_reuse_persisted_start(self):
         for history in (None, "success", "action_required"):

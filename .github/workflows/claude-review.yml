@@ -957,7 +957,7 @@ jobs:
             if [ "$current_patch" != true ]; then
               state=stale
               outcome='⚠️ Stale'
-              message='The captured head or base was superseded; the current patch is not reviewed by this attempt.'
+              message='This attempt does not cover the current PR patch.'
             elif [ "$1" = failure ]; then
               state=failure
               outcome='❌ Incomplete'
@@ -965,11 +965,11 @@ jobs:
             elif [ "$IS_FORK" = true ] && [ -z "$CHECK_RUN_ID" ]; then
               state=publication_incomplete
               outcome='❌ Check unavailable'
-              message='Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.'
+              message='The Claude Review Check is unavailable for this attempt. Completion is unverified.'
             else
               state=publication_incomplete
               outcome='❌ Check unavailable'
-              message='The authoritative Check result could not be published. Treat this commit as not reviewed.'
+              message='The result could not be published to the Claude Review Check.'
             fi
             display_head=$(printf '%s' "$live_patch" | jq -r '.head')
             display_ref=$(printf '%s' "$live_patch" | jq -r '.base_ref')

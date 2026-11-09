@@ -94,10 +94,10 @@ Check is authoritative; the status comment and reactions help you follow progres
 The shared status comment shows the latest accepted attempt and links its
 captured head/base and workflow run. Checks and workflow runs retain earlier
 attempts. Expand an incomplete or cancelled review for diagnostics and general
-troubleshooting. Specific recovery steps and coverage warnings stay visible.
+troubleshooting and any specific recovery steps. Coverage warnings stay visible.
 Verified unread inputs take precedence over workflow-change context. Details
-retain the reason receipt and captured attempt identity. A comment API or permission failure appears in the Check/run when publication
-is possible.
+retain the reason receipt and captured attempt identity. A comment API or
+permission failure appears in the Check or run when publication is possible.
 
 ### Read Details and model warnings
 
@@ -440,10 +440,10 @@ Runtime cannot confirm this cause automatically. [Issue #9](https://github.com/J
 tracks the limitation; [claude-code-action #1879](https://github.com/anthropics/claude-code-action/pull/1879)
 proposes the missing signal.
 
-When the captured patch changes a relevant review workflow, the Incomplete
-message identifies that change as a likely cause, not a confirmed rejection.
-Check the linked attempt's logs to confirm. Unrelated workflow changes do not
-trigger this explanation; unavailable or ambiguous evidence stays generic.
+When the captured patch changes a relevant review workflow, expand Details
+to see the possible cause and the link to the attempt logs. Unrelated workflow
+changes do not trigger this explanation. Unavailable or ambiguous evidence
+gets a general incomplete status.
 
 Before requesting recovery:
 
