@@ -599,7 +599,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 collapsed, expanded = review_parts(cases[case_id])
                 self.assertNotIn("About Claude Review Runtime", collapsed)
                 self.assertRegex(expanded, r"<details>\n<summary><strong>About Claude Review Runtime</strong></summary>")
-                self.assertIn(f"[Read the review guide]({gallery.check.RECOVERY_GUIDE})", expanded)
+                self.assertIn(f"[review guide]({gallery.check.RECOVERY_GUIDE})", expanded)
                 if case_id == "selection-receipt-mismatch":
                     self.assertIn("Model mismatch", collapsed)
                     self.assertIn("**Reviewed commit:**", collapsed)
@@ -619,8 +619,10 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn("**Turns:**", details)
                 details_closed, about = review_parts(details)
                 self.assertIn("<summary><strong>About Claude Review Runtime</strong></summary>", details_closed)
-                self.assertIn("You can customize the model and reasoning effort.", about)
-                self.assertIn(f"\n\n[Read the review guide]({gallery.check.RECOVERY_GUIDE})\n\n", about)
+                self.assertIn("- Comment `/claude-review` on its own line as an authorized user.", about)
+                self.assertIn(
+                    f"\n\nSee the [review guide]({gallery.check.RECOVERY_GUIDE}) for details, "
+                    "including how to customize the model and reasoning effort.\n\n", about)
                 self.assertNotIn("<details open", cases[case_id])
 
     def test_routine_failure_diagnostics_stay_collapsed(self):

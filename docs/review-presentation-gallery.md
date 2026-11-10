@@ -50,13 +50,13 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -109,13 +109,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -167,13 +167,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -226,13 +226,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -284,13 +284,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -344,13 +344,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -404,13 +404,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -466,13 +466,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -512,13 +512,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -563,13 +563,13 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -618,13 +618,13 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -676,13 +676,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -734,13 +734,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -782,13 +782,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -881,13 +881,13 @@ Omit either setting to use its default. No review was started.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -944,13 +944,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1007,13 +1007,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1064,13 +1064,13 @@ The review was cancelled before verified completion. [Troubleshoot incomplete re
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1119,13 +1119,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1177,13 +1177,13 @@ Claude reported success after 101 turns, exceeding the runtime’s 100-turn limi
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1235,13 +1235,13 @@ An inline-comment tool call failed. [Attempt Check](https://github.com/owner/rep
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1293,13 +1293,13 @@ An inline-comment tool call failed. [Attempt Check](https://github.com/owner/rep
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1351,13 +1351,13 @@ An inline-comment tool call failed. [Attempt Check](https://github.com/owner/rep
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1408,13 +1408,13 @@ An inline-comment tool call failed. [Attempt Check](https://github.com/owner/rep
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1465,13 +1465,13 @@ The review did not complete. One posted finding remains recorded.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1520,13 +1520,13 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1577,13 +1577,13 @@ The captured patch changed the review workflow, which may have contributed. [Che
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1631,13 +1631,13 @@ The captured patch changed the review workflow, which may have contributed. [Che
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1669,13 +1669,13 @@ Claude Review: No findings. 🎉
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1705,13 +1705,13 @@ Claude Review: No findings. 🎉
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1738,13 +1738,13 @@ Claude Review: No findings. 🎉
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1774,13 +1774,13 @@ Claude Review: No findings. 🎉
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1809,13 +1809,13 @@ This review used the deployed Runtime, not the proposed pin.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1874,13 +1874,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -1941,13 +1941,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2008,13 +2008,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2076,13 +2076,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2152,13 +2152,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2228,13 +2228,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2304,13 +2304,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2366,13 +2366,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2430,13 +2430,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2487,13 +2487,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2565,13 +2565,13 @@ The result could not be published to the Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2643,13 +2643,13 @@ The result could not be published to the Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2721,13 +2721,13 @@ The result could not be published to the Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2778,13 +2778,13 @@ The result could not be published to the Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2856,13 +2856,13 @@ The Claude Review Check is unavailable for this attempt. Completion is unverifie
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2934,13 +2934,13 @@ The Claude Review Check is unavailable for this attempt. Completion is unverifie
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -2982,13 +2982,13 @@ The Claude Review Check is unavailable for this attempt. Completion is unverifie
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -3051,13 +3051,13 @@ This attempt can’t publish a Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -3120,13 +3120,13 @@ This attempt can’t publish a Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -3189,13 +3189,13 @@ This attempt can’t publish a Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -3264,13 +3264,13 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -3312,13 +3312,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -3364,13 +3364,13 @@ Coverage of the current PR is unconfirmed.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -3417,13 +3417,13 @@ You can customize the model and reasoning effort.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -3470,13 +3470,13 @@ This attempt does not cover the current PR commit.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -3524,13 +3524,13 @@ This attempt does not cover integration with the current target commit.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 
@@ -3597,13 +3597,13 @@ This attempt does not cover the PR’s current target branch.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-Claude reviews a captured PR diff and posts any findings.
+Claude reviews eligible PRs when you:
 
-With the automatic caller configured, reviews can start when an eligible PR opens for review or is marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
+- Open a PR for review.
+- Mark a draft PR ready for review.
+- Comment `/claude-review` on its own line as an authorized user.
 
-You can customize the model and reasoning effort.
-
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md)
+See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 
 </details>
 

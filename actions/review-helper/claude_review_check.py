@@ -1601,12 +1601,12 @@ def incomplete_status_reason(owner, execution_record=None):
 def about_review_details():
     return (
         "<details>\n<summary><strong>About Claude Review Runtime</strong></summary>\n\n"
-        "Claude reviews a captured PR diff and posts any findings.\n\n"
-        "With the automatic caller configured, reviews can start when an eligible PR opens "
-        "for review or is marked ready. With the manual caller installed, authorized users "
-        "can post `/claude-review` on its own line.\n\n"
-        "You can customize the model and reasoning effort.\n\n"
-        f"[Read the review guide]({RECOVERY_GUIDE})\n\n"
+        "Claude reviews eligible PRs when you:\n\n"
+        "- Open a PR for review.\n"
+        "- Mark a draft PR ready for review.\n"
+        "- Comment `/claude-review` on its own line as an authorized user.\n\n"
+        f"See the [review guide]({RECOVERY_GUIDE}) for details, including how to customize "
+        "the model and reasoning effort.\n\n"
         "</details>"
     )
 
