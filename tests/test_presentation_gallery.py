@@ -619,7 +619,11 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn("**Turns:**", details)
                 details_closed, about = review_parts(details)
                 self.assertIn("<summary><strong>About Claude Review Runtime</strong></summary>", details_closed)
-                self.assertIn("- Comment `/claude-review` on its own line as an authorized user.", about)
+                self.assertIn(
+                    "Claude can review when you:\n\n"
+                    "- Open a PR for review\n"
+                    "- Mark a draft ready for review\n"
+                    "- Comment `/claude-review`\n\n", about)
                 self.assertIn(
                     f"\n\nSee the [review guide]({gallery.check.RECOVERY_GUIDE}) for details, "
                     "including how to customize the model and reasoning effort.\n\n", about)

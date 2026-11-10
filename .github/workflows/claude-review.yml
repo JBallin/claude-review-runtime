@@ -1494,11 +1494,11 @@ jobs:
             about='<details>
           <summary><strong>About Claude Review Runtime</strong></summary>
 
-          Claude reviews eligible PRs when you:
+          Claude can review when you:
 
-          - Open a PR for review.
-          - Mark a draft PR ready for review.
-          - Comment `/claude-review` on its own line as an authorized user.
+          - Open a PR for review
+          - Mark a draft ready for review
+          - Comment `/claude-review`
 
           See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
 

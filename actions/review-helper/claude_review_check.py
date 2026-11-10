@@ -1601,10 +1601,10 @@ def incomplete_status_reason(owner, execution_record=None):
 def about_review_details():
     return (
         "<details>\n<summary><strong>About Claude Review Runtime</strong></summary>\n\n"
-        "Claude reviews eligible PRs when you:\n\n"
-        "- Open a PR for review.\n"
-        "- Mark a draft PR ready for review.\n"
-        "- Comment `/claude-review` on its own line as an authorized user.\n\n"
+        "Claude can review when you:\n\n"
+        "- Open a PR for review\n"
+        "- Mark a draft ready for review\n"
+        "- Comment `/claude-review`\n\n"
         f"See the [review guide]({RECOVERY_GUIDE}) for details, including how to customize "
         "the model and reasoning effort.\n\n"
         "</details>"
