@@ -1601,15 +1601,12 @@ def incomplete_status_reason(owner, execution_record=None):
 def about_review_details():
     return (
         "<details>\n<summary><strong>About Claude Review Runtime</strong></summary>\n\n"
-        "When configured, automatic reviews start for eligible PRs opened for review "
-        "or marked ready. With the manual caller installed, authorized users can post "
-        "`/claude-review` on its own line.\n\n"
-        "Claude reviews a captured PR diff and posts any findings. Status refreshes can flag "
-        "coverage changes without starting another review. The 👀 reaction signals progress; "
-        "👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact "
-        "commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.\n\n"
-        "You can customize the model and reasoning effort. "
-        f"[Read the review guide]({RECOVERY_GUIDE}).\n\n"
+        "Claude reviews a captured PR diff and posts any findings.\n\n"
+        "With the automatic caller configured, reviews can start when an eligible PR opens "
+        "for review or is marked ready. With the manual caller installed, authorized users "
+        "can post `/claude-review` on its own line.\n\n"
+        "You can customize the model and reasoning effort.\n\n"
+        f"[Read the review guide]({RECOVERY_GUIDE})\n\n"
         "</details>"
     )
 

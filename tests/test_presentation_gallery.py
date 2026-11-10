@@ -619,7 +619,8 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn("**Turns:**", details)
                 details_closed, about = review_parts(details)
                 self.assertIn("<summary><strong>About Claude Review Runtime</strong></summary>", details_closed)
-                self.assertIn("You can customize the model and reasoning effort. [Read the review guide]", about)
+                self.assertIn("You can customize the model and reasoning effort.", about)
+                self.assertIn(f"\n\n[Read the review guide]({gallery.check.RECOVERY_GUIDE})\n\n", about)
                 self.assertNotIn("<details open", cases[case_id])
 
     def test_routine_failure_diagnostics_stay_collapsed(self):
