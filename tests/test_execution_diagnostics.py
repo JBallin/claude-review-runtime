@@ -307,7 +307,7 @@ class DiagnosticPresentationTests(unittest.TestCase):
         newer = check.status_owner(self.api.status)
         os.environ["PRESENTATION_OWNER"] = json.dumps(newer)
         current, previous = self.api.status["body"].split("**Previous completed review**", 1)
-        self.assertIn("**Turns:** unavailable", current)
+        self.assertNotIn("**Turns:**", current)
         self.assertIn("**Turns:** 33", previous)
         second = receipt(newer, reason="execution_observed", count=7, maximum=None)
         os.environ.update(REVIEW_RESULT="failure", ACTION_CONCLUSION="", COMPLETION_VERIFIED="",

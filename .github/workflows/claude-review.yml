@@ -1494,11 +1494,11 @@ jobs:
             about='<details>
           <summary><strong>About Claude Review Runtime</strong></summary>
 
-          When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+          When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
           Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-          [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+          You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
           </details>'
             rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s\n<details>\n<summary><strong>Claude Review</strong>: %s</summary>\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<!--\n**Reason:** %s\n-->\n\n%s\n\n%s\n\n%s\n\n</details>\n\n</details>%s' \

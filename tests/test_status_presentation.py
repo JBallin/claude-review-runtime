@@ -168,7 +168,7 @@ class StatusPresentationTests(unittest.TestCase):
                     self.assertIn('**Previous completed review**', body.split('<details>', 1)[1])
                     self.assertEqual(check.status_state(self.api.status), 'stale')
                     self.assertTrue(check.status_owner_running(self.api.status))
-                    self.assertIn('In progress — stale</summary>', visible)
+                    self.assertIn('In progress</summary>', visible)
                     self.assertEqual(visible.count('does not cover the current PR commit'), 1)
 
     def test_running_copy_is_compact_but_unavailable_check_warning_remains(self):
@@ -247,7 +247,7 @@ class StatusPresentationTests(unittest.TestCase):
         self.api.pr['head']['sha'] = OTHER
         check.best_effort_status(OTHER, 'stale')
         visible, details = review_parts(self.api.status['body'])
-        self.assertIn('🔄 In progress — stale</summary>', visible)
+        self.assertIn('🔄 In progress</summary>', visible)
         self.assertIn('This attempt does not cover the current PR commit.', visible)
         self.assertNotIn('**Last completed review**', visible)
         started = check.relative_time(check.owner_start_time(check.status_owner(self.api.status)))
@@ -479,7 +479,10 @@ class DetailsProvenanceTests(unittest.TestCase):
                 if state != 'stale':
                     current, previous = body.split('**Previous completed review**')
                     self.assertIn('**Current attempt**', current)
-                    self.assertIn('**Turns:** unavailable', current)
+                    if state == 'in_progress':
+                        self.assertNotIn('**Turns:**', current)
+                    else:
+                        self.assertIn('**Turns:** unavailable', current)
                     self.assertIn('**Turns:** unavailable', previous)
                     self.assertIn(f'**[Attempt run]({url})**' if state == 'in_progress' else f'**[Attempt]({url}) started:**', current)
                     self.assertNotIn(f'[Reviewed]({url})', current)

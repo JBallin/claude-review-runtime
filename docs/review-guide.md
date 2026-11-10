@@ -507,7 +507,8 @@ When trusted execution evidence establishes a turn-limit error, the Check and
 status explain it. Historical configured-cap attempts can also have SDK success
 rejected by the Action's count comparison and remain incomplete. **Turns** in
 collapsed Details and the Actions summary is the validated SDK-reported count
-for that attempt, or unavailable. It does not measure API rounds, tokens, cost,
+for that attempt, or unavailable. Details omit this row for a running attempt.
+It does not measure API rounds, tokens, cost,
 quota, or the native budget. Missing or malformed evidence does not
 establish a specific cause, and a turn-limit diagnosis does not establish complete
 input reading or satisfy review completion. Inspect the linked attempt before

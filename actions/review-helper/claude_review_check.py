@@ -1602,12 +1602,13 @@ def about_review_details():
     return (
         "<details>\n<summary><strong>About Claude Review Runtime</strong></summary>\n\n"
         "When configured, automatic reviews start for eligible PRs opened for review "
-        "or marked ready. With the manual caller installed, authorized users can request a review "
-        "with `/claude-review` on its own line.\n\n"
+        "or marked ready. With the manual caller installed, authorized users can post "
+        "`/claude-review` on its own line.\n\n"
         "Claude reviews a captured PR diff and posts any findings. Status refreshes can flag "
         "coverage changes without starting another review. The 👀 reaction signals progress; "
         "👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact "
         "commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.\n\n"
+        "You can customize the model and reasoning effort. "
         f"[Read the review guide]({RECOVERY_GUIDE}).\n\n"
         "</details>"
     )
@@ -1778,7 +1779,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         notices.append(messages[state])
     attempt_reason = (reason or "").removeprefix(STATUS_REASONS["stale"] + " ")
     if active:
-        outcome = "🔄 In progress — stale" if state == "stale" else "🔄 In progress"
+        outcome = "🔄 In progress"
     elif state == "stale" and not base_advanced:
         outcome = "⚠️ Stale"
     elif state == "publication_incomplete":
@@ -1957,7 +1958,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
             metadata.insert(0, MISSING_MODEL_EVIDENCE)
     if last_review and runtime_used_line(last_review_details.get("runtime")):
         review_metadata.append(runtime_used_line(last_review_details["runtime"]))
-    if not show_review:
+    if not show_review and not active:
         metadata.append(turns_line(execution_record))
     if last_review:
         review_metadata.append(turns_line(reviewed_record["record"] if reviewed_record else None))

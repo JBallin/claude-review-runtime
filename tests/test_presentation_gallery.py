@@ -358,8 +358,8 @@ class PresentationGalleryTests(unittest.TestCase):
                     'compact-clean', 'compact-differing-baseline', 'manual-pin-recovery'):
             self.assertIn('**Turns:** 30', cases[key], key)
             self.assertNotIn('**Turns:** `', cases[key])
-        for key in ('opus-legacy', 'selection-running'):
-            self.assertIn('**Turns:** unavailable', cases[key])
+        self.assertIn('**Turns:** unavailable', cases['opus-legacy'])
+        self.assertNotIn('**Turns:**', cases['selection-running'])
         self.assertIn('**Turns:** 101', cases['turn-limit'])
 
     def test_current_findings_completion_has_current_commit_run_and_evidence(self):
@@ -619,7 +619,7 @@ class PresentationGalleryTests(unittest.TestCase):
                 self.assertIn("**Turns:**", details)
                 details_closed, about = review_parts(details)
                 self.assertIn("<summary><strong>About Claude Review Runtime</strong></summary>", details_closed)
-                self.assertIn("[Read the review guide]", about)
+                self.assertIn("You can customize the model and reasoning effort. [Read the review guide]", about)
                 self.assertNotIn("<details open", cases[case_id])
 
     def test_routine_failure_diagnostics_stay_collapsed(self):
@@ -695,6 +695,18 @@ class PresentationGalleryTests(unittest.TestCase):
             self.assertIn("| " + label + " |", review_parts(body)[1])
             if case_id == "stale-manual":
                 self.assertIn("**Review trigger:** PR opened for review", body)
+
+    def test_running_gallery_samples_omit_current_turns_but_keep_history(self):
+        for case_id, body in sample_items():
+            if "<!-- claude-review-runtime:presentation-owner-phase:running -->" not in body:
+                continue
+            with self.subTest(case_id=case_id):
+                collapsed, expanded = review_parts(body)
+                self.assertIn("🔄 In progress</summary>", collapsed)
+                current, _, previous = expanded.partition("**Previous completed review**")
+                self.assertNotIn("**Turns:**", current)
+                if previous:
+                    self.assertIn("**Turns:**", previous)
 
     def test_stale_explanations_identify_only_known_comparisons(self):
         cases = dict(sample_items())

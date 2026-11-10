@@ -50,11 +50,11 @@ Generated with `python3 -B scripts/render_presentation_gallery.py --write`. Edit
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -107,11 +107,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -163,11 +163,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -220,11 +220,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -276,11 +276,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -334,11 +334,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -392,11 +392,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -452,11 +452,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -491,17 +491,16 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 **Model:** Opus · **Effort:** High\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -546,11 +545,11 @@ This review did not complete reliably; this commit is not approved by it. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -599,11 +598,11 @@ Trusted review tooling was unavailable; the review could not be finalized reliab
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -655,11 +654,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -711,11 +710,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -752,17 +751,16 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -855,11 +853,11 @@ Omit either setting to use its default. No review was started.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -916,11 +914,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -977,11 +975,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1032,11 +1030,11 @@ The review was cancelled before verified completion. [Troubleshoot incomplete re
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1085,11 +1083,11 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1141,11 +1139,11 @@ Claude reported success after 101 turns, exceeding the runtime’s 100-turn limi
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1197,11 +1195,11 @@ An inline-comment tool call failed. [Attempt Check](https://github.com/owner/rep
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1253,11 +1251,11 @@ An inline-comment tool call failed. [Attempt Check](https://github.com/owner/rep
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1309,11 +1307,11 @@ An inline-comment tool call failed. [Attempt Check](https://github.com/owner/rep
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1364,11 +1362,11 @@ An inline-comment tool call failed. [Attempt Check](https://github.com/owner/rep
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1419,11 +1417,11 @@ The review did not complete. One posted finding remains recorded.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1472,11 +1470,11 @@ Required review inputs were not fully read. [Recovery guidance](https://github.c
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1527,11 +1525,11 @@ The captured patch changed the review workflow, which may have contributed. [Che
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1579,11 +1577,11 @@ The captured patch changed the review workflow, which may have contributed. [Che
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1615,11 +1613,11 @@ Claude Review: No findings. 🎉
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1649,11 +1647,11 @@ Claude Review: No findings. 🎉
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1680,11 +1678,11 @@ Claude Review: No findings. 🎉
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1714,11 +1712,11 @@ Claude Review: No findings. 🎉
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1747,11 +1745,11 @@ This review used the deployed Runtime, not the proposed pin.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1795,8 +1793,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 **Current attempt**\
 **Model:** Opus · **Effort:** High\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
@@ -1811,11 +1808,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1861,8 +1858,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
@@ -1877,11 +1873,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1927,8 +1923,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
@@ -1943,11 +1938,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -1993,8 +1988,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 **Previous completed review**\
 ⚠️ **Model mismatch:** Sonnet observed\
@@ -2010,11 +2004,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2084,11 +2078,11 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2158,11 +2152,11 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2232,11 +2226,11 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2292,11 +2286,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2354,11 +2348,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2409,11 +2403,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2485,11 +2479,11 @@ The result could not be published to the Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2561,11 +2555,11 @@ The result could not be published to the Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2637,11 +2631,11 @@ The result could not be published to the Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2692,11 +2686,11 @@ The result could not be published to the Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2768,11 +2762,11 @@ The Claude Review Check is unavailable for this attempt. Completion is unverifie
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2844,11 +2838,11 @@ The Claude Review Check is unavailable for this attempt. Completion is unverifie
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2885,17 +2879,16 @@ The Claude Review Check is unavailable for this attempt. Completion is unverifie
 
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -2943,8 +2936,7 @@ This attempt can’t publish a Claude Review Check.
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
@@ -2959,11 +2951,11 @@ This attempt can’t publish a Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -3011,8 +3003,7 @@ This attempt can’t publish a Claude Review Check.
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
@@ -3027,11 +3018,11 @@ This attempt can’t publish a Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -3079,8 +3070,7 @@ This attempt can’t publish a Claude Review Check.
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt run](https://github.com/owner/repo/actions/runs/5)**\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
@@ -3095,11 +3085,11 @@ This attempt can’t publish a Claude Review Check.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -3168,11 +3158,11 @@ The review did not complete with reliable execution and finding evidence. [Troub
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -3214,11 +3204,11 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -3264,11 +3254,11 @@ Coverage of the current PR is unconfirmed.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -3294,7 +3284,7 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 <!-- claude-review-runtime:presentation-owner-phase:running -->
 
 <details>
-<summary><strong>Claude Review</strong>: 🔄 In progress — stale</summary>
+<summary><strong>Claude Review</strong>: 🔄 In progress</summary>
 
 | Status | Commit | Review trigger |
 | --- | --- | --- |
@@ -3310,17 +3300,16 @@ Claude reviews a captured PR diff and posts any findings. Status refreshes can f
 **Model:** Sonnet · **Effort:** Medium\
 **PR commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main` — not reviewed\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -3346,7 +3335,7 @@ This attempt does not cover the current PR commit.
 <!-- claude-review-runtime:presentation-owner-phase:running -->
 
 <details>
-<summary><strong>Claude Review</strong>: 🔄 In progress — stale</summary>
+<summary><strong>Claude Review</strong>: 🔄 In progress</summary>
 
 | Status | Commit | Review trigger |
 | --- | --- | --- |
@@ -3362,17 +3351,16 @@ This attempt does not cover the current PR commit.
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`bbbbbbb`](https://github.com/owner/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -3398,7 +3386,7 @@ This attempt does not cover integration with the current target commit.
 <!-- claude-review-runtime:presentation-owner-phase:running -->
 
 <details>
-<summary><strong>Claude Review</strong>: 🔄 In progress — stale</summary>
+<summary><strong>Claude Review</strong>: 🔄 In progress</summary>
 
 | Status | Commit | Review trigger |
 | --- | --- | --- |
@@ -3415,17 +3403,16 @@ This attempt does not cover integration with the current target commit.
 **PR commit:** [`aaaaaaa`](https://github.com/owner/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) on `release` — not reviewed against this target\
 **[Attempt](https://github.com/owner/repo/actions/runs/5) baseline:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `main`\
 **Current target commit:** [`ddddddd`](https://github.com/owner/repo/commit/dddddddddddddddddddddddddddddddddddddddd) on `release`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
@@ -3461,7 +3448,7 @@ This attempt does not cover the PR’s current target branch.
 <!-- claude-review-runtime:claude-review-last-reviewed-selection:%7B%22configuration%22%3A%7B%22diagnostics%22%3A%5B%5D%2C%22effort_source%22%3A%22runtime%22%2C%22errors%22%3A%5B%5D%2C%22model_source%22%3A%22runtime%22%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%2C%22version%22%3A2%7D%2C%22execution_attempt%22%3A1%2C%22generation%22%3A%22471ebca794d195ca00fe73c01df7bf7aadc0ba022c8cf14e57d4916c606c2c20%22%2C%22model_evidence%22%3A%22observed%22%2C%22models%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22observed_effort%22%3Anull%2C%22primary_model_evidence%22%3A%7B%22assistant%22%3A%5B%22claude-sonnet-5-5%22%5D%2C%22attempt%22%3A1%2C%22initialization%22%3A%22claude-sonnet-5-5%22%7D%2C%22requested_effort%22%3A%22medium%22%2C%22requested_model%22%3A%22sonnet%22%7D -->
 
 <details>
-<summary><strong>Claude Review</strong>: 🔄 In progress — stale</summary>
+<summary><strong>Claude Review</strong>: 🔄 In progress</summary>
 
 | Status | Commit | Review trigger |
 | --- | --- | --- |
@@ -3477,8 +3464,7 @@ This attempt does not cover the PR’s current target branch.
 **Current attempt**\
 **Model:** Sonnet · **Effort:** Medium\
 **[Attempt](https://github.com/owner/repo/actions/runs/6) baseline:** [`eeeeeee`](https://github.com/owner/repo/commit/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee) on `main`\
-**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)\
-**Turns:** unavailable
+**Runtime:** [`JBallin/claude-review-runtime@fffffff`](https://github.com/JBallin/claude-review-runtime/blob/ffffffffffffffffffffffffffffffffffffffff/.github/workflows/claude.yml)
 
 **Previous completed review**\
 **Model:** Sonnet · **Effort:** Medium\
@@ -3493,11 +3479,11 @@ This attempt does not cover the PR’s current target branch.
 <details>
 <summary><strong>About Claude Review Runtime</strong></summary>
 
-When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can request a review with `/claude-review` on its own line.
+When configured, automatic reviews start for eligible PRs opened for review or marked ready. With the manual caller installed, authorized users can post `/claude-review` on its own line.
 
 Claude reviews a captured PR diff and posts any findings. Status refreshes can flag coverage changes without starting another review. The 👀 reaction signals progress; 👍 signals verified clean completion after the Check is published. The **Claude Review** Check for the exact commit is authoritative. Completion does not approve a merge or guarantee the patch is bug-free.
 
-[Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
+You can customize the model and reasoning effort. [Read the review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md).
 
 </details>
 
