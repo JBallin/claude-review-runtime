@@ -93,11 +93,11 @@ Check is authoritative; the status comment and reactions help you follow progres
 
 The shared status comment shows the latest accepted attempt and links its
 captured head/base and workflow run. Checks and workflow runs retain earlier
-attempts. An incomplete or cancelled attempt shows an explanation and recovery
-link above Details. Verified unread inputs take precedence over workflow-change
-context; Details retain the reason receipt and captured attempt identity.
-A comment API or permission failure appears in the Check/run when publication
-is possible.
+attempts. Open **Details** for diagnostics and recovery guidance on an
+incomplete or cancelled review. Coverage warnings stay visible.
+Verified unread inputs take precedence over workflow-change context. Details
+retain the reason receipt and captured attempt identity. A comment API or
+permission failure appears in the Check or run when publication is possible.
 
 ### Read Details and model warnings
 
@@ -107,9 +107,10 @@ execution identifiers remain in recorded metadata. Current and previous attempts
 each retain their own settings. A refresh neither applies today's defaults to
 an older review nor fills missing historical settings.
 
-Current model warnings appear above Details. A previous run's recorded model
-mismatch appears inside Previous completed review, before that run's settings,
-and uses only its captured evidence. Model warnings do not change completion or
+Current model warnings stay visible when the summary is collapsed. If an attempt
+is already incomplete, missing model evidence is shown in Details. A previous
+run's recorded model mismatch appears inside Previous completed review, before
+that run's settings, and uses only its captured evidence. Model warnings do not change completion or
 finding verification.
 
 For defaults, precedence, and rejected settings, see
@@ -137,8 +138,11 @@ an existing historical 👍 but cannot recreate a removed one.
 
 ### Read timestamps and history
 
-The status table shows **Status**, **Commit**, and **Review trigger**. A completed
-clean or findings review shows its recorded completion time and reviewed SHA.
+The collapsed **Claude Review** summary shows the latest outcome. Coverage
+warnings stay visible, including when the target changes after a review completes.
+Expand the summary to see **Status**, **Commit**, and **Review trigger**. Open
+**Details** for the captured baseline, run, settings, and review history. A
+completed review shows its recorded completion time and reviewed SHA.
 Newer running, failed, or incomplete attempts remain prominent; previous
 completed evidence moves inside Details, with links grouped by attempt.
 
@@ -168,10 +172,10 @@ After a verified clean manual review and successful Check publication, trusted
 finalization may add 👍 and a completion notice even when the validated target
 tip differs from the captured baseline. The notice identifies its captured head,
 base commit, and workflow run. When the observed target differs from the reviewed
-baseline, the notice records that target snapshot in Details and notes the
-historical difference. The shared status comment carries the warning that
-integration with the current target has not been reviewed. Automatic reviews update the shared status comment without adding a
-separate completion notice.
+baseline, a visible warning explains that integration with the observed target
+was not reviewed. Details link to that target snapshot. The standing status
+comment reflects coverage of the current target. Automatic reviews update the
+standing comment without adding a separate completion notice.
 
 Reserve this runtime's namespaced comment markers for its trusted publication jobs.
 
@@ -437,10 +441,10 @@ Runtime cannot confirm this cause automatically. [Issue #9](https://github.com/J
 tracks the limitation; [claude-code-action #1879](https://github.com/anthropics/claude-code-action/pull/1879)
 proposes the missing signal.
 
-When the captured patch changes a relevant review workflow, the Incomplete
-message identifies that change as a likely cause, not a confirmed rejection.
-Check the linked attempt's logs to confirm. Unrelated workflow changes do not
-trigger this explanation; unavailable or ambiguous evidence stays generic.
+When the captured patch changes a relevant review workflow, expand Details
+to see the possible cause and the link to the attempt logs. Unrelated workflow
+changes do not trigger this explanation. Unavailable or ambiguous evidence
+gets a general incomplete status.
 
 Before requesting recovery:
 
@@ -503,7 +507,8 @@ When trusted execution evidence establishes a turn-limit error, the Check and
 status explain it. Historical configured-cap attempts can also have SDK success
 rejected by the Action's count comparison and remain incomplete. **Turns** in
 collapsed Details and the Actions summary is the validated SDK-reported count
-for that attempt, or unavailable. It does not measure API rounds, tokens, cost,
+for that attempt, or unavailable. Details omit this row for a running attempt.
+It does not measure API rounds, tokens, cost,
 quota, or the native budget. Missing or malformed evidence does not
 establish a specific cause, and a turn-limit diagnosis does not establish complete
 input reading or satisfy review completion. Inspect the linked attempt before

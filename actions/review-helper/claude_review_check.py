@@ -75,6 +75,10 @@ CAPTURED_PATCH_SCOPE = "This review covers the captured patch only; integration 
 RECOVERY_GUIDE = "https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md"
 INCOMPLETE_RECOVERY = RECOVERY_GUIDE + "#installation-and-incomplete-reviews"
 UNREAD_RECOVERY = RECOVERY_GUIDE + "#incomplete-captured-input-reads"
+GENERIC_RECOVERY = f"[Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
+MISSING_MODEL_EVIDENCE = "⚠️ **Model unknown:** primary evidence missing"
+OBSERVED_TARGET_WARNING = ("⚠️ The observed target differed from the reviewed baseline. "
+                           "Integration with that target wasn’t reviewed.")
 TARGET_TIP_WARNING = "⚠️ The target branch differs from the reviewed baseline. Integration with its current version hasn’t been reviewed."
 PRESENTATION_SECONDS = 120
 PRESENTATION_DEADLINE = None
@@ -1036,7 +1040,8 @@ def selection_notice(record, *, running=False, mismatch_only=False):
                           or models[0].startswith("claude-" + selected + "-")):
         return []
     if not models and selected and not running:
-        problem, evidence = "Model unknown", "primary evidence missing"
+        notices.append(MISSING_MODEL_EVIDENCE)
+        problem = None
     elif len(models) > 1 and selected:
         labels = [model_label(model) for model in models]
         # Versions distinguish contradictory evidence from the same family.
@@ -1252,6 +1257,15 @@ def inline_failure_explanation(posted_count):
     findings = "1 finding was" if posted_count == 1 else f"{posted_count} findings were"
     verb = "remains" if posted_count == 1 else "remain"
     return text + f" {findings} posted and {verb} recorded; this review is incomplete."
+
+
+def inline_failure_notice(posted_count):
+    if posted_count is None:
+        return "The review did not complete."
+    if posted_count == 0:
+        return "The review did not complete. This attempt posted no findings."
+    recorded = "One posted finding remains" if posted_count == 1 else f"{posted_count} posted findings remain"
+    return f"The review did not complete. {recorded} recorded."
 
 
 def inline_failure_recovery(*, fresh_review_hint=True):
@@ -1547,20 +1561,17 @@ def execution_failure_explanation(record):
 
 def incomplete_explanation(reason, owner):
     """Render fixed, owner-bound diagnostics; never infer a provider rejection."""
-    stale = reason and reason.startswith(STATUS_REASONS["stale"] + " ")
-    if stale:
+    if reason and reason.startswith(STATUS_REASONS["stale"] + " "):
         reason = reason[len(STATUS_REASONS["stale"]) + 1:]
     if reason == STATUS_REASONS["unread_inputs"]:
         return reason + f" [Recovery guidance]({UNREAD_RECOVERY})."
     if reason == STATUS_REASONS["workflow_changed"] and owner:
         run = f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}/attempts/{owner['attempt']}"
-        manual = "Retry with `/claude-review`. " if not stale else ""
-        return ("⚠️ The captured patch changed the review workflow, which likely caused this incomplete review. "
-                f"[Check this attempt’s logs]({run}) to confirm. "
-                f"{manual}See [recovery guidance]({INCOMPLETE_RECOVERY}).")
+        return ("The captured patch changed the review workflow, which may have contributed. "
+                f"[Check this attempt’s logs]({run}) and see [recovery guidance]({INCOMPLETE_RECOVERY}).")
     if reason not in STATUS_REASONS.values() or reason == STATUS_REASONS["workflow_changed"]:
         reason = STATUS_REASONS["incomplete"]
-    return reason + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
+    return reason
 
 
 def incomplete_status_reason(owner, execution_record=None):
@@ -1587,6 +1598,19 @@ def incomplete_status_reason(owner, execution_record=None):
     return STATUS_REASONS["workflow_changed"] if changed is True else STATUS_REASONS["incomplete"]
 
 
+def about_review_details():
+    return (
+        "<details>\n<summary><strong>About Claude Review Runtime</strong></summary>\n\n"
+        "Claude can review when you:\n\n"
+        "- Open a PR for review\n"
+        "- Mark a draft ready for review\n"
+        "- Comment `/claude-review`\n\n"
+        f"See the [review guide]({RECOVERY_GUIDE}) for details, including how to customize "
+        "the model and reasoning effort.\n\n"
+        "</details>"
+    )
+
+
 def status_comment_body(head_sha, base_ref, state, *, check_available=True, last_review=None,
                         last_review_details=None, base_sha=None, trigger_label=None,
                         owner=None, owner_running=None, reason=None, completed_at=None,
@@ -1594,17 +1618,15 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                         runtime=None, inline_failure=None, execution_diagnostic=None, execution_record=None):
     """Render trusted informational state without affecting Check authority."""
     messages = {
-        "in_progress": "Claude is reviewing this commit.",
+        "in_progress": "This attempt can’t publish a Claude Review Check.",
         "action_required": "",
         "failure": "This review did not complete reliably; this commit is not approved by it.",
-        "publication_incomplete": "The authoritative Check result could not be published. Treat this commit as not reviewed.",
+        "publication_incomplete": "The result could not be published to the Claude Review Check.",
         "stale": "Current head and base coverage is not established by this attempt.",
     }
     if not check_available:
-        messages["in_progress"] = "Claude is reviewing this commit, but authoritative Check publication is unavailable."
         messages["publication_incomplete"] = (
-            "Review completion cannot be established because authoritative Check publication is unavailable. "
-            "Consult the workflow run and inline review threads."
+            "The Claude Review Check is unavailable for this attempt. Completion is unverified."
         )
     execution_record = valid_execution_diagnostic(execution_record or execution_diagnostic, owner)
     if state == "in_progress" or owner_running:
@@ -1734,30 +1756,44 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     adverse = state in ("in_progress", "failure", "publication_incomplete")
     current_attempt = active or incomplete or adverse
     show_review = last_review is not None and not current_attempt
-    lines += ["## Claude Review", ""]
+    notices = []
+    diagnostics = []
     specific_reason = reason and reason not in (STATUS_REASONS["stale"], STATUS_REASONS["base_advanced"])
     if state == "stale" and owner_running:
-        repo = owner["repo"] if owner else None
-        explanation = f"Claude is reviewing captured commit {commit_link(owner['head'] if owner else head_sha, repo)}. "
         if owner and owner["head"] != head_sha:
-            explanation += f"The current PR commit {commit_link(head_sha, repo)} is not covered by this attempt."
+            notices.append("This attempt does not cover the current PR commit.")
         elif owner and owner["base_ref"] != base_ref:
-            explanation += (f"This attempt targets {inline_code(owner['base_ref'])}; "
-                            f"the PR now targets {inline_code(base_ref)}.")
+            notices.append("This attempt does not cover the PR’s current target branch.")
         elif owner and isinstance(base_sha, str) and re.fullmatch(r"[0-9a-f]{40}", base_sha) and owner["base"] != base_sha:
-            explanation += (f"Its captured baseline is {commit_link(owner['base'], repo)} on {inline_code(base_ref)}; "
-                            f"the current target commit is {commit_link(base_sha, repo)}.")
+            notices.append("This attempt does not cover integration with the current target commit.")
         else:
-            explanation += "This attempt's coverage of the current PR cannot be confirmed."
-        lines += [explanation, ""]
-    elif (state == "stale" and owner and owner["head"] != head_sha
-          and reason == stale_status_reason(STATUS_REASONS["workflow_changed"])):
-        messages["stale"] = (f"The review of {commit_link(owner['head'], owner['repo'])} did not complete. "
-                             f"The PR is now at {commit_link(head_sha, owner['repo'])}, which this attempt hasn’t reviewed.")
+            notices.append("This attempt’s coverage of the current PR is unconfirmed.")
+    elif state == "stale" and reason == stale_status_reason(STATUS_REASONS["workflow_changed"]):
+        messages["stale"] = "The review did not complete and does not cover the current PR patch."
     elif state == "stale" and show_review and not (base_advanced or superseded_review):
-        messages["stale"] = "The applicability of this completed review to the current PR cannot be confirmed."
+        messages["stale"] = "Coverage of the current PR is unconfirmed."
     if state == "in_progress" and not check_available:
-        lines += [messages[state], ""]
+        notices.append(messages[state])
+    attempt_reason = (reason or "").removeprefix(STATUS_REASONS["stale"] + " ")
+    if active:
+        outcome = "🔄 In progress"
+    elif state == "stale" and not base_advanced:
+        outcome = "⚠️ Stale"
+    elif state == "publication_incomplete":
+        outcome = "❌ Check unavailable"
+    elif attempt_reason == STATUS_REASONS["cancelled"]:
+        outcome = "❌ Cancelled"
+    elif attempt_reason in (STATUS_REASONS["preparation_failed"], STATUS_REASONS["execution_failed"]):
+        outcome = "❌ Failed"
+    elif incomplete:
+        outcome = "❌ Incomplete"
+    elif show_review and last_review[2] == "action_required":
+        outcome = "⚠️ Findings with warning" if base_advanced else "⚠️ Findings"
+    elif show_review:
+        outcome = "⚠️ Completed with warning" if base_advanced else "✅ Completed"
+    else:
+        outcome = "Not reviewed"
+    lines += ["", "<details>", f"<summary><strong>Claude Review</strong>: {outcome}</summary>", ""]
     if show_review:
         if state == "stale" and not (base_advanced or superseded_review):
             lines += ["**Last completed review**", ""]
@@ -1779,28 +1815,49 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
     lines += [f"| Status | {commit_label} | Review trigger |", "| --- | --- | --- |",
               f"| {row_status} | {commit_link(row_commit, repo)} | {row_trigger} |"]
     notice = selection_notice(selection, running=state == "in_progress" or owner_running is True)
-    lines += ["", "  \n".join(notice)] if notice else []
+    missing_model = incomplete and MISSING_MODEL_EVIDENCE in notice
+    if missing_model:
+        notice.remove(MISSING_MODEL_EVIDENCE)
+    if notice:
+        notices.append("  \n".join(notice))
     if state != "success" and not adverse and not (state == "stale" and owner_running) and messages[state]:
-        lines += ["", messages[state]]
+        notices.append(messages[state])
     if base_advanced:
-        lines += ["", TARGET_TIP_WARNING]
+        notices.append(TARGET_TIP_WARNING)
     if incomplete and not active:
         if execution_diagnostic:
             explanation = execution_failure_explanation(execution_diagnostic)
             run = (f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}"
                    f"/actions/runs/{owner['run']}/attempts/{owner['attempt']}")
-            explanation += f" [Attempt logs]({run}). [Recovery guidance]({INCOMPLETE_RECOVERY})."
+            if explanation != attempt_reason:
+                diagnostics.append(explanation)
+            explanation = f"{STATUS_REASONS['execution_failed']} [Attempt logs]({run})."
+            notices.append(explanation)
+            diagnostics.append(GENERIC_RECOVERY)
         elif inline_failure:
             check_url = (f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/pull/{owner['pr']}"
                          f"/checks?check_run_id={inline_failure['check_run_id']}")
-            explanation = (inline_failure_explanation(inline_failure["posted_count"])
-                           + f" [Attempt Check]({check_url})."
-                           + inline_failure_recovery(fresh_review_hint=state == "failure"))
-        elif state == "publication_incomplete" or state == "failure" and not specific_reason:
-            explanation = messages[state] + f" [Troubleshoot incomplete reviews]({INCOMPLETE_RECOVERY})."
+            explanation = f"{STATUS_REASONS['inline_tool_failed']} [Attempt Check]({check_url})."
+            diagnostics.append(explanation + inline_failure_recovery(fresh_review_hint=state == "failure"))
+            notices.append(inline_failure_notice(inline_failure["posted_count"]))
+        elif state == "publication_incomplete":
+            explanation = messages[state]
+            notices.append(explanation)
+            diagnostics.append(GENERIC_RECOVERY)
+        elif state == "failure" and not specific_reason:
+            explanation = messages[state]
+            diagnostics.append(f"{explanation} {GENERIC_RECOVERY}")
         else:
             explanation = incomplete_explanation(reason, owner)
-        lines += ["", explanation]
+            if attempt_reason == STATUS_REASONS["unread_inputs"]:
+                notices.append(explanation)
+            elif attempt_reason == STATUS_REASONS["workflow_changed"] and owner:
+                diagnostics.append(explanation)
+            elif state == "stale":
+                notices.append(explanation)
+                diagnostics.append(GENERIC_RECOVERY)
+            else:
+                diagnostics.append(f"{explanation} {GENERIC_RECOVERY}")
     attempt_url = (env("DETAILS_URL") if not owner else
                    f"{env('GITHUB_SERVER_URL', 'https://github.com')}/{owner['repo']}/actions/runs/{owner['run']}")
     historical = last_review is not None and state not in ("success", "action_required")
@@ -1885,11 +1942,7 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
                 break
         else:
             if not show_review:
-                # Shared-baseline active attempts already show timing/status in
-                # the table; link that status without adding duplicate metadata.
-                label = "Running" if active else "Incomplete" if incomplete else "Not reviewed"
-                linked_status = row_status.replace(f"**{label}**", f"**[{label}]({attempt_link})**", 1)
-                lines = [line.replace(f"| {row_status} |", f"| {linked_status} |", 1) for line in lines]
+                metadata.append(f"**[Attempt run]({attempt_link})**")
             else:
                 # Legacy history may retain a different attempt URL but no
                 # trusted attempt timing or baseline. Do not invent either.
@@ -1898,9 +1951,11 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         metadata.append(runtime_used_line(runtime))
     if not show_review:
         metadata[0:0] = selection_details(selection)
+        if missing_model:
+            metadata.insert(0, MISSING_MODEL_EVIDENCE)
     if last_review and runtime_used_line(last_review_details.get("runtime")):
         review_metadata.append(runtime_used_line(last_review_details["runtime"]))
-    if not show_review:
+    if not show_review and not active:
         metadata.append(turns_line(execution_record))
     if last_review:
         review_metadata.append(turns_line(reviewed_record["record"] if reviewed_record else None))
@@ -1917,7 +1972,11 @@ def status_comment_body(head_sha, base_ref, state, *, check_available=True, last
         lines += ["  \n".join(metadata), ""]
     if previous:
         lines += ["**Previous completed review**  ", "  \n".join(previous), ""]
-    lines += ["</details>"]
+    for diagnostic in diagnostics:
+        lines += [diagnostic, ""]
+    lines += [about_review_details(), "", "</details>", "", "</details>"]
+    for notice in notices:
+        lines += ["", notice]
     return "\n".join(lines)
 
 
@@ -2661,9 +2720,10 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     metadata = selection_details(selection) + [
         f"**{reviewed} against:** {commit_link(base_sha, repo)} on {inline_code(base_ref)}"]
     notes = []
+    coverage_warning = ""
     if observed_base_sha and observed_base_sha != base_sha:
         metadata.append(f"**Observed target commit:** {commit_link(observed_base_sha, repo)} on {inline_code(base_ref)}")
-        notes.append("The observed target differed from the reviewed baseline.")
+        coverage_warning = f"\n\n{OBSERVED_TARGET_WARNING}"
     runtime_line = runtime_used_line(executing_runtime())
     if runtime_line:
         metadata.append(runtime_line)
@@ -2676,9 +2736,9 @@ def completion_comment_body(repo, head_sha, base_ref, base_sha, marker, details_
     return (
         f"{marker}\n"
         "Claude Review: No findings. 🎉\n\n"
-        f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}){settings}\n\n"
+        f"**Reviewed commit:** [`{head_sha[:7]}`](https://github.com/{repo}/commit/{head_sha}){coverage_warning}{settings}\n\n"
         "<details>\n<summary>ℹ️ Details</summary>\n\n"
-        f"{details}\n\n</details>"
+        f"{details}\n\n{about_review_details()}\n\n</details>"
     )
 
 

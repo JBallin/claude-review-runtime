@@ -223,6 +223,8 @@ def presentation_samples():
             GallerySample("changed-head", "changed-head", "PR commit changed after clean completion", status(
                 "stale", head=fixtures.OTHER, last_review=history("success"),
                 base_sha=fixtures.BASE_TIP, **stale_options)),
+            GallerySample("cancelled", "incomplete", "Cancelled attempt", status(
+                "failure", reason=check.STATUS_REASONS["cancelled"])),
             GallerySample("incomplete-unknown", "incomplete", "Incomplete attempt without completed history", status(
                 "failure", reason=check.STATUS_REASONS["incomplete"])),
             GallerySample("turn-limit", "incomplete", "Historical configured-cap failure (nondefault)", status(

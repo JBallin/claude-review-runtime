@@ -354,7 +354,8 @@ output does not report the resolved setting. See
 
 For the current attempt, a selected model with missing or conflicting primary
 evidence, or execution by a different model family, produces a warning outside
-Details. A recorded model mismatch from a previous run appears only within its
+Details. Missing evidence for an incomplete attempt appears inside Details.
+A recorded model mismatch from a previous run appears only within its
 Previous completed review section, before its settings. Model warnings use
 family names unless version detail is needed to distinguish conflicting evidence
 from the same family. Auxiliary model usage

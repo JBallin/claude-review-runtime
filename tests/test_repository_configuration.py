@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest import mock
 from urllib.parse import quote
 
-from test_claude_review_check import BASE_TIP, HEAD, OTHER, REPO, check, presentation_owner
+from test_claude_review_check import BASE_TIP, HEAD, OTHER, REPO, check, presentation_owner, review_parts
 
 
 def historical_workflow_configuration(model="", effort=""):
@@ -271,7 +271,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 lambda: check.status_comment_body(HEAD, "main", "success", owner=owner, selection=record),
                 lambda: check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, "", "", selection=record)):
             rendered = renderer()
-            main, details = rendered.split("<details>", 1)
+            main, details = review_parts(rendered)
             self.assertIn("request", main.lower())
             self.assertIn("using configured defaults: Model Haiku · Effort Low", main)
             self.assertIn("**Usage:** `/claude-review [", main)
@@ -315,7 +315,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         for render in (
                 lambda: check.status_comment_body(HEAD, "main", "success", owner=owner, selection=record),
                 lambda: check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, "", "", selection=record)):
-            visible = render().split("<details>", 1)[0]
+            visible = review_parts(render())[0]
             self.assertEqual(visible.count("**Usage:**"), 1)
             self.assertIn("  \n" + check.MANUAL_USAGE, visible)
             self.assertLess(visible.index("⚠️ **Invalid effort requested**"), visible.index("**Usage:**"))
@@ -455,7 +455,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         self.assertEqual(observed["models"], ["claude-haiku-5-5", "claude-sonnet-5-5"])
         self.assertIsNone(observed["observed_effort"])
         body = check.status_comment_body(HEAD, "main", "success", owner=owner, selection=observed)
-        main, details = body.split("<details>", 1)
+        main, details = review_parts(body)
         self.assertNotIn("**Model:**", main)
         self.assertIn("**Model:** Sonnet · **Effort:** Medium", details)
         self.assertNotIn("Sonnet 5.5", details)
@@ -473,9 +473,10 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 with self.subTest(kind=kind, state=state), mock.patch.dict(os.environ, environment, clear=True):
                     rendered = check.status_comment_body(HEAD, "main", state, owner=owner, selection=record,
                         runtime=check.executing_runtime(), base_sha=BASE_TIP)
-                    details = rendered.split("</summary>", 1)[1].strip()
+                    _, expanded = review_parts(rendered)
+                    _, details = review_parts(expanded)
                     settings = "**Model:** Sonnet · **Effort:** Medium"
-                    self.assertEqual(details.splitlines()[0].rstrip(), settings)
+                    self.assertEqual(details.lstrip().splitlines()[0].rstrip(), settings)
                     self.assertNotIn("<br", details)
                     self.assertLess(details.index(settings), details.index("baseline"))
                     self.assertLess(details.index(settings), details.index("**Runtime:**"))
@@ -507,7 +508,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                                  ["**Effort:** " + effort.capitalize()] if effort else [])
                 for state in ("in_progress", "success"):
                     rendered = check.status_comment_body(HEAD, "main", state, owner=owner, selection=record)
-                    main, details = rendered.split("<details>", 1)
+                    main, details = review_parts(rendered)
                     self.assertNotIn("**Model:**", main + details)
                     self.assertNotIn("Model ambiguous", main)
                     self.assertNotIn("**Effort:**", main)
@@ -538,7 +539,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
                 for running in (False, True):
                     self.assertIn(warning, check.selection_notice(record, running=running)[0])
                 rendered = check.status_comment_body(HEAD, "main", "success", owner=owner, selection=record)
-                self.assertIn(warning, rendered.split("<details>", 1)[0])
+                self.assertIn(warning, review_parts(rendered)[0])
                 self.assertIn("**Completed**", rendered)
 
     def test_alias_version_advancement_is_valid_but_primary_mismatch_stays_visible(self):
@@ -549,7 +550,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         self.assertEqual(check.selection_details(observed), ["**Model:** Haiku · **Effort:** Max"])
         mismatch = self.record(config, owner=owner, model="claude-sonnet-5-5")
         body = check.status_comment_body(HEAD, "main", "success", owner=owner, selection=mismatch)
-        main, details = body.split("<details>", 1)
+        main, details = review_parts(body)
         self.assertIn("Model mismatch:** Sonnet observed", main)
         self.assertIn("**Model:** Haiku · **Effort:** Max", details)
 
@@ -714,7 +715,7 @@ class RepositoryConfigurationTests(unittest.TestCase):
         marker = check.completion_marker(REPO, 7, HEAD, "main", BASE_TIP, "c" * 40)
         body = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP, marker,
                                              f"https://github.com/{REPO}/actions/runs/5", selection=record)
-        main, details = body.split("<details>", 1)
+        main, details = review_parts(body)
         self.assertIn("Model mismatch:** Haiku observed", main)
         self.assertNotIn("**Effort:**", main)
         self.assertIn("**Model:** Sonnet · **Effort:** High", details)

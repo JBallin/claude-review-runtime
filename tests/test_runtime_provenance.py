@@ -4,7 +4,7 @@ import os
 import unittest
 
 import test_presentation_ownership as ownership
-from test_claude_review_check import check, HEAD, OTHER, NEWER, BASE_TIP, REPO
+from test_claude_review_check import check, HEAD, OTHER, NEWER, BASE_TIP, REPO, review_parts
 
 
 class RuntimeProvenanceTests(unittest.TestCase):
@@ -23,7 +23,7 @@ class RuntimeProvenanceTests(unittest.TestCase):
         for state in ("in_progress", "success", "action_required", "failure", "publication_incomplete"):
             with self.subTest(state=state):
                 body = check.status_comment_body(HEAD, "main", state, owner=owner, runtime=runtime)
-                visible, details = body.split("<details>", 1)
+                visible, details = review_parts(body)
                 self.assertNotIn("**Runtime:**", visible)
                 self.assertEqual(details.count(check.runtime_used_line(runtime)), 1)
                 self.assertNotIn("proposed pin", body)
@@ -40,7 +40,7 @@ class RuntimeProvenanceTests(unittest.TestCase):
         body = check.completion_comment_body(REPO, HEAD, "main", BASE_TIP,
             check.completion_marker(REPO, 7, HEAD, "main", BASE_TIP, "c" * 40),
             "https://github.com/owner/repo/actions/runs/5", selection=selection)
-        visible, details = body.split("<details>", 1)
+        visible, details = review_parts(body)
         reviewed = "**Reviewed commit:** " + check.commit_link(HEAD, REPO)
         self.assertIn(reviewed, visible)
         self.assertNotIn("**Model:**", visible)
@@ -48,18 +48,19 @@ class RuntimeProvenanceTests(unittest.TestCase):
         self.assertNotIn("Runtime", visible)
         self.assertEqual(details.count(check.runtime_used_line(runtime)), 1)
 
-    def test_interpretation_notes_lead_details_without_changing_the_main_notice(self):
+    def test_target_warning_stays_visible_and_pin_context_stays_in_details(self):
         self.configure()
         args = (REPO, HEAD, "main", BASE_TIP, "synthetic-marker", "https://github.com/owner/repo/actions/runs/5")
         plain = check.completion_comment_body(*args)
-        observed = "The observed target differed from the reviewed baseline."
+        observed = check.OBSERVED_TARGET_WARNING
         pin = "This review used the deployed Runtime, not the proposed pin."
-        for changed, pin_context, expected in ((False, False, []), (True, False, [observed]),
-                                              (False, True, [pin]), (True, True, [observed, pin])):
+        for changed, pin_context, expected in ((False, False, []), (True, False, []),
+                                              (False, True, [pin]), (True, True, [pin])):
             body = check.completion_comment_body(*args, observed_base_sha=OTHER if changed else BASE_TIP,
                                                  pin_change_context=pin_context)
             main, details = body.split("<details>\n<summary>ℹ️ Details</summary>\n\n", 1)
-            self.assertEqual(main, plain.split("<details>", 1)[0])
+            self.assertEqual(main, plain.split("<details>", 1)[0].rstrip()
+                             + ("\n\n" + observed if changed else "") + "\n\n")
             paragraphs = details.split("\n\n")
             self.assertEqual(paragraphs[:len(expected)], expected)
             self.assertTrue(paragraphs[len(expected)].startswith("**[Reviewed]"))
