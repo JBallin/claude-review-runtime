@@ -39,20 +39,9 @@ ready without the applicable authorization.
 
 ### Review presentation gallery
 
-Follow the [review presentation QA process](docs/review-presentation-qa.md) for
-changes to generated review output. It defines gallery generation, scenario
-coverage, GitHub-rendered desktop and narrow checks, keyboard and semantic
-checks, screenshots, and the evidence required in the PR description.
-
-Complete applicable local validation and independent review before authorized
-publication. Complete the required GitHub-rendered checks against the published
-candidate before marking ready or declaring merge readiness. Keep blocked or
-unrun checks explicit; local previews do not substitute for GitHub rendering.
-Spoken screen-reader, physical-device, and live-comment checks are separate
-coverage, not routine gallery requirements or implied by a routine pass.
-
-The process preserves existing browser approval boundaries. Do not change
-permissions, publish, or switch destinations to work around denied access.
+Follow the [review presentation QA checklist](docs/review-presentation-qa.md)
+when generated review output changes, including its publication gates and
+coverage limits.
 
 ## Scope and runtime adoption
 
