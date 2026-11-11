@@ -23,9 +23,14 @@ exclude them. These code paths do not establish validated fork support.
 For compatible dependency updates, use required offline checks, independent
 review, and verified adoption in a normal review. Propose a separate live
 validation run only for material gaps, under the
-[existing approval requirements](../AGENTS.md#scope-and-runtime-adoption).
+[existing approval requirements](development.md#scope-and-runtime-adoption).
 Preserve fail-closed safeguards and state unverified behavior. Changing pins
 alone does not establish live authentication, model completion, or publication.
+
+## Review presentation QA
+
+Use the [gallery QA checklist](review-presentation-qa.md) for review-output
+changes, including required evidence and checks outside routine coverage.
 
 ## Coverage limits
 
