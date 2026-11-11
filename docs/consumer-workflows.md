@@ -1,6 +1,15 @@
 # Consumer workflows
 
-*Use this guide to install and operate the three reusable review entrypoints in a consumer repository.*
+*Use this guide to install and operate Runtime in your repository. Each caller
+is a small workflow file that invokes one of Runtime's reusable workflows.*
+
+- [Set up your first review](#first-review-checklist)
+- [Choose authentication and check prerequisites](#prerequisites)
+- [Install the callers](#install-the-callers)
+- [Configure model and effort](#model-and-effort-defaults)
+- [Request a manual review](#optional-model-and-effort-selection)
+- [Refresh stale status](#stale-presentation-refresh)
+- [Choose required review checks](#required-reviews-and-status-checks)
 
 ## First-review checklist
 
@@ -39,6 +48,8 @@
 
 ## Required reviews and status checks
 
+### Completed review and finding dispositions
+
 Keep completed Claude review and explicit disposition of each finding as
 requirements of your review policy. A successful Actions job alone does not
 prove Claude completed the review: inspect the authoritative `Claude Review`
@@ -46,6 +57,8 @@ Check and its captured patch identity. A completed `action_required` Check
 records findings; assess each one and record whether it was fixed, invalid, or
 explicitly declined by the responsible maintainer. Disposition does not rewrite
 the Check or erase recorded findings. Material patch changes need fresh review.
+
+### Requiring a clean Check on every head
 
 Requiring a finding-free `Claude Review` Check on every current head is a
 stricter branch-protection choice. It can block a review whose findings have
@@ -81,6 +94,8 @@ The `api-key` branch has not been live-API-tested; it does not require OAuth.
 support. See the
 [branch comparison](https://github.com/JBallin/claude-review-runtime/compare/main...api-key)
 for source differences.
+
+### GitHub App and supported platform
 
 Install the [Claude GitHub App](https://github.com/apps/claude) with access to the
 consumer repository. The app provides GitHub access separately from the model
@@ -169,6 +184,8 @@ with:
   effort: high
 ```
 
+For examples of setting model and effort, see Ballin’s [automatic](https://github.com/JBallin/ballin-scripts/blob/2081cdad866990f3d76205f5bd68e7a0dd1beb62/.github/workflows/claude-review.yml#L23-L25) and [manual](https://github.com/JBallin/ballin-scripts/blob/2081cdad866990f3d76205f5bd68e7a0dd1beb62/.github/workflows/claude.yml#L73-L75) review workflows.
+
 | Input | Supported values | Built-in default |
 | --- | --- | --- |
 | `model` | `opus`, `sonnet`, `haiku` | `sonnet` |
@@ -185,6 +202,8 @@ input, then Runtime's **Sonnet / Medium** defaults. Blank workflow inputs count 
 omitted. Runtime passes both resolved values to execution. Invalid manual
 arguments reject the entire request; they never start a review using replacement
 settings. See the [selection rationale](design-notes.md#review-model-and-effort-selection).
+
+### Safe configuration
 
 Use literal owner-reviewed values in the caller, rather than expressions from
 PR content. Runtime validates the resolved values; it cannot distinguish a
@@ -203,10 +222,16 @@ for diagnosis and recovery.
 
 ## Manual review
 
-Use this caller to accept manual review requests:
+Use this caller for trusted human requests on open, non-draft, same-repository
+PRs. A read-only preflight checks PR eligibility before invoking Runtime. Keep
+command parsing in Runtime rather than copying its supported forms into the
+caller; the pinned revision owns the [manual command contract](#optional-model-and-effort-selection).
+Use a reviewed Runtime revision with strict request classification and original-author
+permission checks; the keyword filter alone provides neither.
 
 ```yaml
 name: Manual Claude review
+
 on:
   issue_comment:
     types: [created]
@@ -216,7 +241,36 @@ on:
 permissions: {}
 
 jobs:
+  eligibility:
+    # Forward candidate text; the pinned Runtime owns command parsing and admission.
+    if: >-
+      contains(github.event.comment.body, '/claude-review') &&
+      github.event.comment.user.type == 'User' &&
+      github.event.sender.type == 'User' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
+      (github.event_name == 'pull_request_review_comment' || github.event.issue.pull_request)
+    runs-on: ubuntu-26.04
+    timeout-minutes: 2
+    permissions:
+      pull-requests: read
+    outputs:
+      eligible: ${{ steps.eligibility.outputs.eligible }}
+    steps:
+      - name: Check PR eligibility
+        id: eligibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+        run: |
+          pr=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
+          eligible=$(printf '%s' "$pr" | jq -r --arg repo "$REPO" '
+            .state == "open" and .draft == false and .head.repo.full_name == $repo')
+          echo "eligible=$eligible" >> "$GITHUB_OUTPUT"
+
   review:
+    needs: eligibility
+    if: needs.eligibility.outputs.eligible == 'true'
     permissions:
       contents: read
       pull-requests: write
@@ -230,6 +284,18 @@ jobs:
     secrets:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 ```
+
+The keyword filter is intentionally coarse: matching prose, quoted examples,
+fenced examples, and invalid commands can start the eligibility job and, for an
+eligible PR, Runtime's queued classification job. This uses Actions runner time
+and API calls even when no model runs, and can wait behind an active review.
+Runtime ignores examples and prose without a command line; invalid requests may
+post a separate permission-checked usage response. Neither outcome starts a
+model or changes review Checks, status, or reactions. A valid whole-line command
+still needs the original comment author's current write or admin permission and
+valid model configuration before review execution or publication. Consumers may
+add repository-specific validation and timeout setup without duplicating the
+command grammar or weakening these gates.
 
 ### Optional model and effort selection
 
@@ -253,6 +319,8 @@ allowed. Other lines may contain prose or another reviewer's request. Mid-senten
 mentions, quoted lines, inline-code examples, and fenced code blocks are ignored;
 indentation alone does not make a command an example.
 
+### Invalid requests
+
 Unknown values, reversed model/effort order, keywords, flags, trailing words, or
 multiple command lines reject the whole request. Runtime does not run a model or
 retain a valid sibling argument from that request. For a trusted human commenter
@@ -262,6 +330,8 @@ remain unchanged. Feedback may wait behind an active review in the shared PR
 queue; rerunning the workflow may post another response. Edited comments do not
 trigger this path: post a new comment to request a review.
 
+### Provider support and usage
+
 The three aliases follow [upstream model resolution](https://code.claude.com/docs/en/model-config)
 and can advance to newer versions. Model access, alias remapping, and effort
 limits depend on the account and provider. Upstream may reject a selection or
@@ -270,6 +340,8 @@ A conflicting `ANTHROPIC_MODEL` or `CLAUDE_CODE_EFFORT_LEVEL` prevents the
 review from starting. Higher effort can increase usage and latency; turn and
 time limits are not a spending cap. See
 [effort support](https://platform.claude.com/docs/en/build-with-claude/effort).
+
+### Settings and model evidence in results
 
 Resolved **Model** and **Effort** appear in each run’s Details, above its
 baseline and Runtime provenance, including manual clean-completion receipts.
@@ -282,7 +354,8 @@ output does not report the resolved setting. See
 
 For the current attempt, a selected model with missing or conflicting primary
 evidence, or execution by a different model family, produces a warning outside
-Details. A recorded model mismatch from a previous run appears only within its
+Details. Missing evidence for an incomplete attempt appears inside Details.
+A recorded model mismatch from a previous run appears only within its
 Previous completed review section, before its settings. Model warnings use
 family names unless version detail is needed to distinguish conflicting evidence
 from the same family. Auxiliary model usage
@@ -291,9 +364,6 @@ Legacy records without separate primary evidence retain the missing-evidence
 warning. Model diagnostics do not invalidate completed reviews or erase
 findings. Runtime adds no retries or substitution runs for these diagnostics;
 provider failures retain their ordinary incomplete-review behavior.
-
-The runtime resolves the current patch once for each accepted manual request.
-Ordinary issue comments and untrusted requests do not start model execution.
 
 ## Stale presentation refresh
 
@@ -322,6 +392,8 @@ retargeting edits and pushes to their target branch. It does not create a review
 when none exists or rerun Claude. Completed review evidence and exact-patch Checks
 remain unchanged; the existing status explains coverage of the newer baseline.
 
+### Push discovery and retry limits
+
 Target pushes discover only open PRs with that exact base branch, including
 stacked PRs on non-default branches. Discovery is read-only and bounded to 100
 pages of 100 PRs and 120 seconds. More than 256 affected PRs or incomplete discovery
@@ -331,10 +403,12 @@ PRs, and changed presentation owners are rechecked before publication. Status AP
 failures remain best effort and appear as workflow warnings; they never change a
 Check verdict. A later qualifying event can retry a missed refresh.
 
+### Enable target-branch push refreshes
+
 Existing consumers must separately update their status caller to include the
 `push` trigger and select a reviewed runtime revision. Updating a runtime pin
 alone cannot add caller events. This repository's pinned self-review callers
-also require separate adoption; this implementation does not repin them.
+have not enabled target-push refreshes. See [updating callers](review-guide.md#updating-callers).
 
 For push events, [GitHub selects the workflow from the event's commit/ref](https://docs.github.com/en/actions/concepts/workflows-and-actions/workflows#workflow-triggers).
 The updated status caller must be present on each target branch whose pushes

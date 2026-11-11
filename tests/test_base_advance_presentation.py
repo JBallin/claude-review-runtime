@@ -3,7 +3,7 @@ import copy
 import os
 import unittest
 
-from test_claude_review_check import check, HEAD, OTHER, MERGE_BASE, NEWER
+from test_claude_review_check import check, HEAD, OTHER, MERGE_BASE, NEWER, review_parts
 import test_presentation_ownership as ownership
 
 DONE = "2026-10-07T13:09:19Z"
@@ -20,7 +20,7 @@ class BaseAdvancePresentationTests(unittest.TestCase):
 
     def assert_completed_result(self, result):
         body = self.api.status["body"]
-        self.assertIn("## Claude Review", body)
+        self.assertIn("<summary><strong>Claude Review</strong>:", body)
         self.assertNotIn("**Last completed review**", body)
         self.assertIn("✅ **Completed**" if result == "success" else "⚠️ **Findings**", body)
         self.assertIn("| Status | Commit | Review trigger |", body)
@@ -83,7 +83,7 @@ class BaseAdvancePresentationTests(unittest.TestCase):
                 self.assertTrue(check.completed_review_for_owner(self.api.status, owner))
                 self.assertEqual(check.terminal_status_reason(self.api.status, owner),
                                  check.STATUS_REASONS["base_advanced"])
-                visible = self.api.status["body"].split("<details>")[0]
+                visible = review_parts(self.api.status["body"])[0]
                 self.assertNotIn("advanced", visible)
                 self.assertNotIn("unchanged commit", visible)
 
@@ -103,7 +103,7 @@ class BaseAdvancePresentationTests(unittest.TestCase):
                     os.environ["BASE_REF"] = "release"
                 check.best_effort_status(self.api.pr["head"]["sha"], "stale")
                 body = self.api.status["body"]
-                self.assertIn("## Claude Review", body)
+                self.assertIn("<summary><strong>Claude Review</strong>:", body)
                 self.assertIn("The current PR commit" if changed_head else "current target `release`", body)
                 self.assertNotIn(" — base advanced", body)
                 self.assertNotIn(check.TARGET_TIP_WARNING, body)

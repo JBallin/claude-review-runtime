@@ -50,6 +50,8 @@ Runtime verifies that the review completed on the captured changes; it doesn’t
 guarantee every bug was found. See the
 [review contract](review-guide.md#trust-and-review-results).
 
+### What you maintain
+
 Install three separate caller workflows for automatic review, manual review
 and stale-status refresh, pinning all three to one reviewed, immutable
 40-character Runtime commit. You also need Claude GitHub App access and a model

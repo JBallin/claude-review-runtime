@@ -4,7 +4,7 @@ import copy
 import os
 import unittest
 
-from test_claude_review_check import check, HEAD, OTHER, presentation_owner
+from test_claude_review_check import check, HEAD, OTHER, presentation_owner, review_parts
 import test_presentation_ownership as ownership
 
 START_NS = 1791316369000000000
@@ -36,23 +36,23 @@ class StatusTimestampTests(unittest.TestCase):
                         self.start(PRESENTATION_START=START_NS - 120 * 10**9)
                         self.finish(history)
                     owner = self.start(PRESENTATION_START=START_NS, GITHUB_RUN_ID=6)
-                    initial = self.body().split("<details>")[0]
+                    initial = review_parts(self.body())[1]
                     self.assertIn(" started " + check.relative_time(START), initial)
                     check.best_effort_status(HEAD, "in_progress", check_available=available)
-                    visible = self.body().split("<details>")[0]
-                    running = "**[Running](https://github.com/owner/repo/actions/runs/6)**" if history else "**Running**"
-                    self.assertIn(running + " started " + check.relative_time(START), visible)
-                    self.assertEqual(visible.count(check.relative_time(START)), 1)
-                    self.assertNotIn("In progress", visible)
+                    visible, details = review_parts(self.body())
+                    running = "**Running**"
+                    self.assertIn(running + " started " + check.relative_time(START), details)
+                    self.assertEqual(details.count(check.relative_time(START)), 1)
+                    self.assertIn("In progress</summary>", visible)
                     self.assertNotIn("in progress", visible)
                     self.assertEqual(check.status_state(self.api.status), "in_progress")
                     self.assertEqual(check.status_owner(self.api.status), owner)
                     if history:
                         self.assertNotIn(check.relative_time(DONE), visible)
-                        self.assertIn(check.relative_time(DONE), self.body().split("<details>")[1])
+                        self.assertIn(check.relative_time(DONE), review_parts(self.body())[1])
                         self.assertEqual(check.last_completed_review(self.api.status), (HEAD, "main", history))
                     if not available:
-                        self.assertIn("authoritative Check publication is unavailable", visible)
+                        self.assertIn("This attempt can’t publish a Claude Review Check.", visible)
 
     def test_running_refreshes_reuse_persisted_start(self):
         for history in (None, "success", "action_required"):
@@ -70,8 +70,8 @@ class StatusTimestampTests(unittest.TestCase):
                 self.api.pr["head"]["sha"] = OTHER
                 for _ in range(2):
                     check.best_effort_status(OTHER, "stale")
-                    visible = self.body().split("<details>")[0]
-                    self.assertIn(" started " + check.relative_time(START), visible)
+                    visible, details = review_parts(self.body())
+                    self.assertIn(" started " + check.relative_time(START), details)
                     self.assertEqual(check.status_owner(self.api.status), owner)
                     self.assertTrue(check.status_owner_running(self.api.status))
                     self.assertEqual(check.status_state(self.api.status), "stale")
@@ -84,8 +84,8 @@ class StatusTimestampTests(unittest.TestCase):
                 first = self.start(PRESENTATION_START=START_NS)
                 self.finish("failure")
                 second = self.start(PRESENTATION_START=START_NS + 60 * 10**9, **retry)
-                visible = self.body().split("<details>")[0]
-                self.assertIn("**Running** started " + check.relative_time("2026-10-06T19:53:49Z"), visible)
+                visible, details = review_parts(self.body())
+                self.assertIn("**Running** started " + check.relative_time("2026-10-06T19:53:49Z"), details)
                 self.assertNotIn(check.relative_time(START), self.body())
                 self.assertNotEqual(first["generation"], second["generation"])
 
@@ -101,8 +101,8 @@ class StatusTimestampTests(unittest.TestCase):
                             owner["started"] = value
                         body = check.status_comment_body(HEAD, "main", state, owner=owner,
                             owner_running=True, last_review=history)
-                        visible = body.split("<details>")[0]
-                        self.assertIn("Running", visible)
+                        visible = review_parts(body)[0]
+                        self.assertIn("In progress", visible)
                         self.assertNotIn("<relative-time", body)
                         self.assertNotIn(" started ", visible)
         body = check.status_comment_body(HEAD, "main", "in_progress")

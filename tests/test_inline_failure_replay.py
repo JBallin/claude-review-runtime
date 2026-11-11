@@ -43,7 +43,7 @@ class InlineFailureReplayTests(ScriptTestCase):
     def assert_count(self, check_body, status, count):
         expected = check.inline_failure_explanation(count)
         self.assertIn(expected, check_body["output"]["summary"])
-        self.assertIn(expected, status["body"])
+        self.assertIn(check.inline_failure_notice(count), status["body"])
         self.assertEqual(check_body["conclusion"], "failure")
         owner = check.status_owner(status)
         self.assertEqual(check.status_inline_failure(status, owner)["posted_count"], count)

@@ -649,8 +649,8 @@ jobs:
           fi
       - name: Review pull request
         id: review
-        # v1.0.253
-        uses: anthropics/claude-code-action@5eb090f3c3afd701a0672cd32981197ca27688f6
+        # v1.0.266
+        uses: anthropics/claude-code-action@d535f5172dec02b204866b393d6b20b9b2aaf98d
         # Runs any subagent in the foreground, as a backstop to --tools below:
         # a background task lets the run end early on an interim result.
         env:
@@ -1346,21 +1346,24 @@ jobs:
             verify_presentation_owner || return 0
             observed_patch=$(verify_known_patch) || return 0
             [ "$observed_patch" = "$live_patch" ] || return 0
-            heading='Claude Review'
             reason='Trusted review tooling was unavailable; the review could not be finalized reliably.'
             recovery='[Troubleshoot incomplete reviews](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md#installation-and-incomplete-reviews).'
             if [ "$current_patch" != true ]; then
               state=stale
-              message='The captured head or base was superseded; the current patch is not reviewed by this attempt.'
+              outcome='⚠️ Stale'
+              message='This attempt does not cover the current PR patch.'
             elif [ "$1" = failure ]; then
               state=failure
+              outcome='❌ Incomplete'
               message='This review did not complete reliably; this commit is not approved by it.'
             elif [ "$IS_FORK" = true ] && [ -z "$CHECK_RUN_ID" ]; then
               state=publication_incomplete
-              message='Review completion cannot be established because authoritative Check publication is unavailable. Consult the workflow run and inline review threads.'
+              outcome='❌ Check unavailable'
+              message='The Claude Review Check is unavailable for this attempt. Completion is unverified.'
             else
               state=publication_incomplete
-              message='The authoritative Check result could not be published. Treat this commit as not reviewed.'
+              outcome='❌ Check unavailable'
+              message='The result could not be published to the Claude Review Check.'
             fi
             display_head=$(printf '%s' "$live_patch" | jq -r '.head')
             display_ref=$(printf '%s' "$live_patch" | jq -r '.base_ref')
@@ -1795,8 +1798,6 @@ jobs:
                   warnings = []
                   if current.get("configuration"):
                       warnings.extend(configuration_notices(current["configuration"]))
-                  if current["requested_model"]:
-                      warnings.append("⚠️ **Model unknown:** primary evidence missing")
                   if MANUAL_USAGE in warnings:
                       warnings.remove(MANUAL_USAGE)
                       warnings.append(MANUAL_USAGE)
@@ -1818,7 +1819,10 @@ jobs:
                       previous = None
           except (ValueError, TypeError, KeyError):
               pass
-          print(json.dumps({"marker": marker, "notice": details(current), "warning": warning, "previous": details(previous),
+          current_details = details(current)
+          if current and current["requested_model"]:
+              current_details += "  \n⚠️ **Model unknown:** primary evidence missing"
+          print(json.dumps({"marker": marker, "notice": current_details, "warning": warning, "previous": details(previous),
                             "previous_warning": previous_mismatch(previous)}))
           ' "$reviewed_markers") || return 0
             selection_notice=$(printf '%s' "$selection_payload" | jq -r '.notice')
@@ -1827,7 +1831,12 @@ jobs:
             previous_warning=$(printf '%s' "$selection_payload" | jq -r '.previous_warning')
             selection_marker=$(printf '%s' "$selection_payload" | jq -r '.marker')
             [ -z "$selection_marker" ] || reviewed_markers="$reviewed_markers$selection_marker"$'\n'
-            [ -z "$selection_warning" ] || message="$message"$'\n\n'"$selection_warning"
+            recovery="$reason $recovery"
+            if [ "$state" = failure ]; then
+              recovery="$message $recovery"
+            else
+              selection_warning="$message"${selection_warning:+$'\n\n'"$selection_warning"}
+            fi
             metadata="**Current commit:** \`${display_head:0:7}\`$trigger_line$captured_line"
             metadata=${metadata//$'\n'/$'  \n'}
             [ -z "$selection_notice" ] || metadata="$selection_notice"$'  \n'"$metadata"
@@ -1875,8 +1884,21 @@ jobs:
               fi
               metadata="$metadata"$'  \n''**Turns:** unavailable'
             fi
-            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s### %s\n\n%s\n\n%s %s\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<!--\n**Reason:** %s\n-->\n\n%s\n\n</details>' \
-              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$heading" "$message" "$reason" "$recovery" "$reason" "$metadata")
+            # Keep the About copy in sync with about_review_details().
+            about='<details>
+          <summary><strong>About Claude Review Runtime</strong></summary>
+
+          Claude can review when you:
+
+          - Open a PR for review
+          - Mark a draft ready for review
+          - Comment `/claude-review`
+
+          See the [review guide](https://github.com/JBallin/claude-review-runtime/blob/main/docs/review-guide.md) for details, including how to customize the model and reasoning effort.
+
+          </details>'
+            rendered=$(printf '<!-- claude-review-runtime:claude-review-status -->\n<!-- claude-review-runtime:claude-review-status-head:%s -->\n<!-- claude-review-runtime:claude-review-status-base-ref:%s -->\n<!-- claude-review-runtime:claude-review-status-state:%s -->\n%s\n<details>\n<summary><strong>Claude Review</strong>: %s</summary>\n\n<details>\n<summary>ℹ️ Details</summary>\n\n<!--\n**Reason:** %s\n-->\n\n%s\n\n%s\n\n%s\n\n</details>\n\n</details>%s' \
+              "$display_head" "$encoded_base" "$state" "$reviewed_markers" "$outcome" "$reason" "$metadata" "$recovery" "$about" "${selection_warning:+$'\n\n'"$selection_warning"}")
             body=$(jq -n --arg body "$rendered" '{body: $body}')
             verify_presentation_owner || return 0
             observed_patch=$(verify_known_patch) || return 0

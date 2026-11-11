@@ -254,9 +254,10 @@ class ReusableBoundaryTests(unittest.TestCase):
             self.assertIn("    with:\n      model: opus\n      effort: high", rendered)
             self.assertIn(f"{path.name}@<full-reviewed-runtime-sha>", rendered)
             if path == w.MANUAL:
-                # The copied caller delegates recognition, including malformed
-                # option recovery, rather than retaining an Opus-only filter.
-                self.assertNotRegex(rendered, r"(?m)^\s+if:")
+                # Eligibility guards may filter candidate text; Runtime alone
+                # owns command forms and malformed-option recovery.
+                self.assertIn("contains(github.event.comment.body, '/claude-review')", rendered)
+                self.assertNotRegex(rendered, r"contains\(fromJSON\('[^']*'\), github\.event\.comment\.body\)")
                 self.assertIn("issue_comment:\n    types: [created]", rendered)
                 self.assertIn("pull_request_review_comment:\n    types: [created]", rendered)
         status = next(block for block in blocks if f"/{w.STALE.name}@" in block)
