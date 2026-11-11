@@ -1,7 +1,7 @@
 # Review presentation QA
 
 Use this checklist when generated review output changes. For documentation-only
-changes, follow the [normal validation rules](../AGENTS.md#development-and-validation).
+changes, follow the [normal validation rules](development.md#development-and-validation).
 
 ## Before publication
 
@@ -60,4 +60,4 @@ Routine sizing, disclosures, and screenshots of this synthetic gallery are withi
 an authorized engineering task; platform approvals still apply. This excludes
 other sites, sign-in, settings/access changes, and publication. Never bypass denied
 access; report missing coverage and hold transitions requiring it. Live workflow
-exercises follow the [separate approval requirements](../AGENTS.md#scope-and-runtime-adoption).
+exercises follow the [separate approval requirements](development.md#scope-and-runtime-adoption).
