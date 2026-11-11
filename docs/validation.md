@@ -27,6 +27,15 @@ validation run only for material gaps, under the
 Preserve fail-closed safeguards and state unverified behavior. Changing pins
 alone does not establish live authentication, model completion, or publication.
 
+## Review presentation QA
+
+Use the [repeatable gallery QA process](review-presentation-qa.md) when review
+output changes. Routine coverage uses GitHub's renderer in the built-in browser
+at desktop and narrow widths, with keyboard and rendered-structure checks.
+Record actual results and limitations for the inspected revision. A routine
+pass does not establish spoken screen-reader behavior, physical-device support,
+or live PR-comment rendering; those need separate checks when warranted.
+
 ## Coverage limits
 
 ### What offline tests exercise

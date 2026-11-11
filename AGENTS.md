@@ -39,84 +39,20 @@ ready without the applicable authorization.
 
 ### Review presentation gallery
 
-Regenerate and check the committed [synthetic gallery](docs/review-presentation-gallery.md)
-with the existing [generator](scripts/render_presentation_gallery.py):
+Follow the [review presentation QA process](docs/review-presentation-qa.md) for
+changes to generated review output. It defines gallery generation, scenario
+coverage, GitHub-rendered desktop and narrow checks, keyboard and semantic
+checks, screenshots, and the evidence required in the PR description.
 
-```sh
-python3 -B scripts/render_presentation_gallery.py --write
-python3 -B scripts/render_presentation_gallery.py --check
-```
+Complete applicable local validation and independent review before authorized
+publication. Complete the required GitHub-rendered checks against the published
+candidate before marking ready or declaring merge readiness. Keep blocked or
+unrun checks explicit; local previews do not substitute for GitHub rendering.
+Spoken screen-reader, physical-device, and live-comment checks are separate
+coverage, not routine gallery requirements or implied by a routine pass.
 
-The generator uses actual presentation helpers and fixed synthetic fixtures,
-without network, browser, or model calls. CI checks exact bytes and fails on
-missing or stale output; it never regenerates the committed file. Keep behavioral
-regression tests alongside freshness checks. Complete synthetic production metadata is retained in the raw gallery; rendered
-HTML comments remain hidden. Markdown hard breaks
-use equivalent backslashes to avoid trailing whitespace in Git diffs. Edit the
-renderer or sample inputs, then regenerate; keep observations out of the generated
-file.
-
-Review the gallery diff and inspect affected rendered states. When metadata,
-operational markers, or their generation paths change, verify the intended
-semantics against source and focused tests, including evidence not visible in
-the gallery. The raw gallery retains operational markers for audit; verify their contracts
-against the production helpers and focused tests. Focus on the changes; a full audit of unchanged metadata is not
-required for every PR.
-
-When a change adds or materially alters a rendered state, add or update
-representative scenarios in the gallery generator and visually inspect the
-resulting output. Cover genuinely distinct behavior, including relevant
-conditional, error and fallback states, rather than every possible combination
-or a new example for every issue.
-
-When emergency workflow presentation changes, also capture synthetic output from
-both workflows through `ToolingFallbackScriptTests.run_fallback` (stubbed GitHub
-calls and temporary fixtures). Keep matching outputs as labeled QA adjuncts
-in the PR review evidence, removing operational markers. This harness is separate
-from the gallery generator; do not duplicate fallback templates or append
-hand-edited output to the committed gallery.
-
-Before authorized draft publication or a PR update, complete applicable local
-tests, generated-gallery freshness and scope checks, and independent review.
-Label local Markdown previews separately; they do not establish GitHub-rendered
-QA.
-
-After authorized publication, inspect the exact published gallery in GitHub's
-renderer during PR finalization, before marking ready or declaring merge
-readiness. Verify the generating checkout and committed gallery match the exact
-published PR head. In an open PR description, use one branch-based gallery
-preview link. Record the exact inspected commit as plain text
-alongside inspected scenarios, visual-QA results, and meaningful limitations;
-a second commit-pinned gallery link is not required. Do not embed the gallery's
-own commit SHA in the generated file. Do not paste the full gallery or duplicate
-the Files changed diff into PR comments or the description. Keep all samples
-synthetic and free of reviewer invocation text.
-
-For that GitHub-rendered check, inspect the gallery at desktop (about 1280 px)
-and narrow (about 390 px) widths. Check Details collapsed and expanded for changed
-or affected states plus representative unchanged cases. Check every section when
-a shared renderer or layout change could affect the whole gallery. Check spacing,
-tables, warnings, identity labels, link targets, and hidden-receipt suppression.
-Record the inspected scenarios, coverage rationale, observed results, actual
-widths, and inspected revision in the PR description. Markdown generation alone
-does not complete visual QA.
-
-Routine read-only QA of this repository's local or public synthetic gallery is
-included in an already authorized engineering task: desktop/narrow sizing,
-opening and closing Details, and screenshots do not need repeated separate
-approval. Continue to follow platform and assistant approval controls. This
-scope does not authorize other sites or browser interactions, sign-in or account
-settings, external publication, or access/permission changes. Report any blocked
-browser access or sizing check precisely instead of claiming visual QA passed.
-If GitHub-rendered coverage is unavailable or denied, report what remains
-unverified and hold transitions that require it. Do not publish or switch
-destinations to work around a browser denial.
-
-Include representative desktop and narrow screenshots of changed rendered views
-in the task handoff, identifying the source revision and scenarios shown.
-Screenshots supplement inspection; an image is not required for every example.
-If capture is blocked, report the precise limitation instead of claiming
-screenshots were supplied.
+The process preserves existing browser approval boundaries. Do not change
+permissions, publish, or switch destinations to work around denied access.
 
 ## Scope and runtime adoption
 
