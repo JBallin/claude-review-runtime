@@ -757,6 +757,11 @@ class JobStructureTests(unittest.TestCase):
             with self.subTest(workflow=path.name):
                 claude = steps(job(path, "review"))["Review pull request"]
                 args = folded(claude, "claude_args", 10)
+                # Upstream v1.0.276 defaults agent mode to auto; the caller's
+                # later explicit mode must preserve the review permission boundary.
+                self.assertEqual(args.count("--permission-mode default"), 1)
+                self.assertNotIn("--permission-mode auto", args)
+                self.assertIn("--strict-mcp-config", args)
                 self.assertIn('--tools "Read,Glob,Grep"', args)
                 self.assertIn(
                     '--allowedTools "Read,Glob,Grep,mcp__github_inline_comment__create_inline_comment"', args
