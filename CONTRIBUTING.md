@@ -13,8 +13,6 @@ details out of public issues and pull requests. See [SECURITY.md](SECURITY.md) f
 
 ## Development
 
-See [AGENTS.md](AGENTS.md) for development commands, validation requirements,
-and presentation-gallery guidance.
-
-For periodic or explicitly requested API-key variant maintenance, maintainers
-should follow the [procedure in AGENTS.md](AGENTS.md#api-key-variant-maintenance).
+Follow [Development and maintenance](docs/development.md) for local checks,
+publication, runtime adoption, and periodic API-key variant maintenance. For
+review-output changes, use the [presentation QA checklist](docs/review-presentation-qa.md).
