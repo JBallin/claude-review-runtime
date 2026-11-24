@@ -43,7 +43,13 @@ Read [Choosing a Claude code-review approach](docs/choosing-a-review-approach.md
 
 - [Claude Code GitHub Action](https://code.claude.com/docs/en/github-actions):
   Use the underlying GitHub Action directly.
-- Anthropic’s [managed Code Review](https://code.claude.com/docs/en/code-review):
-  Anthropic-hosted reviews for eligible Team and Enterprise plans.
+- [Claude Ship](https://claude.com/resources/articles/introducing-claude-ship):
+  Anthropic’s hosted suite for GitHub PR review, fixes, and policy-based
+  approvals, available to eligible Claude Team and Enterprise organizations.
 - [Datadog’s code review action](https://github.com/DataDog/code-review-action):
   Another GitHub Actions option.
+
+Runtime remains an option for individual developers who want to run Claude PR
+reviews in their own GitHub Actions workflows without a Team or Enterprise plan.
+Use the [consumer setup guide](docs/consumer-workflows.md#first-review-checklist)
+for the supported setup and validation limits.
