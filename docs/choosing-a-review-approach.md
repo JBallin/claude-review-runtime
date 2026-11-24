@@ -1,6 +1,6 @@
 # Choosing a Claude code-review approach
 
-*Claude Ship availability checked November 24, 2026.*
+*Sources checked October 31, 2026.*
 
 Claude Review Runtime helps individuals and teams track which changes Claude
 reviewed and whether the review completed. Choose it when that evidence is
@@ -10,25 +10,21 @@ useful enough to justify operating a GitHub review workflow.
 
 | Approach | A good fit when you want | What you operate |
 | --- | --- | --- |
-| [Claude Ship](https://code.claude.com/docs/en/claude-ship) | Managed GitHub PR reviews, with optional fixes and policy-based approvals | App access, organization settings, approval policies and usage budget |
+| [Anthropic's managed Code Review](https://code.claude.com/docs/en/code-review) | Hosted PR reviews with organization controls | App access, review settings, instructions and budget |
 | [Official Claude Code Action directly](https://code.claude.com/docs/en/github-actions) | Your own prompts, tools, triggers or broader automation | Workflow configuration, authentication, dependencies and result handling |
 | [Claude Review Runtime](consumer-workflows.md#first-review-checklist) | Packaged captured-patch verification and review history | Three pinned caller workflows, credentials, upgrades and recovery |
 
-Anthropic’s [Claude Ship](https://claude.com/resources/articles/introducing-claude-ship)
-is a hosted suite for GitHub repositories on eligible Claude Team and Enterprise
-plans. It includes Code Review (generally available), PR Steward for fixes, and
-Claude Approvals for applying your approval policy (both in beta). GitHub branch
-rules still determine what can merge. The hosted suite is unavailable to
-organizations using Zero Data Retention, the HIPAA configuration, or
-customer-managed encryption keys. See the [setup guide](https://code.claude.com/docs/en/claude-ship#set-up-claude-ship)
-for requirements and organization controls. For the review component in
-particular, see [review customization](https://code.claude.com/docs/en/code-review-customize).
-Checks and finding retention are not unique to Runtime.
+Managed Code Review runs on Anthropic infrastructure for eligible Team and
+Enterprise organizations, without repository workflow files. An Owner enables
+it with Claude GitHub App access. You can choose review depth and frequency,
+customize review instructions and set a spending limit; the service chooses
+models. Checks and finding retention are not unique to Runtime. See the
+[setup guide](https://code.claude.com/docs/en/code-review-setup) and
+[review customization](https://code.claude.com/docs/en/code-review-customize).
 
-Claude Code’s [`/ship` command](https://code.claude.com/docs/en/ship-command)
-is separate. From a local clone, a developer can use it to open or review their
-own PR and address feedback and failing checks. It counts toward regular Claude
-Code usage and does not turn on the hosted suite for the repository.
+[Claude Ship](https://claude.com/resources/articles/introducing-claude-ship)
+is a hosted GitHub alternative for eligible Claude Team and Enterprise
+organizations.
 
 The official Action runs Claude on your GitHub Actions runner. Use it directly
 for custom prompts, models, tools or triggers, or broader implementation
@@ -40,10 +36,7 @@ is another reusable workflow if multiple model providers are a priority.
 
 ## Runtime's contract and maintenance
 
-Runtime is an option for individual developers who want their own repository’s
-GitHub Actions to run reviews without a Team or Enterprise plan. It does not
-provide Ship’s automatic fixes or policy-based approvals. Runtime builds on the
-official Action and packages these review safeguards:
+Runtime builds on the official Action and packages these review safeguards:
 
 - **Captured identity:** records the head, base, merge base and executing Runtime
   revision; the checkout and inline findings target the captured head.
@@ -87,10 +80,10 @@ inspect and adapt it under the [MIT License](../LICENSE), read the
 
 ## Evaluate cost
 
-Hosted Claude Ship bills tokens through organization usage credits, separately
-from included plan usage. Cost depends on the agents used and the number,
-size, and review depth of PRs; see
-[Claude Ship billing](https://code.claude.com/docs/en/claude-ship#plans-and-billing).
+Managed Code Review bills tokens through organization usage credits, separately
+from included plan usage, with no flat per-review price. Its multi-agent
+operation, review depth and frequency affect spend; see
+[managed costs](https://code.claude.com/docs/en/code-review-costs).
 
 Runtime and the Action directly use [subscription usage for OAuth or API billing
 for API keys](https://code.claude.com/docs/en/github-actions#manage-costs), plus
