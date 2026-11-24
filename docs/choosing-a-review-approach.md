@@ -1,7 +1,5 @@
 # Choosing a Claude code-review approach
 
-*Sources checked October 31, 2026.*
-
 Claude Review Runtime helps individuals and teams track which changes Claude
 reviewed and whether the review completed. Choose it when that evidence is
 useful enough to justify operating a GitHub review workflow.
@@ -10,16 +8,17 @@ useful enough to justify operating a GitHub review workflow.
 
 | Approach | A good fit when you want | What you operate |
 | --- | --- | --- |
-| [Anthropic's managed Code Review](https://code.claude.com/docs/en/code-review) | Hosted PR reviews with organization controls | App access, review settings, instructions and budget |
+| [Claude Ship](https://claude.com/resources/articles/introducing-claude-ship) ([managed Code Review](https://code.claude.com/docs/en/code-review)) | Hosted PR reviews with organization controls | App access, review settings, instructions and budget |
+| [Qodo](https://docs.qodo.ai/code-review) | Automated pull-request reviews | Repository integration and review settings |
+| [CodeRabbit](https://docs.coderabbit.ai/getting-started/quickstart) | Automated pull-request reviews with walkthroughs | Repository integration and review settings |
 | [Official Claude Code Action directly](https://code.claude.com/docs/en/github-actions) | Your own prompts, tools, triggers or broader automation | Workflow configuration, authentication, dependencies and result handling |
 | [Claude Review Runtime](consumer-workflows.md#first-review-checklist) | Packaged captured-patch verification and review history | Three pinned caller workflows, credentials, upgrades and recovery |
 
 Managed Code Review runs on Anthropic infrastructure for eligible Team and
 Enterprise organizations, without repository workflow files. An Owner enables
 it with Claude GitHub App access. You can choose review depth and frequency,
-customize review instructions and set a spending limit; the service chooses
-models. Checks and finding retention are not unique to Runtime. See the
-[setup guide](https://code.claude.com/docs/en/code-review-setup) and
+customize review instructions and set a spending limit. Checks and finding
+retention are not unique to Runtime. See the [setup guide](https://code.claude.com/docs/en/code-review-setup) and
 [review customization](https://code.claude.com/docs/en/code-review-customize).
 
 The official Action runs Claude on your GitHub Actions runner. Use it directly
@@ -65,8 +64,9 @@ upgrades, and investigate incomplete runs.
 
 Runtime is GitHub-specific, supporting GitHub.com with GitHub-hosted Ubuntu
 runners. See [validation limits](validation.md)
-for unvalidated configurations. Choose managed review if you do not want to own
-workflows, or the Action directly for options Runtime does not expose. Check
+for unvalidated configurations. Consider a hosted review service if you do not
+want to maintain review workflows, or use the Action directly for options Runtime
+does not expose. Check
 [data handling](https://code.claude.com/docs/en/data-usage) against your needs;
 runner location alone does not establish privacy or compliance suitability.
 
