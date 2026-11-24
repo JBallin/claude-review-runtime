@@ -1,7 +1,5 @@
 # Choosing a Claude code-review approach
 
-*Sources checked October 31, 2026.*
-
 Claude Review Runtime helps individuals and teams track which changes Claude
 reviewed and whether the review completed. Choose it when that evidence is
 useful enough to justify operating a GitHub review workflow.
@@ -22,9 +20,11 @@ models. Checks and finding retention are not unique to Runtime. See the
 [setup guide](https://code.claude.com/docs/en/code-review-setup) and
 [review customization](https://code.claude.com/docs/en/code-review-customize).
 
-[Claude Ship](https://claude.com/resources/articles/introducing-claude-ship)
-is a hosted GitHub alternative for eligible Claude Team and Enterprise
-organizations.
+Claude Ship is a hosted GitHub alternative for eligible Claude Team and
+Enterprise organizations.
+
+Sources: [Claude Ship announcement](https://claude.com/resources/articles/introducing-claude-ship)
+and [managed Code Review documentation](https://code.claude.com/docs/en/code-review).
 
 The official Action runs Claude on your GitHub Actions runner. Use it directly
 for custom prompts, models, tools or triggers, or broader implementation
