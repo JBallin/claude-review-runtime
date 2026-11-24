@@ -8,9 +8,9 @@ useful enough to justify operating a GitHub review workflow.
 
 | Approach | A good fit when you want | What you operate |
 | --- | --- | --- |
-| [Anthropic's managed Code Review](https://code.claude.com/docs/en/code-review) | Hosted PR reviews with organization controls | App access, review settings, instructions and budget |
-| Qodo | Automated pull-request reviews | Repository integration and review settings |
-| CodeRabbit | Automated pull-request reviews with walkthroughs | Repository integration and review settings |
+| [Claude Ship](https://claude.com/resources/articles/introducing-claude-ship) ([managed Code Review](https://code.claude.com/docs/en/code-review)) | Hosted PR reviews with organization controls | App access, review settings, instructions and budget |
+| [Qodo](https://docs.qodo.ai/code-review) | Automated pull-request reviews | Repository integration and review settings |
+| [CodeRabbit](https://docs.coderabbit.ai/getting-started/quickstart) | Automated pull-request reviews with walkthroughs | Repository integration and review settings |
 | [Official Claude Code Action directly](https://code.claude.com/docs/en/github-actions) | Your own prompts, tools, triggers or broader automation | Workflow configuration, authentication, dependencies and result handling |
 | [Claude Review Runtime](consumer-workflows.md#first-review-checklist) | Packaged captured-patch verification and review history | Three pinned caller workflows, credentials, upgrades and recovery |
 
@@ -20,9 +20,6 @@ it with Claude GitHub App access. You can choose review depth and frequency,
 customize review instructions and set a spending limit. Checks and finding
 retention are not unique to Runtime. See the [setup guide](https://code.claude.com/docs/en/code-review-setup) and
 [review customization](https://code.claude.com/docs/en/code-review-customize).
-
-Managed Code Review is part of Claude Ship, Anthropic’s hosted GitHub suite
-for eligible Claude Team and Enterprise organizations.
 
 The official Action runs Claude on your GitHub Actions runner. Use it directly
 for custom prompts, models, tools or triggers, or broader implementation
@@ -97,11 +94,3 @@ If Runtime fits, follow the [setup checklist](consumer-workflows.md#first-review
 and evaluate a few representative PRs for useful findings, incomplete runs,
 usage and maintenance effort. Preview the review output in the
 [synthetic gallery](review-presentation-gallery.md).
-
-## Sources
-
-Sources checked November 23, 2026.
-
-- [Anthropic: Claude Ship announcement](https://claude.com/resources/articles/introducing-claude-ship)
-- [Qodo: Code Review](https://docs.qodo.ai/code-review)
-- [CodeRabbit: Pull request reviews](https://docs.coderabbit.ai/getting-started/quickstart)
