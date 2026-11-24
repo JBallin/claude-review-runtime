@@ -100,6 +100,8 @@ usage and maintenance effort. Preview the review output in the
 
 ## Sources
 
+Sources checked November 23, 2026.
+
 - [Anthropic: Claude Ship announcement](https://claude.com/resources/articles/introducing-claude-ship)
 - [Qodo: Code Review](https://docs.qodo.ai/code-review)
 - [CodeRabbit: Pull request reviews](https://docs.coderabbit.ai/getting-started/quickstart)
